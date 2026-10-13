@@ -17,6 +17,8 @@ import ORBlockSchedule from './components/ORBlockSchedule';
 import CaseLogScheduler from './components/CaseLogScheduler';
 import { calculateMedicareRevenue, calculateORCost } from './utils/hospitalUtils';
 import InstructionPanel from './components/InstructionPanel';
+import LoginPage from './components/LoginPage';
+import SurgeonPortal from './components/SurgeonPortal';
 import {
   ResponsiveContainer,
   LineChart,
@@ -69,7 +71,8 @@ import {
   Sun,
   Moon,
   Brain,
-  Upload
+  Upload,
+  LogOut
 } from 'lucide-react';
 
 // ==========================================
@@ -1057,6 +1060,7 @@ const CustomDateInput = React.forwardRef(({ value, onClick }, ref) => (
 CustomDateInput.displayName = 'CustomDateInput';
 
 export default function App() {
+  const [authUser, setAuthUser] = useState(() => db.getSession());
   const [activeTab, setActiveTab] = useState('dashboard');
   const [timeFilter, setTimeFilter] = useState('All');
   const [filterDate, setFilterDate] = useState(new Date('2026-02-23T12:00:00'));
@@ -2763,6 +2767,32 @@ export default function App() {
     return pages;
   };
 
+  // 1. Unauthenticated view -> Login Page
+  if (!authUser) {
+    return (
+      <LoginPage
+        onLogin={(user) => setAuthUser(user)}
+        theme={theme}
+        setTheme={setTheme}
+      />
+    );
+  }
+
+  // 2. Surgeon portal view -> Dedicated Surgeon Workspace
+  if (authUser.role === 'surgeon') {
+    return (
+      <SurgeonPortal
+        surgeon={authUser.surgeonData || authUser}
+        onLogout={() => {
+          db.clearSession();
+          setAuthUser(null);
+        }}
+        theme={theme}
+        setTheme={setTheme}
+      />
+    );
+  }
+
   if (loading) {
     return (
       <div style={{
@@ -3028,12 +3058,43 @@ export default function App() {
           </div>
         </nav>
 
-        <div className="sidebar-profile">
-          <div className="profile-avatar"></div>
-          <div className="profile-info">
-            <span className="profile-name">Admin</span>
-            <span className="profile-role">Director</span>
+        <div className="sidebar-profile" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+            <div className="profile-avatar"></div>
+            <div className="profile-info" style={{ overflow: 'hidden' }}>
+              <span className="profile-name" style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                {authUser?.name || 'Admin Director'}
+              </span>
+              <span className="profile-role">
+                {authUser?.role === 'admin' ? 'ASC Administrator' : 'Attending Provider'}
+              </span>
+            </div>
           </div>
+          <button
+            onClick={() => {
+              db.clearSession();
+              setAuthUser(null);
+            }}
+            title="Log Out of Session"
+            style={{
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.25)',
+              color: '#f87171',
+              cursor: 'pointer',
+              padding: '6px 10px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontSize: '0.72rem',
+              fontWeight: '600',
+              flexShrink: 0,
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <LogOut size={13} />
+            <span>Logout</span>
+          </button>
         </div>
       </aside>
 

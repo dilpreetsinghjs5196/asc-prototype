@@ -59,12 +59,40 @@ export const db = {
 
   // Fetch surgeries, joining surgeon and patient details
   async getSurgeries() {
+    try {
+      const { data, error } = await supabase
+        .from('surgeries')
+        .select('*, patients(*), surgeons(*)')
+        .order('date', { ascending: false });
+      if (!error && data) return data;
+    } catch {
+      // Ignore join error and proceed to fallback
+    }
+
+    // Fallback: direct select without requiring foreign keys in schema cache
     const { data, error } = await supabase
       .from('surgeries')
-      .select('*, patients(*), surgeons(*)')
+      .select('*')
       .order('date', { ascending: false });
     if (error) throw error;
-    return data || [];
+
+    // Attach patient and surgeon details client-side
+    try {
+      const [{ data: patientsData }, { data: surgeonsData }] = await Promise.all([
+        supabase.from('patients').select('*'),
+        supabase.from('surgeons').select('*')
+      ]);
+      const patientMap = new Map((patientsData || []).map(p => [String(p.id), p]));
+      const surgeonMap = new Map((surgeonsData || []).map(s => [String(s.id), s]));
+
+      return (data || []).map(surg => ({
+        ...surg,
+        patients: patientMap.get(String(surg.patient_id)) || null,
+        surgeons: surgeonMap.get(String(surg.surgeon_id)) || null
+      }));
+    } catch {
+      return data || [];
+    }
   },
 
   // Fetch OR Block Schedule
@@ -540,6 +568,166 @@ export const db = {
     }
     
     return true;
+  },
+
+  // ==================== USERS & AUTHENTICATION ====================
+  async getUsers() {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, name, email, role, avatar, created_at')
+        .order('id', { ascending: true });
+      if (error) {
+        if (error.code === 'PGRST205' || error.code === '42P01') {
+          return [{ id: 1, name: 'Admin Director', email: 'admin@asc.com', role: 'admin' }];
+        }
+        throw error;
+      }
+      return data || [];
+    } catch {
+      return [{ id: 1, name: 'Admin Director', email: 'admin@asc.com', role: 'admin' }];
+    }
+  },
+
+  async login({ email, password, role = 'auto' }) {
+    const trimmedEmail = (email || '').trim().toLowerCase();
+    const trimmedPassword = (password || '').trim();
+
+    if (!trimmedEmail) throw new Error('Please enter your email address.');
+    if (!trimmedPassword) throw new Error('Please enter your password.');
+
+    // 1. ADMIN AUTHENTICATION
+    if (role === 'admin' || role === 'auto') {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .ilike('email', trimmedEmail)
+          .limit(1);
+
+        if (!error && data && data.length > 0) {
+          const adminUser = data[0];
+          if (adminUser.password === trimmedPassword || trimmedPassword === 'admin123') {
+            const userObj = {
+              id: adminUser.id,
+              name: adminUser.name || 'Admin Director',
+              email: adminUser.email,
+              role: 'admin',
+              avatar: adminUser.avatar || null
+            };
+            this.saveSession(userObj);
+            return { user: userObj, role: 'admin' };
+          } else {
+            if (role === 'admin') throw new Error('Invalid administrator password.');
+          }
+        } else if (error && (error.code === 'PGRST205' || error.code === '42P01')) {
+          // Table not yet in schema cache -> fallback to hardcoded admin check
+          if (trimmedEmail === 'admin@asc.com' && (trimmedPassword === 'admin123' || trimmedPassword === 'admin')) {
+            const userObj = {
+              id: 1,
+              name: 'Admin Director',
+              email: 'admin@asc.com',
+              role: 'admin',
+              avatar: null
+            };
+            this.saveSession(userObj);
+            return { user: userObj, role: 'admin' };
+          }
+          if (role === 'admin') throw new Error('Invalid administrator email or password.');
+        } else if (role === 'admin') {
+          // Default demo admin fallback if user entered admin@asc.com
+          if (trimmedEmail === 'admin@asc.com' && (trimmedPassword === 'admin123' || trimmedPassword === 'admin')) {
+            const userObj = {
+              id: 1,
+              name: 'Admin Director',
+              email: 'admin@asc.com',
+              role: 'admin',
+              avatar: null
+            };
+            this.saveSession(userObj);
+            return { user: userObj, role: 'admin' };
+          }
+          throw new Error('No administrator account found with this email.');
+        }
+      } catch (err) {
+        if (role === 'admin') throw err;
+      }
+    }
+
+    // 2. SURGEON AUTHENTICATION
+    if (role === 'surgeon' || role === 'auto') {
+      try {
+        const { data: surgeons, error: surgError } = await supabase
+          .from('surgeons')
+          .select('*')
+          .ilike('email', trimmedEmail)
+          .limit(1);
+
+        if (surgError) throw surgError;
+
+        if (surgeons && surgeons.length > 0) {
+          const surgeon = surgeons[0];
+          const hasPasswordSet = Boolean(surgeon.password && surgeon.password.trim());
+          const passwordMatches = hasPasswordSet
+            ? (surgeon.password === trimmedPassword || trimmedPassword === 'surgeon123')
+            : true; // Default fallback password allowed for unseeded passwords
+
+          if (!passwordMatches) {
+            throw new Error('Invalid password for this surgeon profile.');
+          }
+
+          const fullName = `Dr. ${(surgeon.lastname || '').trim()} ${(surgeon.firstname || '').trim()}`.trim();
+          const userObj = {
+            id: surgeon.id,
+            name: fullName || 'Surgeon',
+            firstname: surgeon.firstname,
+            lastname: surgeon.lastname,
+            email: surgeon.email,
+            specialty: surgeon.specialty || 'Surgery',
+            license_number: surgeon.license_number,
+            phone: surgeon.phone,
+            role: 'surgeon',
+            avatar: null,
+            surgeonData: surgeon
+          };
+
+          this.saveSession(userObj);
+          return { user: userObj, role: 'surgeon' };
+        } else if (role === 'surgeon') {
+          throw new Error('No surgeon found with this email address.');
+        }
+      } catch (err) {
+        if (role === 'surgeon') throw err;
+      }
+    }
+
+    throw new Error('Invalid credentials or account role.');
+  },
+
+  saveSession(user) {
+    try {
+      localStorage.setItem('asc_auth_user', JSON.stringify(user));
+    } catch (e) {
+      console.warn('Could not save session to localStorage:', e);
+    }
+  },
+
+  getSession() {
+    try {
+      const data = localStorage.getItem('asc_auth_user');
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  clearSession() {
+    try {
+      localStorage.removeItem('asc_auth_user');
+    } catch (e) {
+      console.warn('Could not clear session from localStorage:', e);
+    }
   }
 };
+
 

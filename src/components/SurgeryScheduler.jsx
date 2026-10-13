@@ -1027,6 +1027,15 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
         return Object.keys(surgeriesByMonth).sort().reverse();
     }, [surgeriesByMonth]);
 
+    useEffect(() => {
+        if (availableMonths.length > 0) {
+            setExpandedMonths(prev => {
+                if (prev.size === 0) return new Set([availableMonths[0]]);
+                return prev;
+            });
+        }
+    }, [availableMonths]);
+
     const formatMonthDisplay = (monthKey) => {
         const [year, month] = monthKey.split('-');
         const date = new Date(year, parseInt(month) - 1);
