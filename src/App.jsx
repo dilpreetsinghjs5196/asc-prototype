@@ -19,6 +19,7 @@ import { calculateMedicareRevenue, calculateORCost } from './utils/hospitalUtils
 import InstructionPanel from './components/InstructionPanel';
 import LoginPage from './components/LoginPage';
 import SurgeonPortal from './components/SurgeonPortal';
+import UserProfile from './components/UserProfile';
 import {
   ResponsiveContainer,
   LineChart,
@@ -72,7 +73,8 @@ import {
   Moon,
   Brain,
   Upload,
-  LogOut
+  LogOut,
+  User
 } from 'lucide-react';
 
 // ==========================================
@@ -1061,6 +1063,30 @@ CustomDateInput.displayName = 'CustomDateInput';
 
 export default function App() {
   const [authUser, setAuthUser] = useState(() => db.getSession());
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const accountMenuRef = React.useRef(null);
+
+  const getInitials = (nameStr) => {
+    if (!nameStr) return 'AD';
+    const parts = nameStr.trim().split(' ');
+    if (parts.length >= 2) return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    return nameStr.slice(0, 2).toUpperCase();
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(e.target)) {
+        setAccountMenuOpen(false);
+      }
+    };
+    if (accountMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [accountMenuOpen]);
+
   const [activeTab, setActiveTab] = useState('dashboard');
   const [timeFilter, setTimeFilter] = useState('All');
   const [filterDate, setFilterDate] = useState(new Date('2026-02-23T12:00:00'));
@@ -3059,8 +3085,12 @@ export default function App() {
         </nav>
 
         <div className="sidebar-profile" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
-            <div className="profile-avatar"></div>
+          <div
+            onClick={() => { setActiveTab('profile'); setSelectedSurgeon(null); }}
+            style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden', cursor: 'pointer', flex: 1 }}
+            title="View Profile & Credentials"
+          >
+            <div className="profile-avatar">{getInitials(authUser?.name || 'Admin')}</div>
             <div className="profile-info" style={{ overflow: 'hidden' }}>
               <span className="profile-name" style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                 {authUser?.name || 'Admin Director'}
@@ -3131,6 +3161,7 @@ export default function App() {
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
                   {activeTab === 'instruction' && 'Chatbot Instructions'}
                   {activeTab === 'ai_agent' && 'AI Agent Workbench'}
+                  {activeTab === 'profile' && 'User Profile & Security Credentials'}
                 </>
               )}
             </h1>
@@ -3159,6 +3190,7 @@ export default function App() {
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
                   {activeTab === 'instruction' && 'Manage dynamic questions and categories for the AI Chatbot'}
                   {activeTab === 'ai_agent' && 'Interact with the AI Agent for intelligent workflow automation'}
+                  {activeTab === 'profile' && 'Manage your account details and update your login password'}
                 </>
               )}
             </span>
@@ -3200,7 +3232,7 @@ export default function App() {
               )}
             </button>
 
-            {!['settings', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'ot_cost_manage', 'cpt_manage', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'ot_cost_manage', 'cpt_manage', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -3265,6 +3297,73 @@ export default function App() {
                 )}
               </>
             )}
+
+            {/* Header Compact Account Avatar & Dropdown */}
+            <div className="header-account-container" ref={accountMenuRef}>
+              <button
+                className="header-account-btn"
+                onClick={() => setAccountMenuOpen(prev => !prev)}
+                title="Account & Credentials"
+              >
+                {getInitials(authUser?.name || 'Admin')}
+              </button>
+
+              {accountMenuOpen && (
+                <div className="header-account-dropdown">
+                  <div className="dropdown-user-header">
+                    <div className="dropdown-avatar">
+                      {getInitials(authUser?.name || 'Admin')}
+                    </div>
+                    <div className="dropdown-user-info">
+                      <span className="dropdown-user-name">{authUser?.name || 'Admin Director'}</span>
+                      <span className="dropdown-user-role">
+                        {authUser?.role === 'admin' ? 'ASC Administrator' : 'Attending Surgeon'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="dropdown-menu-items">
+                    <button
+                      className="dropdown-item"
+                      onClick={() => {
+                        setActiveTab('profile');
+                        setSelectedSurgeon(null);
+                        setAccountMenuOpen(false);
+                      }}
+                    >
+                      <User size={15} style={{ color: '#3b82f6' }} />
+                      <span>My Profile & Credentials</span>
+                    </button>
+
+                    <button
+                      className="dropdown-item"
+                      onClick={() => {
+                        setActiveTab('settings');
+                        setSelectedSurgeon(null);
+                        setAccountMenuOpen(false);
+                      }}
+                    >
+                      <Settings size={15} style={{ color: '#10b981' }} />
+                      <span>System Settings</span>
+                    </button>
+
+                    <div className="dropdown-divider"></div>
+
+                    <button
+                      className="dropdown-item dropdown-item-danger"
+                      onClick={() => {
+                        db.clearSession();
+                        setAuthUser(null);
+                        setAccountMenuOpen(false);
+                      }}
+                    >
+                      <LogOut size={15} />
+                      <span>Log Out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
@@ -4941,6 +5040,21 @@ export default function App() {
                     Query facility databases and build customized tabular grids.
                   </p>
                 </div>
+              )}
+
+              {/* ==========================================
+              TAB: USER PROFILE & CREDENTIALS
+              ========================================== */}
+              {activeTab === 'profile' && (
+                <UserProfile
+                  user={authUser}
+                  onUpdateUser={(updated) => setAuthUser(updated)}
+                  onBack={() => setActiveTab('dashboard')}
+                  onLogout={() => {
+                    db.clearSession();
+                    setAuthUser(null);
+                  }}
+                />
               )}
 
               {/* ==========================================

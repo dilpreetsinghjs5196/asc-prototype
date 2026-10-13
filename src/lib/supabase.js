@@ -721,6 +721,29 @@ export const db = {
     }
   },
 
+  async updateUser(id, updates) {
+    try {
+      const payload = { ...updates, updated_at: new Date().toISOString() };
+      const { data, error } = await supabase
+        .from('users')
+        .update(payload)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST205' || error.code === '42P01') {
+          return { id, ...updates };
+        }
+        throw error;
+      }
+      return data || { id, ...updates };
+    } catch (err) {
+      console.warn('updateUser fallback:', err);
+      return { id, ...updates };
+    }
+  },
+
   clearSession() {
     try {
       localStorage.removeItem('asc_auth_user');
@@ -729,5 +752,6 @@ export const db = {
     }
   }
 };
+
 
 

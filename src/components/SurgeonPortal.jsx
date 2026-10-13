@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '../lib/supabase';
 import './SurgeonPortal.css';
+import UserProfile from './UserProfile';
 import {
   CalendarDays,
   Clock,
@@ -23,7 +24,24 @@ import {
 } from 'lucide-react';
 
 export default function SurgeonPortal({ surgeon, onLogout, theme, setTheme }) {
-  const [activeTab, setActiveTab] = useState('cases'); // 'cases' | 'blocks' | 'performance' | 'preference'
+  const [activeTab, setActiveTab] = useState('cases'); // 'cases' | 'blocks' | 'performance' | 'preference' | 'profile'
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const accountMenuRef = React.useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(e.target)) {
+        setAccountMenuOpen(false);
+      }
+    };
+    if (accountMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [accountMenuOpen]);
+
   const [loading, setLoading] = useState(true);
   const [surgeries, setSurgeries] = useState([]);
   const [orBlocks, setORBlocks] = useState([]);
@@ -176,7 +194,7 @@ export default function SurgeonPortal({ surgeon, onLogout, theme, setTheme }) {
             </button>
           )}
 
-          <div className="surgeon-user-chip">
+          <div className="surgeon-user-chip" onClick={() => setActiveTab('profile')} style={{ cursor: 'pointer' }} title="Edit Profile & Credentials">
             <div className="surgeon-avatar-circle">
               {surgeon?.firstname ? surgeon.firstname[0] : 'S'}
             </div>
@@ -184,6 +202,60 @@ export default function SurgeonPortal({ surgeon, onLogout, theme, setTheme }) {
               <div className="surgeon-user-name">{surgeonFullName}</div>
               <div className="surgeon-user-spec">{surgeon?.specialty || 'Surgical Specialist'}</div>
             </div>
+          </div>
+
+          {/* Header Compact Account Avatar & Dropdown */}
+          <div className="header-account-container" ref={accountMenuRef}>
+            <button
+              className="header-account-btn"
+              onClick={() => setAccountMenuOpen(prev => !prev)}
+              title="Surgeon Account & Credentials"
+              style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
+            >
+              {surgeon?.firstname ? surgeon.firstname[0] : 'S'}
+            </button>
+
+            {accountMenuOpen && (
+              <div className="header-account-dropdown">
+                <div className="dropdown-user-header">
+                  <div className="dropdown-avatar" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
+                    {surgeon?.firstname ? surgeon.firstname[0] : 'S'}
+                  </div>
+                  <div className="dropdown-user-info">
+                    <span className="dropdown-user-name">{surgeonFullName}</span>
+                    <span className="dropdown-user-role" style={{ color: '#10b981' }}>
+                      Attending Surgeon
+                    </span>
+                  </div>
+                </div>
+
+                <div className="dropdown-menu-items">
+                  <button
+                    className="dropdown-item"
+                    onClick={() => {
+                      setActiveTab('profile');
+                      setAccountMenuOpen(false);
+                    }}
+                  >
+                    <User size={15} style={{ color: '#10b981' }} />
+                    <span>My Profile & Credentials</span>
+                  </button>
+
+                  <div className="dropdown-divider"></div>
+
+                  <button
+                    className="dropdown-item dropdown-item-danger"
+                    onClick={() => {
+                      setAccountMenuOpen(false);
+                      onLogout();
+                    }}
+                  >
+                    <LogOut size={15} />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <button
@@ -296,6 +368,14 @@ export default function SurgeonPortal({ surgeon, onLogout, theme, setTheme }) {
           >
             <Package size={16} />
             Preference Cards & Supplies
+          </button>
+
+          <button
+            className={`surgeon-portal-tab ${activeTab === 'profile' ? 'active' : ''}`}
+            onClick={() => setActiveTab('profile')}
+          >
+            <User size={16} />
+            My Profile & Credentials
           </button>
         </div>
 
@@ -530,6 +610,18 @@ export default function SurgeonPortal({ surgeon, onLogout, theme, setTheme }) {
               </table>
             </div>
           </div>
+        )}
+
+        {/* Tab 5: Profile & Credentials */}
+        {activeTab === 'profile' && (
+          <UserProfile
+            user={surgeon}
+            onUpdateUser={(updated) => {
+              // Session automatically saved in localStorage
+            }}
+            onBack={() => setActiveTab('cases')}
+            onLogout={onLogout}
+          />
         )}
       </main>
     </div>
