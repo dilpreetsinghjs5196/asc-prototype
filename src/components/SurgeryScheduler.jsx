@@ -374,7 +374,7 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
             // Add header
             pdf.setFillColor(59, 130, 246); // Blue background
             pdf.rect(margin - 5, 10, pageWidth - (margin - 5) * 2, 25, 'F');
-            
+
             pdf.setTextColor(255, 255, 255);
             pdf.setFontSize(24);
             pdf.text('Surgery Notes', margin, 22);
@@ -441,7 +441,7 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
             // Download PDF
             const fileName = `Surgery_Notes_${surgery.patient_id}_${surgery.date}.pdf`;
             pdf.save(fileName);
-            
+
             Swal.fire('Success', 'PDF downloaded successfully!', 'success');
         } catch (error) {
             console.error('Error generating PDF:', error);
@@ -455,7 +455,7 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
         let preOptNotes = '';
         let postOptNotes = '';
         let isOldFormat = false;
-        
+
         try {
             if (surgery.notes && typeof surgery.notes === 'string') {
                 // Check if it's JSON format or old text format
@@ -559,20 +559,20 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
                     downloadBtn.style.gap = '8px';
                     downloadBtn.style.transition = 'all 0.3s ease';
                     downloadBtn.innerHTML = '<svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg><span>Download PDF</span>';
-                    
+
                     // Hover effect
                     downloadBtn.addEventListener('mouseover', () => {
                         downloadBtn.style.background = '#059669';
                         downloadBtn.style.transform = 'translateY(-2px)';
                         downloadBtn.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.4)';
                     });
-                    
+
                     downloadBtn.addEventListener('mouseout', () => {
                         downloadBtn.style.background = '#10b981';
                         downloadBtn.style.transform = 'translateY(0)';
                         downloadBtn.style.boxShadow = 'none';
                     });
-                    
+
                     downloadBtn.onclick = () => {
                         const preOptInp = Swal.getHtmlContainer().querySelector('#preOptInput');
                         const postOptInp = Swal.getHtmlContainer().querySelector('#postOptInput');
@@ -587,20 +587,20 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
             if (result.isConfirmed) {
                 const preOptInput = Swal.getHtmlContainer().querySelector('#preOptInput');
                 const postOptInput = Swal.getHtmlContainer().querySelector('#postOptInput');
-                
+
                 const notesData = {
                     preOpt: preOptInput.value,
                     postOpt: postOptInput.value
                 };
-                
+
                 // Update surgery notes in database as JSON
                 try {
                     const notesString = JSON.stringify(notesData);
                     await db.updateSurgery(surgery.id, { notes: notesString });
-                    
+
                     // Update the local surgery object so reopening the modal shows updated data
                     surgery.notes = notesString;
-                    
+
                     // Refresh the surgeries list
                     if (onUpdate) onUpdate();
                     Swal.fire('Success', 'Notes saved successfully!', 'success');
@@ -651,7 +651,7 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
         // Room Cost & Labor Cost are now directly mapped from the user-entered CPT expense values
         const roomCost = parseFloat(formData.orRoomCost || 0);
         const laborCost = parseFloat(formData.labourCost || 0);
-        
+
         // Add calculated staff fees if checkbox is checked
         let calculatedStaffFee = 0;
         if (formData.calculateStaffFee && formData.orStaffIds && formData.orStaffIds.length > 0) {
@@ -1650,20 +1650,20 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
                                 <div className="form-row" style={{ gridTemplateColumns: '1fr' }}>
                                     <div className="form-group">
                                         <label>Select OR Staff</label>
-                                        <div style={{ 
-                                            maxHeight: '150px', 
-                                            overflowY: 'auto', 
-                                            border: '1px solid var(--border-color)', 
-                                            borderRadius: '6px', 
-                                            padding: '8px', 
-                                            background: 'var(--bg-input)' 
+                                        <div style={{
+                                            maxHeight: '150px',
+                                            overflowY: 'auto',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '6px',
+                                            padding: '8px',
+                                            background: 'var(--bg-input)'
                                         }}>
                                             {staffList.filter(staff => staff.department === 'Operating Room RN').map(staff => {
                                                 const isSelected = (formData.orStaffIds || []).includes(staff.id);
                                                 return (
                                                     <label key={staff.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px', cursor: 'pointer', borderRadius: '4px', background: isSelected ? 'rgba(59, 130, 246, 0.1)' : 'transparent', transition: 'background 0.2s' }}>
-                                                        <input 
-                                                            type="checkbox" 
+                                                        <input
+                                                            type="checkbox"
                                                             checked={isSelected}
                                                             onChange={(e) => {
                                                                 const currentIds = formData.orStaffIds || [];
@@ -2014,7 +2014,7 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
                                             </div>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                                                 {/* Month Search Bar */}
-                                                <div 
+                                                <div
                                                     onClick={(e) => e.stopPropagation()}
                                                     style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '4px 10px' }}
                                                 >
