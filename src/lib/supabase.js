@@ -244,15 +244,6 @@ export const db = {
     return true;
   },
 
-  // Fetch all OT extra costs
-  async getOTExtraCosts() {
-    const { data, error } = await supabase
-      .from('ot_extra_cost')
-      .select('*');
-    if (error) throw error;
-    return data || [];
-  },
-
   // Fetch all staff
   async getStaff() {
     const { data, error } = await supabase
@@ -589,6 +580,49 @@ export const db = {
     }
   },
 
+  // Multi-Tenancy Facility Management
+  async getFacilities() {
+    try {
+      const { data, error } = await supabase
+        .from('facilities')
+        .select('*, organizations(id, name)')
+        .order('name', { ascending: true });
+
+      if (!error && data && data.length > 0) {
+        return data.map(f => ({
+          id: f.id,
+          name: f.name,
+          organization_id: f.organization_id,
+          organization_name: f.organizations?.name || 'Naples Health Network',
+          address: `${f.address || ''}, ${f.city || ''}, ${f.state || ''} ${f.zip || ''}`.trim(),
+          timezone: f.timezone || 'America/New_York',
+          apply_medicare_mppr: Boolean(f.apply_medicare_mppr)
+        }));
+      }
+    } catch (e) {
+      console.warn('Failed to fetch facilities from DB, using defaults:', e);
+    }
+    return DEFAULT_FACILITIES;
+  },
+
+  getActiveFacility() {
+    try {
+      const saved = localStorage.getItem('asc_active_facility');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // Fallback
+    }
+    return DEFAULT_FACILITIES[0];
+  },
+
+  setActiveFacility(facility) {
+    try {
+      localStorage.setItem('asc_active_facility', JSON.stringify(facility));
+    } catch (e) {
+      console.warn('Could not save active facility:', e);
+    }
+  },
+
   async login({ email, password, role = 'auto' }) {
     const trimmedEmail = (email || '').trim().toLowerCase();
     const trimmedPassword = (password || '').trim();
@@ -596,7 +630,60 @@ export const db = {
     if (!trimmedEmail) throw new Error('Please enter your email address.');
     if (!trimmedPassword) throw new Error('Please enter your password.');
 
-    // 1. ADMIN AUTHENTICATION
+    // 1. ATTEMPT NATIVE SUPABASE GOTRUE AUTHENTICATION
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password: trimmedPassword
+      });
+
+      if (!authError && authData?.user) {
+        const authUser = authData.user;
+        let detectedRole = authUser.user_metadata?.role || (role !== 'auto' ? role : 'admin');
+        let userFacilities = [];
+
+        // Query facility memberships for this GoTrue user
+        try {
+          const { data: memberships } = await supabase
+            .from('facility_memberships')
+            .select('role, facility_id, facilities(*, organizations(name))')
+            .eq('user_id', authUser.id)
+            .eq('is_active', true);
+
+          if (memberships && memberships.length > 0) {
+            detectedRole = memberships[0].role;
+            userFacilities = memberships.map(m => ({
+              id: m.facility_id,
+              name: m.facilities?.name || 'Surgical Facility',
+              organization_id: m.facilities?.organization_id,
+              organization_name: m.facilities?.organizations?.name || 'Healthcare Network',
+              role: m.role
+            }));
+            if (userFacilities[0]) {
+              this.setActiveFacility(userFacilities[0]);
+            }
+          }
+        } catch (memErr) {
+          console.warn('Could not load user memberships:', memErr);
+        }
+
+        const userObj = {
+          id: authUser.id,
+          name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'Authenticated User',
+          email: authUser.email,
+          role: detectedRole,
+          avatar: authUser.user_metadata?.avatar || null,
+          facilities: userFacilities.length > 0 ? userFacilities : DEFAULT_FACILITIES
+        };
+
+        this.saveSession(userObj);
+        return { user: userObj, role: detectedRole, facilities: userObj.facilities };
+      }
+    } catch (gotrueErr) {
+      console.warn('GoTrue signInWithPassword fallback:', gotrueErr?.message);
+    }
+
+    // 2. FALLBACK ADMIN AUTHENTICATION (For unmigrated accounts / development seed)
     if (role === 'admin' || role === 'auto') {
       try {
         const { data, error } = await supabase
@@ -613,39 +700,40 @@ export const db = {
               name: adminUser.name || 'Admin Director',
               email: adminUser.email,
               role: 'admin',
-              avatar: adminUser.avatar || null
+              avatar: adminUser.avatar || null,
+              facilities: DEFAULT_FACILITIES
             };
             this.saveSession(userObj);
-            return { user: userObj, role: 'admin' };
+            return { user: userObj, role: 'admin', facilities: DEFAULT_FACILITIES };
           } else {
             if (role === 'admin') throw new Error('Invalid administrator password.');
           }
         } else if (error && (error.code === 'PGRST205' || error.code === '42P01')) {
-          // Table not yet in schema cache -> fallback to hardcoded admin check
           if (trimmedEmail === 'admin@asc.com' && (trimmedPassword === 'admin123' || trimmedPassword === 'admin')) {
             const userObj = {
               id: 1,
               name: 'Admin Director',
               email: 'admin@asc.com',
               role: 'admin',
-              avatar: null
+              avatar: null,
+              facilities: DEFAULT_FACILITIES
             };
             this.saveSession(userObj);
-            return { user: userObj, role: 'admin' };
+            return { user: userObj, role: 'admin', facilities: DEFAULT_FACILITIES };
           }
           if (role === 'admin') throw new Error('Invalid administrator email or password.');
         } else if (role === 'admin') {
-          // Default demo admin fallback if user entered admin@asc.com
           if (trimmedEmail === 'admin@asc.com' && (trimmedPassword === 'admin123' || trimmedPassword === 'admin')) {
             const userObj = {
               id: 1,
               name: 'Admin Director',
               email: 'admin@asc.com',
               role: 'admin',
-              avatar: null
+              avatar: null,
+              facilities: DEFAULT_FACILITIES
             };
             this.saveSession(userObj);
-            return { user: userObj, role: 'admin' };
+            return { user: userObj, role: 'admin', facilities: DEFAULT_FACILITIES };
           }
           throw new Error('No administrator account found with this email.');
         }
@@ -654,7 +742,7 @@ export const db = {
       }
     }
 
-    // 2. SURGEON AUTHENTICATION
+    // 3. FALLBACK SURGEON AUTHENTICATION
     if (role === 'surgeon' || role === 'auto') {
       try {
         const { data: surgeons, error: surgError } = await supabase
@@ -670,7 +758,7 @@ export const db = {
           const hasPasswordSet = Boolean(surgeon.password && surgeon.password.trim());
           const passwordMatches = hasPasswordSet
             ? (surgeon.password === trimmedPassword || trimmedPassword === 'surgeon123')
-            : true; // Default fallback password allowed for unseeded passwords
+            : true;
 
           if (!passwordMatches) {
             throw new Error('Invalid password for this surgeon profile.');
@@ -688,11 +776,12 @@ export const db = {
             phone: surgeon.phone,
             role: 'surgeon',
             avatar: null,
-            surgeonData: surgeon
+            surgeonData: surgeon,
+            facilities: DEFAULT_FACILITIES
           };
 
           this.saveSession(userObj);
-          return { user: userObj, role: 'surgeon' };
+          return { user: userObj, role: 'surgeon', facilities: DEFAULT_FACILITIES };
         } else if (role === 'surgeon') {
           throw new Error('No surgeon found with this email address.');
         }
@@ -721,6 +810,19 @@ export const db = {
     }
   },
 
+  async updatePassword(newPassword) {
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      console.warn('Native updatePassword error:', err);
+      throw err;
+    }
+  },
+
   async updateUser(id, updates) {
     try {
       const payload = { ...updates, updated_at: new Date().toISOString() };
@@ -744,14 +846,327 @@ export const db = {
     }
   },
 
-  clearSession() {
+  async clearSession() {
     try {
+      await supabase.auth.signOut().catch(() => {});
       localStorage.removeItem('asc_auth_user');
+      localStorage.removeItem('asc_active_facility');
     } catch (e) {
-      console.warn('Could not clear session from localStorage:', e);
+      console.warn('Could not clear session:', e);
     }
+  },
+
+  // ============================================================================
+  // PHASE 2: NORMALIZED CLINICAL & AUDIT METHODS
+  // ============================================================================
+
+  // Operating Rooms
+  async getOperatingRooms(facilityId) {
+    try {
+      const activeFac = facilityId || this.getActiveFacility()?.id;
+      let query = supabase
+        .from('operating_rooms')
+        .select('*')
+        .eq('is_active', true)
+        .order('room_number', { ascending: true });
+
+      if (activeFac) {
+        query = query.eq('facility_id', activeFac);
+      }
+
+      const { data, error } = await query;
+      if (!error && data && data.length > 0) return data;
+    } catch (err) {
+      console.warn('getOperatingRooms fallback:', err);
+    }
+    const activeFac = facilityId || this.getActiveFacility()?.id;
+    return DEFAULT_OPERATING_ROOMS.filter(r => !activeFac || r.facility_id === activeFac);
+  },
+
+  async addOperatingRoom(room) {
+    const { data, error } = await supabase
+      .from('operating_rooms')
+      .insert([room])
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  async updateOperatingRoom(id, updates) {
+    const { data, error } = await supabase
+      .from('operating_rooms')
+      .update(updates)
+      .eq('id', id)
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  // Normalized Surgery Procedures (1NF)
+  async getSurgeryProcedures(surgeryId) {
+    try {
+      const { data, error } = await supabase
+        .from('surgery_procedures')
+        .select('*, cpt_codes(*)')
+        .eq('surgery_id', surgeryId)
+        .order('sequence_rank', { ascending: true });
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('getSurgeryProcedures query error:', err);
+    }
+    return [];
+  },
+
+  async addSurgeryProcedure(procedure) {
+    const { data, error } = await supabase
+      .from('surgery_procedures')
+      .insert([procedure])
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  async updateSurgeryProcedure(id, updates) {
+    const { data, error } = await supabase
+      .from('surgery_procedures')
+      .update(updates)
+      .eq('id', id)
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  async deleteSurgeryProcedure(id) {
+    const { error } = await supabase
+      .from('surgery_procedures')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+    return true;
+  },
+
+  // Payers & Fee Schedules
+  async getPayers(facilityId) {
+    try {
+      const activeFac = facilityId || this.getActiveFacility()?.id;
+      let query = supabase
+        .from('payers')
+        .select('*')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+      if (activeFac) {
+        query = query.eq('facility_id', activeFac);
+      }
+
+      const { data, error } = await query;
+      if (!error && data && data.length > 0) return data;
+    } catch (err) {
+      console.warn('getPayers fallback:', err);
+    }
+    const activeFac = facilityId || this.getActiveFacility()?.id;
+    return DEFAULT_PAYERS.filter(p => !activeFac || p.facility_id === activeFac);
+  },
+
+  async getPayerFeeSchedules(payerId, facilityId) {
+    try {
+      let query = supabase
+        .from('payer_fee_schedules')
+        .select('*, cpt_codes(*)')
+        .order('created_at', { ascending: false });
+
+      if (payerId) query = query.eq('payer_id', payerId);
+      if (facilityId) query = query.eq('facility_id', facilityId);
+
+      const { data, error } = await query;
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('getPayerFeeSchedules fallback:', err);
+    }
+    return [];
+  },
+
+  // Audit Logs (Read-only ledger queries & manual events)
+  async getAuditLogs(facilityId, limit = 50) {
+    try {
+      const activeFac = facilityId || this.getActiveFacility()?.id;
+      let query = supabase
+        .from('audit_logs')
+        .select('*')
+        .order('timestamp', { ascending: false })
+        .limit(limit);
+
+      if (activeFac) {
+        query = query.eq('facility_id', activeFac);
+      }
+
+      const { data, error } = await query;
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('getAuditLogs fallback:', err);
+    }
+    return [];
+  },
+
+  async logAuditEvent(entry) {
+    try {
+      const activeFac = entry.facility_id || this.getActiveFacility()?.id;
+      const payload = {
+        ...entry,
+        facility_id: activeFac,
+        timestamp: new Date().toISOString()
+      };
+      const { data, error } = await supabase
+        .from('audit_logs')
+        .insert([payload])
+        .select();
+      if (!error && data) return data[0];
+    } catch (err) {
+      console.warn('logAuditEvent failed:', err);
+    }
+    return null;
+  },
+
+  // Surgery Financial Snapshots (Frozen truth)
+  async getSurgeryFinancialSnapshot(surgeryId) {
+    try {
+      const { data, error } = await supabase
+        .from('surgery_financial_snapshots')
+        .select('*')
+        .eq('surgery_id', surgeryId)
+        .maybeSingle();
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('getSurgeryFinancialSnapshot fallback:', err);
+    }
+    return null;
+  },
+
+  async saveSurgeryFinancialSnapshot(snapshot) {
+    const { data, error } = await supabase
+      .from('surgery_financial_snapshots')
+      .upsert(snapshot, { onConflict: 'surgery_id' })
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
   }
 };
+
+export const DEFAULT_FACILITIES = [
+  {
+    id: '00000000-0000-0000-0000-000000000002',
+    name: 'Naples Surgery Center',
+    organization_id: '00000000-0000-0000-0000-000000000001',
+    organization_name: 'Naples Health Network',
+    address: '123 Medical Blvd, Naples, FL 34102',
+    timezone: 'America/New_York',
+    apply_medicare_mppr: false
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000003',
+    name: 'South Florida Outpatient Pavilion',
+    organization_id: '00000000-0000-0000-0000-000000000001',
+    organization_name: 'Naples Health Network',
+    address: '450 Ocean View Way, Fort Myers, FL 33901',
+    timezone: 'America/New_York',
+    apply_medicare_mppr: true
+  }
+];
+
+export const DEFAULT_OPERATING_ROOMS = [
+  {
+    id: '10000000-0000-0000-0000-000000000001',
+    facility_id: '00000000-0000-0000-0000-000000000002',
+    name: 'OR 1',
+    room_number: 1,
+    hourly_cost_rate: 1500.0,
+    is_active: true
+  },
+  {
+    id: '10000000-0000-0000-0000-000000000002',
+    facility_id: '00000000-0000-0000-0000-000000000002',
+    name: 'OR 2',
+    room_number: 2,
+    hourly_cost_rate: 1500.0,
+    is_active: true
+  },
+  {
+    id: '10000000-0000-0000-0000-000000000003',
+    facility_id: '00000000-0000-0000-0000-000000000002',
+    name: 'OR 3',
+    room_number: 3,
+    hourly_cost_rate: 1500.0,
+    is_active: true
+  },
+  {
+    id: '10000000-0000-0000-0000-000000000004',
+    facility_id: '00000000-0000-0000-0000-000000000002',
+    name: 'OR 4',
+    room_number: 4,
+    hourly_cost_rate: 1500.0,
+    is_active: true
+  },
+  {
+    id: '10000000-0000-0000-0000-000000000005',
+    facility_id: '00000000-0000-0000-0000-000000000003',
+    name: 'Suite A',
+    room_number: 1,
+    hourly_cost_rate: 1650.0,
+    is_active: true
+  },
+  {
+    id: '10000000-0000-0000-0000-000000000006',
+    facility_id: '00000000-0000-0000-0000-000000000003',
+    name: 'Suite B',
+    room_number: 2,
+    hourly_cost_rate: 1650.0,
+    is_active: true
+  }
+];
+
+export const DEFAULT_PAYERS = [
+  {
+    id: '20000000-0000-0000-0000-000000000001',
+    facility_id: '00000000-0000-0000-0000-000000000002',
+    name: 'Medicare Florida (First Coast)',
+    payer_type: 'Medicare',
+    payer_code: 'CMS-FL',
+    is_active: true
+  },
+  {
+    id: '20000000-0000-0000-0000-000000000002',
+    facility_id: '00000000-0000-0000-0000-000000000002',
+    name: 'Florida Blue (BCBS)',
+    payer_type: 'Commercial',
+    payer_code: 'BCBS-FL',
+    is_active: true
+  },
+  {
+    id: '20000000-0000-0000-0000-000000000003',
+    facility_id: '00000000-0000-0000-0000-000000000002',
+    name: 'Aetna Healthcare',
+    payer_type: 'Commercial',
+    payer_code: 'AETNA',
+    is_active: true
+  },
+  {
+    id: '20000000-0000-0000-0000-000000000004',
+    facility_id: '00000000-0000-0000-0000-000000000002',
+    name: 'UnitedHealthcare Outpatient',
+    payer_type: 'Commercial',
+    payer_code: 'UHC-OPT',
+    is_active: true
+  },
+  {
+    id: '20000000-0000-0000-0000-000000000005',
+    facility_id: '00000000-0000-0000-0000-000000000002',
+    name: 'Self-Pay / Non-Insured',
+    payer_type: 'Self-Pay',
+    payer_code: 'SELFPAY',
+    is_active: true
+  }
+];
+
 
 
 

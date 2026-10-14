@@ -4,7 +4,7 @@ import { calculateNetProfit } from '../../services/aiOperations/FinancialEngine'
  * Cost Agent
  * Following specification in Section 13 of agent/project.md
  */
-export const executeCostTask = async (taskContext, systemContext) => {
+export const executeCostTask = async (taskContext, _systemContext) => {
     const input = taskContext.input || {};
     const grossCharge = parseFloat(input.grossCharge || 1200);
     const durationMinutes = parseFloat(input.durationMinutes || 60);

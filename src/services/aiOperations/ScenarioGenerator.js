@@ -14,7 +14,6 @@ export const generateRecommendation = (
         selectedSurgeries,
         currentMinutes,
         currentRevenue,
-        currentProfit,
         currentORCost,
         currentLaborCost,
         currentSuppliesCost,

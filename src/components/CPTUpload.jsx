@@ -120,7 +120,7 @@ const CPTUpload = () => {
         const existing = existingMap[item.code] || {};
         
         // Remove fields from 'existing' that shouldn't be copied verbatim to a new row
-        const { id, created_at, ...restExisting } = existing;
+        const { id: _id, created_at: _created_at, ...restExisting } = existing;
         
         // Use existing value if new value is empty/null, and preserve other required columns
         const payload = {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Sparkles, X, Send, Mic, MicOff, Lock, Volume2, VolumeX, MessageSquare, Radio, Play, Square } from 'lucide-react';
 import { db } from '../lib/supabase';
 import { sendMessageToGemini } from '../lib/gemini';
@@ -28,7 +28,6 @@ const Chatbot = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [settings, setSettings] = useState(null);
-  const [error, setError] = useState('');
   
   // Database context state
   const [surgeons, setSurgeons] = useState([]);
@@ -51,7 +50,7 @@ const Chatbot = () => {
   const [isListening, setIsListening] = useState(false);
   const [isSoundOn, setIsSoundOn] = useState(true);
 
-  const refreshDatabaseContext = async () => {
+  const refreshDatabaseContext = useCallback(async () => {
     try {
       const [data, surgs, pats, cpts, surgies, orBlocks, extraCosts] = await Promise.all([
         db.getSettings().catch(() => null),
@@ -76,15 +75,18 @@ const Chatbot = () => {
       return { surgs, pats, cpts, surgies, orBlocks, extraCosts, settingsData: data };
     } catch (err) {
       console.error('Failed to load real-time data for Chatbot:', err);
-      return { surgs: surgeons, pats: patients, cpts: cptCodes, surgies: surgeries, orBlocks: orBlockSchedule, extraCosts: otExtraCosts, settingsData: settings };
+      return { surgs: [], pats: [], cpts: [], surgies: [], orBlocks: [], extraCosts: [], settingsData: null };
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
-      refreshDatabaseContext();
+      const timer = setTimeout(() => {
+        refreshDatabaseContext();
+      }, 0);
+      return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+  }, [isOpen, refreshDatabaseContext]);
 
   // Preload TTS voices & Clean up on unmounting
   useEffect(() => {
@@ -100,7 +102,11 @@ const Chatbot = () => {
     return () => {
       liveLoopActiveRef.current = false;
       if (liveRecognitionRef.current) {
-        try { liveRecognitionRef.current.stop(); } catch (e) {}
+        try {
+          liveRecognitionRef.current.stop();
+        } catch (err) {
+          console.debug('Recognition stop notice:', err);
+        }
       }
       if (window.speechSynthesis) {
         window.speechSynthesis.cancel();
@@ -221,15 +227,15 @@ const Chatbot = () => {
     }
   };
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   useEffect(() => {
     if (activeTab === 'text') {
       scrollToBottom();
     }
   }, [messages, isOpen, activeTab]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   const handleLanguageChange = (e) => {
     const newLang = e.target.value;
@@ -502,7 +508,11 @@ const Chatbot = () => {
   const stopLiveVoice = () => {
     liveLoopActiveRef.current = false;
     if (liveRecognitionRef.current) {
-      try { liveRecognitionRef.current.stop(); } catch (e) {}
+      try {
+        liveRecognitionRef.current.stop();
+      } catch (err) {
+        console.debug('Stop live recognition notice:', err);
+      }
     }
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
@@ -516,7 +526,11 @@ const Chatbot = () => {
     setIsLiveMuted(nextMute);
     if (nextMute) {
       if (liveRecognitionRef.current) {
-        try { liveRecognitionRef.current.stop(); } catch (e) {}
+        try {
+          liveRecognitionRef.current.stop();
+        } catch (err) {
+          console.debug('Mute live recognition notice:', err);
+        }
       }
       setLiveStatus('Paused (Muted)');
     } else {
@@ -554,7 +568,6 @@ const Chatbot = () => {
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
-    setError('');
 
     const latestData = await refreshDatabaseContext();
 

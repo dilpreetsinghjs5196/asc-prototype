@@ -6,21 +6,16 @@ import {
   CalendarDays,
   Clock,
   Activity,
-  CheckCircle,
   Stethoscope,
   TrendingUp,
   LogOut,
   Sun,
   Moon,
   Search,
-  Filter,
   Package,
   Layers,
   Award,
-  AlertTriangle,
-  User,
-  Shield,
-  FileText
+  User
 } from 'lucide-react';
 
 export default function SurgeonPortal({ surgeon, onLogout, theme, setTheme }) {
@@ -616,7 +611,7 @@ export default function SurgeonPortal({ surgeon, onLogout, theme, setTheme }) {
         {activeTab === 'profile' && (
           <UserProfile
             user={surgeon}
-            onUpdateUser={(updated) => {
+            onUpdateUser={(_updated) => {
               // Session automatically saved in localStorage
             }}
             onBack={() => setActiveTab('cases')}

@@ -2,7 +2,7 @@
  * Patient Intake & Data Agent
  * Following specification in Section 5 of agent/project.md
  */
-export const executePatientIntake = async (taskContext, systemContext) => {
+export const executePatientIntake = async (taskContext, _systemContext) => {
     const patientData = taskContext.patient || {};
     const procedureData = taskContext.procedure || { description: "Total Knee Replacement" };
     const warnings = [];
@@ -29,7 +29,8 @@ export const executePatientIntake = async (taskContext, systemContext) => {
                 validated: !requiresHumanReview,
                 patientId: patientData.id || `PAT-${Math.floor(Math.random() * 1000)}`,
                 name: patientData.name || "Unknown Patient",
-                mrn: patientData.mrn || "N/A"
+                mrn: patientData.mrn || "N/A",
+                duplicateCheck
             },
             procedure: procedureData
         },

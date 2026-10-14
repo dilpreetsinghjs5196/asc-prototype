@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, BarChart, Bar, PieChart, Pie, Cell, Legend } from 'recharts';
+import React, { useMemo } from 'react';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { DollarSign, Clock, TrendingUp } from 'lucide-react';
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444']; // Highly Profitable, Profitable, Break-even, Unprofitable
@@ -30,7 +30,7 @@ export default function CommandCenter({ surgeries = [], onTabChange, timeframe =
       }
       return true;
     });
-  }, [surgeries, timeframe]);
+  }, [surgeries, timeframe, filterDate]);
 
   // Helper to accurately derive total costs per case from real-time surgery log data
   const getCaseCost = (s, includeOverhead) => {
@@ -60,14 +60,11 @@ export default function CommandCenter({ surgeries = [], onTabChange, timeframe =
     let totalTurnoverMins = 0;
     let turnoverCount = 0;
 
-    let totalAvailableMins = 0;
-
-    // Assume 2 ORs, 8 hours a day.
-    if (timeframe === 'Day') totalAvailableMins = 2 * 8 * 60;
-    else if (timeframe === 'Week') totalAvailableMins = 2 * 8 * 5 * 60;
-    else if (timeframe === 'Month') totalAvailableMins = 2 * 8 * 20 * 60;
-    else if (timeframe === 'Year') totalAvailableMins = 2 * 8 * 250 * 60;
-    else totalAvailableMins = 2 * 8 * 250 * 60;
+    const totalAvailableMins =
+      timeframe === 'Day' ? 2 * 8 * 60 :
+      timeframe === 'Week' ? 2 * 8 * 5 * 60 :
+      timeframe === 'Month' ? 2 * 8 * 20 * 60 :
+      2 * 8 * 250 * 60;
 
     filteredSurgeries.forEach(s => {
       const revenue = getCaseRevenue(s);
@@ -197,7 +194,7 @@ export default function CommandCenter({ surgeries = [], onTabChange, timeframe =
   }, [surgeries, includeAdvancedCosts]);
 
 
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index: _index }) => {
     const RADIAN = Math.PI / 180;
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);

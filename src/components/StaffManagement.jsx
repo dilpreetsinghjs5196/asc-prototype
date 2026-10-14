@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Edit, Trash2, Plus, X, Users, DollarSign, Activity, Search, Download } from 'lucide-react';
+import { Edit, Trash2, Plus, X, Users, Search, Download } from 'lucide-react';
 import Swal from 'sweetalert2';
 import './StaffManagement.css';
 
@@ -35,10 +35,6 @@ const StaffManagement = () => {
     benefits: ''
   });
 
-  useEffect(() => {
-    fetchStaff();
-  }, []);
-
   const fetchStaff = async () => {
     setLoading(true);
     try {
@@ -53,6 +49,13 @@ const StaffManagement = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchStaff();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

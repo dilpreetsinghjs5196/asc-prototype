@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { db } from '../lib/supabase';
-import { Upload, Database, CheckCircle, AlertTriangle, Loader, FileSpreadsheet, Edit2, Trash2, X, Plus, Search } from 'lucide-react';
+import { Upload, Database, CheckCircle, Loader, FileSpreadsheet, Edit2, Trash2, X, Plus, Search } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 export default function OTCostManagement() {
@@ -41,10 +41,6 @@ export default function OTCostManagement() {
     tray_cost: 'tray_cost'
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -59,6 +55,13 @@ export default function OTCostManagement() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   const [sortField, setSortField] = useState('cpt_codes');
   const [sortDirection, setSortDirection] = useState('asc');

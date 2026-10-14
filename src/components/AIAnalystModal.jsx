@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { formatCurrency, calculateORCost, calculateMedicareRevenue } from '../utils/hospitalUtils';
+import { calculateORCost, formatCurrency } from '../utils/hospitalUtils';
 import './AIAnalystModal.css';
 
 const AIAnalystModal = ({ isOpen, onClose, surgeries = [], cptCodes = [], settings = {} }) => {
@@ -23,12 +23,15 @@ const AIAnalystModal = ({ isOpen, onClose, surgeries = [], cptCodes = [], settin
     // Reset state when modal opens
     useEffect(() => {
         if (isOpen) {
-            setRecommendation(null);
-            setErrorMsg(null);
-            setUtilizationTarget(80);
-            setNumberOfORs(1);
-            setSelectedCategory('All');
-            setSelectedSurgeon('All');
+            const timer = setTimeout(() => {
+                setRecommendation(null);
+                setErrorMsg(null);
+                setUtilizationTarget(80);
+                setNumberOfORs(1);
+                setSelectedCategory('All');
+                setSelectedSurgeon('All');
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [isOpen]);
 
@@ -49,7 +52,7 @@ const AIAnalystModal = ({ isOpen, onClose, surgeries = [], cptCodes = [], settin
             let codes = [];
             if (typeof rawCodes === 'string') {
                 if (rawCodes.trim().startsWith('[')) {
-                    try { codes = JSON.parse(rawCodes); } catch (e) { codes = rawCodes.split(',').map(c => c.trim()); }
+                    try { codes = JSON.parse(rawCodes); } catch { codes = rawCodes.split(',').map(c => c.trim()); }
                 } else {
                     codes = rawCodes.split(',').map(c => c.trim());
                 }
@@ -117,7 +120,7 @@ const AIAnalystModal = ({ isOpen, onClose, surgeries = [], cptCodes = [], settin
                             let codes = [];
                             if (typeof rawCodes === 'string') {
                                 if (rawCodes.trim().startsWith('[')) {
-                                    try { codes = JSON.parse(rawCodes); } catch (e) { codes = rawCodes.split(',').map(c => c.trim()); }
+                                    try { codes = JSON.parse(rawCodes); } catch { codes = rawCodes.split(',').map(c => c.trim()); }
                                 } else {
                                     codes = rawCodes.split(',').map(c => c.trim());
                                 }
@@ -173,7 +176,6 @@ const AIAnalystModal = ({ isOpen, onClose, surgeries = [], cptCodes = [], settin
 
                 let currentMinutes = 0;
                 let currentRevenue = 0;
-                let currentProfit = 0;
                 let currentORCost = 0;
                 let currentLaborCost = 0;
                 let currentSuppliesCost = 0;
@@ -193,7 +195,6 @@ const AIAnalystModal = ({ isOpen, onClose, surgeries = [], cptCodes = [], settin
                             cptCounts[item.code] = currentCount + 1;
                             currentMinutes += item.duration;
                             currentRevenue += item.reimbursement;
-                            currentProfit += item.estimatedProfit;
                             currentORCost += item.estimatedORCost;
                             currentLaborCost += item.estimatedLaborCost;
                             currentSuppliesCost += item.estimatedSuppliesCost;

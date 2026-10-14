@@ -99,10 +99,6 @@ const Settings = ({ onUpdate }) => {
         }
     };
 
-    useEffect(() => {
-        loadSettings();
-    }, []);
-
     const loadSettings = async () => {
         try {
             setLoading(true);
@@ -136,6 +132,13 @@ const Settings = ({ onUpdate }) => {
         }
     };
 
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            loadSettings();
+        }, 0);
+        return () => clearTimeout(timer);
+    }, []);
+
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setSettings(prev => ({
@@ -167,7 +170,7 @@ const Settings = ({ onUpdate }) => {
             setSaving(true);
 
             // Separate AI settings to store locally to prevent Supabase schema errors for email
-            const { id, ai_allowed_email, light_sidebar_color, light_bg_color, light_text_color, light_label_color, light_portal_color, dark_sidebar_color, dark_bg_color, dark_text_color, dark_label_color, dark_portal_color, ...settingsToUpdate } = settings;
+            const { id: _id, ai_allowed_email, light_sidebar_color, light_bg_color, light_text_color, light_label_color, light_portal_color, dark_sidebar_color, dark_bg_color, dark_text_color, dark_label_color, dark_portal_color, ...settingsToUpdate } = settings;
 
             // Save local settings
             if (ai_allowed_email !== undefined) localStorage.setItem('ai_allowed_email', ai_allowed_email);

@@ -28,11 +28,10 @@ class ErrorBoundary extends React.Component {
     }
 }
 
-const AIOperationsAnalystInner = ({ surgeries, cptCodes, settings, patients, onSchedule }) => {
+const AIOperationsAnalystInner = ({ surgeries, cptCodes, _settings, patients, onSchedule }) => {
     const safeSurgeries = Array.isArray(surgeries) ? surgeries : [];
     const safeCptCodes = Array.isArray(cptCodes) ? cptCodes : [];
     const safePatients = Array.isArray(patients) ? patients : [];
-    const safeSettings = settings || {};
 
     return (
         <MultiAgentConsole surgeries={safeSurgeries} cptCodes={safeCptCodes} patients={safePatients} onSchedule={onSchedule} />

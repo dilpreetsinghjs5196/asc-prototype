@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AgentOrchestrator } from '../agents/AgentOrchestrator';
 import { 
-  Play, Bot, Users, Cpu, FileText, CheckCircle, 
+  Play, Bot, Cpu, FileText, 
   AlertTriangle, RotateCcw, ArrowRight, ShieldCheck 
 } from 'lucide-react';
 import Swal from 'sweetalert2';
@@ -60,7 +60,6 @@ export default function MultiAgentConsole({ surgeries, cptCodes, patients = [], 
   };
 
   const [isRunning, setIsRunning] = useState(false);
-  const [currentStep, setCurrentStep] = useState(null);
   const [logs, setLogs] = useState([]);
   const [agentStatuses, setAgentStatuses] = useState({
     patient: 'pending',

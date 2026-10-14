@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, X, Edit2, Trash2, Clock, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Edit2, Trash2, Loader2 } from 'lucide-react';
 import { db } from '../lib/supabase';
 import './ORBlockSchedule.css';
 
@@ -290,8 +290,6 @@ const ORBlockSchedule = () => {
                 {dayData.weeks.map((weekData, wIndex) => {
                   const dateStr = weekData.dateStr;
                   const or1Blocks = allActiveBlocks.filter(b => b.dateStr === dateStr && b.or === 'OR 1');
-                  const or2Blocks = allActiveBlocks.filter(b => b.dateStr === dateStr && b.or === 'OR 2');
-                  const prBlocks = allActiveBlocks.filter(b => b.dateStr === dateStr && b.or === 'Procedure Room');
                   
                   return (
                     <div key={wIndex} className="week-row" onClick={() => openModal(weekData.dateStr, 'OR 1')}>

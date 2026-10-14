@@ -2,7 +2,7 @@
  * Scheduling Agent
  * Following specification in Section 16 of agent/project.md
  */
-export const executeSchedulingTask = async (taskContext, systemContext) => {
+export const executeSchedulingTask = async (taskContext, _systemContext) => {
     return {
         agent: "scheduling",
         status: "completed",

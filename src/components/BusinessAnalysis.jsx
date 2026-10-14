@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -124,15 +124,11 @@ const BusinessAnalysis = ({ surgeries = [], orMetrics = {} }) => {
   }, [surgeries, orMetrics]);
 
   const [selectedOrId, setSelectedOrId] = useState('');
+  const activeOrId = (selectedOrId && dynamicOrData.some(or => or.id === selectedOrId))
+    ? selectedOrId
+    : (dynamicOrData[0]?.id || '');
   
-  // Update selected OR if dynamic data changes and nothing is selected
-  useEffect(() => {
-    if (dynamicOrData.length > 0 && (!selectedOrId || !dynamicOrData.find(or => or.id === selectedOrId))) {
-      setSelectedOrId(dynamicOrData[0].id);
-    }
-  }, [dynamicOrData, selectedOrId]);
-  
-  const currentOr = dynamicOrData.find(or => or.id === selectedOrId);
+  const currentOr = dynamicOrData.find(or => or.id === activeOrId);
 
   if (!dynamicOrData || dynamicOrData.length === 0) {
     return (
@@ -162,7 +158,7 @@ const BusinessAnalysis = ({ surgeries = [], orMetrics = {} }) => {
         {dynamicOrData.map(or => (
           <button
             key={or.id}
-            className={`or-tab ${selectedOrId === or.id ? 'active' : ''}`}
+            className={`or-tab ${activeOrId === or.id ? 'active' : ''}`}
             onClick={() => setSelectedOrId(or.id)}
           >
             {or.id}

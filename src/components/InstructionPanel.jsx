@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Search, Edit, Trash2, CheckCircle, Save, Plus } from 'lucide-react';
+import { Search, Edit, Trash2, Save, Plus } from 'lucide-react';
 import './InstructionPanel.css';
 
 export default function InstructionPanel() {
@@ -20,10 +20,6 @@ export default function InstructionPanel() {
   // Edit state
   const [editingQuestion, setEditingQuestion] = useState(null);
 
-  useEffect(() => {
-    fetchQuestions();
-  }, []);
-
   const fetchQuestions = async () => {
     try {
       setLoading(true);
@@ -42,6 +38,13 @@ export default function InstructionPanel() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchQuestions();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSaveQuestion = async (e) => {
     e.preventDefault();

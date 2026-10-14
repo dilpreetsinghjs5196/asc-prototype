@@ -1,5 +1,5 @@
-import { AgentContext } from './AgentContext';
-import { AgentRegistry, isAgentSupported } from './AgentRegistry';
+import { AgentContext } from './AgentContext.js';
+import { AgentRegistry, isAgentSupported } from './AgentRegistry.js';
 
 // Task Dependency Map as per Master Architecture (Section 11)
 const AGENT_DEPENDENCIES = {

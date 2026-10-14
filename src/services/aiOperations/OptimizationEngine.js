@@ -4,7 +4,7 @@
  * Designed to be easily swappable with Google OR-Tools CP-SAT or MILP.
  */
 
-export const optimizeSchedule = (candidateSurgeries, targetMinutes, numberOfORs) => {
+export const optimizeSchedule = (candidateSurgeries, targetMinutes, _numberOfORs) => {
     // 0-1 Knapsack Dynamic Programming approach
     // We want to maximize the sum of 'optimizationScore' without exceeding 'targetMinutes'.
     // candidateSurgeries is an array of objects, each having a 'duration' (weight) and 'optimizationScore' (value).

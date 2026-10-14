@@ -2,7 +2,7 @@
  * Billing Agent
  * Following specification in Section 18 of agent/project.md
  */
-export const executeBillingTask = async (taskContext, systemContext) => {
+export const executeBillingTask = async (taskContext, _systemContext) => {
     return {
         agent: "billing",
         status: "completed",

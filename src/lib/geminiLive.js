@@ -264,7 +264,7 @@ export class GeminiLiveSession {
       };
 
       this.ws.onerror = (error) => {
-        console.warn(`[Gemini Live] WebSocket error on ${activeModel} (${apiVer}).`);
+        console.warn(`[Gemini Live] WebSocket error on ${activeModel} (${apiVer}):`, error);
       };
 
       this.ws.onclose = (event) => {
@@ -283,7 +283,7 @@ export class GeminiLiveSession {
           this.onStatusChange(`Switching endpoint (${this.retryCount}/${LIVE_CONFIGS.length}) in 2s...`);
           
           if (this.ws) {
-            try { this.ws.close(); } catch (e) {}
+            try { this.ws.close(); } catch (err) { console.debug('[Gemini Live] Notice closing ws:', err); }
             this.ws = null;
           }
           
@@ -380,7 +380,7 @@ export class GeminiLiveSession {
 
   stopAllPlayback() {
     this.activeSources.forEach(source => {
-      try { source.stop(); } catch (e) {}
+      try { source.stop(); } catch (err) { console.debug('[Gemini Live] Notice stopping audio source:', err); }
     });
     this.activeSources = [];
     if (this.playbackAudioContext) {
@@ -421,23 +421,23 @@ export class GeminiLiveSession {
       this.mediaStream = null;
     }
     if (this.workletNode) {
-      try { this.workletNode.disconnect(); } catch (e) {}
+      try { this.workletNode.disconnect(); } catch (err) { console.debug('[Gemini Live] Notice disconnecting worklet:', err); }
       this.workletNode = null;
     }
     if (this.scriptProcessor) {
-      try { this.scriptProcessor.disconnect(); } catch (e) {}
+      try { this.scriptProcessor.disconnect(); } catch (err) { console.debug('[Gemini Live] Notice disconnecting processor:', err); }
       this.scriptProcessor = null;
     }
     if (this.inputAudioContext && this.inputAudioContext.state !== 'closed') {
-      try { this.inputAudioContext.close(); } catch (e) {}
+      try { this.inputAudioContext.close(); } catch (err) { console.debug('[Gemini Live] Notice closing input context:', err); }
       this.inputAudioContext = null;
     }
     if (this.playbackAudioContext && this.playbackAudioContext.state !== 'closed') {
-      try { this.playbackAudioContext.close(); } catch (e) {}
+      try { this.playbackAudioContext.close(); } catch (err) { console.debug('[Gemini Live] Notice closing playback context:', err); }
       this.playbackAudioContext = null;
     }
     if (this.workletUrl) {
-      try { URL.revokeObjectURL(this.workletUrl); } catch (e) {}
+      try { URL.revokeObjectURL(this.workletUrl); } catch (err) { console.debug('[Gemini Live] Notice revoking worklet URL:', err); }
       this.workletUrl = null;
     }
     this.stopAllPlayback();
@@ -449,7 +449,7 @@ export class GeminiLiveSession {
     this.isSetupComplete = false;
     this.stopMedia();
     if (this.ws) {
-      try { this.ws.close(); } catch (e) {}
+      try { this.ws.close(); } catch (err) { console.debug('[Gemini Live] Notice closing ws on disconnect:', err); }
       this.ws = null;
     }
     this.onStatusChange('Disconnected');

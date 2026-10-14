@@ -3,8 +3,8 @@ import Swal from 'sweetalert2';
 import { db } from '../lib/supabase';
 import jsPDF from 'jspdf';
 import {
-    Search, Plus, Edit, Trash2, Clock, Calendar,
-    DollarSign, AlertCircle, Filter, Check, ChevronDown, ChevronUp, Wand2, MessageSquare, Download
+    Search, Edit, Trash2, Clock,
+    DollarSign, AlertCircle, Check, ChevronDown, ChevronUp, Wand2, MessageSquare
 } from 'lucide-react';
 import ORBlockSchedule from './ORBlockSchedule';
 import './SurgeryScheduler.css';
@@ -31,7 +31,7 @@ const formatTimeForInput = (time) => {
 };
 
 // Cosmetic fee calculator based on duration
-export const calculateCosmeticFees = (durationMinutes) => {
+const calculateCosmeticFees = (durationMinutes) => {
     const facilityRates = {
         30: 750, 60: 1500, 90: 1800, 120: 2100, 150: 2500,
         180: 2900, 210: 3300, 240: 3700, 270: 4100, 300: 4500,
@@ -99,9 +99,10 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
         calculateStaffFee: false
     });
 
+    const targetDate = formData?.date;
     const availableSurgeons = useMemo(() => {
-        if (!formData?.date || !surgeons || surgeons.length === 0) return surgeons;
-        const [yearStr, monthStr, dayStr] = formData.date.split('-');
+        if (!targetDate || !surgeons || surgeons.length === 0) return surgeons;
+        const [yearStr, monthStr, dayStr] = targetDate.split('-');
         const year = parseInt(yearStr, 10);
         const month = parseInt(monthStr, 10);
         const day = parseInt(dayStr, 10);
@@ -111,14 +112,14 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
             const format2 = surgeon.name || `Dr. ${surgeon.lastname} ${surgeon.firstname}`.trim(); // e.g. "Dr. Malinoski Kelly"
 
             // Check explicit DB blocks
-            if (orBlocks.some(b => b.date === formData.date && (b.provider_name === format1 || b.provider_name === format2))) {
+            if (orBlocks.some(b => b.date === targetDate && (b.provider_name === format1 || b.provider_name === format2))) {
                 return true;
             }
 
             // Check recurring templates
             let templates = surgeon.block_templates;
             if (typeof templates === 'string') {
-                try { templates = JSON.parse(templates); } catch (e) { templates = []; }
+                try { templates = JSON.parse(templates); } catch { templates = []; }
             }
 
             if (Array.isArray(templates) && templates.length > 0) {
@@ -127,7 +128,7 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
 
                 return templates.some(template => {
                     if (template.week === 'Specific Date') {
-                        return template.day === formData.date;
+                        return template.day === targetDate;
                     } else {
                         const targetDay = dayNameToIndex[template.day];
                         if (targetDay !== undefined) {
@@ -143,23 +144,26 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
             }
             return false;
         });
-    }, [formData?.date, surgeons, orBlocks]);
+    }, [targetDate, surgeons, orBlocks]);
 
     // Pagination state used above
 
     useEffect(() => {
         if (formData.durationMinutes > 0) {
             const fees = calculateCosmeticFees(formData.durationMinutes);
-            setFormData(prev => {
-                if (prev.cosmeticFacilityFee === fees.facilityFee && prev.cosmeticAnesthesiaFee === fees.anesthesiaFee) {
-                    return prev;
-                }
-                return {
-                    ...prev,
-                    cosmeticFacilityFee: fees.facilityFee,
-                    cosmeticAnesthesiaFee: fees.anesthesiaFee
-                };
-            });
+            const timer = setTimeout(() => {
+                setFormData(prev => {
+                    if (prev.cosmeticFacilityFee === fees.facilityFee && prev.cosmeticAnesthesiaFee === fees.anesthesiaFee) {
+                        return prev;
+                    }
+                    return {
+                        ...prev,
+                        cosmeticFacilityFee: fees.facilityFee,
+                        cosmeticAnesthesiaFee: fees.anesthesiaFee
+                    };
+                });
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [formData.durationMinutes]);
 
@@ -237,7 +241,7 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
                 } else {
                     selectedCpts = [String(parsed)];
                 }
-            } catch (e) {
+            } catch {
                 selectedCpts = surgery.cpt_codes.split(',').map(s => s.trim()).filter(Boolean);
             }
         }
@@ -468,7 +472,7 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
                     isOldFormat = true;
                 }
             }
-        } catch (e) {
+        } catch {
             // If parsing fails, treat as old format
             isOldFormat = true;
         }
@@ -1027,15 +1031,6 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
         return Object.keys(surgeriesByMonth).sort().reverse();
     }, [surgeriesByMonth]);
 
-    useEffect(() => {
-        if (availableMonths.length > 0) {
-            setExpandedMonths(prev => {
-                if (prev.size === 0) return new Set([availableMonths[0]]);
-                return prev;
-            });
-        }
-    }, [availableMonths]);
-
     const formatMonthDisplay = (monthKey) => {
         const [year, month] = monthKey.split('-');
         const date = new Date(year, parseInt(month) - 1);
@@ -1044,7 +1039,8 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
 
     const toggleMonth = (monthKey) => {
         setExpandedMonths(prev => {
-            const newSet = new Set(prev);
+            const initial = prev.size === 0 && availableMonths.length > 0 ? [availableMonths[0]] : prev;
+            const newSet = new Set(initial);
             if (newSet.has(monthKey)) newSet.delete(monthKey);
             else newSet.add(monthKey);
             return newSet;
@@ -1844,9 +1840,6 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
                                         const supplies = parseFloat(formData.suppliesCost || 0) + parseFloat(formData.implantsCost || 0) + parseFloat(formData.medicationsCost || 0) + parseFloat(formData.trayCost || 0);
                                         const internalCost = (includeLaborSupplies ? (room + labor + supplies) : 0) + calculatedStaffFee;
                                         const writeOff = parseFloat(formData.writeOff || 0);
-                                        let netProfit = revenue - writeOff - internalCost;
-                                        if (formData.isProbono) netProfit = 0;
-                                        const isPositive = netProfit >= 0;
 
                                         return (
                                             <>
@@ -1961,7 +1954,7 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
                         ) : (
                             availableMonths.map(monthKey => {
                                 const monthSurgeries = surgeriesByMonth[monthKey] || [];
-                                const isExpanded = expandedMonths.has(monthKey);
+                                const isExpanded = expandedMonths.size === 0 ? monthKey === availableMonths[0] : expandedMonths.has(monthKey);
 
                                 // Apply month-specific search
                                 const searchQuery = (monthSearchQueries[monthKey] || '').toLowerCase().trim();
@@ -2078,10 +2071,10 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
                                                                     if (Array.isArray(parsed)) {
                                                                         selectedCpts = parsed.map(String);
                                                                     } else {
-                                                                        selectedCpts = s.cpt_codes.replace(/[\[\]"']/g, '').split(',').map(str => str.trim()).filter(Boolean);
+                                                                        selectedCpts = s.cpt_codes.replace(/[[\]"']/g, '').split(',').map(str => str.trim()).filter(Boolean);
                                                                     }
-                                                                } catch (e) {
-                                                                    selectedCpts = s.cpt_codes.replace(/[\[\]"']/g, '').split(',').map(str => str.trim()).filter(Boolean);
+                                                                } catch {
+                                                                    selectedCpts = s.cpt_codes.replace(/[[\]"']/g, '').split(',').map(str => str.trim()).filter(Boolean);
                                                                 }
                                                             }
 

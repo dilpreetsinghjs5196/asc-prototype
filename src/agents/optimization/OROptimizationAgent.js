@@ -4,7 +4,7 @@ import { optimizeSchedule } from '../../services/aiOperations/OptimizationEngine
  * OR Optimization Agent
  * Following specification in Section 17 of agent/project.md
  */
-export const executeOROptimizationTask = async (taskContext, systemContext) => {
+export const executeOROptimizationTask = async (taskContext, _systemContext) => {
     const candidateSurgeries = taskContext.candidates || [];
     const targetMinutes = taskContext.targetMinutes || 480;
     const numberOfORs = taskContext.numberOfORs || 2;

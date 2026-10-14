@@ -12,7 +12,6 @@ import {
   AlertCircle,
   Sun,
   Moon,
-  Sparkles,
   CheckCircle2,
   Building2
 } from 'lucide-react';

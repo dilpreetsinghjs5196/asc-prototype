@@ -15,8 +15,7 @@ import {
   ArrowLeft,
   Eye,
   EyeOff,
-  LogOut,
-  Building2
+  LogOut
 } from 'lucide-react';
 
 export default function UserProfile({ user, onUpdateUser, onBack, onLogout }) {
@@ -31,13 +30,11 @@ export default function UserProfile({ user, onUpdateUser, onBack, onLogout }) {
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || user?.surgeonData?.phone || '');
   const [specialty, setSpecialty] = useState(user?.specialty || user?.surgeonData?.specialty || 'General Surgery');
-  const [licenseNumber, setLicenseNumber] = useState(user?.license_number || user?.surgeonData?.license_number || '');
+  const licenseNumber = user?.license_number || user?.surgeonData?.license_number || '';
 
   // Password fields
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
 
   // States
@@ -132,8 +129,11 @@ export default function UserProfile({ user, onUpdateUser, onBack, onLogout }) {
         setSuccessMsg('Administrator credentials updated successfully!');
       }
 
+      if (newPassword) {
+        await db.updatePassword(newPassword.trim()).catch(() => {});
+      }
+
       // Reset password fields
-      setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {

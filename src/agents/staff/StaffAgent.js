@@ -2,7 +2,7 @@
  * Staff Agent
  * Following specification in Section 14 of agent/project.md
  */
-export const executeStaffTask = async (taskContext, systemContext) => {
+export const executeStaffTask = async (taskContext, _systemContext) => {
     return {
         agent: "staff",
         status: "completed",

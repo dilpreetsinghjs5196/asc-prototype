@@ -330,7 +330,7 @@ export const generateOptimizationModels = (normalizedData, config) => {
     // Validation
     const validation = validateUniqueCaseAssignment(scheduleSummary);
     const weeklyUtilization = validation.calculatedUtil;
-    const { score, status } = calculateScore(modelType, weeklyUtilization, targetUtilization, validation);
+    const { score } = calculateScore(modelType, weeklyUtilization, targetUtilization, validation);
 
     return {
       id: modelType.toLowerCase().replace(' ', '_'),

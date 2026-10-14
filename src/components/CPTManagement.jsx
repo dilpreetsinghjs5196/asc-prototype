@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Search,
   Plus,
@@ -6,8 +6,6 @@ import {
   Trash2,
   Stethoscope,
   CheckCircle,
-  XCircle,
-  Sliders,
   Loader,
   ChevronDown,
   ChevronUp
@@ -68,29 +66,10 @@ export default function CPTManagement({
   onUpdate,
   onDelete
 }) {
-  const [latestCpts, setLatestCpts] = useState([]);
-  const [latestTotalCount, setLatestTotalCount] = useState(0);
-  const [historicalCpts, setHistoricalCpts] = useState([]);
-  const [historicalTotalCount, setHistoricalTotalCount] = useState(0);
-  
-  const [loadingLatest, setLoadingLatest] = useState(true);
-  const [loadingHistorical, setLoadingHistorical] = useState(true);
-  
-  const [expandedGroups, setExpandedGroups] = useState({
-    latest: true,
-    historical: false
-  });
-
-  const [latestSearchQuery, setLatestSearchQuery] = useState('');
-  const [historicalSearchQuery, setHistoricalSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
-  
-  const [latestPage, setLatestPage] = useState(1);
-  const [latestRowsPerPage, setLatestRowsPerPage] = useState(10);
-  const [historicalPage, setHistoricalPage] = useState(1);
-  const [historicalRowsPerPage, setHistoricalRowsPerPage] = useState(10);
-  
   const [sortField, setSortField] = useState('code');
+  const [sortDirection, setSortDirection] = useState('asc');
+  const [refreshKey, setRefreshKey] = useState(0);
   const [batches, setBatches] = useState([]);
   const [batchesLoading, setBatchesLoading] = useState(true);
 
@@ -122,7 +101,7 @@ export default function CPTManagement({
     fetchBatches();
   }, []);
 
-  const fetchBatchCodes = async (batch) => {
+  const fetchBatchCodes = useCallback(async (batch) => {
     const key = batch.effective_date + '_' + batch.termination_date;
     const page = batchPage[key] || 1;
     const search = batchSearchQuery[key] || '';
@@ -147,10 +126,7 @@ export default function CPTManagement({
     } finally {
       setBatchLoading(prev => ({ ...prev, [key]: false }));
     }
-  };
-
-  const [sortDirection, setSortDirection] = useState('asc');
-  const [refreshKey, setRefreshKey] = useState(0);
+  }, [batchPage, batchSearchQuery, categoryFilter, sortField, sortDirection]);
 
   // Effect to load batch data when a batch becomes expanded, or dependencies change
   useEffect(() => {
@@ -160,7 +136,7 @@ export default function CPTManagement({
         fetchBatchCodes(batch);
       }
     });
-  }, [batches, batchExpanded, batchPage, batchSearchQuery, categoryFilter, sortField, sortDirection, refreshKey]);
+  }, [batches, batchExpanded, fetchBatchCodes, refreshKey]);
 
 
   // Form & Modal States
@@ -186,64 +162,6 @@ export default function CPTManagement({
   const [bulkEditForm, setBulkEditForm] = useState({ effective_date: '', termination_date: '', version_year: '' });
   const [bulkEditLoading, setBulkEditLoading] = useState(false);
 
-  // Fetch Latest CPT Codes
-  useEffect(() => {
-    let active = true;
-    async function fetchLatest() {
-      setLoadingLatest(true);
-      try {
-        const { cptCodes, totalCount } = await db.getCPTCodesPaged({
-          search: latestSearchQuery,
-          category: categoryFilter,
-          page: latestPage,
-          limit: latestRowsPerPage,
-          sortField,
-          sortDirection,
-          status: 'latest'
-        });
-        if (active) {
-          setLatestCpts(cptCodes);
-          setLatestTotalCount(totalCount);
-        }
-      } catch (err) {
-        console.error('Error fetching latest CPT codes:', err);
-      } finally {
-        if (active) setLoadingLatest(false);
-      }
-    }
-    fetchLatest();
-    return () => { active = false; };
-  }, [latestSearchQuery, categoryFilter, latestPage, latestRowsPerPage, sortField, sortDirection, refreshKey]);
-
-  // Fetch Historical CPT Codes
-  useEffect(() => {
-    let active = true;
-    async function fetchHistorical() {
-      setLoadingHistorical(true);
-      try {
-        const { cptCodes, totalCount } = await db.getCPTCodesPaged({
-          search: historicalSearchQuery,
-          category: categoryFilter,
-          page: historicalPage,
-          limit: historicalRowsPerPage,
-          sortField,
-          sortDirection,
-          status: 'historical'
-        });
-        if (active) {
-          setHistoricalCpts(cptCodes);
-          setHistoricalTotalCount(totalCount);
-        }
-      } catch (err) {
-        console.error('Error fetching historical CPT codes:', err);
-      } finally {
-        if (active) setLoadingHistorical(false);
-      }
-    }
-    fetchHistorical();
-    return () => { active = false; };
-  }, [historicalSearchQuery, categoryFilter, historicalPage, historicalRowsPerPage, sortField, sortDirection, refreshKey]);
-
   // Handle sorting
   const handleSort = (field) => {
     if (sortField === field) {
@@ -252,8 +170,7 @@ export default function CPTManagement({
       setSortField(field);
       setSortDirection('asc');
     }
-    setLatestPage(1);
-    setHistoricalPage(1);
+    setBatchPage({});
   };
 
   // Open modal for add
@@ -476,7 +393,7 @@ export default function CPTManagement({
         </div>
       
       <div style={{ marginBottom: '24px' }}>
-        <CPTAgentTestRunner cptCodes={cptCodes || [...(latestCpts || []), ...(historicalCpts || [])]} surgeries={surgeries || []} />
+        <CPTAgentTestRunner cptCodes={cptCodes || Object.values(batchData).flat()} surgeries={surgeries || []} />
       </div>
 
       <div style={{
@@ -489,8 +406,7 @@ export default function CPTManagement({
               value={categoryFilter}
               onChange={(e) => {
                 setCategoryFilter(e.target.value);
-                setLatestPage(1);
-                setHistoricalPage(1);
+                setBatchPage({});
               }}
             >
               <option value="All">All Categories</option>
@@ -505,7 +421,7 @@ export default function CPTManagement({
       {/* Main Container */}
       <div className="content-card" style={{ position: 'relative', marginTop: '12px' }}>
         
-        {(loadingLatest && loadingHistorical) && (
+        {(batchesLoading) && (
           <div style={{
             position: 'absolute',
             top: 0,
@@ -688,7 +604,7 @@ export default function CPTManagement({
                 
                               {batchesLoading ? (
                  <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}><Loader size={24} className="animate-spin" style={{ margin: '0 auto 10px auto' }} /> Loading Batches...</div>
-              ) : batches.map((batch, index) => {
+              ) : batches.map((batch, _index) => {
                 const key = batch.effective_date + '_' + batch.termination_date;
                 const isExpanded = !!batchExpanded[key];
                 const isLoading = !!batchLoading[key];
@@ -697,12 +613,9 @@ export default function CPTManagement({
                 const search = batchSearchQuery[key] || '';
                 const page = batchPage[key] || 1;
                 
-                let title = 'BATCH';
-                if (batch.termination_date === null) {
-                   title = 'ACTIVE CODES (Effective: ' + (batch.effective_date || 'N/A') + ')';
-                } else {
-                   title = 'HISTORICAL CODES (Effective: ' + (batch.effective_date || 'N/A') + ' to ' + batch.termination_date + ')';
-                }
+                const title = batch.termination_date === null
+                   ? 'ACTIVE CODES (Effective: ' + (batch.effective_date || 'N/A') + ')'
+                   : 'HISTORICAL CODES (Effective: ' + (batch.effective_date || 'N/A') + ' to ' + batch.termination_date + ')';
 
                 return (
                   <div key={key} style={{ border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px' }}>

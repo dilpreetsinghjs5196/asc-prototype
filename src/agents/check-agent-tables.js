@@ -10,7 +10,7 @@ const tablesToCheck = ['agent_runs', 'agent_tasks', 'agent_events', 'agent_conte
 async function verifyAgentTables() {
     console.log("Checking agent logging tables in Supabase database...\n");
     for (const table of tablesToCheck) {
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from(table)
             .select('*')
             .limit(1);

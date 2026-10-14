@@ -76,8 +76,6 @@ export const formatSurgeonName = (surgeon) => {
 export const calculateORCost = (durationMinutes) => {
     if (!durationMinutes || durationMinutes <= 0) return 0;
 
-    let cost = 0;
-
     if (durationMinutes <= 60) {
         // Proportional rate for first hour: $1500 / 60 min = $25 per minute
         // 15 min = $375
@@ -88,7 +86,7 @@ export const calculateORCost = (durationMinutes) => {
     }
 
     // Base rate for first full hour
-    cost = 1500;
+    let cost = 1500;
 
     // Remaining minutes after first hour
     let remainingMinutes = durationMinutes - 60;
@@ -206,10 +204,10 @@ export const getSurgeryMetrics = (surgery, cptCodes, settings = {}, procedureGro
     const isProbono = !!(surgery.is_probono || surgery.isProbono);
     let cptTotal = 0;
     let orCost = 0; // Billable Facility Fee
-    let internalRoomCost = 0;
-    let laborCost = 0;
-    let totalValue = 0;
-    let netProfit = 0;
+    let internalRoomCost;
+    let laborCost;
+    let totalValue;
+    let netProfit;
     let anesthesiaRevenue = 0;
     const writeOff = parseFloat(surgery.write_off || surgery.writeOff || 0);
 

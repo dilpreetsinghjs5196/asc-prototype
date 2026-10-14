@@ -26,7 +26,7 @@ export const hasSurgeonPerformedCpt = (surgeries, surgeonName, cptCode) => {
         let codes = [];
         if (typeof rawCodes === 'string') {
             if (rawCodes.trim().startsWith('[')) {
-                try { codes = JSON.parse(rawCodes); } catch (e) { codes = rawCodes.split(',').map(c => c.trim()); }
+                try { codes = JSON.parse(rawCodes); } catch { codes = rawCodes.split(',').map(c => c.trim()); }
             } else {
                 codes = rawCodes.split(',').map(c => c.trim());
             }

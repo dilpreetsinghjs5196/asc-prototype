@@ -60,6 +60,6 @@ Rank the candidates from highest confidence to lowest. Return ONLY valid JSON fo
         return JSON.parse(jsonString);
     } catch (e) {
         console.error("Failed to parse CPT Agent response:", e);
-        throw new Error("Failed to parse AI response into structured CPT recommendations. Ensure API key is valid and quota is not exceeded.");
+        throw new Error("Failed to parse AI response into structured CPT recommendations. Ensure API key is valid and quota is not exceeded.", { cause: e });
     }
 };

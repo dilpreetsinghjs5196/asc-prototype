@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { executeCPTTask } from '../agents/CPTAgent';
-import { Bot, Play, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Bot, Play } from 'lucide-react';
 
 export default function CPTAgentTestRunner({ surgeries, cptCodes }) {
   const [procedureDesc, setProcedureDesc] = useState('');
@@ -8,7 +8,6 @@ export default function CPTAgentTestRunner({ surgeries, cptCodes }) {
   const [surgeonName, setSurgeonName] = useState('');
   const [result, setResult] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
-  const [inferredCategory, setInferredCategory] = useState(null);
 
   const MOCK_SPECIALTIES = {
     'Dr. Malinoski Kelly': 'Orthopedics',
@@ -40,10 +39,9 @@ export default function CPTAgentTestRunner({ surgeries, cptCodes }) {
   }).filter(Boolean))].sort();
 
   // Infer category when procedure description changes
-  React.useEffect(() => {
+  const inferredCategory = useMemo(() => {
     if (procedureDesc.length < 4) {
-      setInferredCategory(null);
-      return;
+      return null;
     }
     
     const procLower = procedureDesc.toLowerCase();
@@ -68,13 +66,10 @@ export default function CPTAgentTestRunner({ surgeries, cptCodes }) {
                 mode = c;
              }
           }
-          setInferredCategory(mode);
-       } else {
-         setInferredCategory(null);
+          return mode;
        }
-    } else {
-       setInferredCategory(null);
     }
+    return null;
   }, [procedureDesc, cptCodes]);
 
   // Filter surgeons based on inferred category

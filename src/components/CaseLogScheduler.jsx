@@ -4,9 +4,28 @@ import { parseCaseLogExcel } from '../utils/excelParser';
 import { generateOptimizationModels } from '../services/OptimizationEngine';
 
 export default function CaseLogScheduler({ surgeonsList = [] }) {
-  const [step, setStep] = useState(1);
-  const [file, setFile] = useState(null);
-  const [normalizedData, setNormalizedData] = useState([]);
+  const [initialSavedState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('caseLogSchedulerState');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.normalizedData && parsed.normalizedData.length > 0) {
+          return {
+            normalizedData: parsed.normalizedData,
+            fileFingerprint: parsed.fileFingerprint || null,
+            results: parsed.results || null,
+            step: parsed.results ? 3 : 2
+          };
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load saved scheduler state", e);
+    }
+    return { normalizedData: [], fileFingerprint: null, results: null, step: 1 };
+  });
+
+  const [step, setStep] = useState(initialSavedState.step);
+  const [normalizedData, setNormalizedData] = useState(initialSavedState.normalizedData);
   const [expandedRows, setExpandedRows] = useState({});
   
   const [config, setConfig] = useState({
@@ -20,31 +39,9 @@ export default function CaseLogScheduler({ surgeonsList = [] }) {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState([]);
-  const [results, setResults] = useState(null);
-
-  const [fileFingerprint, setFileFingerprint] = useState(null);
-
-  // Load saved state on mount
-  React.useEffect(() => {
-    try {
-      const saved = localStorage.getItem('caseLogSchedulerState');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.normalizedData && parsed.normalizedData.length > 0) {
-          setNormalizedData(parsed.normalizedData);
-          setFileFingerprint(parsed.fileFingerprint);
-          if (parsed.results) {
-            setResults(parsed.results);
-            setStep(3); // Go straight to results if they exist
-          } else {
-            setStep(2); // Go to config if we have data but no results
-          }
-        }
-      }
-    } catch (e) {
-      console.error("Failed to load saved scheduler state", e);
-    }
-  }, []);
+  const [results, setResults] = useState(initialSavedState.results);
+  const [fileFingerprint, setFileFingerprint] = useState(initialSavedState.fileFingerprint);
+  const [_file, setFile] = useState(null);
 
   // Save state when important things change
   React.useEffect(() => {
@@ -433,7 +430,7 @@ export default function CaseLogScheduler({ surgeonsList = [] }) {
               <tbody>
                 {Object.values(results.surgeonIntelligence || {}).map((s, idx) => {
                   const historyArr = Object.entries(s.weekdayDistribution || {})
-                        .filter(([day, count]) => count > 0)
+                        .filter(([_day, count]) => count > 0)
                         .map(([day, count]) => `${day} — ${count} cases`);
                   return (
                     <tr key={idx}>

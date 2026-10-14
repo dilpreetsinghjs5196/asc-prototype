@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { db } from './lib/supabase';
+import { db, DEFAULT_FACILITIES } from './lib/supabase';
 import SurgeryScheduler from './components/SurgeryScheduler';
 import StaffManagement from './components/StaffManagement';
 import CPTManagement from './components/CPTManagement';
@@ -15,7 +15,6 @@ import CommandCenter from './components/CommandCenter';
 import BusinessAnalysis from './components/BusinessAnalysis';
 import ORBlockSchedule from './components/ORBlockSchedule';
 import CaseLogScheduler from './components/CaseLogScheduler';
-import { calculateMedicareRevenue, calculateORCost } from './utils/hospitalUtils';
 import InstructionPanel from './components/InstructionPanel';
 import LoginPage from './components/LoginPage';
 import SurgeonPortal from './components/SurgeonPortal';
@@ -37,7 +36,6 @@ import {
 import {
   LayoutDashboard,
   Clock,
-  CalendarClock,
   Stethoscope,
   TrendingUp,
   Package,
@@ -45,22 +43,11 @@ import {
   Sparkles,
   DollarSign,
   Settings,
-  ChevronRight,
-  TrendingDown,
-  Info,
-  Play,
-  RotateCcw,
   Sliders,
   CheckCircle,
   Search,
-  Filter,
   Download,
   XCircle,
-  BarChart3,
-  BookOpen,
-  Database,
-  HelpCircle,
-  ShieldCheck,
   UserCheck,
   Users,
   Edit,
@@ -74,20 +61,16 @@ import {
   Brain,
   Upload,
   LogOut,
-  User
+  User,
+  Building2,
+  ChevronDown,
+  CheckCircle2
 } from 'lucide-react';
 
 // ==========================================
 // MTD COMMAND CENTER MOCK DATA
 // ==========================================
 
-const MOCK_OR_UTIL_TREND = [
-  { name: 'May 1', util: 54.2, profUtil: 44.1 },
-  { name: 'May 8', util: 58.7, profUtil: 48.3 },
-  { name: 'May 15', util: 64.2, profUtil: 52.1 },
-  { name: 'May 22', util: 60.1, profUtil: 49.8 },
-  { name: 'May 29', util: 62.4, profUtil: 51.3 }
-];
 
 const MOCK_SURGEON_PERF = [
   { name: 'Dr. Malinoski Kelly', netMargin: 263450, marginCase: 5488 },
@@ -328,7 +311,7 @@ const MOCK_SURGEONS_DETAILS = {
   }
 };
 
-const MOCK_CASE_DIST = [
+const _MOCK_CASE_DIST = [
   { name: 'Highly Profitable (>$1,000)', value: 350, percentage: 28, color: 'var(--color-green)' },
   { name: 'Profitable ($200-$1,000)', value: 449, percentage: 36, color: 'var(--color-blue)' },
   { name: 'Break Even ($0-$200)', value: 200, percentage: 16, color: 'var(--color-orange)' },
@@ -343,7 +326,7 @@ const MOCK_SUPPLY_BREAKDOWN = [
   { name: 'Other', value: 26985, percentage: 8, color: 'var(--color-red)' }
 ];
 
-const MOCK_PROFITABILITY_SUMMARY = [
+const _MOCK_PROFITABILITY_SUMMARY = [
   { location: 'Main ASC', cases: 856, rev: 1102450, cost: 1000936, margin: 101514, marginPct: 9.2, util: 64.2, profUtil: 52.1, revHour: 1145, marginHour: 214, trend: 'up' },
   { location: 'South ASC', cases: 392, rev: 482750, cost: 446210, margin: 36540, marginPct: 7.6, util: 58.7, profUtil: 48.3, revHour: 1028, marginHour: 178, trend: 'up' },
   { location: 'West ASC', cases: 286, rev: 312890, cost: 287680, margin: 25210, marginPct: 8.1, util: 61.3, profUtil: 50.2, revHour: 1056, marginHour: 192, trend: 'up' }
@@ -976,7 +959,7 @@ function SurgeonProfilePage({ surgeonName, onBack, activeProfileTab, setActivePr
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <h3 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '600' }}>Prescriptive Practice Recommendations</h3>
 
-            {surg.aiInsights.map((insight, idx) => (
+            {surg.aiInsights.map((insight, _idx) => (
               <div
                 key={insight.id}
                 style={{
@@ -1014,7 +997,7 @@ function SurgeonProfilePage({ surgeonName, onBack, activeProfileTab, setActivePr
   );
 }
 
-const MOCK_SPECIALTY_DIST = [
+const _MOCK_SPECIALTY_DIST = [
   { name: 'Orthopedics', value: 580, percentage: 38, revenue: 1102450, margin: 468450, color: 'var(--color-blue)' },
   { name: 'Ophthalmology', value: 450, percentage: 29, revenue: 327780, margin: 215630, color: 'var(--color-green)' },
   { name: 'Spine Surgery', value: 180, percentage: 12, revenue: 531200, margin: 157850, color: 'var(--color-purple)' },
@@ -1022,14 +1005,8 @@ const MOCK_SPECIALTY_DIST = [
   { name: 'Gynecology', value: 84, percentage: 5, revenue: 141020, margin: 85230, color: 'var(--color-pink)' }
 ];
 
-const MOCK_EXEC_FINANCIALS_TREND = [
-  { name: 'Week 1', revenue: 420000, cost: 380000, margin: 40000 },
-  { name: 'Week 2', revenue: 480000, cost: 410000, margin: 70000 },
-  { name: 'Week 3', revenue: 510000, cost: 460000, margin: 50000 },
-  { name: 'Week 4', revenue: 488090, cost: 484826, margin: 3264 }
-];
 
-const MOCK_FACILITY_COMPARATIVE = [
+const _MOCK_FACILITY_COMPARATIVE = [
   { name: 'Main ASC', cases: 856, util: 64.2, profitUtil: 52.1, revenue: 1102450, directCost: 1000936, netMargin: 101514, cancellations: 6 },
   { name: 'South ASC', cases: 392, util: 58.7, profitUtil: 48.3, revenue: 482750, directCost: 446210, netMargin: 36540, cancellations: 4 },
   { name: 'West ASC', cases: 286, util: 61.3, profitUtil: 50.2, revenue: 312890, directCost: 287680, netMargin: 25210, cancellations: 2 }
@@ -1073,19 +1050,45 @@ export default function App() {
     return nameStr.slice(0, 2).toUpperCase();
   };
 
+  const [facilities, setFacilities] = useState(DEFAULT_FACILITIES);
+  const [activeFacility, setActiveFacility] = useState(() => db.getActiveFacility());
+  const [facilityDropdownOpen, setFacilityDropdownOpen] = useState(false);
+  const facilityMenuRef = React.useRef(null);
+
+  useEffect(() => {
+    async function loadFacilities() {
+      const list = await db.getFacilities();
+      if (list && list.length > 0) {
+        setFacilities(list);
+        const current = db.getActiveFacility();
+        const found = list.find(f => f.id === current?.id);
+        if (found) {
+          setActiveFacility(found);
+        } else {
+          setActiveFacility(list[0]);
+          db.setActiveFacility(list[0]);
+        }
+      }
+    }
+    loadFacilities();
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (accountMenuRef.current && !accountMenuRef.current.contains(e.target)) {
         setAccountMenuOpen(false);
       }
+      if (facilityMenuRef.current && !facilityMenuRef.current.contains(e.target)) {
+        setFacilityDropdownOpen(false);
+      }
     };
-    if (accountMenuOpen) {
+    if (accountMenuOpen || facilityDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [accountMenuOpen]);
+  }, [accountMenuOpen, facilityDropdownOpen]);
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [timeFilter, setTimeFilter] = useState('All');
@@ -1347,7 +1350,6 @@ export default function App() {
     let netRevenue = 0;
     let operatingMargin = 0;
     let totalDirectCost = 0;
-    let totalCancellations = 0;
 
     const specialtyAgg = {};
     const facilityAgg = {};
@@ -1384,7 +1386,6 @@ export default function App() {
       netRevenue += rev;
       operatingMargin += marg;
       totalDirectCost += cost;
-      if (isCancelled) totalCancellations++;
 
       // Weekly Financials Trend (Arbitrary grouping if time span varies, or sorting chronologically)
       // We will assign cases dynamically to 4 sequential time buckets to maintain the chart shape
@@ -1504,26 +1505,11 @@ export default function App() {
   const [profileTab, setProfileTab] = useState('overview');
 
   // Schedule Optimizer Simulation State
-  const [cancellationActive, setCancellationActive] = useState(true);
-  const [optimizerMessage, setOptimizerMessage] = useState(
-    'CANCELLATION DETECTED: OR 3 at 9:15 AM - 10:45 AM (Gallbladder - Dr. Walsh) was cancelled! Margin Impact: -$3,450.'
-  );
   const [showAutoSuggest, setShowAutoSuggest] = useState(false);
-
-  // What-If Simulator state (under Revenue tab)
-  const [turnoverTime, setTurnoverTime] = useState(25); // minutes
-  const [supplyCostReduction, setSupplyCostReduction] = useState(0); // percentage
-  const [caseVolume, setCaseVolume] = useState(0); // percentage increase
 
   // Loading and Database States
   const [loading, setLoading] = useState(true);
   const [surgeonsDetails, setSurgeonsDetails] = useState(MOCK_SURGEONS_DETAILS);
-  const [surgeonPerf, setSurgeonPerf] = useState(MOCK_SURGEON_PERF);
-  const [caseDist, setCaseDist] = useState(MOCK_CASE_DIST);
-  const [supplyBreakdown, setSupplyBreakdown] = useState(MOCK_SUPPLY_BREAKDOWN);
-  const [profitabilitySummary, setProfitabilitySummary] = useState(MOCK_PROFITABILITY_SUMMARY);
-  const [specialtyDist, setSpecialtyDist] = useState(MOCK_SPECIALTY_DIST);
-  const [facilityComparative, setFacilityComparative] = useState(MOCK_FACILITY_COMPARATIVE);
   const [patients, setPatients] = useState(MOCK_PATIENTS);
   const [patientSearchQuery, setPatientSearchQuery] = useState('');
   const [patientSortField, setPatientSortField] = useState('');
@@ -1597,13 +1583,8 @@ export default function App() {
     { code: '49505', desc: 'Inguinal Hernia Repair', time: 90, turn: 20, fee: 10200, med: 8200, labor: 1350, supply: 3000, margin: 5850, pct: 57.3 }
   ]);
 
-  // Base KPIs (based on database/simulator)
-  const [baseEbitda, setBaseEbitda] = useState(34.2);
-  const [baseOrUtil, setBaseOrUtil] = useState(62.4);
-  const [baseProfitableUtil, setBaseProfitableUtil] = useState(51.3);
-  const [baseRevenuePerHour, setBaseRevenuePerHour] = useState(1102);
-  const [baseMarginPerHour, setBaseMarginPerHour] = useState(208);
-  const [avgTurnoverGlobal, setAvgTurnoverGlobal] = useState(24);
+  const [_surgeonPerf, setSurgeonPerf] = useState(MOCK_SURGEON_PERF);
+  const [supplyBreakdown] = useState(MOCK_SUPPLY_BREAKDOWN);
 
   // ASC Analyst Modal State
   const [showAscAnalyst, setShowAscAnalyst] = useState(false);
@@ -2026,63 +2007,7 @@ export default function App() {
             pct
           };
         });
-        setCptTableData(cptTableMapped.length > 0 ? cptTableMapped : cptTableData);
-
-        // Calculate dynamic global KPIs
-        let totalRev = 0;
-        let totalMargin = 0;
-        let totalDuration = 0;
-        let totalTurnover = 0;
-        let countTurnover = 0;
-        mappedSurgeries.forEach(s => {
-          totalRev += s.revenue;
-          totalMargin += s.margin;
-          totalDuration += (s.endMin - s.startMin);
-        });
-
-        loadedSurgeries.forEach(s => {
-          if (s.turnover_time) {
-            totalTurnover += Number(s.turnover_time);
-            countTurnover++;
-          }
-        });
-
-        const numSurgeries = mappedSurgeries.length;
-        if (numSurgeries > 0) {
-          const calculatedEbitda = Math.round((totalMargin / totalRev) * 100);
-          setBaseEbitda(calculatedEbitda);
-          setBaseRevenuePerHour(Math.round(totalRev / (totalDuration / 60)));
-          setBaseMarginPerHour(Math.round(totalMargin / (totalDuration / 60)));
-          if (countTurnover > 0) {
-            setAvgTurnoverGlobal(Math.round(totalTurnover / countTurnover));
-          }
-
-          // update profitabilitySummary with Main ASC actual metrics
-          const updatedSummary = [...MOCK_PROFITABILITY_SUMMARY];
-          updatedSummary[0] = {
-            ...updatedSummary[0],
-            cases: numSurgeries,
-            rev: totalRev,
-            cost: totalRev - totalMargin,
-            margin: totalMargin,
-            marginPct: calculatedEbitda,
-            revHour: Math.round(totalRev / (totalDuration / 60)),
-            marginHour: Math.round(totalMargin / (totalDuration / 60))
-          };
-          setProfitabilitySummary(updatedSummary);
-
-          // update facilityComparative with Main ASC actual metrics
-          const updatedFacility = [...MOCK_FACILITY_COMPARATIVE];
-          updatedFacility[0] = {
-            ...updatedFacility[0],
-            cases: numSurgeries,
-            util: baseOrUtil,
-            revenue: totalRev,
-            directCost: totalRev - totalMargin,
-            netMargin: totalMargin
-          };
-          setFacilityComparative(updatedFacility);
-        }
+        setCptTableData(prev => cptTableMapped.length > 0 ? cptTableMapped : prev);
 
         setLoading(false);
       } catch (err) {
@@ -2093,20 +2018,6 @@ export default function App() {
 
     loadDatabaseData();
   }, []);
-
-  // Simulator KPI Outputs
-  const simEbitda = (baseEbitda + (25 - turnoverTime) * 0.4 + supplyCostReduction * 0.5 + caseVolume * 0.15).toFixed(1);
-  const simOrUtil = (baseOrUtil + (25 - turnoverTime) * 0.6 + caseVolume * 0.5).toFixed(1);
-  const simProfitableUtil = (baseProfitableUtil + (25 - turnoverTime) * 0.8 + supplyCostReduction * 0.3 + caseVolume * 0.6).toFixed(1);
-  const simRevenuePerHour = Math.round(baseRevenuePerHour + (25 - turnoverTime) * 15 + caseVolume * 8);
-  const simMarginPerHour = Math.round(baseMarginPerHour + (25 - turnoverTime) * 10 + (supplyCostReduction / 100) * 120 + caseVolume * 5);
-  const annualProfitImpact = Math.round(((simMarginPerHour - baseMarginPerHour) * 8 * 250) + (caseVolume / 100 * 250000));
-
-  const handleBlockClick = (surgery) => {
-    if (surgery.marginType !== 'blocked') {
-      setSelectedCase(surgery);
-    }
-  };
 
   const handleSimulateResolve = (waitlistCase) => {
     const cancelledList = surgeries.filter(s => s.status?.toLowerCase() === 'cancelled' || s.status?.toLowerCase() === 'canceled');
@@ -2136,9 +2047,6 @@ export default function App() {
     }
   };
 
-  const resetCancellationSim = () => {
-    setShowAutoSuggest(false);
-  };
 
   const handleExportPatients = () => {
     if (!patients || patients.length === 0) return;
@@ -2329,7 +2237,7 @@ export default function App() {
     try {
       if (editingPatient) {
         // Update database
-        const updated = await db.updatePatient(editingPatient.id, dbPayload);
+        await db.updatePatient(editingPatient.id, dbPayload);
 
         // Update local state
         setPatients(prev => prev.map(p => p.id === editingPatient.id ? { ...p, ...dbPayload, id: editingPatient.id } : p));
@@ -2482,9 +2390,6 @@ export default function App() {
 
     const fullPhone = `${surgeonForm.countryCode} ${phone}`;
 
-    // Format full name expected by dashboard: 'Dr. Lastname Firstname'
-    const docName = `Dr. ${last} ${first}`.trim();
-
     const dbPayload = {
       firstname: first,
       lastname: last,
@@ -2578,7 +2483,7 @@ export default function App() {
 
   const handleUpdateCPT = async (id, updates) => {
     try {
-      const updated = await db.updateCPTCode(id, updates);
+      await db.updateCPTCode(id, updates);
       setCptCodesList(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
 
       setCptTableData(prev => prev.map(c => c.code === updates.code ? {
@@ -3197,6 +3102,91 @@ export default function App() {
           </div>
 
           <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* Multi-Facility Switcher Dropdown */}
+            <div className="header-facility-container" ref={facilityMenuRef} style={{ position: 'relative' }}>
+              <button
+                onClick={() => setFacilityDropdownOpen(prev => !prev)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: theme === 'dark' ? '#1E3A5F' : 'var(--bg-toggle, #f1f5f9)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-primary)',
+                  padding: '7px 15px',
+                  borderRadius: '20px',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+                  outline: 'none',
+                  flexShrink: 0
+                }}
+                title="Switch Surgical Facility"
+              >
+                <Building2 size={15} style={{ color: 'var(--color-blue, #3b82f6)' }} />
+                <span>{activeFacility?.name || 'Naples Surgery Center'}</span>
+                <ChevronDown size={14} style={{ opacity: 0.7 }} />
+              </button>
+
+              {facilityDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  right: 0,
+                  width: '280px',
+                  backgroundColor: 'var(--bg-card, #1e293b)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+                  zIndex: 1000,
+                  padding: '8px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px'
+                }}>
+                  <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--border-light)', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                    {activeFacility?.organization_name || 'Select Facility'}
+                  </div>
+                  {facilities.map(fac => {
+                    const isSelected = fac.id === activeFacility?.id;
+                    return (
+                      <button
+                        key={fac.id}
+                        onClick={() => {
+                          setActiveFacility(fac);
+                          db.setActiveFacility(fac);
+                          setFacilityDropdownOpen(false);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '10px 12px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: isSelected ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                          color: isSelected ? 'var(--color-blue, #3b82f6)' : 'var(--text-primary)',
+                          fontWeight: isSelected ? '700' : '500',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          fontSize: '0.85rem',
+                          transition: 'background 0.15s'
+                        }}
+                      >
+                        <div>
+                          <div>{fac.name}</div>
+                          {fac.address && <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{fac.address}</div>}
+                        </div>
+                        {isSelected && <CheckCircle2 size={16} style={{ color: 'var(--color-blue, #3b82f6)' }} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {/* Light / Dark Mode Switcher */}
             <button
               onClick={() => setTheme(prev => prev === 'light' ? 'dark' : 'light')}
