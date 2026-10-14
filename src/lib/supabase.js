@@ -1,9 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
+import { ENV } from './env';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://xeqbfrxoozaltcxvitfa.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder';
+const supabaseUrl = ENV.supabaseUrl || '';
+const supabaseAnonKey = ENV.supabaseAnonKey || '';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = (supabaseUrl && supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : new Proxy({}, {
+      get(target, prop) {
+        if (typeof prop === 'symbol' || prop === 'toJSON' || prop === 'then' || prop === '$$typeof') {
+          return undefined;
+        }
+        throw new Error(`Supabase client.${String(prop)} accessed without valid environment configuration.`);
+      }
+    });
 
 export const db = {
   // Fetch list of surgeons
@@ -679,114 +689,123 @@ export const db = {
         this.saveSession(userObj);
         return { user: userObj, role: detectedRole, facilities: userObj.facilities };
       }
+      if (authError && !ENV.enableDemoAuth) {
+        throw new Error(authError.message || 'Invalid email or password.');
+      }
     } catch (gotrueErr) {
+      if (!ENV.enableDemoAuth) {
+        throw gotrueErr;
+      }
       console.warn('GoTrue signInWithPassword fallback:', gotrueErr?.message);
     }
 
-    // 2. FALLBACK ADMIN AUTHENTICATION (For unmigrated accounts / development seed)
-    if (role === 'admin' || role === 'auto') {
-      try {
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .ilike('email', trimmedEmail)
-          .limit(1);
+    // 2. FALLBACK AUTHENTICATION (Gated: strictly disabled in production builds)
+    if (ENV.enableDemoAuth) {
+      // 2a. Fallback Admin Authentication (For unmigrated accounts / development seed)
+      if (role === 'admin' || role === 'auto') {
+        try {
+          const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .ilike('email', trimmedEmail)
+            .limit(1);
 
-        if (!error && data && data.length > 0) {
-          const adminUser = data[0];
-          if (adminUser.password === trimmedPassword || trimmedPassword === 'admin123') {
-            const userObj = {
-              id: adminUser.id,
-              name: adminUser.name || 'Admin Director',
-              email: adminUser.email,
-              role: 'admin',
-              avatar: adminUser.avatar || null,
-              facilities: DEFAULT_FACILITIES
-            };
-            this.saveSession(userObj);
-            return { user: userObj, role: 'admin', facilities: DEFAULT_FACILITIES };
-          } else {
-            if (role === 'admin') throw new Error('Invalid administrator password.');
+          if (!error && data && data.length > 0) {
+            const adminUser = data[0];
+            if (adminUser.password === trimmedPassword || trimmedPassword === 'admin123') {
+              const userObj = {
+                id: adminUser.id,
+                name: adminUser.name || 'Admin Director',
+                email: adminUser.email,
+                role: 'admin',
+                avatar: adminUser.avatar || null,
+                facilities: DEFAULT_FACILITIES
+              };
+              this.saveSession(userObj);
+              return { user: userObj, role: 'admin', facilities: DEFAULT_FACILITIES };
+            } else {
+              if (role === 'admin') throw new Error('Invalid administrator password.');
+            }
+          } else if (error && (error.code === 'PGRST205' || error.code === '42P01')) {
+            if (trimmedEmail === 'admin@asc.com' && (trimmedPassword === 'admin123' || trimmedPassword === 'admin')) {
+              const userObj = {
+                id: 1,
+                name: 'Admin Director',
+                email: 'admin@asc.com',
+                role: 'admin',
+                avatar: null,
+                facilities: DEFAULT_FACILITIES
+              };
+              this.saveSession(userObj);
+              return { user: userObj, role: 'admin', facilities: DEFAULT_FACILITIES };
+            }
+            if (role === 'admin') throw new Error('Invalid administrator email or password.');
+          } else if (role === 'admin') {
+            if (trimmedEmail === 'admin@asc.com' && (trimmedPassword === 'admin123' || trimmedPassword === 'admin')) {
+              const userObj = {
+                id: 1,
+                name: 'Admin Director',
+                email: 'admin@asc.com',
+                role: 'admin',
+                avatar: null,
+                facilities: DEFAULT_FACILITIES
+              };
+              this.saveSession(userObj);
+              return { user: userObj, role: 'admin', facilities: DEFAULT_FACILITIES };
+            }
+            throw new Error('No administrator account found with this email.');
           }
-        } else if (error && (error.code === 'PGRST205' || error.code === '42P01')) {
-          if (trimmedEmail === 'admin@asc.com' && (trimmedPassword === 'admin123' || trimmedPassword === 'admin')) {
-            const userObj = {
-              id: 1,
-              name: 'Admin Director',
-              email: 'admin@asc.com',
-              role: 'admin',
-              avatar: null,
-              facilities: DEFAULT_FACILITIES
-            };
-            this.saveSession(userObj);
-            return { user: userObj, role: 'admin', facilities: DEFAULT_FACILITIES };
-          }
-          if (role === 'admin') throw new Error('Invalid administrator email or password.');
-        } else if (role === 'admin') {
-          if (trimmedEmail === 'admin@asc.com' && (trimmedPassword === 'admin123' || trimmedPassword === 'admin')) {
-            const userObj = {
-              id: 1,
-              name: 'Admin Director',
-              email: 'admin@asc.com',
-              role: 'admin',
-              avatar: null,
-              facilities: DEFAULT_FACILITIES
-            };
-            this.saveSession(userObj);
-            return { user: userObj, role: 'admin', facilities: DEFAULT_FACILITIES };
-          }
-          throw new Error('No administrator account found with this email.');
+        } catch (err) {
+          if (role === 'admin') throw err;
         }
-      } catch (err) {
-        if (role === 'admin') throw err;
       }
-    }
 
-    // 3. FALLBACK SURGEON AUTHENTICATION
-    if (role === 'surgeon' || role === 'auto') {
-      try {
-        const { data: surgeons, error: surgError } = await supabase
-          .from('surgeons')
-          .select('*')
-          .ilike('email', trimmedEmail)
-          .limit(1);
+      // 2b. Fallback Surgeon Authentication
+      if (role === 'surgeon' || role === 'auto') {
+        try {
+          const { data: surgeons, error: surgError } = await supabase
+            .from('surgeons')
+            .select('*')
+            .ilike('email', trimmedEmail)
+            .limit(1);
 
-        if (surgError) throw surgError;
+          if (surgError) throw surgError;
 
-        if (surgeons && surgeons.length > 0) {
-          const surgeon = surgeons[0];
-          const hasPasswordSet = Boolean(surgeon.password && surgeon.password.trim());
-          const passwordMatches = hasPasswordSet
-            ? (surgeon.password === trimmedPassword || trimmedPassword === 'surgeon123')
-            : true;
+          if (surgeons && surgeons.length > 0) {
+            const surgeon = surgeons[0];
+            const hasPasswordSet = Boolean(surgeon.password && surgeon.password.trim());
+            const passwordMatches = hasPasswordSet
+              ? (surgeon.password === trimmedPassword || trimmedPassword === 'surgeon123')
+              : true;
 
-          if (!passwordMatches) {
-            throw new Error('Invalid password for this surgeon profile.');
+            if (!passwordMatches) {
+              throw new Error('Invalid password for this surgeon profile.');
+            }
+
+            const fullName = `Dr. ${(surgeon.lastname || '').trim()} ${(surgeon.firstname || '').trim()}`.trim();
+            const userObj = {
+              id: surgeon.id,
+              name: fullName || 'Surgeon',
+              firstname: surgeon.firstname,
+              lastname: surgeon.lastname,
+              email: surgeon.email,
+              specialty: surgeon.specialty || 'Surgery',
+              license_number: surgeon.license_number,
+              phone: surgeon.phone,
+              role: 'surgeon',
+              avatar: null,
+              surgeonData: surgeon,
+              facilities: DEFAULT_FACILITIES
+            };
+
+            this.saveSession(userObj);
+            return { user: userObj, role: 'surgeon', facilities: DEFAULT_FACILITIES };
+          } else if (role === 'surgeon') {
+            throw new Error('No surgeon found with this email address.');
           }
-
-          const fullName = `Dr. ${(surgeon.lastname || '').trim()} ${(surgeon.firstname || '').trim()}`.trim();
-          const userObj = {
-            id: surgeon.id,
-            name: fullName || 'Surgeon',
-            firstname: surgeon.firstname,
-            lastname: surgeon.lastname,
-            email: surgeon.email,
-            specialty: surgeon.specialty || 'Surgery',
-            license_number: surgeon.license_number,
-            phone: surgeon.phone,
-            role: 'surgeon',
-            avatar: null,
-            surgeonData: surgeon,
-            facilities: DEFAULT_FACILITIES
-          };
-
-          this.saveSession(userObj);
-          return { user: userObj, role: 'surgeon', facilities: DEFAULT_FACILITIES };
-        } else if (role === 'surgeon') {
-          throw new Error('No surgeon found with this email address.');
+        } catch (err) {
+          if (role === 'surgeon') throw err;
         }
-      } catch (err) {
-        if (role === 'surgeon') throw err;
       }
     }
 

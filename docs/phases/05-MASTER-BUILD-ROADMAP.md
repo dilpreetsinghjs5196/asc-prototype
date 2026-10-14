@@ -242,4 +242,5 @@ graph TD
 - **Phase 2 Status**: **COMPLETED & VERIFIED** (1NF procedures, operating rooms, payers, audit ledger, triggers, snapshots, 0 errors/0 warnings).
 - **Specification 11 Status**: **COMPLETED & VERIFIED** (11-REPOSITORY-STRUCTURE.md authored and verified).
 - **Specification 12 Status**: **COMPLETED & VERIFIED** (12-ENGINEERING-STANDARDS.md authored, verified, and committed).
+- **Specification 13 Status**: **COMPLETED & VERIFIED** (13-ENVIRONMENT-AND-CONFIG.md authored and verified).
 - **Next Milestone**: Proceed with **Phase 3: Deterministic Server-Side Financial Engine** upon user authorization.
