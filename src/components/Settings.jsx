@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { db } from '../lib/supabase';
-import { downloadDatabaseBackup, BACKUP_TABLES } from '../utils/databaseBackup';
 import './Management.css';
 
 const Settings = ({ onUpdate }) => {
@@ -30,74 +29,6 @@ const Settings = ({ onUpdate }) => {
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [exportingBackup, setExportingBackup] = useState(false);
-
-    const handleDownloadBackup = async () => {
-        try {
-            setExportingBackup(true);
-
-            Swal.fire({
-                title: 'Generating Database SQL Backup',
-                html: `
-                    <div style="text-align: left; padding: 0.5rem 0.5rem 0; font-size: 0.9rem;">
-                        <p style="margin-bottom: 0.75rem; color: #475569;">Fetching all records from Supabase tables and generating PostgreSQL SQL dump...</p>
-                        <div id="swal-backup-progress" style="font-family: monospace; font-size: 0.82rem; color: #0369a1; background: #f0f9ff; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #bae6fd; min-height: 48px; display: flex; align-items: center;">
-                            Connecting to database...
-                        </div>
-                    </div>
-                `,
-                allowOutsideClick: false,
-                showConfirmButton: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
-            const result = await downloadDatabaseBackup((progress) => {
-                const el = document.getElementById('swal-backup-progress');
-                if (el) {
-                    if (progress.phase === 'fetching') {
-                        el.innerHTML = `<div>[${progress.tableIndex}/${progress.totalTables}] Exporting <b>${progress.label}</b> (<code>${progress.currentTable}</code>)...<br/><span style="color:#0284c7;font-size:0.75rem;">${(progress.rowsFetched || 0).toLocaleString()} rows fetched</span></div>`;
-                    } else if (progress.phase === 'finalizing') {
-                        el.innerHTML = `<div>Finalizing sequences, constraints, and building .sql file...</div>`;
-                    }
-                }
-            });
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Database Backup Downloaded!',
-                html: `
-                    <div style="text-align: left; padding: 0.25rem 0.5rem;">
-                        <p style="margin-bottom: 0.75rem; color: #334155; font-size: 0.95rem;">
-                            Your complete PostgreSQL database backup file has been generated and downloaded.
-                        </p>
-                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 0.75rem;">
-                            <div style="font-size: 0.85rem; color: #475569; margin-bottom: 0.35rem;"><b>File:</b> <code style="color: #0369a1; background: #e0f2fe; padding: 2px 6px; border-radius: 4px;">${result.fileName}</code></div>
-                            <div style="font-size: 0.85rem; color: #475569; margin-bottom: 0.35rem;"><b>Size:</b> ${result.fileSizeMB} MB</div>
-                            <div style="font-size: 0.85rem; color: #475569; margin-bottom: 0.35rem;"><b>Total Records:</b> <span style="color: #10b981; font-weight: 700;">${result.totalRecords.toLocaleString()}</span> rows</div>
-                            <div style="font-size: 0.85rem; color: #475569;"><b>Tables Exported:</b> ${Object.keys(result.tableCounts).length} tables</div>
-                        </div>
-                        <p style="margin: 0; font-size: 0.8rem; color: #64748b; line-height: 1.5;">
-                            💡 <b>Restoration:</b> You can execute this <code>.sql</code> script anytime inside the <b>Supabase SQL Editor</b> or any PostgreSQL database to recreate or restore your data.
-                        </p>
-                    </div>
-                `,
-                confirmButtonColor: '#10b981',
-                confirmButtonText: 'Done'
-            });
-        } catch (error) {
-            console.error('Error generating database backup:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Backup Failed',
-                text: error.message || 'An error occurred while generating the database backup.',
-                confirmButtonColor: '#ef4444'
-            });
-        } finally {
-            setExportingBackup(false);
-        }
-    };
 
     const loadSettings = async () => {
         try {
@@ -240,31 +171,6 @@ const Settings = ({ onUpdate }) => {
                     </p>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <button
-                        type="button"
-                        onClick={handleDownloadBackup}
-                        disabled={exportingBackup}
-                        title="Download entire database backup as a PostgreSQL .sql file"
-                        style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            padding: '0.75rem 1.5rem',
-                            fontSize: '0.95rem',
-                            fontWeight: 600,
-                            borderRadius: '12px',
-                            border: '1px solid #10b981',
-                            background: exportingBackup ? '#065f46' : 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
-                            color: '#ffffff',
-                            cursor: exportingBackup ? 'not-allowed' : 'pointer',
-                            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
-                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                            opacity: exportingBackup ? 0.7 : 1
-                        }}
-                    >
-                        <span>{exportingBackup ? '⏳' : '📥'}</span>
-                        {exportingBackup ? 'Generating Backup...' : 'Download SQL Backup'}
-                    </button>
                     <button
                         type="button"
                         className="setting-btn-add"
@@ -807,11 +713,11 @@ const Settings = ({ onUpdate }) => {
                         </div>
                     </div>
 
-                    {/* Section 6: Database Management & Backup */}
-                    <div className="setting-content-card" style={{ padding: '2rem', border: '1px solid rgba(16, 185, 129, 0.35)', background: 'linear-gradient(180deg, rgba(16, 185, 129, 0.04) 0%, rgba(16, 185, 129, 0.01) 100%)' }}>
+                    {/* Section 6: Enterprise Backup & Recovery Status */}
+                    <div className="setting-content-card" style={{ padding: '2rem', border: '1px solid rgba(59, 130, 246, 0.35)', background: 'linear-gradient(180deg, rgba(59, 130, 246, 0.04) 0%, rgba(59, 130, 246, 0.01) 100%)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap', gap: '1rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <div style={{ background: 'rgba(16, 185, 129, 0.12)', padding: '0.5rem', borderRadius: '8px', color: '#10b981' }}>
+                                <div style={{ background: 'rgba(59, 130, 246, 0.12)', padding: '0.5rem', borderRadius: '8px', color: '#2563eb' }}>
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
                                         <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
@@ -819,64 +725,44 @@ const Settings = ({ onUpdate }) => {
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 style={{ fontSize: '1.125rem', color: 'var(--text-primary)', margin: 0, fontWeight: '700' }}>Full Database Backup (.sql)</h3>
+                                    <h3 style={{ fontSize: '1.125rem', color: 'var(--text-primary)', margin: 0, fontWeight: '700' }}>Backup & Recovery Status</h3>
                                     <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                                        Export entire database tables, schemas, constraints, sequences, and records
+                                        Server-side data protection, automated snapshots, and disaster recovery policy
                                     </p>
                                 </div>
                             </div>
-                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '0.35rem 0.75rem', borderRadius: '9999px', border: '1px solid rgba(16, 185, 129, 0.25)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                PostgreSQL & Supabase Ready
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0284c7', background: 'rgba(2, 132, 199, 0.1)', padding: '0.35rem 0.75rem', borderRadius: '9999px', border: '1px solid rgba(2, 132, 199, 0.25)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                Server-Managed Infrastructure
                             </span>
                         </div>
 
-                        <div style={{ marginBottom: '1.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-                            Clicking the button below will query all database tables and generate a comprehensive, downloadable <code>.sql</code> backup script. This file includes full table structures (DDL), auto-increment sequence resets, and batch <code>INSERT</code> statements for all records.
+                        <div style={{ marginBottom: '1.25rem', fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+                            In compliance with HIPAA Technical Safeguards (45 CFR § 164.308 / 164.312), database backups and disaster recovery are executed strictly server-side at the managed infrastructure tier. <strong>Unencrypted client-side browser database downloads have been quarantined and permanently disabled</strong> to prevent extraction of Protected Health Information (PHI), authentication credentials, and cross-facility records.
                         </div>
 
-                        <div style={{ background: 'var(--bg-main)', padding: '1rem 1.25rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
+                        <div style={{ background: 'var(--bg-main)', padding: '1rem 1.25rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginBottom: '1.25rem' }}>
                             <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)', fontWeight: 700, letterSpacing: '0.05em', marginBottom: '0.625rem' }}>
-                                Tables Included in Backup ({BACKUP_TABLES.length})
+                                Operational Infrastructure Controls
                             </div>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                                {BACKUP_TABLES.map(t => (
-                                    <span key={t.name} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.3rem 0.6rem', fontSize: '0.8rem', color: 'var(--text-primary)', fontFamily: 'monospace' }}>
-                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
-                                        {t.name}
-                                    </span>
-                                ))}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.75rem', fontSize: '0.85rem' }}>
+                                <div style={{ background: 'var(--bg-card)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.25rem' }}>Database Protection Tier</div>
+                                    <div style={{ color: 'var(--text-primary)', fontWeight: 600 }}>External Supabase PostgreSQL</div>
+                                </div>
+                                <div style={{ background: 'var(--bg-card)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.25rem' }}>Automated Backups / PITR</div>
+                                    <div style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Unverified (Console Check Required)</div>
+                                </div>
+                                <div style={{ background: 'var(--bg-card)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.25rem' }}>Backup Verification</div>
+                                    <div style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Supabase Console Audit Only</div>
+                                </div>
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-                            <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span>🔒</span>
-                                <span>Safe operation: Read-only export; will not alter existing database records.</span>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={handleDownloadBackup}
-                                disabled={exportingBackup}
-                                style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '0.625rem',
-                                    padding: '0.875rem 2rem',
-                                    fontSize: '1rem',
-                                    fontWeight: 700,
-                                    borderRadius: '12px',
-                                    border: 'none',
-                                    background: exportingBackup ? '#065f46' : 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
-                                    color: '#ffffff',
-                                    cursor: exportingBackup ? 'not-allowed' : 'pointer',
-                                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
-                                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    opacity: exportingBackup ? 0.7 : 1
-                                }}
-                            >
-                                <span style={{ fontSize: '1.2rem' }}>{exportingBackup ? '⏳' : '📥'}</span>
-                                {exportingBackup ? 'Generating SQL Backup...' : 'Download Database Backup (.sql)'}
-                            </button>
+                        <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(234, 179, 8, 0.08)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid rgba(234, 179, 8, 0.25)' }}>
+                            <span style={{ fontSize: '1rem' }}>ℹ️</span>
+                            <span><strong>Note:</strong> Client applications cannot verify external backup status, schedule snapshots, or execute database restores. Automated daily snapshots, Point-in-Time Recovery (PITR), and disaster recovery drills are unverified from the client and must be confirmed through the Supabase project dashboard according to Specification 15 (<code>docs/phases/15-OBSERVABILITY-MONITORING-BACKUPS.md</code>).</span>
                         </div>
                     </div>
 
