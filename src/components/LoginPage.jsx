@@ -46,13 +46,6 @@ export default function LoginPage({ onLogin, theme, setTheme }) {
     }
   };
 
-  const handleQuickDemo = (demoRole, demoEmail, demoPass) => {
-    setRole(demoRole);
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    setError(null);
-  };
-
   return (
     <div className="login-page-wrapper">
       {/* Decorative ambient lights */}
@@ -160,16 +153,9 @@ export default function LoginPage({ onLogin, theme, setTheme }) {
           </div>
 
           <div className="login-form-group">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <label className="login-label" htmlFor="login-password">
-                Password
-              </label>
-              {role === 'surgeon' && (
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                  Default: surgeon123
-                </span>
-              )}
-            </div>
+            <label className="login-label" htmlFor="login-password">
+              Password
+            </label>
             <div className="login-input-wrapper">
               <Lock size={16} className="login-input-icon" />
               <input
@@ -209,49 +195,6 @@ export default function LoginPage({ onLogin, theme, setTheme }) {
           </button>
         </form>
 
-        {/* Demo Quick Access Helper */}
-        <div className="login-demo-section">
-          <div className="login-demo-title">
-            <span>Fast Prototype Demo Logins</span>
-          </div>
-          <div className="login-demo-chips">
-            <button
-              type="button"
-              className="login-demo-chip"
-              onClick={() => handleQuickDemo('admin', 'admin@asc.com', 'admin123')}
-            >
-              <div>
-                <div className="login-demo-chip-name">👑 ASC Administrator</div>
-                <div className="login-demo-chip-email">admin@asc.com</div>
-              </div>
-              <span className="login-demo-chip-tag badge-admin">Fill Admin</span>
-            </button>
-
-            <button
-              type="button"
-              className="login-demo-chip"
-              onClick={() => handleQuickDemo('surgeon', 'prysi@hospital.com', 'surgeon123')}
-            >
-              <div>
-                <div className="login-demo-chip-name">🩺 Dr. Mark Prysi</div>
-                <div className="login-demo-chip-email">prysi@hospital.com</div>
-              </div>
-              <span className="login-demo-chip-tag badge-surgeon">Fill Surgeon</span>
-            </button>
-
-            <button
-              type="button"
-              className="login-demo-chip"
-              onClick={() => handleQuickDemo('surgeon', 'burmiester@hospital.com', 'surgeon123')}
-            >
-              <div>
-                <div className="login-demo-chip-name">🩺 Dr. Cliff Burmiester</div>
-                <div className="login-demo-chip-email">burmiester@hospital.com</div>
-              </div>
-              <span className="login-demo-chip-tag badge-surgeon">Fill Surgeon</span>
-            </button>
-          </div>
-        </div>
 
         {/* Footer info */}
         <div className="login-footer-info">
