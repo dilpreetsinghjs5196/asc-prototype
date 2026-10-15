@@ -19,6 +19,10 @@ import InstructionPanel from './components/InstructionPanel';
 import LoginPage from './components/LoginPage';
 import SurgeonPortal from './components/SurgeonPortal';
 import UserProfile from './components/UserProfile';
+import UserManagement from './components/UserManagement';
+import RoleManagement from './components/RoleManagement';
+import RoleGate from './components/RoleGate';
+import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import {
   ResponsiveContainer,
   LineChart,
@@ -50,6 +54,7 @@ import {
   XCircle,
   UserCheck,
   Users,
+  Shield,
   Edit,
   Trash2,
   Plus,
@@ -2955,6 +2960,20 @@ export default function App() {
             ⚙️ Administration
           </div>
           <div
+            className={`menu-item ${activeTab === 'user_management' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('user_management'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Users size={16} /></div>
+            User Accounts
+          </div>
+          <div
+            className={`menu-item ${activeTab === 'role_management' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('role_management'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Shield size={16} /></div>
+            Roles & Permissions
+          </div>
+          <div
             className={`menu-item ${activeTab === 'settings' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('settings'); setSelectedSurgeon(null); }}
           >
@@ -3006,7 +3025,7 @@ export default function App() {
                 {authUser?.name || 'Admin Director'}
               </span>
               <span className="profile-role">
-                {authUser?.role === 'admin' || authUser?.role === 'facility_admin' || authUser?.role === 'super_admin' ? 'ASC Administrator' : 'Attending Provider'}
+                {CANONICAL_ROLES.find(r => r.slug === rbacService.normalizeRole(authUser?.role))?.name || (authUser?.role ? String(authUser.role).toUpperCase() : 'Authorized Staff')}
               </span>
             </div>
           </div>
@@ -3072,6 +3091,8 @@ export default function App() {
                   {activeTab === 'instruction' && 'Chatbot Instructions'}
                   {activeTab === 'ai_agent' && 'AI Agent Workbench'}
                   {activeTab === 'profile' && 'User Profile & Security Credentials'}
+                  {activeTab === 'user_management' && 'User Accounts & Facility Memberships'}
+                  {activeTab === 'role_management' && 'Roles & Permissions Architecture'}
                 </>
               )}
             </h1>
@@ -3101,6 +3122,8 @@ export default function App() {
                   {activeTab === 'instruction' && 'Manage dynamic questions and categories for the AI Chatbot'}
                   {activeTab === 'ai_agent' && 'Interact with the AI Agent for intelligent workflow automation'}
                   {activeTab === 'profile' && 'Manage your account details and update your login password'}
+                  {activeTab === 'user_management' && 'User provisioning, active facility memberships, and department assignments'}
+                  {activeTab === 'role_management' && 'Role hierarchy, built-in system immutability, and 13-domain permission matrix'}
                 </>
               )}
             </span>
@@ -3227,7 +3250,7 @@ export default function App() {
               )}
             </button>
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'ot_cost_manage', 'cpt_manage', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'ot_cost_manage', 'cpt_manage', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'user_management', 'role_management'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -3312,7 +3335,7 @@ export default function App() {
                     <div className="dropdown-user-info">
                       <span className="dropdown-user-name">{authUser?.name || 'Admin Director'}</span>
                       <span className="dropdown-user-role">
-                        {authUser?.role === 'admin' ? 'ASC Administrator' : 'Attending Surgeon'}
+                        {CANONICAL_ROLES.find(r => r.slug === rbacService.normalizeRole(authUser?.role))?.name || (authUser?.role ? String(authUser.role).toUpperCase() : 'Authorized User')}
                       </span>
                     </div>
                   </div>
@@ -5057,6 +5080,48 @@ export default function App() {
               ========================================== */}
               {activeTab === 'settings' && (
                 <SettingsView />
+              )}
+
+              {/* ==========================================
+              TAB: USER MANAGEMENT (RBAC)
+              ========================================== */}
+              {activeTab === 'user_management' && (
+                <RoleGate
+                  allowedRoles={['super_admin', 'org_admin', 'facility_admin']}
+                  requiredPermission="users.view"
+                  fallback={
+                    <div style={{ padding: '48px', textAlign: 'center', backgroundColor: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', margin: '24px' }}>
+                      <Shield size={48} style={{ color: '#ef4444', marginBottom: '16px' }} />
+                      <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', color: 'var(--text-primary)' }}>Administrative Access Required</h3>
+                      <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                        You do not possess the required <code>users.view</code> permission or executive role tier to administer user memberships.
+                      </p>
+                    </div>
+                  }
+                >
+                  <UserManagement activeFacility={activeFacility} theme={theme} />
+                </RoleGate>
+              )}
+
+              {/* ==========================================
+              TAB: ROLES & PERMISSIONS ARCHITECTURE (RBAC)
+              ========================================== */}
+              {activeTab === 'role_management' && (
+                <RoleGate
+                  allowedRoles={['super_admin', 'org_admin', 'facility_admin']}
+                  requiredPermission="roles.view"
+                  fallback={
+                    <div style={{ padding: '48px', textAlign: 'center', backgroundColor: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', margin: '24px' }}>
+                      <Shield size={48} style={{ color: '#ef4444', marginBottom: '16px' }} />
+                      <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', color: 'var(--text-primary)' }}>Administrative Access Required</h3>
+                      <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                        You do not possess the required <code>roles.view</code> permission or executive role tier to configure security access roles.
+                      </p>
+                    </div>
+                  }
+                >
+                  <RoleManagement activeFacility={activeFacility} theme={theme} />
+                </RoleGate>
               )}
 
               {/* ==========================================

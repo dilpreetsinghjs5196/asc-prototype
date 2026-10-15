@@ -5,8 +5,13 @@ import {
   AlertTriangle, RotateCcw, ArrowRight, ShieldCheck 
 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { db } from '../lib/supabase.js';
+import { rbacService } from '../lib/rbacService.js';
 
 export default function MultiAgentConsole({ surgeries, cptCodes, patients = [], onSchedule }) {
+  const session = db.getSession();
+  const userRole = rbacService.normalizeRole(session?.role);
+  const canCommitSchedule = !['viewer', 'biller', 'coder'].includes(userRole);
   const [patientName, setPatientName] = useState('');
   const [mrn, setMrn] = useState('');
   const [selectedCpts, setSelectedCpts] = useState([]);
@@ -163,9 +168,20 @@ export default function MultiAgentConsole({ surgeries, cptCodes, patients = [], 
 
     setFinalContext(final);
     
-    // Automatically schedule in the database
-    appendLog('Agent Action: Scheduling surgery in database...', 'system');
-    if (onSchedule) {
+    // Check scheduling authority before committing to database
+    if (!canCommitSchedule) {
+      appendLog(`Simulation completed in Read-Only Preview. Database write skipped (User role "${userRole}" lacks scheduling permissions).`, 'warning');
+      Swal.fire({
+        title: 'Simulation Complete',
+        text: 'Simulation completed in Read-Only Preview. Scheduling writes are restricted for your role.',
+        icon: 'info',
+        background: 'var(--bg-card)',
+        color: 'var(--text-primary)'
+      });
+      setApproved(true);
+    } else if (onSchedule) {
+      // Automatically schedule in the database
+      appendLog('Agent Action: Scheduling surgery in database...', 'system');
       try {
         const p = patients.find(x => (x.mrn || `MRN-${x.id}`) === mrn);
         const patient_id = p ? p.id : null;

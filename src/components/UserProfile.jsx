@@ -86,7 +86,6 @@ export default function UserProfile({ user, onUpdateUser, onBack, onLogout }) {
           phone: phone.trim(),
           specialty: specialty.trim()
         };
-        if (newPassword) updates.password = newPassword.trim();
 
         await db.updateSurgeon(surgeonId, updates);
 
@@ -106,15 +105,14 @@ export default function UserProfile({ user, onUpdateUser, onBack, onLogout }) {
 
         db.saveSession(updatedUser);
         if (onUpdateUser) onUpdateUser(updatedUser);
-        setSuccessMsg('Surgeon profile and credentials updated successfully!');
+        setSuccessMsg('Surgeon profile updated successfully!');
       } else {
-        // Update admin in users table
+        // Update admin profile metadata
         const adminId = user?.id || 1;
         const updates = {
           name: fullName,
           email: email.trim().toLowerCase()
         };
-        if (newPassword) updates.password = newPassword.trim();
 
         await db.updateUser(adminId, updates);
 
@@ -126,11 +124,12 @@ export default function UserProfile({ user, onUpdateUser, onBack, onLogout }) {
 
         db.saveSession(updatedUser);
         if (onUpdateUser) onUpdateUser(updatedUser);
-        setSuccessMsg('Administrator credentials updated successfully!');
+        setSuccessMsg('Administrator profile updated successfully!');
       }
 
       if (newPassword) {
-        await db.updatePassword(newPassword.trim()).catch(() => {});
+        await db.updatePassword(newPassword.trim());
+        setSuccessMsg('Profile and login password updated successfully!');
       }
 
       // Reset password fields
