@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, FileText, CheckCircle, AlertTriangle, Loader } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { supabase } from '../lib/supabase';
+import { supabase, db } from '../lib/supabase';
 import './CPTUpload.css';
 
 const CPTUpload = () => {
@@ -125,6 +125,7 @@ const CPTUpload = () => {
         // Use existing value if new value is empty/null, and preserve other required columns
         const payload = {
           id: nextId++,
+          facility_id: existing.facility_id || db.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002',
           is_active: true,
           turnover_time: 30,
           procedure_group: 'General Procedures',

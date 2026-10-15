@@ -1057,6 +1057,7 @@ export default function App() {
 
   useEffect(() => {
     async function loadFacilities() {
+      if (!authUser) return;
       const list = await db.getFacilities();
       if (list && list.length > 0) {
         setFacilities(list);
@@ -1071,7 +1072,7 @@ export default function App() {
       }
     }
     loadFacilities();
-  }, []);
+  }, [authUser]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -1671,9 +1672,13 @@ export default function App() {
     return result.length > 0 ? result : surgeonTableData;
   }, [filteredSurgeries, surgeries, includeAdvancedCosts, surgeonTableData]);
 
-  // Fetch from Supabase on component mount
+  // Fetch from Supabase on component mount or authentication/facility change
   useEffect(() => {
     async function loadDatabaseData() {
+      if (!authUser) {
+        setLoading(false);
+        return;
+      }
       try {
         setLoading(true);
         console.log("Loading Supabase tables...");
@@ -2017,7 +2022,7 @@ export default function App() {
     }
 
     loadDatabaseData();
-  }, []);
+  }, [authUser, activeFacility]);
 
   const handleSimulateResolve = (waitlistCase) => {
     const cancelledList = surgeries.filter(s => s.status?.toLowerCase() === 'cancelled' || s.status?.toLowerCase() === 'canceled');
@@ -3001,7 +3006,7 @@ export default function App() {
                 {authUser?.name || 'Admin Director'}
               </span>
               <span className="profile-role">
-                {authUser?.role === 'admin' ? 'ASC Administrator' : 'Attending Provider'}
+                {authUser?.role === 'admin' || authUser?.role === 'facility_admin' || authUser?.role === 'super_admin' ? 'ASC Administrator' : 'Attending Provider'}
               </span>
             </div>
           </div>

@@ -111,7 +111,7 @@ export const sendMessageToGemini = async (message, history = [], contextData = n
 
     if (settings && settings.ai_allowed_email) {
         try {
-            const savedUser = localStorage.getItem('hospital_user');
+            const savedUser = localStorage.getItem('asc_auth_user') || localStorage.getItem('hospital_user');
             const currentUser = savedUser ? JSON.parse(savedUser) : null;
 
             if (!currentUser || currentUser.email !== settings.ai_allowed_email) {

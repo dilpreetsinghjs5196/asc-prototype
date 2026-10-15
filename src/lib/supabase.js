@@ -117,9 +117,13 @@ export const db = {
 
   // Add a new patient
   async addPatient(patient) {
+    const payload = {
+      ...patient,
+      facility_id: patient.facility_id || this.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002'
+    };
     const { data, error } = await supabase
       .from('patients')
-      .insert([patient])
+      .insert([payload])
       .select();
     if (error) throw error;
     return data?.[0] || null;
@@ -148,9 +152,13 @@ export const db = {
 
   // Add a new surgeon
   async addSurgeon(surgeon) {
+    const payload = {
+      ...surgeon,
+      facility_id: surgeon.facility_id || this.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002'
+    };
     const { data, error } = await supabase
       .from('surgeons')
-      .insert([surgeon])
+      .insert([payload])
       .select();
     if (error) throw error;
     return data?.[0] || null;
@@ -179,9 +187,13 @@ export const db = {
 
   // Add a new surgery
   async addSurgery(surgery) {
+    const payload = {
+      ...surgery,
+      facility_id: surgery.facility_id || this.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002'
+    };
     const { data, error } = await supabase
       .from('surgeries')
-      .insert([surgery])
+      .insert([payload])
       .select();
     if (error) throw error;
     return data?.[0] || null;
@@ -221,7 +233,11 @@ export const db = {
     const maxId = maxData && maxData.length > 0 ? maxData[0].id : 0;
     const nextId = maxId + 1;
     
-    const payload = { ...schedule, id: nextId };
+    const payload = { 
+      ...schedule, 
+      id: nextId,
+      facility_id: schedule.facility_id || this.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002'
+    };
 
     const { data, error } = await supabase
       .from('or_block_schedule')
@@ -370,6 +386,7 @@ export const db = {
     const payload = {
       ...cpt,
       id: nextId,
+      facility_id: cpt.facility_id || this.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002',
       reimbursement: cpt.reimbursement !== null && cpt.reimbursement !== undefined ? cpt.reimbursement : 0,
       cost: cpt.cost !== null && cpt.cost !== undefined ? cpt.cost : 0,
       gross_charge: cpt.gross_charge !== null && cpt.gross_charge !== undefined ? cpt.gross_charge : 0,
@@ -534,9 +551,13 @@ export const db = {
          if (updateError) throw updateError;
        } else {
          // Insert
+         const payload = {
+           ...record,
+           facility_id: record.facility_id || this.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002'
+         };
          const { error: insertError } = await supabase
            .from('ot_extra_cost')
-           .insert([record]);
+           .insert([payload]);
          if (insertError) throw insertError;
        }
     }
@@ -690,11 +711,12 @@ export const db = {
         return { user: userObj, role: detectedRole, facilities: userObj.facilities };
       }
       if (authError && !ENV.enableDemoAuth) {
-        throw new Error(authError.message || 'Invalid email or password.');
+        throw new Error(authError.message || authError.error_description || 'Invalid email or password.');
       }
     } catch (gotrueErr) {
       if (!ENV.enableDemoAuth) {
-        throw gotrueErr;
+        const msg = gotrueErr?.message || gotrueErr?.error_description || (typeof gotrueErr === 'string' ? gotrueErr : 'Invalid email or password.');
+        throw new Error(msg);
       }
       console.warn('GoTrue signInWithPassword fallback:', gotrueErr?.message);
     }

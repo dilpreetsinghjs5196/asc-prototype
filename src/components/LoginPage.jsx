@@ -36,7 +36,11 @@ export default function LoginPage({ onLogin, theme, setTheme }) {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'Authentication failed. Please verify your credentials.');
+      let errorMsg = err?.message;
+      if (!errorMsg || errorMsg === '{}' || typeof errorMsg !== 'string') {
+        errorMsg = err?.error_description || (typeof err === 'string' ? err : 'Invalid email or password. Please verify your credentials.');
+      }
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
