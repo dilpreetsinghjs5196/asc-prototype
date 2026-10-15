@@ -49,127 +49,77 @@ export default function UserManagement({ activeFacility, theme = 'light' }) {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      // 1. Fetch remote memberships from Supabase
-      const list = await rbacService.listUsers(activeFacility?.id);
+      // 1. Fetch real memberships from facility_memberships
+      const memberships = await rbacService.listUsers(activeFacility?.id);
 
-      // 2. Baseline clinical team for Naples Surgery Center
-      const baselineUsers = [
-        {
-          id: 'mem-admin-01',
-          user_id: session?.id || 'usr-admin-01',
-          name: session?.name || 'ASC Administrator',
-          email: session?.email || 'admin@asc.com',
-          role: 'facility_admin',
+      // 2. Fetch real user accounts from public.users
+      let publicUsers = [];
+      try {
+        const { data } = await supabase
+          .from('users')
+          .select('id, name, email, role, avatar');
+        if (data && data.length > 0) {
+          publicUsers = data;
+        }
+      } catch (e) {
+        console.warn('Could not query public.users:', e);
+      }
+
+      // 3. Map strictly real database users (zero artificial extra users)
+      let combined = [];
+
+      if (memberships && memberships.length > 0) {
+        combined = memberships.map(mem => {
+          // Cross-reference with public.users or active session
+          const userObj = publicUsers.find(u => 
+            String(u.id) === String(mem.user_id) || 
+            (u.email && session?.email && u.email.toLowerCase() === session.email.toLowerCase())
+          );
+          const isSessionAdmin = mem.user_id === session?.id || mem.role === 'facility_admin';
+
+          return {
+            id: mem.id,
+            user_id: mem.user_id,
+            name: mem.name || userObj?.name || (isSessionAdmin ? (session?.name || 'Admin Director') : 'Staff User'),
+            email: mem.email || userObj?.email || (isSessionAdmin ? (session?.email || 'admin@asc.com') : 'user@asc.com'),
+            role: mem.role || userObj?.role || 'facility_admin',
+            department: mem.department || 'Executive Administration',
+            title: mem.title || 'Executive Director',
+            password: isSessionAdmin ? 'admin123' : (mem.password || 'asc2026!Staff'),
+            is_active: mem.is_active !== false,
+            created_at: mem.created_at || new Date().toISOString()
+          };
+        });
+      } else if (publicUsers.length > 0) {
+        combined = publicUsers.map(u => ({
+          id: `usr-${u.id}`,
+          user_id: u.id,
+          name: u.name || 'Admin Director',
+          email: u.email || 'admin@asc.com',
+          role: u.role || 'facility_admin',
           department: 'Executive Administration',
-          title: 'Executive Center Director',
+          title: 'Executive Director',
+          password: u.email === 'admin@asc.com' ? 'admin123' : 'asc2026!Staff',
+          is_active: true,
+          created_at: u.created_at || new Date().toISOString()
+        }));
+      } else {
+        // Fallback to active logged in session
+        combined = [{
+          id: 'mem-admin',
+          user_id: session?.id || '1',
+          name: session?.name || 'Admin Director',
+          email: session?.email || 'admin@asc.com',
+          role: session?.role || 'facility_admin',
+          department: 'Executive Administration',
+          title: 'Executive Director',
           password: 'admin123',
           is_active: true,
           created_at: new Date().toISOString()
-        },
-        {
-          id: 'mem-surg-01',
-          user_id: 'usr-surg-01',
-          name: 'Dr. Mark Prysi',
-          email: 'prysi@hospital.com',
-          role: 'surgeon',
-          department: 'Plastic & Reconstructive Surgery',
-          title: 'Attending Surgeon',
-          password: 'surgeon123',
-          is_active: true,
-          created_at: new Date(Date.now() - 86400000 * 45).toISOString()
-        },
-        {
-          id: 'mem-surg-02',
-          user_id: 'usr-surg-02',
-          name: 'Dr. Robert Chen',
-          email: 'chen.surgery@asc.com',
-          role: 'surgeon',
-          department: 'Orthopedic Surgery',
-          title: 'Attending Surgeon',
-          password: 'surgeon123',
-          is_active: true,
-          created_at: new Date(Date.now() - 86400000 * 30).toISOString()
-        },
-        {
-          id: 'mem-sched-01',
-          user_id: 'usr-sched-01',
-          name: 'Sarah Jenkins',
-          email: 'sjenkins@asc.com',
-          role: 'scheduler',
-          department: 'OR Scheduling',
-          title: 'Lead OR Coordinator',
-          password: 'staff123',
-          is_active: true,
-          created_at: new Date(Date.now() - 86400000 * 14).toISOString()
-        },
-        {
-          id: 'mem-bill-01',
-          user_id: 'usr-bill-01',
-          name: 'Michael Torres',
-          email: 'mtorres@asc.com',
-          role: 'biller',
-          department: 'Revenue Cycle Management',
-          title: 'Senior Billing Specialist',
-          password: 'staff123',
-          is_active: true,
-          created_at: new Date(Date.now() - 86400000 * 7).toISOString()
-        },
-        {
-          id: 'mem-code-01',
-          user_id: 'usr-code-01',
-          name: 'Lisa Wong',
-          email: 'lwong@asc.com',
-          role: 'coder',
-          department: 'Medical Records & Coding',
-          title: 'Certified Coding Specialist',
-          password: 'staff123',
-          is_active: true,
-          created_at: new Date(Date.now() - 86400000 * 5).toISOString()
-        },
-        {
-          id: 'mem-cfo-01',
-          user_id: 'usr-cfo-01',
-          name: 'David Miller',
-          email: 'dmiller@asc.com',
-          role: 'cfo',
-          department: 'Finance & Analytics',
-          title: 'Chief Financial Officer',
-          password: 'staff123',
-          is_active: true,
-          created_at: new Date(Date.now() - 86400000 * 20).toISOString()
-        }
-      ];
-
-      // 3. Map remote list and merge with baseline
-      const mappedList = (list || []).map(item => {
-        const matchingBase = baselineUsers.find(b => 
-          b.user_id === item.user_id || 
-          (item.role === 'facility_admin' && b.role === 'facility_admin')
-        );
-        const isSessionAdmin = item.user_id === session?.id || item.role === 'facility_admin';
-
-        return {
-          ...item,
-          name: item.name || (isSessionAdmin ? (session?.name || 'ASC Administrator') : (matchingBase?.name || 'Staff Member')),
-          email: item.email || (isSessionAdmin ? (session?.email || 'admin@asc.com') : (matchingBase?.email || `staff_${item.id.slice(0, 5)}@asc.com`)),
-          department: item.department || matchingBase?.department || 'Clinical Operations',
-          title: item.title || matchingBase?.title || 'Staff Member',
-          password: item.password || matchingBase?.password || 'asc2026!Staff'
-        };
-      });
-
-      // Combine ensuring all default team members appear
-      const finalUsers = [...mappedList];
-      for (const base of baselineUsers) {
-        if (!finalUsers.some(u => 
-          u.email?.toLowerCase() === base.email?.toLowerCase() || 
-          (u.role === 'facility_admin' && base.role === 'facility_admin')
-        )) {
-          finalUsers.push(base);
-        }
+        }];
       }
 
-      setUsers(finalUsers);
+      setUsers(combined);
     } catch (err) {
       console.warn('Could not load user memberships:', err);
     } finally {
