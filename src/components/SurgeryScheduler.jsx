@@ -446,6 +446,23 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
             const fileName = `Surgery_Notes_${surgery.patient_id}_${surgery.date}.pdf`;
             pdf.save(fileName);
 
+            // Phase 25: Audit Operative Notes PDF Export
+            try {
+                db.logExportAuditEvent({
+                    exportType: 'PDF',
+                    tableName: 'surgeries',
+                    recordCount: 1,
+                    filterMetadata: {
+                        surgery_id: surgery.id,
+                        patient_id: surgery.patient_id,
+                        doctor_name: surgery.doctor_name,
+                        date: surgery.date
+                    }
+                });
+            } catch {
+                // Non-blocking telemetry
+            }
+
             Swal.fire('Success', 'PDF downloaded successfully!', 'success');
         } catch (error) {
             console.error('Error generating PDF:', error);

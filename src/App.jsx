@@ -24,6 +24,9 @@ import RoleManagement from './components/RoleManagement';
 import AuditLogViewer from './components/AuditLogViewer';
 import RoleGate from './components/RoleGate';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
+import Swal from 'sweetalert2';
+import { useInactivityTimeout } from './hooks/useInactivityTimeout';
+import { maskMRN, maskPatientName, maskDOB, maskPhone } from './utils/phiMasking';
 import {
   ResponsiveContainer,
   LineChart,
@@ -56,6 +59,7 @@ import {
   UserCheck,
   Users,
   Shield,
+  ShieldAlert,
   Edit,
   Trash2,
   Plus,
@@ -1046,6 +1050,50 @@ CustomDateInput.displayName = 'CustomDateInput';
 
 export default function App() {
   const [authUser, setAuthUser] = useState(() => db.getSession());
+  const userRole = rbacService.normalizeRole(authUser?.role);
+  const canViewPHI = ['super_admin', 'org_admin', 'facility_admin', 'clinical_manager', 'scheduler', 'surgeon', 'biller', 'coder'].includes(userRole);
+
+  // Phase 25: Secure Session Logout & Storage Purge
+  const handleLogout = React.useCallback((reason = 'USER_INITIATED') => {
+    if (authUser) {
+      db.logAuditEvent({
+        action: 'LOGOUT',
+        table_name: 'facility_memberships',
+        record_id: authUser?.id ? String(authUser.id) : 'session',
+        source: reason === 'INACTIVITY_TIMEOUT' ? 'SYSTEM' : 'UI',
+        change_reason: reason === 'INACTIVITY_TIMEOUT'
+          ? 'Automatic session termination due to 15-minute inactivity (HIPAA § 164.312(a)(2)(iii))'
+          : 'User initiated secure session sign-out'
+      }).catch(() => {});
+    }
+    db.clearSession();
+    try {
+      localStorage.removeItem('caseLogSchedulerState');
+    } catch {
+      // ignore
+    }
+    setAuthUser(null);
+  }, [authUser]);
+
+  // Phase 25: HIPAA § 164.312(a)(2)(iii) Inactivity Auto-Logoff Handler
+  const handleSessionTimeout = React.useCallback(() => {
+    handleLogout('INACTIVITY_TIMEOUT');
+    Swal.fire({
+      title: 'Session Expired',
+      text: 'In compliance with HIPAA Technical Safeguards (45 CFR § 164.312), your session was automatically logged out due to 15 minutes of inactivity to protect patient records.',
+      icon: 'info',
+      background: 'var(--bg-card)',
+      color: 'var(--text-primary)'
+    });
+  }, [handleLogout]);
+
+  const { showWarning: showInactivityWarning, remainingSeconds: inactivitySeconds, resetTimer: resetInactivityTimer } = useInactivityTimeout({
+    timeoutMs: 15 * 60 * 1000,
+    warningMs: 60 * 1000,
+    onTimeout: handleSessionTimeout,
+    enabled: Boolean(authUser)
+  });
+
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const accountMenuRef = React.useRef(null);
 
@@ -2062,6 +2110,35 @@ export default function App() {
   const handleExportPatients = () => {
     if (!patients || patients.length === 0) return;
     
+    // Phase 25: Minimum Necessary & Export Authorization Gate (HIPAA § 164.502(b))
+    const userRole = rbacService.normalizeRole(authUser?.role);
+    const canExport = ['super_admin', 'org_admin', 'facility_admin', 'clinical_manager'].includes(userRole);
+    if (!canExport) {
+      Swal.fire({
+        title: 'Access Restricted',
+        text: `HIPAA Technical Access Safeguard (45 CFR § 164.312): Your user role (${userRole}) is not authorized to export unredacted patient PHI.`,
+        icon: 'warning',
+        background: 'var(--bg-card)',
+        color: 'var(--text-primary)'
+      });
+      return;
+    }
+
+    try {
+      db.logExportAuditEvent({
+        exportType: 'CSV',
+        tableName: 'patients',
+        recordCount: patients.length,
+        facilityId: activeFacility?.id,
+        filterMetadata: {
+          total_patients: patients.length,
+          columns_exported: 20
+        }
+      });
+    } catch {
+      // Non-blocking telemetry
+    }
+
     const headers = [
       'MRN', 'Patient Name', 'DOB', 'Gender', 'Phone', 'Email', 'Address',
       'Insurance Provider', 'Policy Number', 'Group Number', 'Insurance Type',
@@ -2296,6 +2373,21 @@ export default function App() {
   const handleExportSurgeons = () => {
     if (!surgeonsList || surgeonsList.length === 0) return;
     
+    // Phase 25: Audit Surgeon Directory Export
+    try {
+      db.logExportAuditEvent({
+        exportType: 'CSV',
+        tableName: 'surgeons',
+        recordCount: surgeonsList.length,
+        facilityId: activeFacility?.id,
+        filterMetadata: {
+          total_surgeons: surgeonsList.length
+        }
+      });
+    } catch {
+      // Non-blocking telemetry
+    }
+
     const headers = ['NPI / License', 'First Name', 'Last Name', 'Specialty', 'Email', 'Phone'];
     
     const csvContent = [
@@ -2408,7 +2500,6 @@ export default function App() {
       license_number: lic,
       phone: fullPhone,
       email: email,
-      password: password,
       block_templates: surgeonForm.block_templates || []
     };
 
@@ -2725,10 +2816,7 @@ export default function App() {
     return (
       <SurgeonPortal
         surgeon={authUser.surgeonData || authUser}
-        onLogout={() => {
-          db.clearSession();
-          setAuthUser(null);
-        }}
+        onLogout={handleLogout}
         theme={theme}
         setTheme={setTheme}
       />
@@ -3038,10 +3126,7 @@ export default function App() {
             </div>
           </div>
           <button
-            onClick={() => {
-              db.clearSession();
-              setAuthUser(null);
-            }}
+            onClick={() => handleLogout()}
             title="Log Out of Session"
             style={{
               background: 'rgba(239, 68, 68, 0.12)',
@@ -3380,8 +3465,7 @@ export default function App() {
                     <button
                       className="dropdown-item dropdown-item-danger"
                       onClick={() => {
-                        db.clearSession();
-                        setAuthUser(null);
+                        handleLogout();
                         setAccountMenuOpen(false);
                       }}
                     >
@@ -4236,7 +4320,7 @@ export default function App() {
                           paginatedPatients.map(patient => (
                             <tr key={patient.id || patient.mrn} className="clickable-row">
                               <td style={{ fontWeight: '600', fontFamily: 'monospace', color: 'var(--color-blue)', letterSpacing: '0.5px' }}>
-                                #{patient.mrn}
+                                #{canViewPHI ? patient.mrn : maskMRN(patient.mrn)}
                               </td>
                               <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -4253,12 +4337,12 @@ export default function App() {
                                     fontWeight: '700',
                                     border: `1px solid ${patient.gender === 'Female' ? 'rgba(236, 72, 153, 0.2)' : 'rgba(59, 130, 246, 0.2)'}`
                                   }}>
-                                    {patient.name ? patient.name.trim().charAt(0) : '?'}
+                                    {canViewPHI ? (patient.name ? patient.name.trim().charAt(0) : '?') : '*'}
                                   </div>
-                                  {patient.name ? patient.name.trim() : ''}
+                                  {canViewPHI ? (patient.name ? patient.name.trim() : '') : maskPatientName(patient.name)}
                                 </div>
                               </td>
-                              <td style={{ whiteSpace: 'nowrap' }}>{patient.dob}</td>
+                              <td style={{ whiteSpace: 'nowrap' }}>{canViewPHI ? patient.dob : maskDOB(patient.dob)}</td>
                               <td>
                                 <span style={{
                                   padding: '4px 10px',
@@ -5078,10 +5162,7 @@ export default function App() {
                   user={authUser}
                   onUpdateUser={(updated) => setAuthUser(updated)}
                   onBack={() => setActiveTab('dashboard')}
-                  onLogout={() => {
-                    db.clearSession();
-                    setAuthUser(null);
-                  }}
+                  onLogout={handleLogout}
                 />
               )}
 
@@ -5998,6 +6079,43 @@ export default function App() {
       />
 
       <Chatbot />
+
+      {/* Phase 25: Clinical Inactivity Timeout Modal (HIPAA § 164.312(a)(2)(iii)) */}
+      {showInactivityWarning && (
+        <div className="inactivity-modal-overlay">
+          <div className="inactivity-modal-card">
+            <div className="inactivity-modal-header">
+              <ShieldAlert size={28} color="#f59e0b" />
+              <h3>Session Inactivity Warning</h3>
+            </div>
+            <p>
+              In compliance with HIPAA Security Standards (45 CFR § 164.312), your clinical session will automatically lock in:
+            </p>
+            <div className="inactivity-countdown">
+              {inactivitySeconds}s
+            </div>
+            <p className="inactivity-subtext">
+              To protect Protected Health Information (PHI), unattended sessions are automatically terminated after 15 minutes of inactivity. Click below to continue working.
+            </p>
+            <div className="inactivity-actions">
+              <button
+                type="button"
+                className="btn-stay-logged-in"
+                onClick={resetInactivityTimer}
+              >
+                Stay Logged In
+              </button>
+              <button
+                type="button"
+                className="btn-logout-now"
+                onClick={handleSessionTimeout}
+              >
+                Log Out Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

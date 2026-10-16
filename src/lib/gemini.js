@@ -1,23 +1,15 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { db } from './supabase';
+import { supabase, db } from './supabase';
+import { deidentifyTextForAI } from '../utils/phiMasking.js';
 
 let cachedModels = null;
 let currentModelIndex = 0;
 
 export const getSettingsAndKey = async () => {
     try {
-        // 1. Try database settings FIRST
-        let apiKey = null;
         const settings = await db.getSettings();
-        if (settings && settings.gemini_api_key) {
-            apiKey = settings.gemini_api_key.trim();
-        }
-
-        // 2. Fallback to environment variable if DB key is missing
-        if (!apiKey) {
-            apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-        }
-
+        // Secrets are never queried from public.settings. Fallback to local env only during local development.
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY || null;
         return { settings, apiKey };
     } catch (e) {
         console.error("Error fetching settings/key:", e);
@@ -123,8 +115,43 @@ export const sendMessageToGemini = async (message, history = [], contextData = n
         }
     }
 
+    const sanitizedMessage = deidentifyTextForAI(message);
+    const sanitizedContext = contextData ? deidentifyTextForAI(contextData) : null;
+
+    // 1. Primary Architecture: Server-Side Edge Function Proxy (zero client secret exposure)
+    try {
+        const activeFacilityId = localStorage.getItem('asc_active_facility_id') || '00000000-0000-0000-0000-000000000002';
+        const { data: proxyData, error: proxyError } = await supabase.functions.invoke('gemini-proxy', {
+            body: {
+                message: sanitizedMessage,
+                history: history.map(msg => ({
+                    role: msg.role === 'user' ? 'user' : 'model',
+                    text: deidentifyTextForAI(msg.text)
+                })),
+                contextData: sanitizedContext,
+                facilityId: activeFacilityId
+            }
+        });
+
+        if (!proxyError && proxyData && proxyData.text) {
+            return proxyData.text;
+        }
+
+        if (proxyError) {
+            if (proxyError.status === 403) {
+                return "Access Denied: Your account does not have AI authorization for this facility.";
+            }
+            if (proxyError.status === 401) {
+                return "Authentication Required: Please log in to use the AI Assistant.";
+            }
+        }
+    } catch (proxyEx) {
+        console.info("[Gemini Proxy] Edge proxy unavailable, falling back to local runner:", proxyEx);
+    }
+
+    // 2. Development Fallback Runner (active only when local dev key is present)
     if (!apiKey) {
-        return "Error: Gemini API Key is missing. Please add it to Settings -> AI Configuration or .env file.";
+        return "AI Assistant is currently offline. Please configure GEMINI_API_KEY in Supabase Vault.";
     }
 
     const availableModels = await getFallbackModels(apiKey);
@@ -137,23 +164,23 @@ export const sendMessageToGemini = async (message, history = [], contextData = n
 
         try {
             const activeModel = createModelInstance(apiKey, modelName);
+
             const chat = activeModel.startChat({
                 history: history.map(msg => ({
                     role: msg.role === 'user' ? 'user' : 'model',
-                    parts: [{ text: msg.text }],
+                    parts: [{ text: deidentifyTextForAI(msg.text) }],
                 })),
             });
 
-            let finalMessage = message;
-            if (contextData) {
-                finalMessage = `[System Data Context]:\n${contextData}\n\n[User Question]:\n${message}`;
+            let finalMessage = sanitizedMessage;
+            if (sanitizedContext) {
+                finalMessage = `[System Data Context]:\n${sanitizedContext}\n\n[User Question]:\n${sanitizedMessage}`;
             }
 
             const result = await chat.sendMessage(finalMessage);
             const response = await result.response;
             const textOutput = response.text();
 
-            // When successful, update currentModelIndex so subsequent requests reuse this working model directly
             currentModelIndex = index;
             if (i > 0) {
                 console.info(`[Gemini Quota Fallback] Successfully switched to working model: ${modelName}`);

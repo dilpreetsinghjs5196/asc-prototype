@@ -7,11 +7,15 @@ import {
 import Swal from 'sweetalert2';
 import { db } from '../lib/supabase.js';
 import { rbacService } from '../lib/rbacService.js';
+import { maskPatientName, maskMRN } from '../utils/phiMasking.js';
 
 export default function MultiAgentConsole({ surgeries, cptCodes, patients = [], onSchedule }) {
   const session = db.getSession();
   const userRole = rbacService.normalizeRole(session?.role);
   const canCommitSchedule = !['viewer', 'biller', 'coder'].includes(userRole);
+  const canViewPHI = ['super_admin', 'org_admin', 'facility_admin', 'clinical_manager', 'scheduler', 'surgeon'].includes(userRole);
+
+  const [selectedPatientId, setSelectedPatientId] = useState('');
   const [patientName, setPatientName] = useState('');
   const [mrn, setMrn] = useState('');
   const [selectedCpts, setSelectedCpts] = useState([]);
@@ -25,6 +29,7 @@ export default function MultiAgentConsole({ surgeries, cptCodes, patients = [], 
   // Removed auto-filling defaults on load as per user request
   
   const handlePatientChange = (id) => {
+    setSelectedPatientId(id);
     if (!id) {
        setPatientName('');
        setMrn('');
@@ -32,8 +37,10 @@ export default function MultiAgentConsole({ surgeries, cptCodes, patients = [], 
     }
     const p = patients.find(x => String(x.id) === String(id));
     if (p) {
-       setPatientName(p.name || 'Unknown Patient');
-       setMrn(p.mrn || `MRN-${p.id}`);
+       const rawName = p.name || 'Unknown Patient';
+       const rawMrn = p.mrn || `MRN-${p.id}`;
+       setPatientName(canViewPHI ? rawName : maskPatientName(rawName));
+       setMrn(canViewPHI ? rawMrn : maskMRN(rawMrn));
     }
   };
 
@@ -183,7 +190,7 @@ export default function MultiAgentConsole({ surgeries, cptCodes, patients = [], 
       // Automatically schedule in the database
       appendLog('Agent Action: Scheduling surgery in database...', 'system');
       try {
-        const p = patients.find(x => (x.mrn || `MRN-${x.id}`) === mrn);
+        const p = patients.find(x => String(x.id) === String(selectedPatientId)) || patients.find(x => (x.mrn || `MRN-${x.id}`) === mrn);
         const patient_id = p ? p.id : null;
         const codeMatches = selectedCpts.length > 0 ? selectedCpts.map(c => c.code) : [procedureDesc.split(' - ')[0]];
 
@@ -279,10 +286,12 @@ export default function MultiAgentConsole({ surgeries, cptCodes, patients = [], 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
           <div>
             <label className="styled-label" style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-secondary)' }}>Select Patient</label>
-            <select className="date-range-selector" style={{ width: '100%', height: '36px', padding: '0 10px', marginTop: '4px' }} disabled={isRunning} value={patients.find(p => p.name === patientName)?.id || ""} onChange={(e) => handlePatientChange(e.target.value)}>
+            <select className="date-range-selector" style={{ width: '100%', height: '36px', padding: '0 10px', marginTop: '4px' }} disabled={isRunning} value={selectedPatientId || patients.find(p => p.name === patientName)?.id || ""} onChange={(e) => handlePatientChange(e.target.value)}>
                <option value="">-- Select Patient --</option>
                {patients.map(p => (
-                 <option key={p.id} value={p.id}>{p.name || 'Unknown Patient'} ({p.mrn || p.id})</option>
+                 <option key={p.id} value={p.id}>
+                   {canViewPHI ? (p.name || 'Unknown Patient') : maskPatientName(p.name)} ({canViewPHI ? (p.mrn || p.id) : maskMRN(p.mrn || p.id)})
+                 </option>
                ))}
             </select>
           </div>

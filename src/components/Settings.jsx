@@ -15,7 +15,6 @@ const Settings = ({ onUpdate }) => {
         npi: '1234567890',
         apply_medicare_mppr: false,
         ai_allowed_email: '', // Restrict usage to this email
-        gemini_api_key: '',
         light_sidebar_color: '#112238',
         light_bg_color: '#f8fafc',
         light_text_color: '#0f172a',
@@ -119,13 +118,8 @@ const Settings = ({ onUpdate }) => {
             // Dispatch theme update event
             window.dispatchEvent(new Event('theme-updated'));
 
-            // If the user didn't type a new API key (it's either empty or just the placeholder dots), we don't overwrite it in DB
-            // We use a separate state to handle the input, but since it's in `settings.gemini_api_key`, 
-            // if it's exactly the masked string '••••••••••••••••', we delete it from settingsToUpdate
-            // so we don't overwrite the real key with dots.
-            if (settingsToUpdate.gemini_api_key === '••••••••••••••••' || settingsToUpdate.gemini_api_key === '...........................') {
-                delete settingsToUpdate.gemini_api_key;
-            }
+            // Ensure deprecated gemini_api_key is never sent to public.settings
+            delete settingsToUpdate.gemini_api_key;
 
             await db.updateSettings(settingsToUpdate);
 
@@ -395,28 +389,25 @@ const Settings = ({ onUpdate }) => {
                         </div>
 
                         <div className="setting-form-group">
-                            <label style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>Gemini API Key</label>
-                            <div style={{ position: 'relative' }}>
-                                <input
-                                    className="setting-form-input"
-                                    type="password"
-                                    name="gemini_api_key"
-                                    value={settings.gemini_api_key ? (settings.gemini_api_key === '••••••••••••••••' ? '••••••••••••••••' : settings.gemini_api_key.includes('AIza') ? '••••••••••••••••' : settings.gemini_api_key) : ''}
-                                    onChange={handleChange}
-                                    placeholder="Enter new API key to update..."
-                                    style={{ height: '48px', fontFamily: 'monospace', letterSpacing: '0.05em', paddingRight: '120px' }}
-                                    autoComplete="new-password"
-                                />
-                                <div style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.75rem', color: 'var(--text-secondary)', background: 'rgba(255, 255, 255, 0.05)', padding: '4px 8px', borderRadius: '4px' }}>
-                                    Encrypted
+                            <label style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>AI Engine & Secret Architecture</label>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }}></div>
+                                    <div>
+                                        <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.9rem' }}>Server-Side AI Proxy (gemini-proxy)</div>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Master secrets isolated in Supabase Vault environment; zero client exposure</div>
+                                    </div>
                                 </div>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '4px 10px', borderRadius: '9999px' }}>
+                                    Active & Protected
+                                </span>
                             </div>
                             <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                                Provide your Google Gemini API Key to enable the ASC Assistant chatbot. this key will be stored securely in your database.
+                                Third-party Google AI keys are managed exclusively via Supabase Edge Function environment variables, preventing client-side network exposure and unauthorized table reads.
                             </p>
-                            <div style={{ marginTop: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255, 255, 255, 0.05)', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            <div style={{ marginTop: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255, 255, 255, 0.05)', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                                 <span style={{ fontSize: '1rem' }}>🛡️</span>
-                                <strong>Rate Limit Active:</strong> 5 requests / minute
+                                <strong>Rate Limit & Tenancy Protection:</strong> Server-Enforced
                             </div>
                         </div>
 

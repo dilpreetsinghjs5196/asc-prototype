@@ -59,10 +59,10 @@ export default function UserProfile({ user, onUpdateUser, onBack, onLogout }) {
       return;
     }
 
-    // Validate password change
+    // Validate password change (HIPAA Security Standard: at least 8 characters)
     if (newPassword) {
-      if (newPassword.length < 6) {
-        setErrorMsg('New password must be at least 6 characters.');
+      if (newPassword.length < 8) {
+        setErrorMsg('HIPAA Security Safeguard: New password must be at least 8 characters long.');
         return;
       }
       if (newPassword !== confirmPassword) {

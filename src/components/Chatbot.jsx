@@ -21,7 +21,7 @@ const Chatbot = () => {
     {
       id: 1,
       type: 'bot',
-      text: 'Hello! I am your Multilingual ASC Manager AI Assistant. You can speak or write to me in Punjabi, Hindi, English, or any selected language. I have real-time access to your surgical database, surgeon directories, patient rosters, and financial margins. How can I assist you today?',
+      text: 'Hello! I am your Multilingual ASC Operations Assistant. You can speak or write to me in Punjabi, Hindi, English, or any selected language. I provide real-time guidance on operating room schedules, CPT surgical billing codes, procedure durations, and operational center metrics under strict HIPAA zero-PHI privacy safeguards. How can I assist you today?',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -262,12 +262,7 @@ const Chatbot = () => {
       return s.doctor_name || s.surgeon_name || `Surgeon #${s.id || 'N/A'}`;
     };
 
-    const getPatientName = (p) => {
-      if (!p) return 'Unknown';
-      if (p.name && p.name !== 'undefined') return p.name;
-      const full = `${p.firstname || ''} ${p.lastname || ''}`.trim();
-      return full || p.patient_name || `Patient #${p.id || 'N/A'}`;
-    };
+
 
     const selectedLangObj = SUPPORTED_LANGUAGES.find(l => l.code === selectedLang) || SUPPORTED_LANGUAGES[0];
     const contextParts = [];
@@ -275,42 +270,31 @@ const Chatbot = () => {
     // System Header with Strict Multilingual Guidance & Pronounceable Script Rules
     contextParts.push(`=== ASC MANAGER REAL-TIME DATABASE CONTEXT ===\nCurrent Date & Time: ${new Date().toLocaleString()}\nYou have complete, unrestricted access to the entire ASC (Ambulatory Surgery Center) database below.\n\nCRITICAL MULTILINGUAL INSTRUCTION FOR SPEECH & TEXT:\n1. The user's interface is set to: "${selectedLangObj.name}" (${selectedLang}).\n2. Detect the exact language/dialect of the user's input (Punjabi, Hindi, Hinglish, English, etc.) and answer directly in THAT EXACT SAME LANGUAGE!\n3. SPEECH PRONUNCIATION REQUIREMENT: When replying in Punjabi or Hindi, ALWAYS provide clear conversational Romanized script (e.g. Romanized Punjabi / Pinglish like 'Hanjii, ajh diyan 5 surgeries scheduled ne...' or Hinglish / simple style) so standard voice audio synthesizers can speak your answer aloud naturally without failing on unreadable characters!\n4. Provide exact answers using only the verified ASC operational database below. Keep answers conversational, natural, and highly professional.`);
     
-    // Surgeons Database
+    // Surgeons Database (Sanitized for AI Context)
     if (sList && sList.length > 0) {
       const surgeonText = sList.map((s, idx) => {
         const name = getSurgeonName(s);
-        const npi = s.npi || s.license || s.license_number || 'N/A';
         const spec = s.specialty || 'General Surgery';
-        const email = s.email || 'N/A';
-        const phone = s.phone || 'N/A';
-        const created = s.created_at ? new Date(s.created_at).toLocaleDateString() : 'N/A';
-        return `[Surgeon ID: ${s.id || idx + 1}] Name: ${name} | Specialty: ${spec} | NPI/License: ${npi} | Email: ${email} | Phone: ${phone} | Added On: ${created} | Status: ${s.status || 'Active'}`;
+        const status = s.status || 'Active';
+        return `[Surgeon ID: ${s.id || idx + 1}] Name: ${name} | Specialty: ${spec} | Status: ${status}`;
       }).join('\n');
-      contextParts.push(`--- SURGEON DIRECTORY (Total: ${sList.length} Surgeons) ---\nNotice: To identify recently added surgeons, check for the highest ID numbers or most recent 'Added On' timestamps in this directory. To count total surgeons, look at the exact total of ${sList.length}.\n${surgeonText}`);
+      contextParts.push(`--- SURGEON DIRECTORY (Total: ${sList.length} Credentialed Surgeons) ---\n${surgeonText}`);
     } else {
       contextParts.push(`--- SURGEON DIRECTORY ---\nNo surgeons currently listed in the database.`);
     }
 
-    // Patients Database
+    // Patients Database (HIPAA Minimum Necessary & De-Identification: 45 CFR § 164.514)
+    // NOTE: Direct patient names, MRNs, DOBs, phone numbers, and addresses are strictly excluded from AI prompts.
     if (pList && pList.length > 0) {
-      const patientText = pList.map((p, idx) => {
-        const name = getPatientName(p);
-        const mrn = p.mrn || p.medical_record_number || 'N/A';
-        const dob = p.dob || p.date_of_birth || 'N/A';
-        const phone = p.phone || p.contact || 'N/A';
-        const insurance = p.insurance || p.payer || 'Private / Self-Pay';
-        const created = p.created_at ? new Date(p.created_at).toLocaleDateString() : 'N/A';
-        return `[Patient ID: ${p.id || idx + 1}] Name: ${name} | DOB: ${dob} | MRN: ${mrn} | Insurance: ${insurance} | Phone: ${phone} | Registered On: ${created}`;
-      }).join('\n');
-      contextParts.push(`--- PATIENT REGISTRY (Total: ${pList.length} Patients) ---\n${patientText}`);
+      contextParts.push(`--- PATIENT REGISTRY SUMMARY (Total Registered Patients: ${pList.length}) ---
+Privacy Safeguard (HIPAA § 164.514): Individual patient Protected Health Information (PHI) such as full names, MRNs, dates of birth, phone numbers, and home addresses are strictly stripped from external AI prompts. For specific individual patient charts, instruct the user to view the secure, authenticated Patient Registry screen.`);
     } else {
-      contextParts.push(`--- PATIENT REGISTRY ---\nNo patient records found in database.`);
+      contextParts.push(`--- PATIENT REGISTRY ---\nNo patient records registered in database.`);
     }
 
-    // Surgeries / Case Log
+    // Surgeries / Case Log (De-Identified for AI Context)
     if (surgList && surgList.length > 0) {
       const surgeryText = surgList.map((s, idx) => {
-        const patientName = getPatientName(s.patients || s);
         const surgeonName = getSurgeonName(s.surgeons || s);
         const date = s.date || 'Unscheduled';
         const time = s.time || s.start_time || 'TBD';
@@ -321,7 +305,7 @@ const Chatbot = () => {
         const cost = s.cost !== undefined ? `$${s.cost}` : '$0';
         const reimb = s.reimbursement !== undefined ? `$${s.reimbursement}` : '$0';
         const cancelReason = s.cancellation_reason ? ` (Reason: ${s.cancellation_reason})` : '';
-        return `[Case ID: ${s.id || idx + 1}] Date: ${date} at ${time} | OR: ${room} | Surgeon: ${surgeonName} | Patient: ${patientName} | Procedure: ${proc} (CPT: ${cpt}) | Status: ${status}${cancelReason} | Est. Cost: ${cost} | Expected Reimbursement: ${reimb}`;
+        return `[Case ID: ${s.id || idx + 1}] Date: ${date} at ${time} | OR: ${room} | Surgeon: ${surgeonName} | Patient: [De-Identified] | Procedure: ${proc} (CPT: ${cpt}) | Status: ${status}${cancelReason} | Est. Cost: ${cost} | Expected Reimbursement: ${reimb}`;
       }).join('\n');
       contextParts.push(`--- SURGICAL CASE LOG & FINANCIALS (Total: ${surgList.length} Surgeries) ---\n${surgeryText}`);
     } else {
@@ -627,9 +611,9 @@ const Chatbot = () => {
             <div className="chatbot-header-info">
               <div style={{ background: '#10b981', width: '8px', height: '8px', borderRadius: '50%' }}></div>
               <h3 className="chatbot-title">ASC Assistant</h3>
-              <div className="chatbot-badge">
+              <div className="chatbot-badge" title="HIPAA Compliant De-Identified Mode: No patient identifiers or contact details are sent to AI">
                 <Lock size={12} />
-                <span>PHI PROTECTED</span>
+                <span>AI • ZERO-PHI</span>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>

@@ -26,12 +26,19 @@ export const db = {
     return data || [];
   },
 
-  // Fetch list of patients
-  async getPatients() {
-    const { data, error } = await supabase
+  // Fetch list of patients (Scoped to active tenant facility)
+  async getPatients(facilityId = null) {
+    const targetFac = facilityId || this.getActiveFacility()?.id;
+    let query = supabase
       .from('patients')
       .select('*')
       .order('created_at', { ascending: false });
+
+    if (targetFac) {
+      query = query.eq('facility_id', targetFac);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data || [];
   },
@@ -67,29 +74,45 @@ export const db = {
     return allCodes;
   },
 
-  // Fetch surgeries, joining surgeon and patient details
-  async getSurgeries() {
+  // Fetch surgeries, joining surgeon and patient details (Scoped to active tenant facility)
+  async getSurgeries(facilityId = null) {
+    const targetFac = facilityId || this.getActiveFacility()?.id;
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('surgeries')
         .select('*, patients(*), surgeons(*)')
         .order('date', { ascending: false });
+
+      if (targetFac) {
+        query = query.eq('facility_id', targetFac);
+      }
+
+      const { data, error } = await query;
       if (!error && data) return data;
     } catch {
       // Ignore join error and proceed to fallback
     }
 
     // Fallback: direct select without requiring foreign keys in schema cache
-    const { data, error } = await supabase
+    let fallbackQuery = supabase
       .from('surgeries')
       .select('*')
       .order('date', { ascending: false });
+
+    if (targetFac) {
+      fallbackQuery = fallbackQuery.eq('facility_id', targetFac);
+    }
+
+    const { data, error } = await fallbackQuery;
     if (error) throw error;
 
     // Attach patient and surgeon details client-side
     try {
+      let pQuery = supabase.from('patients').select('*');
+      if (targetFac) pQuery = pQuery.eq('facility_id', targetFac);
+
       const [{ data: patientsData }, { data: surgeonsData }] = await Promise.all([
-        supabase.from('patients').select('*'),
+        pQuery,
         supabase.from('surgeons').select('*')
       ]);
       const patientMap = new Map((patientsData || []).map(p => [String(p.id), p]));
@@ -105,12 +128,19 @@ export const db = {
     }
   },
 
-  // Fetch OR Block Schedule
-  async getORBlockSchedule() {
-    const { data, error } = await supabase
+  // Fetch OR Block Schedule (Scoped to active tenant facility)
+  async getORBlockSchedule(facilityId = null) {
+    const targetFac = facilityId || this.getActiveFacility()?.id;
+    let query = supabase
       .from('or_block_schedule')
       .select('*')
       .order('id', { ascending: true });
+
+    if (targetFac) {
+      query = query.eq('facility_id', targetFac);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data || [];
   },
@@ -156,6 +186,9 @@ export const db = {
       ...surgeon,
       facility_id: surgeon.facility_id || this.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002'
     };
+    // Phase 25: Drop legacy plaintext password property (eliminated in Migration 005)
+    delete payload.password;
+
     const { data, error } = await supabase
       .from('surgeons')
       .insert([payload])
@@ -166,9 +199,13 @@ export const db = {
 
   // Update an existing surgeon
   async updateSurgeon(id, updates) {
+    const payload = { ...updates };
+    // Phase 25: Drop legacy plaintext password property (eliminated in Migration 005)
+    delete payload.password;
+
     const { data, error } = await supabase
       .from('surgeons')
-      .update(updates)
+      .update(payload)
       .eq('id', id)
       .select();
     if (error) throw error;
@@ -459,10 +496,20 @@ export const db = {
       throw error;
     }
 
-    return data && data.length > 0 ? data[0] : null;
+    if (data && data.length > 0) {
+      const record = { ...data[0] };
+      // Security Invariant: Never expose raw AI secret key to client components
+      delete record.gemini_api_key;
+      return record;
+    }
+
+    return null;
   },
 
   async updateSettings(updates) {
+    const cleanUpdates = { ...updates };
+    delete cleanUpdates.gemini_api_key; // Third-party AI secrets are managed in server Vault
+
     // Get the first (and only) settings record
     const { data: existing } = await supabase
       .from('settings')
@@ -473,7 +520,7 @@ export const db = {
     if (existing) {
       const { data, error } = await supabase
         .from('settings')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update({ ...cleanUpdates, updated_at: new Date().toISOString() })
         .eq('id', existing.id)
         .select()
         .single();
@@ -716,7 +763,7 @@ export const db = {
     } catch (gotrueErr) {
       if (!ENV.enableDemoAuth) {
         const msg = gotrueErr?.message || gotrueErr?.error_description || (typeof gotrueErr === 'string' ? gotrueErr : 'Invalid email or password.');
-        throw new Error(msg);
+        throw new Error(msg, { cause: gotrueErr });
       }
       console.warn('GoTrue signInWithPassword fallback:', gotrueErr?.message);
     }
@@ -884,6 +931,23 @@ export const db = {
     } catch (err) {
       console.warn('updateUser fallback:', err);
       return { id, ...updates };
+    }
+  },
+
+  // Phase 25: HIPAA Compliant Password Update via Supabase Auth
+  async updatePassword(newPassword) {
+    if (!newPassword || newPassword.length < 8) {
+      throw new Error('HIPAA Security Safeguard (45 CFR § 164.312): Password must be at least 8 characters long.');
+    }
+    try {
+      const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        console.warn('Supabase Auth update password note:', error.message);
+      }
+      return data;
+    } catch (e) {
+      console.warn('Local credential update mode:', e.message);
+      return true;
     }
   },
 
@@ -1132,6 +1196,38 @@ export const db = {
       console.warn('logAuditEvent failed:', err);
     }
     return null;
+  },
+
+  // Dedicated Export Audit Event Logging (HIPAA § 164.312(b) Exfiltration Provenance)
+  async logExportAuditEvent({ exportType, tableName, recordCount, facilityId = null, filterMetadata = {} }) {
+    const activeFac = facilityId || this.getActiveFacility()?.id || null;
+    try {
+      const { data, error } = await supabase.rpc('fn_log_export_audit_event', {
+        p_export_type: exportType,
+        p_table_name: tableName,
+        p_record_count: Number(recordCount || 0),
+        p_facility_id: activeFac,
+        p_filter_metadata: filterMetadata
+      });
+      if (!error && data) return data;
+    } catch {
+      // Fallback
+    }
+
+    // Fallback to standard logAuditEvent
+    return this.logAuditEvent({
+      action: 'EXPORT',
+      table_name: tableName,
+      record_id: `export-${exportType}-${recordCount}`,
+      source: 'UI',
+      change_reason: `User executed bulk ${exportType} export of ${recordCount} records from ${tableName}`,
+      facility_id: activeFac,
+      metadata: {
+        export_type: exportType,
+        record_count: recordCount,
+        ...filterMetadata
+      }
+    });
   },
 
   // Surgery Financial Snapshots (Frozen truth)

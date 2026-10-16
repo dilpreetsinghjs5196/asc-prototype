@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, db } from '../lib/supabase';
 import { Edit, Trash2, Plus, X, Users, Search, Download } from 'lucide-react';
 import Swal from 'sweetalert2';
 import './StaffManagement.css';
@@ -155,6 +155,21 @@ const StaffManagement = () => {
   const handleExportStaff = () => {
     if (!staffList || staffList.length === 0) return;
     
+    // Phase 25: HIPAA § 164.312(b) Audit Exfiltration Tracking
+    try {
+      db.logExportAuditEvent({
+        exportType: 'CSV',
+        tableName: 'staff',
+        recordCount: staffList.length,
+        filterMetadata: {
+          staff_count: staffList.length,
+          departments_included: DEPARTMENT_CATEGORIES
+        }
+      });
+    } catch {
+      // Non-blocking telemetry
+    }
+
     const headers = ['Department', 'First Name', 'Last Name', 'Role', 'Specialty / Position', 'License / ID', 'Phone', 'Email', 'Hourly Rate', 'Monthly Salary', 'Benefits'];
     
     const csvContent = [

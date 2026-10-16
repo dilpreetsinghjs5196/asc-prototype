@@ -116,14 +116,29 @@ export default function AuditLogViewer({ activeFacility, _theme }) {
     link.click();
     document.body.removeChild(link);
 
-    // Record audit event for export
-    db.logAuditEvent({
-      action: 'EXPORT',
-      table_name: 'audit_logs',
-      record_id: `export-${logs.length}`,
-      source: 'UI',
-      metadata: { record_count: logs.length, format: 'CSV' }
-    });
+    // Record audit event for export (Phase 24/25 hardened telemetry)
+    if (db.logExportAuditEvent) {
+      db.logExportAuditEvent({
+        exportType: 'CSV',
+        tableName: 'audit_logs',
+        recordCount: logs.length,
+        facilityId: activeFacility?.id,
+        filterMetadata: {
+          format: 'CSV',
+          actionFilter,
+          sourceFilter,
+          tableFilter
+        }
+      });
+    } else {
+      db.logAuditEvent({
+        action: 'EXPORT',
+        table_name: 'audit_logs',
+        record_id: `export-${logs.length}`,
+        source: 'UI',
+        metadata: { record_count: logs.length, format: 'CSV' }
+      });
+    }
   };
 
   const getActionBadge = (action) => {
