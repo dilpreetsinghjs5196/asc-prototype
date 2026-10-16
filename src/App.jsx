@@ -3310,40 +3310,6 @@ export default function App() {
               )}
             </div>
 
-            {/* Light / Dark Mode Switcher */}
-            <button
-              onClick={() => setTheme(prev => prev === 'light' ? 'dark' : 'light')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                background: theme === 'dark' ? '#1E3A5F' : 'var(--bg-toggle, #f1f5f9)',
-                border: '1px solid var(--border-color)',
-                color: 'var(--text-primary)',
-                padding: '7px 15px',
-                borderRadius: '20px',
-                cursor: 'pointer',
-                fontSize: '0.85rem',
-                fontWeight: '600',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
-                outline: 'none',
-                flexShrink: 0
-              }}
-              title="Toggle Light / Dark Mode"
-            >
-              {theme === 'dark' ? (
-                <>
-                  <Moon size={15} style={{ color: '#60a5fa' }} />
-                  <span>Dark Mode</span>
-                </>
-              ) : (
-                <>
-                  <Sun size={15} style={{ color: '#f59e0b' }} />
-                  <span>Light Mode</span>
-                </>
-              )}
-            </button>
 
             {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'ot_cost_manage', 'cpt_manage', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
