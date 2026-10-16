@@ -216,11 +216,17 @@ FOR UPDATE
 TO authenticated
 USING (
     NOT is_system AND
-    user_has_facility_role(facility_id, ARRAY['super_admin', 'org_admin', 'facility_admin'])
+    (
+        (facility_id IS NOT NULL AND user_has_facility_role(facility_id, ARRAY['super_admin', 'org_admin', 'facility_admin'])) OR
+        (organization_id IS NOT NULL AND facility_id IS NULL AND user_has_facility_role(NULL, ARRAY['super_admin', 'org_admin']))
+    )
 )
 WITH CHECK (
     NOT is_system AND
-    user_has_facility_role(facility_id, ARRAY['super_admin', 'org_admin', 'facility_admin'])
+    (
+        (facility_id IS NOT NULL AND user_has_facility_role(facility_id, ARRAY['super_admin', 'org_admin', 'facility_admin'])) OR
+        (organization_id IS NOT NULL AND facility_id IS NULL AND user_has_facility_role(NULL, ARRAY['super_admin', 'org_admin']))
+    )
 );
 
 DROP POLICY IF EXISTS "Authorized Admins Can Delete Custom Roles" ON public.roles;
@@ -230,7 +236,10 @@ FOR DELETE
 TO authenticated
 USING (
     NOT is_system AND
-    user_has_facility_role(facility_id, ARRAY['super_admin', 'org_admin', 'facility_admin']) AND
+    (
+        (facility_id IS NOT NULL AND user_has_facility_role(facility_id, ARRAY['super_admin', 'org_admin', 'facility_admin'])) OR
+        (organization_id IS NOT NULL AND facility_id IS NULL AND user_has_facility_role(NULL, ARRAY['super_admin', 'org_admin']))
+    ) AND
     NOT EXISTS (SELECT 1 FROM public.facility_memberships fm WHERE fm.role_id = roles.id)
 );
 
@@ -543,6 +552,9 @@ $$;
 -- ==============================================================================
 -- 9. TRUE DATABASE-TIER SURGEON CASE ISOLATION (RLS POLICIES)
 -- ==============================================================================
+
+-- Performance Index: Support fast lower(email) matching in surgeon case isolation RLS
+CREATE INDEX IF NOT EXISTS idx_surgeons_lower_email ON public.surgeons (LOWER(TRIM(email)));
 
 -- Surgeries SELECT: Restricts attending surgeons strictly to personal surgical cases
 DROP POLICY IF EXISTS "Tenant Scoped Surgeries Read" ON public.surgeries;

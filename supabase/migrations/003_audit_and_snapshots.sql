@@ -257,8 +257,15 @@ CREATE INDEX IF NOT EXISTS idx_snapshots_facility ON public.surgery_financial_sn
 CREATE INDEX IF NOT EXISTS idx_snapshots_facility_margin ON public.surgery_financial_snapshots(facility_id, net_margin);
 
 -- ==============================================================================
--- 5. HARDENED ROW LEVEL SECURITY (RLS) POLICIES
+-- 5. HARDENED ROW LEVEL SECURITY (RLS) POLICIES & EXPLICIT DCL GRANTS
 -- ==============================================================================
+
+-- Explicit DCL Table Grants (Defense-in-depth: revoke anon, restrict authenticated)
+REVOKE ALL ON public.audit_logs FROM anon;
+GRANT SELECT ON public.audit_logs TO authenticated;
+
+REVOKE ALL ON public.surgery_financial_snapshots FROM anon;
+GRANT SELECT, INSERT, UPDATE ON public.surgery_financial_snapshots TO authenticated;
 
 -- 5.1 Audit Logs RLS (Strict Read-Only Ledger for Authorized Roles)
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;

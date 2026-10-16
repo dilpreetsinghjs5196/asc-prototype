@@ -66,7 +66,8 @@ WITH CHECK (
     AND user_has_facility_role(facility_id, ARRAY['super_admin', 'org_admin', 'facility_admin', 'clinical_manager', 'clinical_director', 'scheduler', 'surgeon', 'biller', 'billing_rcm'])
 );
 
--- 4. Drop Permission Evaluation Functions
+-- 4. Drop Permission Evaluation Functions & Performance Indexes
+DROP INDEX IF EXISTS public.idx_surgeons_lower_email;
 DROP FUNCTION IF EXISTS public.get_auth_user_permissions(UUID);
 DROP FUNCTION IF EXISTS public.has_permission(UUID, TEXT);
 
