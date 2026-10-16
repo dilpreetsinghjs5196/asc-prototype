@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { db } from '../lib/supabase';
+import { exportDatabaseSql } from '../utils/sqlExporter';
 import './Management.css';
 
 const Settings = ({ onUpdate }) => {
@@ -141,6 +142,42 @@ const Settings = ({ onUpdate }) => {
         }
     };
 
+    const [exportingSql, setExportingSql] = useState(false);
+
+    const handleExportSql = async () => {
+        setExportingSql(true);
+        Swal.fire({
+            title: 'Generating Database SQL Dump',
+            html: 'Connecting to database and compiling complete SQL statements...<br/><br/><div class="spinner"></div>',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        try {
+            const { totalRecords, tableStats } = await exportDatabaseSql((tbl, current, total) => {
+                const content = document.getElementById('swal2-html-container');
+                if (content) {
+                    content.innerHTML = `Extracting table <b>${tbl}</b> (${current}/${total})...<br/><br/><div class="spinner"></div>`;
+                }
+            });
+
+            Swal.fire({
+                icon: 'success',
+                title: 'SQL File Downloaded!',
+                html: `Successfully compiled and downloaded full database SQL dump.<br/><br/><b>Total Records:</b> ${totalRecords}<br/><b>Tables Exported:</b> ${Object.keys(tableStats).length}`,
+                confirmButtonColor: '#10b981'
+            });
+        } catch (err) {
+            console.error('SQL export error:', err);
+            Swal.fire('Error', 'Failed to generate SQL export: ' + (err.message || 'Unknown error'), 'error');
+        } finally {
+            setExportingSql(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="setting-container fade-in">
@@ -165,6 +202,30 @@ const Settings = ({ onUpdate }) => {
                     </p>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <button
+                        type="button"
+                        onClick={handleExportSql}
+                        disabled={exportingSql}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            background: 'rgba(16, 185, 129, 0.12)',
+                            color: '#10b981',
+                            border: '1px solid rgba(16, 185, 129, 0.3)',
+                            padding: '0.75rem 1.5rem',
+                            borderRadius: '10px',
+                            fontSize: '0.95rem',
+                            fontWeight: 600,
+                            cursor: exportingSql ? 'not-allowed' : 'pointer',
+                            transition: 'all 0.2s ease',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                        }}
+                        title="Download complete SQL file containing all database tables and data"
+                    >
+                        <span>{exportingSql ? '⏳' : '📥'}</span>
+                        {exportingSql ? 'Generating SQL...' : 'Export Database (.sql)'}
+                    </button>
                     <button
                         type="button"
                         className="setting-btn-add"
