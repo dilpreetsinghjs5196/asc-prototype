@@ -1028,33 +1028,99 @@ export const db = {
   },
 
   // Audit Logs (Read-only ledger queries & manual events)
-  async getAuditLogs(facilityId, limit = 50) {
+  async getAuditLogs(facilityId, options = {}) {
     try {
       const activeFac = facilityId || this.getActiveFacility()?.id;
+      const limit = typeof options === 'number' ? options : (options.limit || 50);
+      const offset = typeof options === 'object' ? (options.offset || 0) : 0;
+
       let query = supabase
         .from('audit_logs')
-        .select('*')
-        .order('timestamp', { ascending: false })
-        .limit(limit);
+        .select('*', { count: 'exact' })
+        .order('timestamp', { ascending: false });
 
       if (activeFac) {
         query = query.eq('facility_id', activeFac);
       }
 
-      const { data, error } = await query;
-      if (!error && data) return data;
+      if (options.tableName) {
+        query = query.eq('table_name', options.tableName);
+      }
+
+      if (options.action) {
+        query = query.eq('action', options.action);
+      }
+
+      if (options.source) {
+        query = query.eq('source', options.source);
+      }
+
+      if (options.startDate) {
+        query = query.gte('timestamp', options.startDate);
+      }
+
+      if (options.endDate) {
+        query = query.lte('timestamp', options.endDate);
+      }
+
+      if (options.search && typeof options.search === 'string' && options.search.trim()) {
+        const term = options.search.trim();
+        query = query.or(`actor_email.ilike.%${term}%,record_id.ilike.%${term}%,table_name.ilike.%${term}%`);
+      }
+
+      query = query.range(offset, offset + limit - 1);
+
+      const { data, count, error } = await query;
+      if (!error && data) {
+        const result = [...data];
+        result.totalCount = count !== null ? count : data.length;
+        return result;
+      }
     } catch (err) {
       console.warn('getAuditLogs fallback:', err);
     }
-    return [];
+    const empty = [];
+    empty.totalCount = 0;
+    return empty;
   },
 
   async logAuditEvent(entry) {
     try {
-      const activeFac = entry.facility_id || this.getActiveFacility()?.id;
+      const activeFac = entry.facility_id || entry.facilityId || this.getActiveFacility()?.id;
+      const tableName = entry.table_name || entry.tableName || 'system';
+      const recordId = String(entry.record_id || entry.recordId || 'app');
+      const action = entry.action || 'VIEW_PHI';
+      const source = entry.source || 'UI';
+      const reason = entry.change_reason || entry.changeReason || null;
+      const metadata = entry.metadata || {};
+      const correlationId = entry.correlation_id || entry.correlationId || null;
+
+      // Primary path: Use hardened RPC with server-side validation and session extraction
+      const { data: rpcLogId, error: rpcError } = await supabase.rpc('fn_log_manual_audit_event', {
+        p_facility_id: activeFac,
+        p_table_name: tableName,
+        p_record_id: recordId,
+        p_action: action,
+        p_source: source,
+        p_change_reason: reason,
+        p_metadata: metadata,
+        p_correlation_id: correlationId
+      });
+
+      if (!rpcError && rpcLogId) {
+        return { id: rpcLogId, success: true };
+      }
+
+      // Fallback path: Direct insert if RPC not yet deployed
       const payload = {
-        ...entry,
         facility_id: activeFac,
+        table_name: tableName,
+        record_id: recordId,
+        action: action,
+        source: source,
+        change_reason: reason,
+        metadata: metadata,
+        correlation_id: correlationId,
         timestamp: new Date().toISOString()
       };
       const { data, error } = await supabase

@@ -21,6 +21,7 @@ import SurgeonPortal from './components/SurgeonPortal';
 import UserProfile from './components/UserProfile';
 import UserManagement from './components/UserManagement';
 import RoleManagement from './components/RoleManagement';
+import AuditLogViewer from './components/AuditLogViewer';
 import RoleGate from './components/RoleGate';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import {
@@ -2974,6 +2975,13 @@ export default function App() {
             Roles & Permissions
           </div>
           <div
+            className={`menu-item ${activeTab === 'audit_logs' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('audit_logs'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Activity size={16} /></div>
+            Audit Logs
+          </div>
+          <div
             className={`menu-item ${activeTab === 'settings' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('settings'); setSelectedSurgeon(null); }}
           >
@@ -3093,6 +3101,7 @@ export default function App() {
                   {activeTab === 'profile' && 'User Profile & Security Credentials'}
                   {activeTab === 'user_management' && 'User Accounts & Facility Memberships'}
                   {activeTab === 'role_management' && 'Roles & Permissions Architecture'}
+                  {activeTab === 'audit_logs' && 'Compliance Audit Trail & Provenance'}
                 </>
               )}
             </h1>
@@ -3124,6 +3133,7 @@ export default function App() {
                   {activeTab === 'profile' && 'Manage your account details and update your login password'}
                   {activeTab === 'user_management' && 'User provisioning, active facility memberships, and department assignments'}
                   {activeTab === 'role_management' && 'Role hierarchy, built-in system immutability, and 13-domain permission matrix'}
+                  {activeTab === 'audit_logs' && 'HIPAA § 164.312(b) immutable transaction audit ledger, state diffs, and AI telemetry'}
                 </>
               )}
             </span>
@@ -3250,7 +3260,7 @@ export default function App() {
               )}
             </button>
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'ot_cost_manage', 'cpt_manage', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'user_management', 'role_management'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'ot_cost_manage', 'cpt_manage', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -5121,6 +5131,27 @@ export default function App() {
                   }
                 >
                   <RoleManagement activeFacility={activeFacility} theme={theme} />
+                </RoleGate>
+              )}
+
+              {/* ==========================================
+              TAB: AUDIT LOGS & PROVENANCE (PHASE 24)
+              ========================================== */}
+              {activeTab === 'audit_logs' && (
+                <RoleGate
+                  allowedRoles={['super_admin', 'org_admin', 'facility_admin', 'clinical_manager', 'clinical_director', 'cfo', 'biller']}
+                  requiredPermission="audit.view_clinical"
+                  fallback={
+                    <div style={{ padding: '48px', textAlign: 'center', backgroundColor: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', margin: '24px' }}>
+                      <Shield size={48} style={{ color: '#ef4444', marginBottom: '16px' }} />
+                      <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', color: 'var(--text-primary)' }}>Compliance Audit Access Required</h3>
+                      <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                        You do not possess the required <code>audit.view_clinical</code> or <code>audit.view_financial</code> permission to inspect immutable compliance logs.
+                      </p>
+                    </div>
+                  }
+                >
+                  <AuditLogViewer activeFacility={activeFacility} theme={theme} />
                 </RoleGate>
               )}
 

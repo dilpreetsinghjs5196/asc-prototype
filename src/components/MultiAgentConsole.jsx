@@ -187,7 +187,7 @@ export default function MultiAgentConsole({ surgeries, cptCodes, patients = [], 
         const patient_id = p ? p.id : null;
         const codeMatches = selectedCpts.length > 0 ? selectedCpts.map(c => c.code) : [procedureDesc.split(' - ')[0]];
 
-        await onSchedule({
+        const scheduledResult = await onSchedule({
           patient_id: patient_id,
           doctor_name: 'AI Auto-Assigned',
           date: selectedDate,
@@ -201,6 +201,30 @@ export default function MultiAgentConsole({ surgeries, cptCodes, patients = [], 
           medications_cost: 0,
           notes: 'Scheduled by AI Multi-Agent Simulation'
         });
+
+        // Phase 24: Record AI Multi-Agent Provenance Audit Telemetry
+        try {
+          await db.logAuditEvent({
+            action: 'AI_ANALYSIS',
+            table_name: 'surgeries',
+            record_id: scheduledResult?.id ? String(scheduledResult.id) : (patient_id ? `patient-${patient_id}` : 'simulation-commit'),
+            source: 'AI_AGENT',
+            change_reason: 'Automated case booking commit from MultiAgent simulation pipeline',
+            correlation_id: 'REQ-SIM-990',
+            metadata: {
+              simulation_date: selectedDate,
+              simulation_time: selectedTime,
+              cpt_codes: codeMatches,
+              estimated_duration: 120,
+              estimated_cost: 16250,
+              gross_charge: grossCharge,
+              model_version: 'asc-multiagent-v2.4'
+            }
+          });
+        } catch {
+          // Non-blocking telemetry fallback
+        }
+
         appendLog('Agent Action: Surgery successfully scheduled in the database.', 'success');
         Swal.fire({
           title: 'Scheduled',
