@@ -1736,6 +1736,7 @@ export default function App() {
       }
       try {
         setLoading(true);
+        await db.ensureAuthSession();
         const currentFacId = activeFacility?.id;
         console.log("Loading Supabase tables for active facility:", currentFacId, activeFacility?.name);
 
@@ -1748,7 +1749,7 @@ export default function App() {
 
         const isNaples = !currentFacId || currentFacId === '00000000-0000-0000-0000-000000000002';
         // Only if Naples (primary facility) returns 0 due to an unmigrated or unreachable DB, use mock fallbacks
-        if (isNaples && (loadedSurgeons || []).length === 0 && (loadedSurgeries || []).length === 0) {
+        if (isNaples && (loadedSurgeons || []).length === 0 && (loadedSurgeries || []).length === 0 && (loadedPatients || []).length === 0) {
           console.warn("Database loaded but returned empty or incomplete data for primary facility. Using mock fallbacks.");
           setLoading(false);
           return;

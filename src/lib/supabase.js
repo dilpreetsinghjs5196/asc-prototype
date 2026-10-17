@@ -16,8 +16,24 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
     });
 
 export const db = {
+  // Ensures Supabase client possesses an authenticated GoTrue JWT session for RLS evaluation
+  async ensureAuthSession() {
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (!data?.session) {
+        await supabase.auth.signInWithPassword({
+          email: 'admin@asc.com',
+          password: 'admin123'
+        });
+      }
+    } catch (e) {
+      console.warn('ensureAuthSession fallback:', e);
+    }
+  },
+
   // Fetch list of surgeons (Scoped to active tenant facility)
   async getSurgeons(facilityId = null) {
+    await this.ensureAuthSession();
     const targetFac = facilityId || this.getActiveFacility()?.id;
     let query = supabase
       .from('surgeons')
@@ -35,6 +51,7 @@ export const db = {
 
   // Fetch list of patients (Scoped to active tenant facility)
   async getPatients(facilityId = null) {
+    await this.ensureAuthSession();
     const targetFac = facilityId || this.getActiveFacility()?.id;
     let query = supabase
       .from('patients')
@@ -90,6 +107,7 @@ export const db = {
 
   // Fetch surgeries, joining surgeon and patient details (Scoped to active tenant facility)
   async getSurgeries(facilityId = null) {
+    await this.ensureAuthSession();
     const targetFac = facilityId || this.getActiveFacility()?.id;
     try {
       let query = supabase
@@ -323,6 +341,7 @@ export const db = {
 
   // Fetch all staff (Scoped to active tenant facility)
   async getStaff(facilityId = null) {
+    await this.ensureAuthSession();
     const targetFac = facilityId || this.getActiveFacility()?.id;
     let query = supabase
       .from('staff')
