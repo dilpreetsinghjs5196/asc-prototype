@@ -1736,17 +1736,20 @@ export default function App() {
       }
       try {
         setLoading(true);
-        console.log("Loading Supabase tables...");
+        const currentFacId = activeFacility?.id;
+        console.log("Loading Supabase tables for active facility:", currentFacId, activeFacility?.name);
 
         const [loadedSurgeons, loadedSurgeries, loadedPatients, loadedCPTList] = await Promise.all([
-          db.getSurgeons(),
-          db.getSurgeries(),
-          db.getPatients(),
-          db.getCPTCodes()
+          db.getSurgeons(currentFacId),
+          db.getSurgeries(currentFacId),
+          db.getPatients(currentFacId),
+          db.getCPTCodes(currentFacId)
         ]);
 
-        if (loadedSurgeons.length === 0 || loadedSurgeries.length === 0) {
-          console.warn("Database loaded but returned empty or incomplete data. Using mock fallbacks.");
+        const isNaples = !currentFacId || currentFacId === '00000000-0000-0000-0000-000000000002';
+        // Only if Naples (primary facility) returns 0 due to an unmigrated or unreachable DB, use mock fallbacks
+        if (isNaples && (loadedSurgeons || []).length === 0 && (loadedSurgeries || []).length === 0) {
+          console.warn("Database loaded but returned empty or incomplete data for primary facility. Using mock fallbacks.");
           setLoading(false);
           return;
         }
@@ -1849,14 +1852,14 @@ export default function App() {
           };
         });
         setSurgeries(mappedSurgeries);
-        setPatients(loadedPatients);
-        setSurgeonsList(loadedSurgeons);
+        setPatients(loadedPatients || []);
+        setSurgeonsList(loadedSurgeons || []);
 
         // 2. Process surgeons details
         const surgeonsDetailsObj = {};
         const surgeonColors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6', '#f43f5e'];
 
-        loadedSurgeons.forEach((s, idx) => {
+        (loadedSurgeons || []).forEach((s, idx) => {
           const fullName = formatDoctorName(s);
           surgeonsDetailsObj[fullName] = {
             name: fullName,
@@ -2319,6 +2322,7 @@ export default function App() {
       ...patientForm,
       ...(editingPatient ? {} : { id: Date.now() }), // explicitly pass an ID for new patients to bypass sequence collision
       name: patientForm.name ? patientForm.name.trim() : '',
+      facility_id: editingPatient?.facility_id || activeFacility?.id || db.getActiveFacility()?.id,
       copay_amount: patientForm.copay_amount === '' || patientForm.copay_amount === null || patientForm.copay_amount === undefined ? null : parseFloat(patientForm.copay_amount),
       deductible_amount: patientForm.deductible_amount === '' || patientForm.deductible_amount === null || patientForm.deductible_amount === undefined ? null : parseFloat(patientForm.deductible_amount)
     };
@@ -2501,6 +2505,7 @@ export default function App() {
       license_number: lic,
       phone: fullPhone,
       email: email,
+      facility_id: editingSurgeon?.facility_id || activeFacility?.id || db.getActiveFacility()?.id,
       block_templates: surgeonForm.block_templates || []
     };
 
@@ -3487,7 +3492,7 @@ export default function App() {
               TAB: OR BLOCK SCHEDULE
               ========================================== */}
               {activeTab === 'or_block_schedule' && (
-                <ORBlockSchedule />
+                <ORBlockSchedule activeFacility={activeFacility} />
               )}
 
               {/* ==========================================
@@ -4428,7 +4433,7 @@ export default function App() {
               )}
 
               {activeTab === 'staff_manage' && (
-                <StaffManagement />
+                <StaffManagement activeFacility={activeFacility} />
               )}
 
               {activeTab === 'surgeons_manage' && (
@@ -5247,7 +5252,7 @@ export default function App() {
               TAB: INSTRUCTION PANEL
               ========================================== */}
               {activeTab === 'instruction' && (
-                <InstructionPanel />
+                <InstructionPanel activeFacility={activeFacility} />
               )}
 
               {/* ==========================================
@@ -5333,7 +5338,7 @@ export default function App() {
               TAB: OT COST MANAGEMENT
               ========================================== */}
               {activeTab === 'ot_cost_manage' && (
-                <OTCostManagement />
+                <OTCostManagement activeFacility={activeFacility} />
               )}
 
               {/* ==========================================

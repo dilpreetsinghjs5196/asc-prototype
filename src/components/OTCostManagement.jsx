@@ -4,7 +4,7 @@ import { db } from '../lib/supabase';
 import { Upload, Database, CheckCircle, Loader, FileSpreadsheet, Edit2, Trash2, X, Plus, Search } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-export default function OTCostManagement() {
+export default function OTCostManagement({ activeFacility }) {
   const [data, setData] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -45,7 +45,8 @@ export default function OTCostManagement() {
     setIsLoading(true);
     try {
       if (db.getOTExtraCosts) {
-        const result = await db.getOTExtraCosts();
+        const targetFac = activeFacility?.id || db.getActiveFacility()?.id;
+        const result = await db.getOTExtraCosts(targetFac);
         setDbData(result);
         setCurrentPage(1); // Reset to first page on refresh
       }
@@ -57,11 +58,8 @@ export default function OTCostManagement() {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchData();
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
+    fetchData();
+  }, [activeFacility?.id]);
 
   const [sortField, setSortField] = useState('cpt_codes');
   const [sortDirection, setSortDirection] = useState('asc');
@@ -168,7 +166,8 @@ export default function OTCostManagement() {
       }
       
       if (db.upsertOTExtraCosts) {
-        await db.upsertOTExtraCosts([newRecordData]);
+        const targetFac = activeFacility?.id || db.getActiveFacility()?.id;
+        await db.upsertOTExtraCosts([{ ...newRecordData, facility_id: targetFac }]);
         Swal.fire('Success', 'Record added successfully', 'success');
         setIsAddingRecord(false);
         setNewRecordData({

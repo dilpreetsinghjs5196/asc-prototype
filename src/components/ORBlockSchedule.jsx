@@ -16,7 +16,7 @@ const mapDBToBlock = (dbBlock) => {
   };
 };
 
-const ORBlockSchedule = () => {
+const ORBlockSchedule = ({ activeFacility }) => {
   // Use a dynamic Date object initialized to the 1st day of the current month
   const [currentMonthDate, setCurrentMonthDate] = useState(() => {
     const now = new Date();
@@ -32,9 +32,10 @@ const ORBlockSchedule = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        const targetFac = activeFacility?.id || db.getActiveFacility()?.id;
         const [blocksData, surgeonsData] = await Promise.all([
-          db.getORBlockSchedule(),
-          db.getSurgeons()
+          db.getORBlockSchedule(targetFac),
+          db.getSurgeons(targetFac)
         ]);
         setBlocks(blocksData.map(mapDBToBlock));
         setSurgeonsData(surgeonsData);
@@ -46,7 +47,7 @@ const ORBlockSchedule = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [activeFacility?.id]);
 
   const allActiveBlocks = useMemo(() => {
     const dynamicBlocks = [];

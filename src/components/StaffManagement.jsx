@@ -14,7 +14,7 @@ const DEPARTMENT_CATEGORIES = [
   'Other'
 ];
 
-const StaffManagement = () => {
+const StaffManagement = ({ activeFacility }) => {
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,9 +38,8 @@ const StaffManagement = () => {
   const fetchStaff = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.from('staff').select('*').order('lastname', { ascending: true });
-      
-      if (error) throw error;
+      const targetFac = activeFacility?.id || db.getActiveFacility()?.id;
+      const data = await db.getStaff(targetFac);
       setStaffList(data || []);
     } catch (err) {
       console.error('Error fetching staff:', err);
@@ -51,11 +50,8 @@ const StaffManagement = () => {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchStaff();
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
+    fetchStaff();
+  }, [activeFacility?.id]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -103,8 +99,10 @@ const StaffManagement = () => {
       return;
     }
 
+    const targetFac = activeFacility?.id || db.getActiveFacility()?.id;
     const payload = {
       ...formData,
+      facility_id: editingStaff?.facility_id || targetFac,
       hourly_rate: formData.hourly_rate ? parseFloat(formData.hourly_rate) : null,
       monthly_salary: formData.monthly_salary ? parseFloat(formData.monthly_salary) : null,
       benefits: formData.benefits ? parseFloat(formData.benefits) : null,
@@ -112,19 +110,17 @@ const StaffManagement = () => {
 
     try {
       if (editingStaff) {
-        const { error } = await supabase.from('staff').update(payload).eq('id', editingStaff.id);
-        if (error) throw error;
+        await db.updateStaff(editingStaff.id, payload);
         Swal.fire('Success', 'Staff member updated!', 'success');
       } else {
-        const { error } = await supabase.from('staff').insert([payload]);
-        if (error) throw error;
+        await db.addStaff(payload);
         Swal.fire('Success', 'Staff member added!', 'success');
       }
       setIsModalOpen(false);
       fetchStaff();
     } catch (err) {
       console.error('Error saving staff:', err);
-      Swal.fire('Error', 'Failed to save staff member.', 'error');
+      Swal.fire('Error', 'Failed to save staff member: ' + (err.message || ''), 'error');
     }
   };
 
@@ -141,13 +137,12 @@ const StaffManagement = () => {
 
     if (result.isConfirmed) {
       try {
-        const { error } = await supabase.from('staff').delete().eq('id', id);
-        if (error) throw error;
-        Swal.fire('Deleted!', 'Staff member has been deleted.', 'success');
+        await db.deleteStaff(id);
+        Swal.fire('Deleted!', 'Staff member has been removed.', 'success');
         fetchStaff();
       } catch (err) {
         console.error('Error deleting staff:', err);
-        Swal.fire('Error', 'Failed to delete staff member.', 'error');
+        Swal.fire('Error', 'Failed to delete staff member: ' + (err.message || ''), 'error');
       }
     }
   };

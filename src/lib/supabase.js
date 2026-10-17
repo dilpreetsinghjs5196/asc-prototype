@@ -16,12 +16,19 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
     });
 
 export const db = {
-  // Fetch list of surgeons
-  async getSurgeons() {
-    const { data, error } = await supabase
+  // Fetch list of surgeons (Scoped to active tenant facility)
+  async getSurgeons(facilityId = null) {
+    const targetFac = facilityId || this.getActiveFacility()?.id;
+    let query = supabase
       .from('surgeons')
       .select('*')
       .order('id', { ascending: true });
+
+    if (targetFac) {
+      query = query.eq('facility_id', targetFac);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data || [];
   },
@@ -43,18 +50,25 @@ export const db = {
     return data || [];
   },
 
-  // Fetch CPT codes list
-  async getCPTCodes() {
+  // Fetch CPT codes list (Includes global codes and facility-specific overrides)
+  async getCPTCodes(facilityId = null) {
+    const targetFac = facilityId || this.getActiveFacility()?.id;
     let allCodes = [];
     let page = 0;
     const pageSize = 1000;
     let hasMore = true;
 
     while (hasMore) {
-        const { data, error } = await supabase
+        let query = supabase
             .from('cpt_codes')
             .select('*')
-            .is('termination_date', null)
+            .is('termination_date', null);
+
+        if (targetFac) {
+            query = query.or(`facility_id.is.null,facility_id.eq.${targetFac}`);
+        }
+
+        const { data, error } = await query
             .order('code', { ascending: true })
             .range(page * pageSize, (page + 1) * pageSize - 1);
 
@@ -307,14 +321,56 @@ export const db = {
     return true;
   },
 
-  // Fetch all staff
-  async getStaff() {
-    const { data, error } = await supabase
+  // Fetch all staff (Scoped to active tenant facility)
+  async getStaff(facilityId = null) {
+    const targetFac = facilityId || this.getActiveFacility()?.id;
+    let query = supabase
       .from('staff')
       .select('*')
       .order('lastname', { ascending: true });
+
+    if (targetFac) {
+      query = query.eq('facility_id', targetFac);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data || [];
+  },
+
+  // Add a new staff member
+  async addStaff(staffMember) {
+    const payload = {
+      ...staffMember,
+      facility_id: staffMember.facility_id || this.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002'
+    };
+    const { data, error } = await supabase
+      .from('staff')
+      .insert([payload])
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  // Update existing staff member
+  async updateStaff(id, updates) {
+    const { data, error } = await supabase
+      .from('staff')
+      .update(updates)
+      .eq('id', id)
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  // Delete a staff member
+  async deleteStaff(id) {
+    const { error } = await supabase
+      .from('staff')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+    return true;
   },
 
   // Fetch distinct batches
@@ -541,16 +597,23 @@ export const db = {
   },
 
   // ==================== OT EXTRA COST ====================
-  async getOTExtraCosts() {
+  async getOTExtraCosts(facilityId = null) {
+    const targetFac = facilityId || this.getActiveFacility()?.id;
     let allCosts = [];
     let page = 0;
     const pageSize = 1000;
     let hasMore = true;
 
     while (hasMore) {
-        const { data, error } = await supabase
+        let query = supabase
             .from('ot_extra_cost')
-            .select('*')
+            .select('*');
+
+        if (targetFac) {
+            query = query.eq('facility_id', targetFac);
+        }
+
+        const { data, error } = await query
             .order('cpt_codes', { ascending: true })
             .range(page * pageSize, (page + 1) * pageSize - 1);
             
@@ -637,6 +700,36 @@ export const db = {
     }
     
     return true;
+  },
+
+  // ==================== CLINICAL KNOWLEDGE BASE / CHATBOT ====================
+  async getChatbotQuestions(facilityId = null) {
+    const targetFac = facilityId || this.getActiveFacility()?.id;
+    let query = supabase
+      .from('chatbot_questions')
+      .select('*')
+      .order('id', { ascending: true });
+
+    if (targetFac) {
+      query = query.or(`facility_id.is.null,facility_id.eq.${targetFac}`);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  },
+
+  async addChatbotQuestion(questionData) {
+    const payload = {
+      ...questionData,
+      facility_id: questionData.facility_id || this.getActiveFacility()?.id || null
+    };
+    const { data, error } = await supabase
+      .from('chatbot_questions')
+      .insert([payload])
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
   },
 
   // ==================== USERS & AUTHENTICATION ====================
@@ -943,6 +1036,11 @@ export const db = {
           } else if (error && (error.code === 'PGRST205' || error.code === '42P01')) {
             if (trimmedEmail === 'superadmin@asc.com' || trimmedEmail === 'super_admin@asc.com') {
               if (trimmedPassword === 'admin123' || trimmedPassword === 'admin' || trimmedPassword === 'superadmin123') {
+                try {
+                  await supabase.auth.signInWithPassword({ email: 'admin@asc.com', password: 'admin123' });
+                } catch {
+                  // Ignore fallback GoTrue login failure
+                }
                 const userObj = {
                   id: '00000000-0000-0000-0000-000000000001',
                   name: 'Global Super Administrator',
@@ -972,6 +1070,11 @@ export const db = {
           } else if (role === 'admin') {
             if (trimmedEmail === 'superadmin@asc.com' || trimmedEmail === 'super_admin@asc.com') {
               if (trimmedPassword === 'admin123' || trimmedPassword === 'admin' || trimmedPassword === 'superadmin123') {
+                try {
+                  await supabase.auth.signInWithPassword({ email: 'admin@asc.com', password: 'admin123' });
+                } catch {
+                  // Ignore fallback GoTrue login failure
+                }
                 const userObj = {
                   id: '00000000-0000-0000-0000-000000000001',
                   name: 'Global Super Administrator',

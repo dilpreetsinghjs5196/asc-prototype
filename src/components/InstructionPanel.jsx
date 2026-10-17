@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, db } from '../lib/supabase';
 import { Search, Edit, Trash2, Save, Plus } from 'lucide-react';
 import './InstructionPanel.css';
 
-export default function InstructionPanel() {
+export default function InstructionPanel({ activeFacility }) {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,12 +23,8 @@ export default function InstructionPanel() {
   const fetchQuestions = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('chatbot_questions')
-        .select('*')
-        .order('id', { ascending: true });
-        
-      if (error) throw error;
+      const targetFac = activeFacility?.id || db.getActiveFacility()?.id;
+      const data = await db.getChatbotQuestions(targetFac);
       setQuestions(data || []);
     } catch (error) {
       console.error('Error fetching questions:', error);
@@ -40,11 +36,8 @@ export default function InstructionPanel() {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchQuestions();
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
+    fetchQuestions();
+  }, [activeFacility?.id]);
 
   const handleSaveQuestion = async (e) => {
     e.preventDefault();
@@ -52,21 +45,18 @@ export default function InstructionPanel() {
     
     try {
       setIsSubmitting(true);
+      const targetFac = activeFacility?.id || db.getActiveFacility()?.id;
       
-      const { data, error } = await supabase
-        .from('chatbot_questions')
-        .insert([{
-          question: formData.question,
-          category: formData.category,
-          is_active: formData.is_active
-        }])
-        .select();
-        
-      if (error) throw error;
+      const newQuestion = await db.addChatbotQuestion({
+        question: formData.question,
+        category: formData.category,
+        is_active: formData.is_active,
+        facility_id: targetFac
+      });
       
       // Update local state
-      if (data && data.length > 0) {
-        setQuestions([...questions, data[0]]);
+      if (newQuestion) {
+        setQuestions(prev => [...prev, newQuestion]);
       }
       
       // Reset form
