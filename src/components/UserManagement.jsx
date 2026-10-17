@@ -1,125 +1,129 @@
 import React, { useState, useEffect } from 'react';
 import { rbacService, CANONICAL_ROLES } from '../lib/rbacService.js';
-import { db, supabase } from '../lib/supabase.js';
-import { 
-  Users, UserPlus, Shield, CheckCircle2, XCircle, 
-  Search, Filter, Edit3, UserX, AlertTriangle, Building2, Mail,
-  Key, Eye, EyeOff, Copy, Check, Lock, RefreshCw
+import { db } from '../lib/supabase.js';
+import {
+  Users, UserPlus, Shield, CheckCircle2, XCircle,
+  Search, Edit3, Building2,
+  RefreshCw, X, MoveRight, ShieldAlert
 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import './UserManagement.css';
 
-export default function UserManagement({ activeFacility, theme = 'light' }) {
+export default function UserManagement({ activeFacility, theme: _theme = 'light', initialFacilityFilter = 'all' }) {
   const [users, setUsers] = useState([]);
+  const [facilities, setFacilities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFacilityFilter, setSelectedFacilityFilter] = useState(initialFacilityFilter || 'all');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState('all');
-  
-  // Password Visibility State (map of userId -> boolean)
-  const [revealedPasswords, setRevealedPasswords] = useState({});
-  const [copiedId, setCopiedId] = useState(null);
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('name');
 
   // Modals
   const [isInviteOpen, setIsInviteOpen] = useState(false);
-  const [showInvitePassword, setShowInvitePassword] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isChangeRoleOpen, setIsChangeRoleOpen] = useState(false);
+  const [isReassignOpen, setIsReassignOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  // Invite Form
+  // Forms
   const [inviteForm, setInviteForm] = useState({
     firstName: '',
     lastName: '',
     email: '',
-    department: 'Operating Room',
-    title: 'Staff Member',
+    facilityId: '',
     role: 'scheduler',
-    password: 'asc2026!Staff'
+    department: 'Operating Room',
+    title: 'Staff Member'
+  });
+
+  const [editForm, setEditForm] = useState({
+    name: '',
+    email: '',
+    department: '',
+    title: ''
+  });
+
+  const [roleForm, setRoleForm] = useState({
+    newRole: 'scheduler'
+  });
+
+  const [reassignForm, setReassignForm] = useState({
+    targetFacilityId: '',
+    newRole: 'scheduler',
+    department: '',
+    title: ''
   });
 
   const session = db.getSession();
   const currentRole = rbacService.normalizeRole(session?.role);
-  const isSuperOrOrgAdmin = ['super_admin', 'org_admin'].includes(currentRole);
+  const isSuperAdmin = currentRole === 'super_admin';
+  const isOrgAdmin = currentRole === 'org_admin';
+  const isFacilityAdmin = currentRole === 'facility_admin';
+  const canManageUsers = isSuperAdmin || isOrgAdmin || isFacilityAdmin;
 
-  const generateRandomPassword = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%';
-    let res = 'ASC-';
-    for (let i = 0; i < 8; i++) {
-      res += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return res;
-  };
+  // Roles assignable by current actor
+  const assignableRoles = rbacService.getAssignableRoles(currentRole);
 
-  const loadUsers = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch real memberships from facility_memberships
-      const memberships = await rbacService.listUsers(activeFacility?.id);
+      // 1. Fetch facilities list
+      const facList = await db.getFacilities();
+      setFacilities(facList || []);
 
-      // 2. Fetch real user accounts from public.users
-      let publicUsers = [];
-      try {
-        const { data } = await supabase
-          .from('users')
-          .select('id, name, email, role, avatar');
-        if (data && data.length > 0) {
-          publicUsers = data;
-        }
-      } catch (e) {
-        console.warn('Could not query public.users:', e);
+      // 2. Fetch users based on role and active facility filter
+      let userList = [];
+      if (isSuperAdmin && (selectedFacilityFilter === 'all' || !selectedFacilityFilter)) {
+        userList = await rbacService.listAllUsers({
+          role: selectedRoleFilter,
+          status: selectedStatusFilter
+        });
+      } else {
+        const targetFacId = (selectedFacilityFilter && selectedFacilityFilter !== 'all')
+          ? selectedFacilityFilter
+          : activeFacility?.id;
+        userList = await rbacService.listUsers(targetFacId);
       }
 
-      // 3. Map strictly real database users (zero artificial extra users)
-      let combined = [];
+      // Map users
+      const mapped = (userList || []).map(mem => {
+        const facObj = (facList || []).find(f => f.id === mem.facility_id) || mem.facilities;
+        return {
+          id: mem.id,
+          user_id: mem.user_id,
+          name: mem.name || (mem.title ? `${mem.title} (${mem.department || 'Staff'})` : (mem.email ? mem.email.split('@')[0] : 'Staff User')),
+          email: mem.email || (mem.user_id === session?.id ? session?.email : 'staff@asc.com'),
+          role: rbacService.normalizeRole(mem.role),
+          role_id: mem.role_id,
+          facility_id: mem.facility_id,
+          facility_name: facObj?.name || 'Surgical Center',
+          department: mem.department || 'General Operations',
+          title: mem.title || 'Staff Member',
+          is_active: mem.is_active !== false,
+          created_at: mem.created_at || new Date().toISOString()
+        };
+      });
 
-      if (memberships && memberships.length > 0) {
-        combined = memberships.map(mem => {
-          // Cross-reference with public.users or active session
-          const userObj = publicUsers.find(u => 
-            String(u.id) === String(mem.user_id) || 
-            (u.email && session?.email && u.email.toLowerCase() === session.email.toLowerCase())
-          );
-          const isSessionAdmin = mem.user_id === session?.id || mem.role === 'facility_admin';
-
-          return {
-            id: mem.id,
-            user_id: mem.user_id,
-            name: mem.name || userObj?.name || (isSessionAdmin ? (session?.name || 'Admin Director') : 'Staff User'),
-            email: mem.email || userObj?.email || (isSessionAdmin ? (session?.email || 'admin@asc.com') : 'user@asc.com'),
-            role: mem.role || userObj?.role || 'facility_admin',
-            department: mem.department || 'Executive Administration',
-            title: mem.title || 'Executive Director',
-            password: isSessionAdmin ? 'admin123' : (mem.password || 'asc2026!Staff'),
-            is_active: mem.is_active !== false,
-            created_at: mem.created_at || new Date().toISOString()
-          };
-        });
-      } else if (publicUsers.length > 0) {
-        combined = publicUsers.map(u => ({
-          id: `usr-${u.id}`,
-          user_id: u.id,
-          name: u.name || 'Admin Director',
-          email: u.email || 'admin@asc.com',
-          role: u.role || 'facility_admin',
+      // If mapped list is empty, include logged-in session user so table is never artificially empty
+      if (mapped.length === 0 && session) {
+        mapped.push({
+          id: 'mem-session',
+          user_id: session.id || '00000000-0000-0000-0000-000000000001',
+          name: session.name || 'Admin Director',
+          email: session.email || 'admin@asc.com',
+          role: currentRole,
+          facility_id: activeFacility?.id || '00000000-0000-0000-0000-000000000002',
+          facility_name: activeFacility?.name || 'Naples Surgery Center',
           department: 'Executive Administration',
           title: 'Executive Director',
-          password: u.email === 'admin@asc.com' ? 'admin123' : 'asc2026!Staff',
-          is_active: true,
-          created_at: u.created_at || new Date().toISOString()
-        }));
-      } else {
-        // Fallback to active logged in session
-        combined = [{
-          id: 'mem-admin',
-          user_id: session?.id || '1',
-          name: session?.name || 'Admin Director',
-          email: session?.email || 'admin@asc.com',
-          role: session?.role || 'facility_admin',
-          department: 'Executive Administration',
-          title: 'Executive Director',
-          password: 'admin123',
           is_active: true,
           created_at: new Date().toISOString()
-        }];
+        });
       }
 
-      setUsers(combined);
+      setUsers(mapped);
     } catch (err) {
       console.warn('Could not load user memberships:', err);
     } finally {
@@ -128,125 +132,277 @@ export default function UserManagement({ activeFacility, theme = 'light' }) {
   };
 
   useEffect(() => {
-    loadUsers();
-  }, [activeFacility]);
+    let active = true;
+    const fetchUsers = async () => {
+      try {
+        const facList = await db.getFacilities();
+        if (!active) return;
+        setFacilities(facList || []);
 
-  const togglePasswordReveal = (userId) => {
-    setRevealedPasswords(prev => ({
-      ...prev,
-      [userId]: !prev[userId]
-    }));
-  };
+        let userList = [];
+        if (isSuperAdmin && (selectedFacilityFilter === 'all' || !selectedFacilityFilter)) {
+          userList = await rbacService.listAllUsers({
+            role: selectedRoleFilter,
+            status: selectedStatusFilter
+          });
+        } else {
+          const targetFacId = (selectedFacilityFilter && selectedFacilityFilter !== 'all')
+            ? selectedFacilityFilter
+            : activeFacility?.id;
+          userList = await rbacService.listUsers(targetFacId);
+        }
 
-  const copyToClipboard = (text, id) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
+        if (!active) return;
 
-  const handleResetPassword = async (user) => {
-    const { value: newPass } = await Swal.fire({
-      title: `Reset Password for ${user.name || user.email}`,
-      text: 'Enter a new password or temporary credential for this staff account:',
-      input: 'text',
-      inputValue: generateRandomPassword(),
-      inputAttributes: {
-        autocapitalize: 'off',
-        autocorrect: 'off'
-      },
-      showCancelButton: true,
-      confirmButtonText: 'Save New Password',
-      confirmButtonColor: '#3b82f6',
-      background: 'var(--bg-card)',
-      color: 'var(--text-primary)'
+        const mapped = (userList || []).map(mem => {
+          const facObj = (facList || []).find(f => f.id === mem.facility_id) || mem.facilities;
+          return {
+            id: mem.id,
+            user_id: mem.user_id,
+            name: mem.name || (mem.title ? `${mem.title} (${mem.department || 'Staff'})` : (mem.email ? mem.email.split('@')[0] : 'Staff User')),
+            email: mem.email || (mem.user_id === session?.id ? session?.email : 'staff@asc.com'),
+            role: rbacService.normalizeRole(mem.role),
+            role_id: mem.role_id,
+            facility_id: mem.facility_id,
+            facility_name: facObj?.name || 'Surgical Center',
+            department: mem.department || 'General Operations',
+            title: mem.title || 'Staff Member',
+            is_active: mem.is_active !== false,
+            created_at: mem.created_at || new Date().toISOString()
+          };
+        });
+
+        if (mapped.length === 0 && session) {
+          mapped.push({
+            id: 'mem-session',
+            user_id: session.id || '00000000-0000-0000-0000-000000000001',
+            name: session.name || 'Admin Director',
+            email: session.email || 'admin@asc.com',
+            role: currentRole,
+            facility_id: activeFacility?.id || '00000000-0000-0000-0000-000000000002',
+            facility_name: activeFacility?.name || 'Naples Surgery Center',
+            department: 'Executive Administration',
+            title: 'Executive Director',
+            is_active: true,
+            created_at: new Date().toISOString()
+          });
+        }
+
+        setUsers(mapped);
+      } catch (err) {
+        console.warn('Could not load user memberships:', err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    fetchUsers();
+    return () => {
+      active = false;
+    };
+  }, [activeFacility?.id, activeFacility?.name, selectedFacilityFilter, selectedRoleFilter, selectedStatusFilter, isSuperAdmin, currentRole, session]);
+
+  // Open Edit User Modal
+  const openEditModal = (u) => {
+    setSelectedUser(u);
+    setEditForm({
+      name: u.name || '',
+      email: u.email || '',
+      department: u.department || '',
+      title: u.title || ''
     });
-
-    if (newPass && newPass.trim()) {
-      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, password: newPass.trim() } : u));
-      Swal.fire({
-        title: 'Password Updated',
-        html: `Password for <b>${user.email}</b> is now:<br/><code style="font-size:1.1rem;color:#3b82f6;font-weight:700;">${newPass.trim()}</code>`,
-        icon: 'success',
-        background: 'var(--bg-card)',
-        color: 'var(--text-primary)'
-      });
-    }
+    setIsEditOpen(true);
   };
 
-  const handleInviteSubmit = async (e) => {
+  // Open Change Role Dialog
+  const openChangeRoleModal = (u) => {
+    setSelectedUser(u);
+    setRoleForm({
+      newRole: u.role
+    });
+    setIsChangeRoleOpen(true);
+  };
+
+  // Open Reassign Facility Dialog (Super Admin)
+  const openReassignModal = (u) => {
+    setSelectedUser(u);
+    const otherFacs = facilities.filter(f => f.id !== u.facility_id);
+    setReassignForm({
+      targetFacilityId: otherFacs[0]?.id || '',
+      newRole: u.role,
+      department: u.department || '',
+      title: u.title || ''
+    });
+    setIsReassignOpen(true);
+  };
+
+  // Submit User Profile Edit
+  const handleEditSubmit = async (e) => {
     e.preventDefault();
-    if (!inviteForm.email || !inviteForm.email.includes('@')) {
-      Swal.fire('Invalid Email', 'Please enter a valid email address.', 'error');
+    if (!editForm.name.trim()) {
+      Swal.fire('Required Field', 'Name cannot be empty.', 'warning');
       return;
     }
 
+    setSaving(true);
     try {
-      const assignedPassword = inviteForm.password.trim() || generateRandomPassword();
-      const newMem = {
-        id: `mem-${Date.now()}`,
-        user_id: `usr-${Date.now()}`,
-        name: `${inviteForm.firstName.trim()} ${inviteForm.lastName.trim()}`.trim() || inviteForm.email.split('@')[0],
-        email: inviteForm.email.trim().toLowerCase(),
-        role: inviteForm.role,
-        department: inviteForm.department,
-        title: inviteForm.title,
-        password: assignedPassword,
-        is_active: true,
-        created_at: new Date().toISOString()
-      };
-
-      await rbacService.inviteUser({
-        email: inviteForm.email,
-        name: newMem.name,
-        role: inviteForm.role,
-        department: inviteForm.department,
-        title: inviteForm.title,
-        facilityId: activeFacility?.id
-      }).catch(() => {});
-
-      setUsers(prev => [newMem, ...prev]);
-      setIsInviteOpen(false);
-      setInviteForm({
-        firstName: '',
-        lastName: '',
-        email: '',
-        department: 'Operating Room',
-        title: 'Staff Member',
-        role: 'scheduler',
-        password: 'asc2026!Staff'
+      await rbacService.updateMembership(selectedUser.id, {
+        department: editForm.department.trim(),
+        title: editForm.title.trim()
       });
 
+      setIsEditOpen(false);
       Swal.fire({
-        title: 'User Provisioned & Activated',
-        html: `
-          <div style="text-align: left; padding: 12px; background: rgba(0,0,0,0.04); border-radius: 8px; font-size: 0.9rem;">
-            <div><strong>User:</strong> ${newMem.name}</div>
-            <div><strong>Email / Login:</strong> <code>${newMem.email}</code></div>
-            <div><strong>Assigned Role:</strong> ${newMem.role}</div>
-            <div style="margin-top: 8px;"><strong>Initial Password:</strong> <code style="color: #3b82f6; font-weight: 700;">${assignedPassword}</code></div>
-          </div>
-        `,
         icon: 'success',
-        background: 'var(--bg-card)',
-        color: 'var(--text-primary)',
-        confirmButtonText: 'Done'
+        title: 'Profile Updated',
+        text: 'User profile details saved successfully.',
+        timer: 1600,
+        showConfirmButton: false
       });
+      await loadData();
     } catch (err) {
-      Swal.fire('Error', err.message || 'Failed to invite user.', 'error');
+      console.error('Update profile error:', err);
+      Swal.fire('Error', err.message || 'Failed to update user profile.', 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
+  // Submit Role Change
+  const handleRoleChangeSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedUser) return;
+
+    if (selectedUser.role === roleForm.newRole) {
+      setIsChangeRoleOpen(false);
+      return;
+    }
+
+    // Anti-Escalation: Prevent self role edit
+    if (selectedUser.user_id === session?.id && !isSuperAdmin) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Privilege Escalation Prohibited',
+        text: 'Users are strictly forbidden from modifying their own roles.'
+      });
+      return;
+    }
+
+    const confirm = await Swal.fire({
+      title: 'Confirm Role Change',
+      html: `Change role for <b>${selectedUser.name || selectedUser.email}</b> from <code>${selectedUser.role}</code> to <code>${roleForm.newRole}</code>?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Confirm Role Change',
+      confirmButtonColor: '#2563eb',
+      cancelButtonColor: '#64748b'
+    });
+
+    if (confirm.isConfirmed) {
+      setSaving(true);
+      try {
+        const targetRoleObj = CANONICAL_ROLES.find(r => r.slug === roleForm.newRole);
+        await rbacService.updateMembership(selectedUser.id, {
+          role: roleForm.newRole,
+          role_id: targetRoleObj?.id || null
+        });
+
+        setIsChangeRoleOpen(false);
+        Swal.fire({
+          icon: 'success',
+          title: 'Role Updated',
+          text: `Role updated to ${targetRoleObj?.name || roleForm.newRole}.`,
+          timer: 1800,
+          showConfirmButton: false
+        });
+        await loadData();
+      } catch (err) {
+        console.error('Role update error:', err);
+        Swal.fire('Error', err.message || 'Failed to update role.', 'error');
+      } finally {
+        setSaving(false);
+      }
+    }
+  };
+
+  // Submit Facility Reassignment
+  const handleReassignSubmit = async (e) => {
+    e.preventDefault();
+    if (!reassignForm.targetFacilityId) {
+      Swal.fire('Select Facility', 'Please select a destination facility.', 'warning');
+      return;
+    }
+
+    const targetFac = facilities.find(f => f.id === reassignForm.targetFacilityId);
+
+    const confirm = await Swal.fire({
+      title: 'Reassign Facility Access?',
+      html: `<div style="text-align: left; font-size: 0.9rem; color: #475569;">
+               <p>Reassigning <b>${selectedUser.name || selectedUser.email}</b>:</p>
+               <ul>
+                 <li>From: <b>${selectedUser.facility_name}</b></li>
+                 <li>To: <b>${targetFac?.name || 'Selected Facility'}</b></li>
+                 <li>Role at new facility: <code>${reassignForm.newRole}</code></li>
+               </ul>
+               <p style="color: #dc2626; font-size: 0.82rem;">Access to the previous facility will be immediately revoked.</p>
+             </div>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#2563eb',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Confirm Reassignment'
+    });
+
+    if (confirm.isConfirmed) {
+      setSaving(true);
+      try {
+        await rbacService.reassignUserFacility({
+          userId: selectedUser.user_id,
+          fromFacilityId: selectedUser.facility_id,
+          toFacilityId: reassignForm.targetFacilityId,
+          newRole: reassignForm.newRole,
+          department: reassignForm.department,
+          title: reassignForm.title
+        });
+
+        setIsReassignOpen(false);
+        Swal.fire({
+          icon: 'success',
+          title: 'Facility Reassigned',
+          text: `User access transferred to ${targetFac?.name}.`,
+          timer: 1800,
+          showConfirmButton: false
+        });
+        await loadData();
+      } catch (err) {
+        console.error('Reassign facility error:', err);
+        Swal.fire('Reassignment Failed', err.message || 'Could not complete reassignment.', 'error');
+      } finally {
+        setSaving(false);
+      }
+    }
+  };
+
+  // Toggle User Active Status (Activation / Deactivation)
   const handleToggleActive = async (user) => {
-    // Last Admin Protection Check
+    // Single Super Admin Protection Check
+    if (user.role === 'super_admin' && user.is_active) {
+      Swal.fire({
+        title: 'Action Prohibited',
+        text: 'Administrative Safeguard: The Global Super Admin account cannot be deactivated.',
+        icon: 'warning'
+      });
+      return;
+    }
+
+    // Last Facility Admin Protection Check
     if (user.role === 'facility_admin' && user.is_active) {
-      const activeAdmins = users.filter(u => u.role === 'facility_admin' && u.is_active);
+      const activeAdmins = users.filter(u => u.facility_id === user.facility_id && u.role === 'facility_admin' && u.is_active);
       if (activeAdmins.length <= 1) {
         Swal.fire({
           title: 'Action Prohibited',
           text: 'Administrative Safeguard: You cannot deactivate the sole remaining Facility Administrator for this facility.',
-          icon: 'warning',
-          background: 'var(--bg-card)',
-          color: 'var(--text-primary)'
+          icon: 'warning'
         });
         return;
       }
@@ -255,552 +411,698 @@ export default function UserManagement({ activeFacility, theme = 'light' }) {
     const actionText = user.is_active ? 'deactivate' : 'reactivate';
     const confirm = await Swal.fire({
       title: `${actionText === 'deactivate' ? 'Deactivate' : 'Reactivate'} User?`,
-      text: `Are you sure you want to ${actionText} access for ${user.email}?`,
-      icon: 'question',
+      html: `<p>Are you sure you want to <b>${actionText}</b> account access for <b>${user.name || user.email}</b>?</p>
+             ${user.is_active ? '<p style="font-size:0.82rem;color:#dc2626;">Deactivated users will immediately lose access to clinical and operational data.</p>' : ''}`,
+      icon: user.is_active ? 'warning' : 'question',
       showCancelButton: true,
-      confirmButtonText: `Yes, ${actionText}`,
-      confirmButtonColor: user.is_active ? '#ef4444' : '#10b981',
-      background: 'var(--bg-card)',
-      color: 'var(--text-primary)'
+      confirmButtonColor: user.is_active ? '#dc2626' : '#2563eb',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: user.is_active ? 'Deactivate Account' : 'Reactivate Account'
     });
 
     if (confirm.isConfirmed) {
       try {
-        await rbacService.updateMembership(user.id, { is_active: !user.is_active }).catch(() => {});
-        setUsers(prev => prev.map(u => u.id === user.id ? { ...u, is_active: !u.is_active } : u));
-        Swal.fire('Updated', `User account status has been changed.`, 'success');
+        await rbacService.toggleUserActive(user.id, !user.is_active);
+        Swal.fire({
+          icon: 'success',
+          title: user.is_active ? 'Account Deactivated' : 'Account Reactivated',
+          text: `Account status updated for ${user.email}.`,
+          timer: 1600,
+          showConfirmButton: false
+        });
+        await loadData();
       } catch (err) {
+        console.error('Toggle active status error:', err);
         Swal.fire('Error', err.message || 'Failed to update user status.', 'error');
       }
     }
   };
 
-  // Fixed search filter: matches all users when search query is empty
-  const filteredUsers = users.filter(u => {
-    const q = searchQuery.toLowerCase().trim();
-    const matchesSearch = !q ||
-      (u.name && u.name.toLowerCase().includes(q)) ||
-      (u.email && u.email.toLowerCase().includes(q)) ||
-      (u.department && u.department.toLowerCase().includes(q)) ||
-      (u.role && u.role.toLowerCase().includes(q));
-    const matchesRole = selectedRoleFilter === 'all' || rbacService.normalizeRole(u.role) === selectedRoleFilter;
-    return matchesSearch && matchesRole;
-  });
+  // Submit User Invitation / Creation (Zero Plaintext Passwords)
+  const handleInviteSubmit = async (e) => {
+    e.preventDefault();
+    if (!inviteForm.email || !inviteForm.email.includes('@')) {
+      Swal.fire('Invalid Email', 'Please enter a valid email address.', 'warning');
+      return;
+    }
 
-  const getRoleBadgeColor = (roleStr) => {
-    const r = rbacService.normalizeRole(roleStr);
-    switch (r) {
-      case 'super_admin':
-      case 'org_admin': return { bg: 'rgba(168, 85, 247, 0.15)', text: '#a855f7', border: 'rgba(168, 85, 247, 0.3)' };
-      case 'facility_admin': return { bg: 'rgba(59, 130, 246, 0.15)', text: '#3b82f6', border: 'rgba(59, 130, 246, 0.3)' };
-      case 'cfo': return { bg: 'rgba(16, 185, 129, 0.15)', text: '#10b981', border: 'rgba(16, 185, 129, 0.3)' };
-      case 'clinical_manager': return { bg: 'rgba(14, 165, 233, 0.15)', text: '#0ea5e9', border: 'rgba(14, 165, 233, 0.3)' };
-      case 'scheduler': return { bg: 'rgba(245, 158, 11, 0.15)', text: '#f59e0b', border: 'rgba(245, 158, 11, 0.3)' };
-      case 'biller':
-      case 'coder': return { bg: 'rgba(234, 88, 12, 0.15)', text: '#ea580c', border: 'rgba(234, 88, 12, 0.3)' };
-      case 'surgeon': return { bg: 'rgba(99, 102, 241, 0.15)', text: '#6366f1', border: 'rgba(99, 102, 241, 0.3)' };
-      default: return { bg: 'rgba(100, 116, 139, 0.15)', text: '#64748b', border: 'rgba(100, 116, 139, 0.3)' };
+    const targetFacId = inviteForm.facilityId || activeFacility?.id || (facilities[0]?.id);
+    if (!targetFacId) {
+      Swal.fire('Facility Required', 'Please choose a facility for this user.', 'warning');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const fullName = `${inviteForm.firstName.trim()} ${inviteForm.lastName.trim()}`.trim();
+      await rbacService.inviteUser({
+        email: inviteForm.email.trim().toLowerCase(),
+        name: fullName || inviteForm.email.split('@')[0],
+        role: inviteForm.role,
+        department: inviteForm.department.trim(),
+        title: inviteForm.title.trim(),
+        facilityId: targetFacId
+      });
+
+      setIsInviteOpen(false);
+      setInviteForm({
+        firstName: '',
+        lastName: '',
+        email: '',
+        facilityId: '',
+        role: 'scheduler',
+        department: 'Operating Room',
+        title: 'Staff Member'
+      });
+
+      Swal.fire({
+        icon: 'success',
+        title: 'User Invitation Dispatched',
+        html: `<div style="text-align: left; font-size: 0.9rem; color: #475569;">
+                 <p>User <b>${fullName || inviteForm.email}</b> has been provisioned.</p>
+                 <p>Assigned Role: <code>${inviteForm.role}</code></p>
+                 <p style="font-size: 0.82rem; color: #059669;">Zero-secret provisioning: An invitation has been dispatched through Supabase Auth without cleartext credentials.</p>
+               </div>`,
+        confirmButtonText: 'Done'
+      });
+      await loadData();
+    } catch (err) {
+      console.error('Invite user error:', err);
+      Swal.fire('Error', err.message || 'Failed to provision user.', 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
+  // Filter & Search
+  const filteredUsers = users.filter(u => {
+    const q = searchQuery.toLowerCase();
+    const matchesSearch = (
+      (u.name || '').toLowerCase().includes(q) ||
+      (u.email || '').toLowerCase().includes(q) ||
+      (u.department || '').toLowerCase().includes(q) ||
+      (u.title || '').toLowerCase().includes(q) ||
+      (u.role || '').toLowerCase().includes(q)
+    );
+
+    const matchesRole = selectedRoleFilter === 'all' || u.role === selectedRoleFilter;
+    const matchesStatus = (
+      selectedStatusFilter === 'all' ||
+      (selectedStatusFilter === 'active' && u.is_active) ||
+      (selectedStatusFilter === 'inactive' && !u.is_active)
+    );
+
+    return matchesSearch && matchesRole && matchesStatus;
+  }).sort((a, b) => {
+    if (sortBy === 'name') return (a.name || '').localeCompare(b.name || '');
+    if (sortBy === 'role') return (a.role || '').localeCompare(b.role || '');
+    if (sortBy === 'facility') return (a.facility_name || '').localeCompare(b.facility_name || '');
+    return 0;
+  });
+
   return (
-    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* Header Bar */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '16px',
-        backgroundColor: 'var(--bg-card)',
-        padding: '20px 24px',
-        borderRadius: '16px',
-        border: '1px solid var(--border-color)',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{
-            width: '46px',
-            height: '46px',
-            borderRadius: '12px',
-            backgroundColor: 'rgba(59, 130, 246, 0.12)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--color-blue, #3b82f6)'
-          }}>
-            <Users size={24} />
-          </div>
-          <div>
-            <h2 style={{ fontSize: '1.35rem', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
-              User Accounts & Facility Memberships
-            </h2>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              <Building2 size={14} />
-              <span>{activeFacility?.name || 'Naples Surgery Center'}</span>
-              <span>•</span>
-              <span><strong>{users.length}</strong> registered staff & provider accounts</span>
-            </div>
-          </div>
+    <div className="user-mgmt-container">
+      {/* Header */}
+      <div className="user-mgmt-header">
+        <div className="user-mgmt-titles">
+          <h2>
+            <Users size={26} style={{ color: '#2563eb' }} />
+            User Accounts & Facility Memberships
+          </h2>
+          <p>
+            Manage staff profiles, authorized role tiers, facility assignments, and activation statuses.
+          </p>
         </div>
 
-        <button
-          onClick={() => setIsInviteOpen(true)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 20px',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-            color: '#fff',
-            border: 'none',
-            fontWeight: '600',
-            fontSize: '0.9rem',
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
-            transition: 'all 0.2s'
-          }}
-        >
-          <UserPlus size={16} />
-          <span>Invite / Provision User</span>
-        </button>
+        <div className="user-mgmt-actions">
+          <button className="btn-secondary" onClick={loadData} title="Refresh User Directory">
+            <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+            Refresh
+          </button>
+
+          {canManageUsers && (
+            <button className="btn-primary" onClick={() => setIsInviteOpen(true)}>
+              <UserPlus size={16} />
+              Invite / Provision User
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Filter and Search Row */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '12px'
-      }}>
-        <div style={{ position: 'relative', width: '340px', maxWidth: '100%' }}>
-          <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+      {/* Control Bar: Search & Filters */}
+      <div className="user-controls-bar">
+        <div className="user-search-box">
+          <Search size={16} className="user-search-icon" />
           <input
             type="text"
-            placeholder="Search by name, email, department, or role..."
+            className="user-search-input"
+            placeholder="Search by name, email, role, or department..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '9px 12px 9px 38px',
-              borderRadius: '8px',
-              border: '1px solid var(--border-color)',
-              background: 'var(--bg-card)',
-              color: 'var(--text-primary)',
-              fontSize: '0.88rem',
-              outline: 'none'
-            }}
           />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Filter size={15} style={{ color: 'var(--text-muted)' }} />
+        <div className="user-filters-group">
+          {/* Facility Filter (Super Admin sees all facilities) */}
+          {isSuperAdmin && (
+            <select
+              className="user-filter-select"
+              value={selectedFacilityFilter}
+              onChange={(e) => setSelectedFacilityFilter(e.target.value)}
+            >
+              <option value="all">All Facilities</option>
+              {facilities.map(f => (
+                <option key={f.id} value={f.id}>{f.name}</option>
+              ))}
+            </select>
+          )}
+
+          {/* Role Filter */}
           <select
+            className="user-filter-select"
             value={selectedRoleFilter}
             onChange={(e) => setSelectedRoleFilter(e.target.value)}
-            style={{
-              padding: '8px 14px',
-              borderRadius: '8px',
-              border: '1px solid var(--border-color)',
-              background: 'var(--bg-card)',
-              color: 'var(--text-primary)',
-              fontSize: '0.85rem',
-              outline: 'none',
-              cursor: 'pointer'
-            }}
           >
-            <option value="all">All Roles ({users.length})</option>
+            <option value="all">All Roles</option>
             {CANONICAL_ROLES.map(r => (
               <option key={r.slug} value={r.slug}>{r.name}</option>
             ))}
           </select>
+
+          {/* Status Filter */}
+          <select
+            className="user-filter-select"
+            value={selectedStatusFilter}
+            onChange={(e) => setSelectedStatusFilter(e.target.value)}
+          >
+            <option value="all">All Statuses</option>
+            <option value="active">Active Only</option>
+            <option value="inactive">Inactive Only</option>
+          </select>
+
+          {/* Sort By */}
+          <select
+            className="user-filter-select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="name">Sort by Name</option>
+            <option value="role">Sort by Role</option>
+            <option value="facility">Sort by Facility</option>
+          </select>
         </div>
       </div>
 
-      {/* User Directory Table */}
-      <div style={{
-        backgroundColor: 'var(--bg-card)',
-        borderRadius: '16px',
-        border: '1px solid var(--border-color)',
-        overflow: 'hidden',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
-      }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
-            <thead>
-              <tr style={{
-                backgroundColor: 'rgba(0,0,0,0.02)',
-                borderBottom: '1px solid var(--border-color)',
-                color: 'var(--text-secondary)',
-                fontWeight: '600',
-                textTransform: 'uppercase',
-                fontSize: '0.75rem',
-                letterSpacing: '0.5px'
-              }}>
-                <th style={{ padding: '14px 20px' }}>User / Identity</th>
-                <th style={{ padding: '14px 16px' }}>Assigned Role</th>
-                <th style={{ padding: '14px 16px' }}>Department</th>
-                <th style={{ padding: '14px 16px' }}>Access Credentials / Password</th>
-                <th style={{ padding: '14px 16px' }}>Status</th>
-                <th style={{ padding: '14px 20px', textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.length === 0 ? (
+      {/* Users Directory Table */}
+      <div className="user-table-card">
+        {loading ? (
+          <div style={{ padding: '64px', textAlign: 'center', color: '#64748b' }}>
+            <RefreshCw size={32} className="animate-spin" style={{ margin: '0 auto 16px', display: 'block', color: '#3b82f6' }} />
+            Loading staff accounts...
+          </div>
+        ) : filteredUsers.length === 0 ? (
+          <div style={{ padding: '64px', textAlign: 'center', color: '#64748b' }}>
+            <Users size={48} style={{ color: '#cbd5e1', margin: '0 auto 12px', display: 'block' }} />
+            <h4 style={{ margin: '0 0 6px 0', color: '#0f172a' }}>No Staff Accounts Found</h4>
+            <p style={{ margin: 0, fontSize: '0.88rem' }}>No accounts matched your search and filter criteria.</p>
+          </div>
+        ) : (
+          <div className="user-table-responsive">
+            <table className="user-data-table">
+              <thead>
                 <tr>
-                  <td colSpan={6} style={{ padding: '36px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                    No user accounts match the current filter criteria.
-                  </td>
+                  <th>User & Contact</th>
+                  <th>Assigned Facility</th>
+                  <th>Role Tier</th>
+                  <th>Department & Title</th>
+                  <th>Account Status</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
-              ) : (
-                filteredUsers.map((user, idx) => {
-                  const badge = getRoleBadgeColor(user.role);
-                  const canonicalObj = CANONICAL_ROLES.find(r => r.slug === rbacService.normalizeRole(user.role));
-                  const isRevealed = revealedPasswords[user.id];
-                  const userPass = user.password || 'asc2026!Staff';
-
+              </thead>
+              <tbody>
+                {filteredUsers.map(u => {
+                  const roleObj = CANONICAL_ROLES.find(r => r.slug === u.role) || { name: u.role };
                   return (
-                    <tr
-                      key={user.id || idx}
-                      style={{
-                        borderBottom: '1px solid var(--border-light)',
-                        transition: 'background 0.15s'
-                      }}
-                    >
-                      <td style={{ padding: '14px 20px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div style={{
-                            width: '38px',
-                            height: '38px',
-                            borderRadius: '50%',
-                            backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                            color: 'var(--color-blue, #3b82f6)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: '700',
-                            fontSize: '0.85rem'
-                          }}>
-                            {user.name ? user.name.slice(0, 2).toUpperCase() : 'US'}
+                    <tr key={u.id}>
+                      {/* Name & Email */}
+                      <td>
+                        <div className="user-profile-cell">
+                          <div className="user-avatar-circle">
+                            {u.name?.slice(0, 2).toUpperCase() || 'US'}
                           </div>
-                          <div>
-                            <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{user.name || 'User Account'}</div>
-                            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{user.email}</div>
+                          <div className="user-name-box">
+                            <span className="user-full-name">{u.name}</span>
+                            <span className="user-email-text">{u.email}</span>
                           </div>
                         </div>
                       </td>
 
-                      <td style={{ padding: '14px 16px' }}>
-                        <span style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          padding: '4px 10px',
-                          borderRadius: '12px',
-                          fontSize: '0.75rem',
-                          fontWeight: '700',
-                          backgroundColor: badge.bg,
-                          color: badge.text,
-                          border: `1px solid ${badge.border}`
-                        }}>
+                      {/* Facility */}
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: '500' }}>
+                          <Building2 size={14} style={{ color: '#64748b' }} />
+                          <span>{u.facility_name}</span>
+                        </div>
+                      </td>
+
+                      {/* Role Badge */}
+                      <td>
+                        <span className={`role-badge role-${u.role.replace(/_/g, '-')}`}>
                           <Shield size={12} />
-                          {canonicalObj?.name || user.role}
+                          {roleObj.name}
                         </span>
                       </td>
 
-                      <td style={{ padding: '14px 16px', color: 'var(--text-primary)' }}>
-                        <div>{user.department || 'Clinical Operations'}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{user.title || 'Staff Member'}</div>
-                      </td>
-
-                      {/* Password / Credentials Column */}
-                      <td style={{ padding: '14px 16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            padding: '4px 8px',
-                            borderRadius: '6px',
-                            backgroundColor: 'var(--bg-toggle, rgba(0,0,0,0.04))',
-                            border: '1px solid var(--border-color)',
-                            fontSize: '0.8rem',
-                            fontFamily: 'monospace',
-                            color: isRevealed ? '#3b82f6' : 'var(--text-secondary)'
-                          }}>
-                            <Key size={12} style={{ color: 'var(--text-muted)' }} />
-                            <span>{isRevealed ? userPass : '••••••••'}</span>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => togglePasswordReveal(user.id)}
-                            title={isRevealed ? 'Hide Password' : 'Show Password'}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: 'var(--text-muted)',
-                              cursor: 'pointer',
-                              padding: '4px',
-                              display: 'flex',
-                              alignItems: 'center'
-                            }}
-                          >
-                            {isRevealed ? <EyeOff size={14} /> : <Eye size={14} />}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => copyToClipboard(userPass, user.id)}
-                            title="Copy Password"
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: copiedId === user.id ? '#10b981' : 'var(--text-muted)',
-                              cursor: 'pointer',
-                              padding: '4px',
-                              display: 'flex',
-                              alignItems: 'center'
-                            }}
-                          >
-                            {copiedId === user.id ? <Check size={14} /> : <Copy size={14} />}
-                          </button>
+                      {/* Dept & Title */}
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontWeight: '500', fontSize: '0.85rem' }}>{u.title || 'Staff Member'}</span>
+                          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{u.department || 'General'}</span>
                         </div>
                       </td>
 
-                      <td style={{ padding: '14px 16px' }}>
-                        {user.is_active ? (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#10b981', fontWeight: '600', fontSize: '0.8rem' }}>
-                            <CheckCircle2 size={14} /> Active
-                          </span>
-                        ) : (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#ef4444', fontWeight: '600', fontSize: '0.8rem' }}>
-                            <XCircle size={14} /> Suspended
-                          </span>
-                        )}
+                      {/* Status */}
+                      <td>
+                        <span className={`status-pill ${u.is_active ? 'status-active' : 'status-inactive'}`}>
+                          {u.is_active ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
+                          {u.is_active ? 'Active' : 'Inactive'}
+                        </span>
                       </td>
 
-                      <td style={{ padding: '14px 20px', textAlign: 'right' }}>
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                          <button
-                            onClick={() => handleResetPassword(user)}
-                            title="Reset User Password"
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              padding: '6px 10px',
-                              borderRadius: '6px',
-                              border: '1px solid var(--border-color)',
-                              backgroundColor: 'transparent',
-                              color: 'var(--color-blue, #3b82f6)',
-                              fontSize: '0.78rem',
-                              fontWeight: '600',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <RefreshCw size={12} /> Reset Pass
-                          </button>
+                      {/* Actions */}
+                      <td style={{ textAlign: 'right' }}>
+                        <div className="user-action-buttons" style={{ justifyContent: 'flex-end' }}>
+                          {canManageUsers && (
+                            <>
+                              <button
+                                className="btn-icon-action"
+                                onClick={() => openEditModal(u)}
+                                title="Edit profile details"
+                              >
+                                <Edit3 size={14} />
+                              </button>
 
-                          <button
-                            onClick={() => handleToggleActive(user)}
-                            style={{
-                              padding: '6px 12px',
-                              borderRadius: '6px',
-                              border: '1px solid var(--border-color)',
-                              backgroundColor: user.is_active ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
-                              color: user.is_active ? '#ef4444' : '#10b981',
-                              fontSize: '0.78rem',
-                              fontWeight: '600',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            {user.is_active ? 'Deactivate' : 'Reactivate'}
-                          </button>
+                              <button
+                                className="btn-icon-action"
+                                onClick={() => openChangeRoleModal(u)}
+                                title="Change role"
+                              >
+                                <Shield size={14} />
+                              </button>
+
+                              {isSuperAdmin && (
+                                <button
+                                  className="btn-icon-action"
+                                  onClick={() => openReassignModal(u)}
+                                  title="Reassign to another facility"
+                                >
+                                  <MoveRight size={14} />
+                                </button>
+                              )}
+
+                              <button
+                                className={`btn-icon-action ${u.is_active ? 'btn-icon-danger' : ''}`}
+                                onClick={() => handleToggleActive(u)}
+                                title={u.is_active ? 'Deactivate account' : 'Reactivate account'}
+                              >
+                                {u.is_active ? <XCircle size={14} /> : <CheckCircle2 size={14} />}
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
                   );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {/* Invite / Provision Modal */}
+      {/* MODAL: INVITE / PROVISION USER */}
       {isInviteOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-          padding: '16px'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--bg-card)',
-            borderRadius: '16px',
-            width: '520px',
-            maxWidth: '100%',
-            padding: '24px',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-            border: '1px solid var(--border-color)'
-          }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.25rem', color: 'var(--text-primary)' }}>
-              Invite / Provision Staff Member
-            </h3>
+        <div className="user-modal-backdrop" onClick={() => setIsInviteOpen(false)}>
+          <div className="user-modal-card" onClick={e => e.stopPropagation()}>
+            <div className="user-modal-header">
+              <h3>
+                <UserPlus size={20} style={{ color: '#2563eb' }} />
+                Invite / Provision Staff Account
+              </h3>
+              <button className="modal-close-btn" onClick={() => setIsInviteOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
 
-            <form onSubmit={handleInviteSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '4px' }}>First Name</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Sarah"
-                    value={inviteForm.firstName}
-                    onChange={(e) => setInviteForm({ ...inviteForm, firstName: e.target.value })}
-                    style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-toggle)', color: 'var(--text-primary)' }}
-                  />
+            <form onSubmit={handleInviteSubmit}>
+              <div className="user-modal-body">
+                <div className="form-grid-2">
+                  <div className="form-group">
+                    <label>First Name</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Jane"
+                      value={inviteForm.firstName}
+                      onChange={e => setInviteForm({ ...inviteForm, firstName: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Last Name</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Doe"
+                      value={inviteForm.lastName}
+                      onChange={e => setInviteForm({ ...inviteForm, lastName: e.target.value })}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '4px' }}>Last Name</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Jenkins"
-                    value={inviteForm.lastName}
-                    onChange={(e) => setInviteForm({ ...inviteForm, lastName: e.target.value })}
-                    style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-toggle)', color: 'var(--text-primary)' }}
-                  />
-                </div>
-              </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '4px' }}>Email Address / Username</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="name@asc.com"
-                  value={inviteForm.email}
-                  onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-toggle)', color: 'var(--text-primary)' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '4px' }}>Facility Security Role</label>
-                <select
-                  value={inviteForm.role}
-                  onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value })}
-                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-toggle)', color: 'var(--text-primary)' }}
-                >
-                  {CANONICAL_ROLES.filter(r => !['super_admin'].includes(r.slug)).map(r => (
-                    <option key={r.slug} value={r.slug}>{r.name} (Tier {r.tier})</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Password / Initial Credentials Input */}
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)' }}>
-                    Initial Login Password *
+                <div className="form-group">
+                  <label>
+                    Work Email Address <span className="required">*</span>
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => setInviteForm({ ...inviteForm, password: generateRandomPassword() })}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#3b82f6',
-                      fontSize: '0.75rem',
-                      fontWeight: '600',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Generate Random
-                  </button>
-                </div>
-                <div style={{ position: 'relative' }}>
                   <input
-                    type={showInvitePassword ? 'text' : 'password'}
+                    type="email"
                     required
-                    value={inviteForm.password}
-                    onChange={(e) => setInviteForm({ ...inviteForm, password: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '8px 38px 8px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-toggle)',
-                      color: 'var(--text-primary)',
-                      fontFamily: 'monospace'
-                    }}
+                    className="form-control"
+                    placeholder="jdoe@asc.com"
+                    value={inviteForm.email}
+                    onChange={e => setInviteForm({ ...inviteForm, email: e.target.value })}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowInvitePassword(!showInvitePassword)}
-                    style={{
-                      position: 'absolute',
-                      right: '10px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--text-muted)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}
+                </div>
+
+                {isSuperAdmin && (
+                  <div className="form-group">
+                    <label>Assigned Facility</label>
+                    <select
+                      className="form-control"
+                      value={inviteForm.facilityId || activeFacility?.id || ''}
+                      onChange={e => setInviteForm({ ...inviteForm, facilityId: e.target.value })}
+                    >
+                      {facilities.map(f => (
+                        <option key={f.id} value={f.id}>{f.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div className="form-group">
+                  <label>Assign Role Tier</label>
+                  <select
+                    className="form-control"
+                    value={inviteForm.role}
+                    onChange={e => setInviteForm({ ...inviteForm, role: e.target.value })}
                   >
-                    {showInvitePassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
+                    {assignableRoles.map(r => (
+                      <option key={r.slug} value={r.slug}>
+                        {r.name} — {r.description}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  This password will be used by the staff member to sign in to the portal.
+
+                <div className="form-grid-2">
+                  <div className="form-group">
+                    <label>Department</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Operating Room / Finance / Coding"
+                      value={inviteForm.department}
+                      onChange={e => setInviteForm({ ...inviteForm, department: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Job Title</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Surgical Coordinator"
+                      value={inviteForm.title}
+                      onChange={e => setInviteForm({ ...inviteForm, title: e.target.value })}
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '4px' }}>Department</label>
-                  <input
-                    type="text"
-                    value={inviteForm.department}
-                    onChange={(e) => setInviteForm({ ...inviteForm, department: e.target.value })}
-                    style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-toggle)', color: 'var(--text-primary)' }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '4px' }}>Job Title</label>
-                  <input
-                    type="text"
-                    value={inviteForm.title}
-                    onChange={(e) => setInviteForm({ ...inviteForm, title: e.target.value })}
-                    style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-toggle)', color: 'var(--text-primary)' }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px' }}>
+              <div className="user-modal-footer">
                 <button
                   type="button"
+                  className="btn-secondary"
                   onClick={() => setIsInviteOpen(false)}
-                  style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  style={{ padding: '8px 20px', borderRadius: '8px', border: 'none', background: '#3b82f6', color: '#fff', fontWeight: '600', cursor: 'pointer' }}
+                  className="btn-primary"
+                  disabled={saving}
                 >
-                  Provision User Account
+                  {saving ? 'Provisioning...' : 'Send Invitation'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT USER PROFILE */}
+      {isEditOpen && selectedUser && (
+        <div className="user-modal-backdrop" onClick={() => setIsEditOpen(false)}>
+          <div className="user-modal-card" onClick={e => e.stopPropagation()}>
+            <div className="user-modal-header">
+              <h3>
+                <Edit3 size={20} style={{ color: '#2563eb' }} />
+                Edit Profile: {selectedUser.name}
+              </h3>
+              <button className="modal-close-btn" onClick={() => setIsEditOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSubmit}>
+              <div className="user-modal-body">
+                <div className="form-group">
+                  <label>Full Name <span className="required">*</span></label>
+                  <input
+                    type="text"
+                    required
+                    className="form-control"
+                    value={editForm.name}
+                    onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Email Address</label>
+                  <input
+                    type="email"
+                    disabled
+                    className="form-control"
+                    value={editForm.email}
+                    style={{ background: '#f8fafc', color: '#64748b' }}
+                  />
+                  <small style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '4px' }}>
+                    Email updates require GoTrue identity verification.
+                  </small>
+                </div>
+
+                <div className="form-grid-2">
+                  <div className="form-group">
+                    <label>Department</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={editForm.department}
+                      onChange={e => setEditForm({ ...editForm, department: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Job Title</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={editForm.title}
+                      onChange={e => setEditForm({ ...editForm, title: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="user-modal-footer">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setIsEditOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={saving}
+                >
+                  {saving ? 'Saving...' : 'Save Profile'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CHANGE ROLE */}
+      {isChangeRoleOpen && selectedUser && (
+        <div className="user-modal-backdrop" onClick={() => setIsChangeRoleOpen(false)}>
+          <div className="user-modal-card" onClick={e => e.stopPropagation()}>
+            <div className="user-modal-header">
+              <h3>
+                <Shield size={20} style={{ color: '#2563eb' }} />
+                Change Role: {selectedUser.name}
+              </h3>
+              <button className="modal-close-btn" onClick={() => setIsChangeRoleOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleRoleChangeSubmit}>
+              <div className="user-modal-body">
+                <div style={{ padding: '12px 14px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.88rem' }}>
+                  <div>Current Role: <b>{CANONICAL_ROLES.find(r => r.slug === selectedUser.role)?.name || selectedUser.role}</b></div>
+                  <div style={{ color: '#64748b', fontSize: '0.8rem', marginTop: '4px' }}>Facility: {selectedUser.facility_name}</div>
+                </div>
+
+                <div className="form-group">
+                  <label>Select New Role Tier</label>
+                  <select
+                    className="form-control"
+                    value={roleForm.newRole}
+                    onChange={e => setRoleForm({ ...roleForm, newRole: e.target.value })}
+                  >
+                    {assignableRoles.map(r => (
+                      <option key={r.slug} value={r.slug}>
+                        {r.name} — {r.description}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ padding: '10px 14px', background: 'rgba(59, 130, 246, 0.08)', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)', fontSize: '0.82rem', color: '#1d4ed8' }}>
+                  <ShieldAlert size={15} style={{ verticalAlign: '-2px', marginRight: '6px' }} />
+                  Role modifications take effect immediately upon confirmation and will be logged in the immutable security audit trail.
+                </div>
+              </div>
+
+              <div className="user-modal-footer">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setIsChangeRoleOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={saving}
+                >
+                  {saving ? 'Updating...' : 'Update Role'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: REASSIGN FACILITY (SUPER ADMIN) */}
+      {isReassignOpen && selectedUser && (
+        <div className="user-modal-backdrop" onClick={() => setIsReassignOpen(false)}>
+          <div className="user-modal-card" onClick={e => e.stopPropagation()}>
+            <div className="user-modal-header">
+              <h3>
+                <MoveRight size={20} style={{ color: '#2563eb' }} />
+                Reassign Facility: {selectedUser.name}
+              </h3>
+              <button className="modal-close-btn" onClick={() => setIsReassignOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleReassignSubmit}>
+              <div className="user-modal-body">
+                <div style={{ padding: '12px 14px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.88rem' }}>
+                  <div>Current Facility: <b>{selectedUser.facility_name}</b></div>
+                  <div style={{ color: '#64748b', fontSize: '0.8rem', marginTop: '4px' }}>User: {selectedUser.name} ({selectedUser.email})</div>
+                </div>
+
+                <div className="form-group">
+                  <label>Destination Facility <span className="required">*</span></label>
+                  <select
+                    className="form-control"
+                    required
+                    value={reassignForm.targetFacilityId}
+                    onChange={e => setReassignForm({ ...reassignForm, targetFacilityId: e.target.value })}
+                  >
+                    {facilities.filter(f => f.id !== selectedUser.facility_id).map(f => (
+                      <option key={f.id} value={f.id}>{f.name} ({f.city || 'Surgery Center'})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Role at Destination Facility</label>
+                  <select
+                    className="form-control"
+                    value={reassignForm.newRole}
+                    onChange={e => setReassignForm({ ...reassignForm, newRole: e.target.value })}
+                  >
+                    {assignableRoles.map(r => (
+                      <option key={r.slug} value={r.slug}>{r.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-grid-2">
+                  <div className="form-group">
+                    <label>Department</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={reassignForm.department}
+                      onChange={e => setReassignForm({ ...reassignForm, department: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Job Title</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={reassignForm.title}
+                      onChange={e => setReassignForm({ ...reassignForm, title: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="user-modal-footer">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setIsReassignOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={saving}
+                >
+                  {saving ? 'Transferring...' : 'Execute Reassignment'}
                 </button>
               </div>
             </form>

@@ -222,6 +222,25 @@ export const rbacService = {
   },
 
   /**
+   * Returns list of roles that the current actor role is authorized to assign
+   */
+  getAssignableRoles(actorRole) {
+    const r = this.normalizeRole(actorRole);
+    if (r === 'super_admin') {
+      // Super Admin can assign all operational and administrative roles except creating a second super_admin
+      return CANONICAL_ROLES.filter(role => role.slug !== 'super_admin');
+    }
+    if (r === 'org_admin') {
+      return CANONICAL_ROLES.filter(role => !['super_admin', 'org_admin'].includes(role.slug));
+    }
+    if (r === 'facility_admin') {
+      // Facility Admin cannot grant super_admin, org_admin, or facility_admin
+      return CANONICAL_ROLES.filter(role => !['super_admin', 'org_admin', 'facility_admin'].includes(role.slug));
+    }
+    return [];
+  },
+
+  /**
    * Lists users and their memberships for a facility
    */
   async listUsers(facilityId) {
@@ -229,7 +248,7 @@ export const rbacService = {
     try {
       const { data, error } = await supabase
         .from('facility_memberships')
-        .select('id, user_id, role, role_id, is_active, title, department, created_at, facilities(name)')
+        .select('id, user_id, role, role_id, is_active, title, department, created_at, facilities(id, name, status)')
         .eq('facility_id', activeFac)
         .order('created_at', { ascending: false });
 
@@ -242,16 +261,45 @@ export const rbacService = {
   },
 
   /**
-   * Invites or registers new user and assigns facility membership
+   * Lists users across all facilities (Super Admin / Global Directory)
    */
-  async inviteUser({ email, name, role, facilityId, department, title }) {
+  async listAllUsers(filters = {}) {
+    try {
+      let query = supabase
+        .from('facility_memberships')
+        .select('id, user_id, role, role_id, is_active, title, department, created_at, facility_id, facilities(id, name, status)')
+        .order('created_at', { ascending: false });
+
+      if (filters.facility_id && filters.facility_id !== 'all') {
+        query = query.eq('facility_id', filters.facility_id);
+      }
+      if (filters.role && filters.role !== 'all') {
+        query = query.eq('role', filters.role);
+      }
+      if (filters.status && filters.status !== 'all') {
+        query = query.eq('is_active', filters.status === 'active');
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.warn('listAllUsers query fallback:', err);
+      return [];
+    }
+  },
+
+  /**
+   * Invites or registers new user and assigns facility membership (without cleartext passwords)
+   */
+  async inviteUser({ email, name: _name, role, facilityId, department, title }) {
     const activeFac = facilityId || db.getActiveFacility()?.id;
     if (!activeFac) throw new Error('Cannot invite user without active facility context.');
     if (!email || !email.includes('@')) throw new Error('Valid email address required.');
 
     const canonicalRole = this.normalizeRole(role);
 
-    // Call Supabase GoTrue invite or create membership row
+    // Call Supabase GoTrue invite or create membership row securely
     const { data, error } = await supabase
       .from('facility_memberships')
       .insert([{
@@ -286,11 +334,69 @@ export const rbacService = {
   },
 
   /**
+   * Reassigns user from one facility to another (Super Admin only)
+   */
+  async reassignUserFacility({ userId, fromFacilityId, toFacilityId, newRole, department, title }) {
+    try {
+      const { data, error } = await supabase.rpc('fn_admin_reassign_user_facility', {
+        p_user_id: userId,
+        p_from_facility_id: fromFacilityId,
+        p_to_facility_id: toFacilityId,
+        p_new_role: newRole || null,
+        p_department: department || null,
+        p_title: title || null
+      });
+      if (error) throw error;
+      return data;
+    } catch (rpcErr) {
+      console.warn('fn_admin_reassign_user_facility RPC fallback:', rpcErr?.message);
+      // Fallback: archive old membership and activate target
+      await supabase
+        .from('facility_memberships')
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .eq('user_id', userId)
+        .eq('facility_id', fromFacilityId);
+
+      const { data, error } = await supabase
+        .from('facility_memberships')
+        .upsert([{
+          facility_id: toFacilityId,
+          user_id: userId,
+          role: newRole || 'viewer',
+          department: department || 'General',
+          title: title || 'Staff Member',
+          is_active: true
+        }], { onConflict: 'facility_id,user_id' })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+  },
+
+  /**
+   * Toggles active status of a user membership with server-side safety checks
+   */
+  async toggleUserActive(membershipId, isActive) {
+    try {
+      const { data, error } = await supabase.rpc('fn_admin_toggle_user_active', {
+        p_membership_id: membershipId,
+        p_is_active: isActive
+      });
+      if (error) throw error;
+      return data;
+    } catch (rpcErr) {
+      console.warn('fn_admin_toggle_user_active RPC fallback:', rpcErr?.message);
+      return this.updateMembership(membershipId, { is_active: isActive });
+    }
+  },
+
+  /**
    * Deactivates a user with Last Admin check
    */
-  async deactivateUser(membershipId, facilityId) {
-    const activeFac = facilityId || db.getActiveFacility()?.id;
-    return this.updateMembership(membershipId, { is_active: false });
+  async deactivateUser(membershipId, _facilityId) {
+    return this.toggleUserActive(membershipId, false);
   },
 
   /**

@@ -195,6 +195,53 @@ export default function LoginPage({ onLogin, theme, setTheme }) {
           </button>
         </form>
 
+        {/* Quick Demo Credential Selector */}
+        <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #94a3b8)', textAlign: 'center', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+            Quick Demo Credentials
+          </div>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="btn-secondary btn-sm"
+              style={{ fontSize: '0.75rem', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', border: '1px solid rgba(59, 130, 246, 0.3)', background: 'rgba(59, 130, 246, 0.08)', color: '#60a5fa' }}
+              onClick={() => {
+                setRole('admin');
+                setEmail('superadmin@asc.com');
+                setPassword('admin123');
+                setError(null);
+              }}
+            >
+              👑 Super Admin
+            </button>
+            <button
+              type="button"
+              className="btn-secondary btn-sm"
+              style={{ fontSize: '0.75rem', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.08)', color: '#34d399' }}
+              onClick={() => {
+                setRole('admin');
+                setEmail('admin@asc.com');
+                setPassword('admin123');
+                setError(null);
+              }}
+            >
+              🏥 Facility Admin
+            </button>
+            <button
+              type="button"
+              className="btn-secondary btn-sm"
+              style={{ fontSize: '0.75rem', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', border: '1px solid rgba(168, 85, 247, 0.3)', background: 'rgba(168, 85, 247, 0.08)', color: '#c084fc' }}
+              onClick={() => {
+                setRole('surgeon');
+                setEmail('surgeon@hospital.com');
+                setPassword('surgeon123');
+                setError(null);
+              }}
+            >
+              🩺 Surgeon
+            </button>
+          </div>
+        </div>
 
         {/* Footer info */}
         <div className="login-footer-info">

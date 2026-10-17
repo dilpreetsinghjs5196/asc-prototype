@@ -20,6 +20,7 @@ import LoginPage from './components/LoginPage';
 import SurgeonPortal from './components/SurgeonPortal';
 import UserProfile from './components/UserProfile';
 import UserManagement from './components/UserManagement';
+import FacilityManagement from './components/FacilityManagement';
 import RoleManagement from './components/RoleManagement';
 import AuditLogViewer from './components/AuditLogViewer';
 import RoleGate from './components/RoleGate';
@@ -3048,6 +3049,15 @@ export default function App() {
           <div className="sidebar-section-header">
             ⚙️ Administration
           </div>
+          {['super_admin', 'org_admin'].includes(userRole) && (
+            <div
+              className={`menu-item ${activeTab === 'facility_management' && !selectedSurgeon ? 'active' : ''}`}
+              onClick={() => { setActiveTab('facility_management'); setSelectedSurgeon(null); }}
+            >
+              <div className="menu-item-icon"><Building2 size={16} /></div>
+              Facility Management
+            </div>
+          )}
           <div
             className={`menu-item ${activeTab === 'user_management' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('user_management'); setSelectedSurgeon(null); }}
@@ -3184,6 +3194,7 @@ export default function App() {
                   {activeTab === 'instruction' && 'Chatbot Instructions'}
                   {activeTab === 'ai_agent' && 'AI Agent Workbench'}
                   {activeTab === 'profile' && 'User Profile & Security Credentials'}
+                  {activeTab === 'facility_management' && 'Enterprise Facility Management'}
                   {activeTab === 'user_management' && 'User Accounts & Facility Memberships'}
                   {activeTab === 'role_management' && 'Roles & Permissions Architecture'}
                   {activeTab === 'audit_logs' && 'Compliance Audit Trail & Provenance'}
@@ -3216,6 +3227,7 @@ export default function App() {
                   {activeTab === 'instruction' && 'Manage dynamic questions and categories for the AI Chatbot'}
                   {activeTab === 'ai_agent' && 'Interact with the AI Agent for intelligent workflow automation'}
                   {activeTab === 'profile' && 'Manage your account details and update your login password'}
+                  {activeTab === 'facility_management' && 'Centralized surgery center provisioning, operating centers, and designated administrator governance'}
                   {activeTab === 'user_management' && 'User provisioning, active facility memberships, and department assignments'}
                   {activeTab === 'role_management' && 'Role hierarchy, built-in system immutability, and 13-domain permission matrix'}
                   {activeTab === 'audit_logs' && 'HIPAA § 164.312(b) immutable transaction audit ledger, state diffs, and AI telemetry'}
@@ -3311,7 +3323,7 @@ export default function App() {
             </div>
 
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'ot_cost_manage', 'cpt_manage', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'ot_cost_manage', 'cpt_manage', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -5137,6 +5149,35 @@ export default function App() {
               ========================================== */}
               {activeTab === 'settings' && (
                 <SettingsView />
+              )}
+
+              {/* ==========================================
+              TAB: FACILITY MANAGEMENT (MULTI-TENANCY GOVERNANCE)
+              ========================================== */}
+              {activeTab === 'facility_management' && (
+                <RoleGate
+                  allowedRoles={['super_admin', 'org_admin']}
+                  requiredPermission="tenancy.edit_facility_config"
+                  fallback={
+                    <div style={{ padding: '48px', textAlign: 'center', backgroundColor: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', margin: '24px' }}>
+                      <Shield size={48} style={{ color: '#ef4444', marginBottom: '16px' }} />
+                      <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', color: 'var(--text-primary)' }}>Super Administrator Access Required</h3>
+                      <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                        You do not possess the required permissions to administer global enterprise facilities.
+                      </p>
+                    </div>
+                  }
+                >
+                  <FacilityManagement
+                    onSelectFacility={(fac) => {
+                      setActiveFacility(fac);
+                      db.setActiveFacility(fac);
+                    }}
+                    onNavigateToUsers={(facId) => {
+                      setActiveTab('user_management');
+                    }}
+                  />
+                </RoleGate>
               )}
 
               {/* ==========================================
