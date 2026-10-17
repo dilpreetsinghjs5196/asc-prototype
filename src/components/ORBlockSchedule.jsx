@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, X, Edit2, Trash2, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Edit2, Trash2, Loader2, Building2 } from 'lucide-react';
 import { db } from '../lib/supabase';
 import './ORBlockSchedule.css';
 
@@ -16,7 +16,7 @@ const mapDBToBlock = (dbBlock) => {
   };
 };
 
-const ORBlockSchedule = ({ activeFacility }) => {
+const ORBlockSchedule = ({ activeFacility, facilities = [], isSuperAdmin: propIsSuperAdmin }) => {
   // Use a dynamic Date object initialized to the 1st day of the current month
   const [currentMonthDate, setCurrentMonthDate] = useState(() => {
     const now = new Date();
@@ -27,6 +27,21 @@ const ORBlockSchedule = ({ activeFacility }) => {
   const [surgeonsList, setSurgeonsList] = useState([]);
   const [surgeonsData, setSurgeonsData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [facilitiesList, setFacilitiesList] = useState(facilities || []);
+  const [newFacilityId, setNewFacilityId] = useState('');
+
+  const session = db.getSession();
+  const isSuperAdmin = propIsSuperAdmin !== undefined ? propIsSuperAdmin : (session?.role === 'super_admin');
+
+  useEffect(() => {
+    if (facilities && facilities.length > 0) {
+      setFacilitiesList(facilities);
+    } else {
+      db.getFacilities().then(res => {
+        if (res && res.length > 0) setFacilitiesList(res);
+      }).catch(console.error);
+    }
+  }, [facilities]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -165,6 +180,7 @@ const ORBlockSchedule = ({ activeFacility }) => {
   const openModal = (dateStr, orRoom) => {
     setSelectedDate(dateStr);
     setSelectedOR(orRoom);
+    setNewFacilityId(activeFacility?.id || (facilitiesList[0]?.id || ''));
     setModalMode('list');
     setIsModalOpen(true);
   };
@@ -174,12 +190,14 @@ const ORBlockSchedule = ({ activeFacility }) => {
     setNewSurgeon('');
     setNewStart('');
     setNewEnd('');
+    setNewFacilityId('');
     setEditingBlockId(null);
   };
 
   const handleEditOpen = (block) => {
     setEditingBlockId(block.id);
     setNewSurgeon(block.surgeon);
+    setNewFacilityId(block.facility_id || activeFacility?.id || (facilitiesList[0]?.id || ''));
     
     let start = '';
     let end = '';
@@ -215,7 +233,8 @@ const ORBlockSchedule = ({ activeFacility }) => {
         room_name: selectedOR,
         provider_name: newSurgeon,
         start_time: newStart || null,
-        end_time: newEnd || null
+        end_time: newEnd || null,
+        facility_id: newFacilityId || activeFacility?.id || (facilitiesList[0]?.id || '')
       };
       
       if (editingBlockId) {
@@ -366,6 +385,39 @@ const ORBlockSchedule = ({ activeFacility }) => {
               </div>
             ) : (
               <div className="or-modal-body-form">
+                {isSuperAdmin && (
+                  <div className="form-group" style={{ 
+                    padding: '12px 14px', 
+                    background: 'rgba(59, 130, 246, 0.06)', 
+                    borderRadius: '8px', 
+                    border: '1px solid rgba(59, 130, 246, 0.2)',
+                    marginBottom: '12px' 
+                  }}>
+                    <label style={{ 
+                      fontSize: '0.78rem', 
+                      fontWeight: '700', 
+                      color: 'var(--color-blue, #3b82f6)', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '6px',
+                      marginBottom: '6px'
+                    }}>
+                      <Building2 size={14} /> Assign Facility (Super Admin)
+                    </label>
+                    <select
+                      value={newFacilityId}
+                      onChange={(e) => setNewFacilityId(e.target.value)}
+                      className="form-control"
+                      style={{ background: 'var(--bg-card, #1e293b)', color: 'var(--text-primary, #fff)', fontWeight: '600' }}
+                    >
+                      <option value="">Select Facility...</option>
+                      {facilitiesList.map(f => (
+                        <option key={f.id} value={f.id}>{f.name} ({f.location || f.code})</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div className="form-group">
                   <label>Surgeon / Provider</label>
                   <select value={newSurgeon} onChange={(e) => setNewSurgeon(e.target.value)} className="form-control">

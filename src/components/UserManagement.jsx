@@ -795,15 +795,30 @@ export default function UserManagement({ activeFacility, theme: _theme = 'light'
                 </div>
 
                 {isSuperAdmin && (
-                  <div className="form-group">
-                    <label>Assigned Facility</label>
+                  <div className="form-group" style={{
+                    padding: '12px 14px',
+                    background: 'rgba(59, 130, 246, 0.06)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(59, 130, 246, 0.2)'
+                  }}>
+                    <label style={{
+                      fontSize: '0.78rem',
+                      fontWeight: '700',
+                      color: 'var(--color-blue, #3b82f6)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      marginBottom: '6px'
+                    }}>
+                      <Building2 size={14} /> Assign Facility (Super Admin)
+                    </label>
                     <select
                       className="form-control"
                       value={inviteForm.facilityId || activeFacility?.id || ''}
                       onChange={e => setInviteForm({ ...inviteForm, facilityId: e.target.value })}
                     >
                       {facilities.map(f => (
-                        <option key={f.id} value={f.id}>{f.name}</option>
+                        <option key={f.id} value={f.id}>{f.name} ({f.location || f.code})</option>
                       ))}
                     </select>
                   </div>

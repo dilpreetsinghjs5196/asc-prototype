@@ -8,7 +8,8 @@ import {
   CheckCircle,
   Loader,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Building2
 } from 'lucide-react';
 import { db } from '../lib/supabase';
 import CPTAgentTestRunner from './CPTAgentTestRunner';
@@ -64,7 +65,10 @@ export default function CPTManagement({
   surgeries,
   onAdd,
   onUpdate,
-  onDelete
+  onDelete,
+  activeFacility,
+  facilities = [],
+  isSuperAdmin: propIsSuperAdmin
 }) {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [sortField, setSortField] = useState('code');
@@ -139,6 +143,21 @@ export default function CPTManagement({
   }, [batches, batchExpanded, fetchBatchCodes, refreshKey]);
 
 
+  // Super Admin & Facilities
+  const session = db.getSession();
+  const isSuperAdmin = propIsSuperAdmin !== undefined ? propIsSuperAdmin : (session?.role === 'super_admin');
+  const [facilitiesList, setFacilitiesList] = useState(facilities || []);
+
+  useEffect(() => {
+    if (facilities && facilities.length > 0) {
+      setFacilitiesList(facilities);
+    } else {
+      db.getFacilities().then(res => {
+        if (res && res.length > 0) setFacilitiesList(res);
+      }).catch(console.error);
+    }
+  }, [facilities]);
+
   // Form & Modal States
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCpt, setEditingCpt] = useState(null);
@@ -155,7 +174,8 @@ export default function CPTManagement({
     procedure_indicator: '',
     gross_charge: '',
     active_published: true,
-    active_code: true
+    active_code: true,
+    facility_id: activeFacility?.id || ''
   });
 
   const [bulkEditStatus, setBulkEditStatus] = useState(null); // 'latest' or 'historical'
@@ -189,7 +209,8 @@ export default function CPTManagement({
       procedure_indicator: '',
       gross_charge: '',
       active_published: true,
-      active_code: true
+      active_code: true,
+      facility_id: activeFacility?.id || (facilitiesList[0]?.id || '')
     });
     setModalOpen(true);
   };
@@ -210,7 +231,8 @@ export default function CPTManagement({
       procedure_indicator: cpt.procedure_indicator || '',
       gross_charge: cpt.gross_charge !== null && cpt.gross_charge !== undefined ? String(cpt.gross_charge) : '',
       active_published: cpt.is_active !== false,
-      active_code: cpt.is_active !== false
+      active_code: cpt.is_active !== false,
+      facility_id: cpt.facility_id || activeFacility?.id || ''
     });
     setModalOpen(true);
   };
@@ -252,7 +274,8 @@ export default function CPTManagement({
       average_duration: form.average_duration === '' ? 0 : parseInt(form.average_duration, 10),
       turnover_time: form.turnover_time === '' ? 0 : parseInt(form.turnover_time, 10),
       gross_charge: form.gross_charge === '' ? 0 : parseFloat(form.gross_charge),
-      is_active: form.active_published && form.active_code
+      is_active: form.active_published && form.active_code,
+      facility_id: form.facility_id || activeFacility?.id || null
     };
 
     try {
@@ -700,7 +723,40 @@ export default function CPTManagement({
             </div>
 
             <form onSubmit={handleSubmit} className="modal-body" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              
+              {isSuperAdmin && (
+                <div style={{
+                  padding: '12px 14px',
+                  background: 'rgba(59, 130, 246, 0.06)',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px'
+                }}>
+                  <label style={{
+                    fontSize: '0.78rem',
+                    fontWeight: '700',
+                    color: 'var(--color-blue, #3b82f6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}>
+                    <Building2 size={14} /> Assign Facility (Super Admin)
+                  </label>
+                  <select
+                    value={form.facility_id || activeFacility?.id || ''}
+                    onChange={(e) => setForm({ ...form, facility_id: e.target.value })}
+                    className="date-range-selector"
+                    style={{ width: '100%', height: '38px', background: 'var(--bg-card, #1e293b)', color: 'var(--text-primary, #fff)', fontWeight: '600' }}
+                  >
+                    <option value="">Select Facility...</option>
+                    {facilitiesList.map(f => (
+                      <option key={f.id} value={f.id}>{f.name} ({f.location || f.code})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               {/* Row 1 */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>

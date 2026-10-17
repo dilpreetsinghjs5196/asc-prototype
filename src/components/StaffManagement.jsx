@@ -14,12 +14,26 @@ const DEPARTMENT_CATEGORIES = [
   'Other'
 ];
 
-const StaffManagement = ({ activeFacility }) => {
+const StaffManagement = ({ activeFacility, facilities = [], isSuperAdmin: propIsSuperAdmin }) => {
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [facilitiesList, setFacilitiesList] = useState(facilities || []);
+
+  const session = db.getSession();
+  const isSuperAdmin = propIsSuperAdmin !== undefined ? propIsSuperAdmin : (session?.role === 'super_admin');
+
+  useEffect(() => {
+    if (facilities && facilities.length > 0) {
+      setFacilitiesList(facilities);
+    } else {
+      db.getFacilities().then(res => {
+        if (res && res.length > 0) setFacilitiesList(res);
+      }).catch(console.error);
+    }
+  }, [facilities]);
 
   const [formData, setFormData] = useState({
     firstname: '',
@@ -32,7 +46,8 @@ const StaffManagement = ({ activeFacility }) => {
     email: '',
     hourly_rate: '',
     monthly_salary: '',
-    benefits: ''
+    benefits: '',
+    facility_id: ''
   });
 
   const fetchStaff = async () => {
@@ -72,7 +87,8 @@ const StaffManagement = ({ activeFacility }) => {
         email: staff.email || '',
         hourly_rate: staff.hourly_rate || '',
         monthly_salary: staff.monthly_salary || '',
-        benefits: staff.benefits || ''
+        benefits: staff.benefits || '',
+        facility_id: staff.facility_id || activeFacility?.id || (facilitiesList[0]?.id || '')
       });
     } else {
       setEditingStaff(null);
@@ -87,7 +103,8 @@ const StaffManagement = ({ activeFacility }) => {
         email: '',
         hourly_rate: '',
         monthly_salary: '',
-        benefits: ''
+        benefits: '',
+        facility_id: activeFacility?.id || (facilitiesList[0]?.id || '')
       });
     }
     setIsModalOpen(true);
@@ -102,7 +119,7 @@ const StaffManagement = ({ activeFacility }) => {
     const targetFac = activeFacility?.id || db.getActiveFacility()?.id;
     const payload = {
       ...formData,
-      facility_id: editingStaff?.facility_id || targetFac,
+      facility_id: formData.facility_id || editingStaff?.facility_id || targetFac,
       hourly_rate: formData.hourly_rate ? parseFloat(formData.hourly_rate) : null,
       monthly_salary: formData.monthly_salary ? parseFloat(formData.monthly_salary) : null,
       benefits: formData.benefits ? parseFloat(formData.benefits) : null,
@@ -400,6 +417,25 @@ const StaffManagement = ({ activeFacility }) => {
             </div>
             <div className="staff-modal-body">
               <div className="staff-form-grid">
+                {isSuperAdmin && (
+                  <div className="staff-form-group full-width" style={{ padding: '12px 14px', background: 'rgba(59, 130, 246, 0.06)', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)', marginBottom: '4px' }}>
+                    <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--color-blue)', display: 'block', marginBottom: '6px' }}>
+                      Assign Facility <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <select
+                      name="facility_id"
+                      value={formData.facility_id || activeFacility?.id || ''}
+                      onChange={handleInputChange}
+                      className="staff-form-input"
+                      style={{ width: '100%', height: '38px', background: 'var(--bg-card)', color: 'var(--text-primary)', fontWeight: '600', padding: '0 10px', borderRadius: '6px' }}
+                      required
+                    >
+                      {facilitiesList.map(f => (
+                        <option key={f.id} value={f.id}>{f.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div className="staff-form-group">
                   <label>First Name</label>
                   <input type="text" name="firstname" value={formData.firstname} onChange={handleInputChange} placeholder="First Name" />

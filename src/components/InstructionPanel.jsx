@@ -1,19 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, db } from '../lib/supabase';
-import { Search, Edit, Trash2, Save, Plus } from 'lucide-react';
+import { Search, Edit, Trash2, Save, Plus, Building2 } from 'lucide-react';
 import './InstructionPanel.css';
 
-export default function InstructionPanel({ activeFacility }) {
+export default function InstructionPanel({ activeFacility, facilities = [], isSuperAdmin: propIsSuperAdmin }) {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
   
+  // Super Admin & Facilities
+  const session = db.getSession();
+  const isSuperAdmin = propIsSuperAdmin !== undefined ? propIsSuperAdmin : (session?.role === 'super_admin');
+  const [facilitiesList, setFacilitiesList] = useState(facilities || []);
+
+  useEffect(() => {
+    if (facilities && facilities.length > 0) {
+      setFacilitiesList(facilities);
+    } else {
+      db.getFacilities().then(res => {
+        if (res && res.length > 0) setFacilitiesList(res);
+      }).catch(console.error);
+    }
+  }, [facilities]);
+
   // Form state
   const [formData, setFormData] = useState({
     question: '',
     category: '',
-    is_active: true
+    is_active: true,
+    facility_id: activeFacility?.id || ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -37,6 +53,9 @@ export default function InstructionPanel({ activeFacility }) {
 
   useEffect(() => {
     fetchQuestions();
+    if (activeFacility?.id) {
+      setFormData(prev => ({ ...prev, facility_id: prev.facility_id || activeFacility.id }));
+    }
   }, [activeFacility?.id]);
 
   const handleSaveQuestion = async (e) => {
@@ -45,7 +64,7 @@ export default function InstructionPanel({ activeFacility }) {
     
     try {
       setIsSubmitting(true);
-      const targetFac = activeFacility?.id || db.getActiveFacility()?.id;
+      const targetFac = formData.facility_id || activeFacility?.id || db.getActiveFacility()?.id;
       
       const newQuestion = await db.addChatbotQuestion({
         question: formData.question,
@@ -63,7 +82,8 @@ export default function InstructionPanel({ activeFacility }) {
       setFormData({
         question: '',
         category: '',
-        is_active: true
+        is_active: true,
+        facility_id: activeFacility?.id || (facilitiesList[0]?.id || '')
       });
       
     } catch (error) {
@@ -98,13 +118,17 @@ export default function InstructionPanel({ activeFacility }) {
     
     try {
       setIsSubmitting(true);
+      const updatePayload = {
+        question: editingQuestion.question,
+        category: editingQuestion.category,
+        is_active: editingQuestion.is_active
+      };
+      if (editingQuestion.facility_id) {
+        updatePayload.facility_id = editingQuestion.facility_id;
+      }
       const { data, error } = await supabase
         .from('chatbot_questions')
-        .update({
-          question: editingQuestion.question,
-          category: editingQuestion.category,
-          is_active: editingQuestion.is_active
-        })
+        .update(updatePayload)
         .eq('id', editingQuestion.id)
         .select();
         
@@ -143,6 +167,40 @@ export default function InstructionPanel({ activeFacility }) {
         </div>
         
         <form onSubmit={handleSaveQuestion}>
+          {isSuperAdmin && (
+            <div style={{
+              margin: '0 0 16px 0',
+              padding: '12px 14px',
+              background: 'rgba(59, 130, 246, 0.06)',
+              borderRadius: '8px',
+              border: '1px solid rgba(59, 130, 246, 0.2)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px'
+            }}>
+              <label style={{
+                fontSize: '0.78rem',
+                fontWeight: '700',
+                color: 'var(--color-blue, #3b82f6)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}>
+                <Building2 size={14} /> Assign Facility (Super Admin)
+              </label>
+              <select
+                value={formData.facility_id || activeFacility?.id || ''}
+                onChange={(e) => setFormData({ ...formData, facility_id: e.target.value })}
+                className="ip-input"
+                style={{ width: '100%', background: 'var(--bg-card, #1e293b)', color: 'var(--text-primary, #fff)', fontWeight: '600' }}
+              >
+                <option value="">Select Facility...</option>
+                {facilitiesList.map(f => (
+                  <option key={f.id} value={f.id}>{f.name} ({f.location || f.code})</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="ip-form-grid">
             <div className="ip-form-group">
               <label className="ip-label">Enter the question...</label>
@@ -279,6 +337,23 @@ export default function InstructionPanel({ activeFacility }) {
           <div className="ip-modal" onClick={e => e.stopPropagation()}>
             <h3 className="card-title-ip" style={{ marginBottom: '20px' }}>Edit Question</h3>
             <form onSubmit={handleUpdateQuestion}>
+              {isSuperAdmin && (
+                <div className="ip-form-group" style={{ marginBottom: '16px' }}>
+                  <label className="ip-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Building2 size={14} /> Assign Facility (Super Admin)
+                  </label>
+                  <select
+                    className="ip-input"
+                    value={editingQuestion.facility_id || activeFacility?.id || ''}
+                    onChange={(e) => setEditingQuestion({ ...editingQuestion, facility_id: e.target.value })}
+                  >
+                    <option value="">Select Facility...</option>
+                    {facilitiesList.map(f => (
+                      <option key={f.id} value={f.id}>{f.name} ({f.location || f.code})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="ip-form-group" style={{ marginBottom: '16px' }}>
                 <label className="ip-label">Question</label>
                 <input 

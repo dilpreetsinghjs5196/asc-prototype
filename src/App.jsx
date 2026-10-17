@@ -1052,6 +1052,7 @@ CustomDateInput.displayName = 'CustomDateInput';
 export default function App() {
   const [authUser, setAuthUser] = useState(() => db.getSession());
   const userRole = rbacService.normalizeRole(authUser?.role);
+  const isSuperAdmin = userRole === 'super_admin';
   const canViewPHI = ['super_admin', 'org_admin', 'facility_admin', 'clinical_manager', 'scheduler', 'surgeon', 'biller', 'coder'].includes(userRole);
 
   // Phase 25: Secure Session Logout & Storage Purge
@@ -2212,7 +2213,8 @@ export default function App() {
       deductible_amount: '',
       secondary_insurance_provider: '',
       secondary_insurance_policy_number: '',
-      secondary_insurance_group_number: ''
+      secondary_insurance_group_number: '',
+      facility_id: activeFacility?.id || (facilities[0]?.id || '')
     });
     setPatientModalOpen(true);
   };
@@ -2239,7 +2241,8 @@ export default function App() {
       deductible_amount: patient.deductible_amount || '',
       secondary_insurance_provider: patient.secondary_insurance_provider || '',
       secondary_insurance_policy_number: patient.secondary_insurance_policy_number || '',
-      secondary_insurance_group_number: patient.secondary_insurance_group_number || ''
+      secondary_insurance_group_number: patient.secondary_insurance_group_number || '',
+      facility_id: patient.facility_id || activeFacility?.id || (facilities[0]?.id || '')
     });
     setPatientModalOpen(true);
   };
@@ -2323,7 +2326,7 @@ export default function App() {
       ...patientForm,
       ...(editingPatient ? {} : { id: Date.now() }), // explicitly pass an ID for new patients to bypass sequence collision
       name: patientForm.name ? patientForm.name.trim() : '',
-      facility_id: editingPatient?.facility_id || activeFacility?.id || db.getActiveFacility()?.id,
+      facility_id: patientForm.facility_id || editingPatient?.facility_id || activeFacility?.id || db.getActiveFacility()?.id,
       copay_amount: patientForm.copay_amount === '' || patientForm.copay_amount === null || patientForm.copay_amount === undefined ? null : parseFloat(patientForm.copay_amount),
       deductible_amount: patientForm.deductible_amount === '' || patientForm.deductible_amount === null || patientForm.deductible_amount === undefined ? null : parseFloat(patientForm.deductible_amount)
     };
@@ -2431,6 +2434,7 @@ export default function App() {
       email: '',
       password: '',
       countryCode: '+1',
+      facility_id: activeFacility?.id || (facilities[0]?.id || ''),
       block_templates: []
     });
     setSurgeonModalOpen(true);
@@ -2467,6 +2471,7 @@ export default function App() {
       email: s.email || '',
       password: s.password || 'surgeon123',
       countryCode: country,
+      facility_id: s.facility_id || activeFacility?.id || (facilities[0]?.id || ''),
       block_templates: s.block_templates || []
     });
     setSurgeonModalOpen(true);
@@ -2506,7 +2511,7 @@ export default function App() {
       license_number: lic,
       phone: fullPhone,
       email: email,
-      facility_id: editingSurgeon?.facility_id || activeFacility?.id || db.getActiveFacility()?.id,
+      facility_id: surgeonForm.facility_id || editingSurgeon?.facility_id || activeFacility?.id || db.getActiveFacility()?.id,
       block_templates: surgeonForm.block_templates || []
     };
 
@@ -2561,8 +2566,12 @@ export default function App() {
 
   const handleAddCPT = async (cptData) => {
     try {
-      const inserted = await db.addCPTCode(cptData);
-      const newCpt = inserted || { ...cptData, id: Date.now(), created_at: new Date().toISOString() };
+      const payload = {
+        ...cptData,
+        facility_id: cptData.facility_id || activeFacility?.id || db.getActiveFacility()?.id
+      };
+      const inserted = await db.addCPTCode(payload);
+      const newCpt = inserted || { ...payload, id: Date.now(), created_at: new Date().toISOString() };
       setCptCodesList(prev => [newCpt, ...prev]);
 
       const newTableItem = {
@@ -4434,7 +4443,7 @@ export default function App() {
               )}
 
               {activeTab === 'staff_manage' && (
-                <StaffManagement activeFacility={activeFacility} />
+                <StaffManagement activeFacility={activeFacility} facilities={facilities} isSuperAdmin={isSuperAdmin} />
               )}
 
               {activeTab === 'surgeons_manage' && (
@@ -5224,7 +5233,7 @@ export default function App() {
                     </div>
                   }
                 >
-                  <RoleManagement activeFacility={activeFacility} theme={theme} />
+                  <RoleManagement activeFacility={activeFacility} facilities={facilities} isSuperAdmin={isSuperAdmin} theme={theme} />
                 </RoleGate>
               )}
 
@@ -5253,7 +5262,7 @@ export default function App() {
               TAB: INSTRUCTION PANEL
               ========================================== */}
               {activeTab === 'instruction' && (
-                <InstructionPanel activeFacility={activeFacility} />
+                <InstructionPanel activeFacility={activeFacility} facilities={facilities} isSuperAdmin={isSuperAdmin} />
               )}
 
               {/* ==========================================
@@ -5298,8 +5307,14 @@ export default function App() {
                   surgeons={surgeonsList}
                   cptCodes={cptCodesList}
                   surgeries={filteredSurgeries}
+                  activeFacility={activeFacility}
+                  facilities={facilities}
+                  isSuperAdmin={isSuperAdmin}
                   onSchedule={async (surgData) => {
-                    const newSurg = await db.addSurgery(surgData);
+                    const newSurg = await db.addSurgery({
+                      ...surgData,
+                      facility_id: surgData.facility_id || activeFacility?.id || db.getActiveFacility()?.id
+                    });
                     if (newSurg) {
                       setSurgeries(prev => [{ ...surgData, id: newSurg.id, status: newSurg.status || 'scheduled' }, ...prev]);
                     }
@@ -5322,6 +5337,9 @@ export default function App() {
                 <CPTManagement
                   cptCodes={cptCodesList}
                   surgeries={filteredSurgeries}
+                  activeFacility={activeFacility}
+                  facilities={facilities}
+                  isSuperAdmin={isSuperAdmin}
                   onAdd={handleAddCPT}
                   onUpdate={handleUpdateCPT}
                   onDelete={handleDeleteCPT}
@@ -5339,7 +5357,7 @@ export default function App() {
               TAB: OT COST MANAGEMENT
               ========================================== */}
               {activeTab === 'ot_cost_manage' && (
-                <OTCostManagement activeFacility={activeFacility} />
+                <OTCostManagement activeFacility={activeFacility} facilities={facilities} isSuperAdmin={isSuperAdmin} />
               )}
 
               {/* ==========================================
@@ -5439,6 +5457,26 @@ export default function App() {
             </div>
 
             <form onSubmit={handleSavePatient} className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto', paddingRight: '6px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+              {/* Super Admin Facility Assignment */}
+              {isSuperAdmin && (
+                <div style={{ padding: '12px 14px', background: 'rgba(59, 130, 246, 0.06)', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--color-blue)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                    <Building2 size={14} /> Assign Facility <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <select
+                    className="date-range-selector"
+                    style={{ width: '100%', height: '38px', background: 'var(--bg-card)', color: 'var(--text-primary)', fontWeight: '600', padding: '0 10px', borderRadius: '6px' }}
+                    value={patientForm.facility_id || activeFacility?.id || ''}
+                    onChange={(e) => setPatientForm({ ...patientForm, facility_id: e.target.value })}
+                    required
+                  >
+                    {facilities.map(f => (
+                      <option key={f.id} value={f.id}>{f.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Basic Information Section */}
               <div>
@@ -5795,6 +5833,26 @@ export default function App() {
             </div>
 
             <form onSubmit={handleSaveSurgeon} className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Super Admin Facility Assignment */}
+              {isSuperAdmin && (
+                <div style={{ padding: '12px 14px', background: 'rgba(59, 130, 246, 0.06)', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--color-blue)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                    <Building2 size={14} /> Assign Facility <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <select
+                    className="date-range-selector"
+                    style={{ width: '100%', height: '38px', background: 'var(--bg-card)', color: 'var(--text-primary)', fontWeight: '600', padding: '0 10px', borderRadius: '6px' }}
+                    value={surgeonForm.facility_id || activeFacility?.id || ''}
+                    onChange={(e) => setSurgeonForm({ ...surgeonForm, facility_id: e.target.value })}
+                    required
+                  >
+                    {facilities.map(f => (
+                      <option key={f.id} value={f.id}>{f.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               {/* Personal Information */}
               <div>
                 <h4 style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--color-blue)', marginBottom: '12px', paddingBottom: '6px', borderBottom: '1px solid var(--border-light)' }}>

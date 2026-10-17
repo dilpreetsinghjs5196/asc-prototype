@@ -49,7 +49,18 @@ const calculateCosmeticFees = (durationMinutes) => {
     };
 };
 
-const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeries = [], onSchedule, onUpdate, onDelete }) => {
+const SurgeryScheduler = ({
+    patients = [],
+    surgeons = [],
+    cptCodes = [],
+    surgeries = [],
+    activeFacility,
+    facilities = [],
+    isSuperAdmin: propIsSuperAdmin,
+    onSchedule,
+    onUpdate,
+    onDelete
+}) => {
     // ----- State -----------------------------------------------------------
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [showSchedule, setShowSchedule] = useState(false);
@@ -64,14 +75,30 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
     const [otExtraCosts, setOtExtraCosts] = useState([]);
     const [orBlocks, setOrBlocks] = useState([]);
     const [staffList, setStaffList] = useState([]);
+    const [facilitiesList, setFacilitiesList] = useState(facilities || []);
+
+    const session = db.getSession();
+    const isSuperAdmin = propIsSuperAdmin !== undefined ? propIsSuperAdmin : (session?.role === 'super_admin');
 
     useEffect(() => {
-        db.getOTExtraCosts().then(setOtExtraCosts).catch(console.error);
-        db.getORBlockSchedule().then(setOrBlocks).catch(console.error);
-        db.getStaff().then(setStaffList).catch(console.error);
-    }, []);
+        if (facilities && facilities.length > 0) {
+            setFacilitiesList(facilities);
+        } else {
+            db.getFacilities().then(res => {
+                if (res && res.length > 0) setFacilitiesList(res);
+            }).catch(console.error);
+        }
+    }, [facilities]);
+
+    useEffect(() => {
+        const targetFac = activeFacility?.id || db.getActiveFacility()?.id;
+        db.getOTExtraCosts(targetFac).then(setOtExtraCosts).catch(console.error);
+        db.getORBlockSchedule(targetFac).then(setOrBlocks).catch(console.error);
+        db.getStaff(targetFac).then(setStaffList).catch(console.error);
+    }, [activeFacility?.id]);
 
     const [formData, setFormData] = useState({
+        facilityId: activeFacility?.id || '',
         patientId: '',
         doctorName: '',
         date: new Date().toISOString().split('T')[0],
@@ -196,7 +223,8 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
             cosmeticFacilityFee: calculateCosmeticFees(60).facilityFee,
             cosmeticAnesthesiaFee: calculateCosmeticFees(60).anesthesiaFee,
             orStaffIds: [],
-            calculateStaffFee: false
+            calculateStaffFee: false,
+            facilityId: activeFacility?.id || (facilitiesList[0]?.id || '')
         });
     };
 
@@ -348,7 +376,8 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
             cosmeticFacilityFee: calculateCosmeticFees(surgery.duration_minutes || 60).facilityFee,
             cosmeticAnesthesiaFee: calculateCosmeticFees(surgery.duration_minutes || 60).anesthesiaFee,
             orStaffIds: surgery.cpt_expenses?._or_staff_ids || [],
-            calculateStaffFee: surgery.cpt_expenses?._calculate_staff_fee || false
+            calculateStaffFee: surgery.cpt_expenses?._calculate_staff_fee || false,
+            facilityId: surgery.facility_id || activeFacility?.id || (facilitiesList[0]?.id || '')
         });
 
         setIsFormOpen(true);
@@ -722,6 +751,7 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
             patient_id: parseInt(formData.patientId),
             surgeon_id: selectedSurgeonObj?.id || null,
             doctor_name: formData.doctorName,
+            facility_id: formData.facilityId || editingSurgery?.facility_id || activeFacility?.id || (facilitiesList[0]?.id || null),
             date: formData.date,
             start_time: formData.startTime,
             duration_minutes: parseInt(formData.durationMinutes),
@@ -1135,7 +1165,7 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
             {/* Visual calendar block schedule */}
             {showSchedule && (
                 <div className="content-card fade-in" style={{ marginBottom: '24px' }}>
-                    <ORBlockSchedule surgeons={surgeons} embedded={true} />
+                    <ORBlockSchedule surgeons={surgeons} embedded={true} activeFacility={activeFacility} facilities={facilitiesList} isSuperAdmin={isSuperAdmin} />
                 </div>
             )}
 
@@ -1152,6 +1182,24 @@ const SurgeryScheduler = ({ patients = [], surgeons = [], cptCodes = [], surgeri
                         </div>
 
                         <form onSubmit={handleSubmit} className="surgery-form">
+                            {isSuperAdmin && (
+                                <div className="form-group" style={{ gridColumn: '1 / -1', padding: '12px 14px', background: 'rgba(59, 130, 246, 0.06)', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)', marginBottom: '8px' }}>
+                                    <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--color-blue)', display: 'block', marginBottom: '6px' }}>
+                                        Assign Facility <span style={{ color: '#ef4444' }}>*</span>
+                                    </label>
+                                    <select
+                                        className="form-input"
+                                        style={{ fontWeight: '600', width: '100%', height: '38px', background: 'var(--bg-card)' }}
+                                        value={formData.facilityId || activeFacility?.id || ''}
+                                        onChange={(e) => setFormData({ ...formData, facilityId: e.target.value })}
+                                        required
+                                    >
+                                        {facilitiesList.map(f => (
+                                            <option key={f.id} value={f.id}>{f.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                             <div className="form-row">
                                 <div className="form-group">
                                     <label>Date</label>

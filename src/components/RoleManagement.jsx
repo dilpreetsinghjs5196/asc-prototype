@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-export default function RoleManagement({ activeFacility, theme = 'light' }) {
+export default function RoleManagement({ activeFacility, facilities = [], isSuperAdmin: propIsSuperAdmin, theme = 'light' }) {
   const [roles, setRoles] = useState(CANONICAL_ROLES);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('cards'); // 'cards' | 'matrix'
@@ -16,15 +16,29 @@ export default function RoleManagement({ activeFacility, theme = 'light' }) {
   const [selectedRoleForDetail, setSelectedRoleForDetail] = useState(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
+  const session = db.getSession();
+  const currentRole = rbacService.normalizeRole(session?.role);
+  const isSuperAdmin = propIsSuperAdmin !== undefined ? propIsSuperAdmin : (currentRole === 'super_admin');
+  const [facilitiesList, setFacilitiesList] = useState(facilities || []);
+
+  useEffect(() => {
+    if (facilities && facilities.length > 0) {
+      setFacilitiesList(facilities);
+    } else {
+      db.getFacilities().then(res => {
+        if (res && res.length > 0) setFacilitiesList(res);
+      }).catch(console.error);
+    }
+  }, [facilities]);
+
   // Custom Role Form
   const [roleForm, setRoleForm] = useState({
     name: '',
     description: '',
-    selectedPermissions: []
+    selectedPermissions: [],
+    facilityId: activeFacility?.id || ''
   });
 
-  const session = db.getSession();
-  const currentRole = rbacService.normalizeRole(session?.role);
   const canManageRoles = ['super_admin', 'org_admin', 'facility_admin'].includes(currentRole);
 
   const loadRoles = async () => {
@@ -156,10 +170,11 @@ export default function RoleManagement({ activeFacility, theme = 'light' }) {
     }
 
     try {
+      const targetFacId = roleForm.facilityId || activeFacility?.id;
       const created = await rbacService.createCustomRole({
         name: roleForm.name,
         description: roleForm.description,
-        facilityId: activeFacility?.id,
+        facilityId: targetFacId,
         permissionCodes: roleForm.selectedPermissions
       });
 
@@ -170,12 +185,12 @@ export default function RoleManagement({ activeFacility, theme = 'light' }) {
         description: roleForm.description.trim(),
         is_system: false,
         tier: 6,
-        facility_id: activeFacility?.id
+        facility_id: targetFacId
       };
 
       setRoles(prev => [...prev, newRoleObj]);
       setIsCreateOpen(false);
-      setRoleForm({ name: '', description: '', selectedPermissions: [] });
+      setRoleForm({ name: '', description: '', selectedPermissions: [], facilityId: activeFacility?.id || (facilitiesList[0]?.id || '') });
 
       Swal.fire({
         title: 'Custom Role Provisioned',
@@ -754,6 +769,48 @@ export default function RoleManagement({ activeFacility, theme = 'light' }) {
 
             <form onSubmit={handleCreateSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
               <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {isSuperAdmin && (
+                  <div style={{
+                    padding: '12px 14px',
+                    background: 'rgba(59, 130, 246, 0.06)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(59, 130, 246, 0.2)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px'
+                  }}>
+                    <label style={{
+                      fontSize: '0.78rem',
+                      fontWeight: '700',
+                      color: 'var(--color-blue, #3b82f6)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}>
+                      <Building2 size={14} /> Assign Facility (Super Admin)
+                    </label>
+                    <select
+                      value={roleForm.facilityId || activeFacility?.id || ''}
+                      onChange={(e) => setRoleForm({ ...roleForm, facilityId: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-card, #1e293b)',
+                        color: 'var(--text-primary, #fff)',
+                        fontWeight: '600',
+                        fontSize: '0.88rem'
+                      }}
+                    >
+                      <option value="">Select Facility...</option>
+                      {facilitiesList.map(f => (
+                        <option key={f.id} value={f.id}>{f.name} ({f.location || f.code})</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '4px' }}>
                     Role Name *

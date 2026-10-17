@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { db } from '../lib/supabase';
-import { Upload, Database, CheckCircle, Loader, FileSpreadsheet, Edit2, Trash2, X, Plus, Search } from 'lucide-react';
+import { Upload, Database, CheckCircle, Loader, FileSpreadsheet, Edit2, Trash2, X, Plus, Search, Building2 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-export default function OTCostManagement({ activeFacility }) {
+export default function OTCostManagement({ activeFacility, facilities = [], isSuperAdmin: propIsSuperAdmin }) {
   const [data, setData] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -18,6 +18,21 @@ export default function OTCostManagement({ activeFacility }) {
   const [editingRowId, setEditingRowId] = useState(null);
   const [editFormData, setEditFormData] = useState({});
 
+  // Super Admin & Facilities
+  const session = db.getSession();
+  const isSuperAdmin = propIsSuperAdmin !== undefined ? propIsSuperAdmin : (session?.role === 'super_admin');
+  const [facilitiesList, setFacilitiesList] = useState(facilities || []);
+
+  useEffect(() => {
+    if (facilities && facilities.length > 0) {
+      setFacilitiesList(facilities);
+    } else {
+      db.getFacilities().then(res => {
+        if (res && res.length > 0) setFacilitiesList(res);
+      }).catch(console.error);
+    }
+  }, [facilities]);
+
   // Add State
   const [isAddingRecord, setIsAddingRecord] = useState(false);
   const [newRecordData, setNewRecordData] = useState({
@@ -27,7 +42,8 @@ export default function OTCostManagement({ activeFacility }) {
     labour_cost: 0,
     or_room_cost: 0,
     medication_cost: 0,
-    tray_cost: 0
+    tray_cost: 0,
+    facility_id: activeFacility?.id || ''
   });
 
   // Columns to extract as per user requirements
@@ -59,6 +75,9 @@ export default function OTCostManagement({ activeFacility }) {
 
   useEffect(() => {
     fetchData();
+    if (activeFacility?.id) {
+      setNewRecordData(prev => ({ ...prev, facility_id: prev.facility_id || activeFacility.id }));
+    }
   }, [activeFacility?.id]);
 
   const [sortField, setSortField] = useState('cpt_codes');
@@ -166,7 +185,7 @@ export default function OTCostManagement({ activeFacility }) {
       }
       
       if (db.upsertOTExtraCosts) {
-        const targetFac = activeFacility?.id || db.getActiveFacility()?.id;
+        const targetFac = newRecordData.facility_id || activeFacility?.id || db.getActiveFacility()?.id;
         await db.upsertOTExtraCosts([{ ...newRecordData, facility_id: targetFac }]);
         Swal.fire('Success', 'Record added successfully', 'success');
         setIsAddingRecord(false);
@@ -177,7 +196,8 @@ export default function OTCostManagement({ activeFacility }) {
           labour_cost: 0,
           or_room_cost: 0,
           medication_cost: 0,
-          tray_cost: 0
+          tray_cost: 0,
+          facility_id: activeFacility?.id || (facilitiesList[0]?.id || '')
         });
         fetchData();
       }
@@ -578,6 +598,40 @@ export default function OTCostManagement({ activeFacility }) {
             </div>
 
             <form onSubmit={handleAddRecord} className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {isSuperAdmin && (
+                <div style={{
+                  padding: '12px 14px',
+                  background: 'rgba(59, 130, 246, 0.06)',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px'
+                }}>
+                  <label style={{
+                    fontSize: '0.78rem',
+                    fontWeight: '700',
+                    color: 'var(--color-blue, #3b82f6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}>
+                    <Building2 size={14} /> Assign Facility (Super Admin)
+                  </label>
+                  <select
+                    value={newRecordData.facility_id || activeFacility?.id || ''}
+                    onChange={(e) => setNewRecordData({ ...newRecordData, facility_id: e.target.value })}
+                    className="date-range-selector"
+                    style={{ width: '100%', background: 'var(--bg-card, #1e293b)', color: 'var(--text-primary, #fff)', fontWeight: '600' }}
+                  >
+                    <option value="">Select Facility...</option>
+                    {facilitiesList.map(f => (
+                      <option key={f.id} value={f.id}>{f.name} ({f.location || f.code})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>CPT Code *</label>
                 <input 
