@@ -244,6 +244,7 @@ export const rbacService = {
    * Lists users and their memberships for a facility
    */
   async listUsers(facilityId) {
+    await db.ensureAuthSession();
     const activeFac = facilityId || db.getActiveFacility()?.id;
     try {
       const { data, error } = await supabase
@@ -264,6 +265,7 @@ export const rbacService = {
    * Lists users across all facilities (Super Admin / Global Directory)
    */
   async listAllUsers(filters = {}) {
+    await db.ensureAuthSession();
     try {
       let query = supabase
         .from('facility_memberships')

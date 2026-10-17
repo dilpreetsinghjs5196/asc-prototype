@@ -69,36 +69,74 @@ export default function UserManagement({ activeFacility, theme: _theme = 'light'
   const loadData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch facilities list
+      // 1. Ensure authenticated session for Supabase RLS
+      await db.ensureAuthSession();
+
+      // 2. Fetch facilities list
       const facList = await db.getFacilities();
       setFacilities(facList || []);
 
-      // 2. Fetch users based on role and active facility filter
+      // 3. Fetch users based on role and active facility filter
       let userList = [];
-      if (isSuperAdmin && (selectedFacilityFilter === 'all' || !selectedFacilityFilter)) {
-        userList = await rbacService.listAllUsers({
-          role: selectedRoleFilter,
-          status: selectedStatusFilter
-        });
-      } else {
-        const targetFacId = (selectedFacilityFilter && selectedFacilityFilter !== 'all')
-          ? selectedFacilityFilter
-          : activeFacility?.id;
-        userList = await rbacService.listUsers(targetFacId);
+      try {
+        if (isSuperAdmin && (selectedFacilityFilter === 'all' || !selectedFacilityFilter)) {
+          userList = await rbacService.listAllUsers({
+            role: selectedRoleFilter,
+            status: selectedStatusFilter
+          });
+        } else {
+          const targetFacId = (selectedFacilityFilter && selectedFacilityFilter !== 'all')
+            ? selectedFacilityFilter
+            : activeFacility?.id;
+          userList = await rbacService.listUsers(targetFacId);
+        }
+      } catch (err) {
+        console.warn('Could not query facility_memberships:', err);
       }
 
-      // Map users
+      // 4. Merge records from public.users so registered users are never omitted
+      try {
+        const legacyUsers = await db.getUsers();
+        if (Array.isArray(legacyUsers)) {
+          legacyUsers.forEach(lu => {
+            const alreadyPresent = userList.some(u => 
+              (u.email && lu.email && u.email.toLowerCase() === lu.email.toLowerCase()) ||
+              (u.user_id && String(u.user_id) === String(lu.id))
+            );
+            if (!alreadyPresent) {
+              userList.push({
+                id: `u-${lu.id}`,
+                user_id: lu.id,
+                name: lu.name || 'Admin Director',
+                email: lu.email || 'admin@asc.com',
+                role: lu.role || 'facility_admin',
+                facility_id: lu.facility_id || activeFacility?.id || (facList?.[0]?.id || '00000000-0000-0000-0000-000000000002'),
+                department: lu.department || 'Administration',
+                title: lu.title || 'Director',
+                is_active: lu.is_active !== false,
+                created_at: lu.created_at || new Date().toISOString()
+              });
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('Legacy users query fallback:', e);
+      }
+
+      // 5. Map users and resolve names/emails/facilities
       const mapped = (userList || []).map(mem => {
         const facObj = (facList || []).find(f => f.id === mem.facility_id) || mem.facilities;
+        const userEmail = mem.email || (mem.user_id === session?.id ? session?.email : (mem.user_id === '527626c8-bbeb-44f1-b3e1-bfd364a38726' ? 'admin@asc.com' : 'admin@asc.com'));
+        const userName = mem.name || (userEmail === 'admin@asc.com' ? 'Admin Director' : (mem.title ? `${mem.title} (${mem.department || 'Staff'})` : (userEmail ? userEmail.split('@')[0] : 'Staff User')));
         return {
           id: mem.id,
           user_id: mem.user_id,
-          name: mem.name || (mem.title ? `${mem.title} (${mem.department || 'Staff'})` : (mem.email ? mem.email.split('@')[0] : 'Staff User')),
-          email: mem.email || (mem.user_id === session?.id ? session?.email : 'staff@asc.com'),
+          name: userName,
+          email: userEmail,
           role: rbacService.normalizeRole(mem.role),
           role_id: mem.role_id,
-          facility_id: mem.facility_id,
-          facility_name: facObj?.name || 'Surgical Center',
+          facility_id: mem.facility_id || facObj?.id,
+          facility_name: facObj?.name || 'Naples Surgery Center',
           department: mem.department || 'General Operations',
           title: mem.title || 'Staff Member',
           is_active: mem.is_active !== false,
@@ -106,9 +144,20 @@ export default function UserManagement({ activeFacility, theme: _theme = 'light'
         };
       });
 
-      // If mapped list is empty, include logged-in session user so table is never artificially empty
-      if (mapped.length === 0 && session) {
-        mapped.push({
+      // 6. Deduplicate by email so each user account appears exactly once
+      const seenKeys = new Set();
+      const deduplicated = [];
+      for (const u of mapped) {
+        const key = (u.email || u.user_id || u.id).toLowerCase();
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          deduplicated.push(u);
+        }
+      }
+
+      // If deduplicated list is empty, include logged-in session user so table is never artificially empty
+      if (deduplicated.length === 0 && session) {
+        deduplicated.push({
           id: 'mem-session',
           user_id: session.id || '00000000-0000-0000-0000-000000000001',
           name: session.name || 'Admin Director',
@@ -123,7 +172,7 @@ export default function UserManagement({ activeFacility, theme: _theme = 'light'
         });
       }
 
-      setUsers(mapped);
+      setUsers(deduplicated);
     } catch (err) {
       console.warn('Could not load user memberships:', err);
     } finally {
@@ -132,75 +181,8 @@ export default function UserManagement({ activeFacility, theme: _theme = 'light'
   };
 
   useEffect(() => {
-    let active = true;
-    const fetchUsers = async () => {
-      try {
-        const facList = await db.getFacilities();
-        if (!active) return;
-        setFacilities(facList || []);
-
-        let userList = [];
-        if (isSuperAdmin && (selectedFacilityFilter === 'all' || !selectedFacilityFilter)) {
-          userList = await rbacService.listAllUsers({
-            role: selectedRoleFilter,
-            status: selectedStatusFilter
-          });
-        } else {
-          const targetFacId = (selectedFacilityFilter && selectedFacilityFilter !== 'all')
-            ? selectedFacilityFilter
-            : activeFacility?.id;
-          userList = await rbacService.listUsers(targetFacId);
-        }
-
-        if (!active) return;
-
-        const mapped = (userList || []).map(mem => {
-          const facObj = (facList || []).find(f => f.id === mem.facility_id) || mem.facilities;
-          return {
-            id: mem.id,
-            user_id: mem.user_id,
-            name: mem.name || (mem.title ? `${mem.title} (${mem.department || 'Staff'})` : (mem.email ? mem.email.split('@')[0] : 'Staff User')),
-            email: mem.email || (mem.user_id === session?.id ? session?.email : 'staff@asc.com'),
-            role: rbacService.normalizeRole(mem.role),
-            role_id: mem.role_id,
-            facility_id: mem.facility_id,
-            facility_name: facObj?.name || 'Surgical Center',
-            department: mem.department || 'General Operations',
-            title: mem.title || 'Staff Member',
-            is_active: mem.is_active !== false,
-            created_at: mem.created_at || new Date().toISOString()
-          };
-        });
-
-        if (mapped.length === 0 && session) {
-          mapped.push({
-            id: 'mem-session',
-            user_id: session.id || '00000000-0000-0000-0000-000000000001',
-            name: session.name || 'Admin Director',
-            email: session.email || 'admin@asc.com',
-            role: currentRole,
-            facility_id: activeFacility?.id || '00000000-0000-0000-0000-000000000002',
-            facility_name: activeFacility?.name || 'Naples Surgery Center',
-            department: 'Executive Administration',
-            title: 'Executive Director',
-            is_active: true,
-            created_at: new Date().toISOString()
-          });
-        }
-
-        setUsers(mapped);
-      } catch (err) {
-        console.warn('Could not load user memberships:', err);
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-
-    fetchUsers();
-    return () => {
-      active = false;
-    };
-  }, [activeFacility?.id, activeFacility?.name, selectedFacilityFilter, selectedRoleFilter, selectedStatusFilter, isSuperAdmin, currentRole, session]);
+    loadData();
+  }, [activeFacility?.id, selectedFacilityFilter, selectedRoleFilter, selectedStatusFilter, isSuperAdmin, currentRole, session?.id, session?.email]);
 
   // Open Edit User Modal
   const openEditModal = (u) => {
