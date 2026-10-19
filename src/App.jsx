@@ -5349,10 +5349,12 @@ export default function App() {
                     if (newSurg) {
                       setSurgeries(prev => [{ ...surgData, id: newSurg.id, status: newSurg.status || 'scheduled' }, ...prev]);
                     }
+                    return newSurg;
                   }}
                   onUpdate={async (id, updates) => {
-                    await db.updateSurgery(id, updates);
+                    const updated = await db.updateSurgery(id, updates);
                     setSurgeries(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+                    return updated;
                   }}
                   onDelete={async (id) => {
                     await db.deleteSurgery(id);

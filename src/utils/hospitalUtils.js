@@ -111,26 +111,52 @@ export const calculateORCost = (durationMinutes) => {
 // Calculate Medicare revenue with MPPR (Multiple Procedure Payment Reduction)
 // Pays 100% for highest-value code, 50% for eligible subsequent surgical codes.
 // Add-on codes (+) are exempt (100%), and device-intensive codes protect the device offset.
+// Calculate Medicare revenue with MPPR (Multiple Procedure Payment Reduction)
+// Supports both string CPT arrays ['29881'] and normalized line objects [{ code: '29881', units: 1, modifiers: ['RT'] }]
+// Pays 100% for highest-value code, 50% for eligible subsequent surgical codes.
+// Add-on codes (+) are exempt (100%), bilateral modifier 50 receives 150%, and device-intensive codes protect device offset.
 export const calculateMedicareRevenue = (cptCodesArray, cptDatabase, applyMPPR = false, options = {}) => {
     if (!cptCodesArray || cptCodesArray.length === 0) return 0;
 
-    // Get full CPT code objects with reimbursement values
-    const cptObjects = cptCodesArray
-        .map(code => cptDatabase.find(c => String(c.code) === String(code)))
-        .filter(Boolean); // Remove any not found
+    // Parse input into normalized line items (supporting both string codes and full objects)
+    const normalizedLines = cptCodesArray.map(item => {
+        if (typeof item === 'string') {
+            return { code: item.trim(), units: 1, modifiers: [], laterality: 'NOT_APPLICABLE' };
+        }
+        return {
+            code: String(item.code || item.cpt_code || '').trim(),
+            units: Math.max(1, parseInt(item.units) || 1),
+            modifiers: Array.isArray(item.modifiers) ? item.modifiers : (item.modifier_code ? [item.modifier_code] : []),
+            laterality: item.laterality || 'NOT_APPLICABLE'
+        };
+    }).filter(l => Boolean(l.code));
 
-    if (cptObjects.length === 0) return 0;
+    if (normalizedLines.length === 0) return 0;
 
-    // Helper to get the best price (Gross Charge if available, else Reimbursement)
-    const getPrice = (cpt) => {
-        // Preference: gross_charge (350% rate requested by user)
-        // Fallback: reimbursement (Original Medicare rate)
-        return parseFloat(cpt.gross_charge || cpt.reimbursement || 0);
+    // Get matching CPT catalog objects
+    const resolvedLines = normalizedLines.map(line => {
+        const catalogItem = cptDatabase.find(c => String(c.code) === String(line.code));
+        if (!catalogItem) return null;
+        return {
+            ...catalogItem,
+            units: line.units,
+            modifiers: line.modifiers,
+            laterality: line.laterality
+        };
+    }).filter(Boolean);
+
+    if (resolvedLines.length === 0) return 0;
+
+    // Helper to get base allowable price (Gross Charge if available, else Reimbursement)
+    const getBasePrice = (cpt) => {
+        const rawRate = parseFloat(cpt.gross_charge || cpt.reimbursement || 0);
+        const isBilateral = (cpt.modifiers && cpt.modifiers.includes('50')) || cpt.laterality === 'BILATERAL';
+        return isBilateral ? rawRate * 1.50 : rawRate;
     };
 
-    // If MPPR is disabled, return simple sum
+    // If MPPR is disabled, return sum of base price * units
     if (!applyMPPR) {
-        return cptObjects.reduce((sum, cpt) => sum + getPrice(cpt), 0);
+        return resolvedLines.reduce((sum, cpt) => sum + (getBasePrice(cpt) * cpt.units), 0);
     }
 
     // Payer scoping: If options specify a commercial or non-Medicare payer, do not apply Medicare MPPR
@@ -140,37 +166,36 @@ export const calculateMedicareRevenue = (cptCodesArray, cptDatabase, applyMPPR =
     );
 
     if (!isMedicare && options?.strictPayerCheck) {
-        return cptObjects.reduce((sum, cpt) => sum + getPrice(cpt), 0);
+        return resolvedLines.reduce((sum, cpt) => sum + (getBasePrice(cpt) * cpt.units), 0);
     }
 
-    // Sort by price (highest first) for MPPR
-    const sortedCpts = [...cptObjects].sort((a, b) => getPrice(b) - getPrice(a));
+    // Sort by base price (highest first) for MPPR ranking
+    const sortedCpts = [...resolvedLines].sort((a, b) => getBasePrice(b) - getBasePrice(a));
 
-    // Calculate total with MPPR
     let totalRevenue = 0;
     let eligibleRank = 1;
 
     sortedCpts.forEach((cpt) => {
-        const price = getPrice(cpt);
+        const price = getBasePrice(cpt);
+        const units = cpt.units;
         const isAddOn = String(cpt.code || '').startsWith('+') || Boolean(cpt.is_add_on) || Boolean(cpt.is_mppr_exempt);
         const isDeviceIntensive = cpt.payment_indicator === 'J8' || (cpt.device_offset_amount && parseFloat(cpt.device_offset_amount) > 0);
         const deviceOffset = parseFloat(cpt.device_offset_amount || 0);
 
         if (isAddOn) {
-            // Add-on codes are exempt from multiple procedure reduction per CMS rules
-            totalRevenue += price;
+            // Add-on codes are exempt from reduction across all units
+            totalRevenue += price * units;
         } else if (eligibleRank === 1) {
-            // First (highest value) eligible surgical code gets 100%
-            totalRevenue += price;
+            // First eligible code: 1st unit gets 100%, subsequent units of same line get 50%
+            totalRevenue += price + (price * 0.50 * (units - 1));
             eligibleRank++;
         } else {
-            // Subsequent eligible surgical codes get 50%
+            // Subsequent eligible codes get 50%
             if (isDeviceIntensive && deviceOffset > 0 && deviceOffset < price) {
-                // Device-intensive: 50% applies ONLY to the non-device service portion
                 const servicePortion = price - deviceOffset;
-                totalRevenue += deviceOffset + (servicePortion * 0.5);
+                totalRevenue += (deviceOffset + (servicePortion * 0.50)) * units;
             } else {
-                totalRevenue += price * 0.5;
+                totalRevenue += price * 0.50 * units;
             }
             eligibleRank++;
         }

@@ -4,8 +4,10 @@ import { db } from '../lib/supabase';
 import jsPDF from 'jspdf';
 import {
     Search, Edit, Trash2, Clock,
-    DollarSign, AlertCircle, Check, ChevronDown, ChevronUp, Wand2, MessageSquare
+    DollarSign, AlertCircle, Check, ChevronDown, ChevronUp, Wand2, MessageSquare,
+    ArrowUp, ArrowDown, Plus, Tag, Star
 } from 'lucide-react';
+import { calculateMedicareRevenue } from '../utils/hospitalUtils';
 import ORBlockSchedule from './ORBlockSchedule';
 import './SurgeryScheduler.css';
 
@@ -106,6 +108,7 @@ const SurgeryScheduler = ({
         durationMinutes: 60,
         turnoverTime: 20,
         selectedCptCodes: [],
+        procedureLines: [],
         trayCost: 0,
         paymentModel: 'Insurance',
         caseClassification: 'Elective',
@@ -212,6 +215,7 @@ const SurgeryScheduler = ({
             durationMinutes: 60,
             turnoverTime: 20,
             selectedCptCodes: [],
+            procedureLines: [],
             trayCost: 0,
             paymentModel: 'Insurance',
             caseClassification: 'Elective',
@@ -363,6 +367,24 @@ const SurgeryScheduler = ({
             }
         }
 
+        const initialProcedures = selectedCpts.map((cCode, idx) => {
+            const cpt = cptCodes.find(c => String(c.code) === String(cCode));
+            return {
+                code: cCode,
+                cpt_code_id: cpt?.id || null,
+                procedure_description: cpt?.description || '',
+                units: 1,
+                modifiers: [],
+                laterality: 'NOT_APPLICABLE',
+                sequence_rank: idx + 1,
+                is_primary: idx === 0,
+                coding_status: 'Coded',
+                gross_charge: parseFloat(cpt?.gross_charge || 0),
+                baseline_charge: parseFloat(cpt?.gross_charge || 0),
+                contracted_reimbursement: parseFloat(cpt?.reimbursement || 0)
+            };
+        });
+
         setFormData({
             patientId: surgery.patient_id || '',
             doctorName: formattedDoctorName,
@@ -371,6 +393,7 @@ const SurgeryScheduler = ({
             durationMinutes: surgery.duration_minutes || 60,
             turnoverTime: surgery.turnover_time || 20,
             selectedCptCodes: selectedCpts,
+            procedureLines: initialProcedures,
             trayCost: trayCostVal || calcTray || 0,
             paymentModel: surgery.payment_model || (surgery.is_probono ? 'Pro_Bono' : ((surgery.notes && surgery.notes.includes('Fixed Facility Fee Case')) ? 'Cosmetic_Fixed' : 'Insurance')),
             caseClassification: surgery.case_classification || 'Elective',
@@ -397,6 +420,32 @@ const SurgeryScheduler = ({
             calculateStaffFee: surgery.cpt_expenses?._calculate_staff_fee || false,
             facilityId: surgery.facility_id || activeFacility?.id || (facilitiesList[0]?.id || '')
         });
+
+        if (surgery.id) {
+            db.getSurgeryProcedures(surgery.id).then(fetchedProcs => {
+                if (fetchedProcs && fetchedProcs.length > 0) {
+                    const mapped = fetchedProcs.map((p, idx) => ({
+                        id: p.id,
+                        code: p.cpt_codes?.code || p.cpt_code || '',
+                        cpt_code_id: p.cpt_code_id,
+                        procedure_description: p.procedure_description || p.cpt_codes?.description || '',
+                        units: Math.max(1, parseInt(p.units) || 1),
+                        modifiers: Array.isArray(p.modifiers) ? p.modifiers : [],
+                        laterality: p.laterality || 'NOT_APPLICABLE',
+                        sequence_rank: p.sequence_rank || (idx + 1),
+                        is_primary: p.is_primary !== undefined ? p.is_primary : (idx === 0),
+                        coding_status: p.coding_status || 'Coded',
+                        gross_charge: parseFloat(p.line_gross_charge || p.baseline_charge || p.cpt_codes?.gross_charge || 0),
+                        baseline_charge: parseFloat(p.baseline_charge || p.cpt_codes?.gross_charge || 0),
+                        contracted_reimbursement: parseFloat(p.contracted_reimbursement || p.cpt_codes?.reimbursement || 0)
+                    }));
+                    setFormData(prev => ({
+                        ...prev,
+                        procedureLines: mapped
+                    }));
+                }
+            }).catch(console.error);
+        }
 
         setIsFormOpen(true);
         setTimeout(() => {
@@ -707,6 +756,8 @@ const SurgeryScheduler = ({
         if (formData.applyFixedCosmeticFee) {
             reimbursementSum = formData.cosmeticFacilityFee;
             noteText += (noteText ? '; ' : '') + `Fixed Facility Fee Case - Facility: $${formData.cosmeticFacilityFee.toLocaleString()}, Anesthesia: $${formData.cosmeticAnesthesiaFee.toLocaleString()}`;
+        } else if (formData.procedureLines && formData.procedureLines.length > 0) {
+            reimbursementSum = calculateMedicareRevenue(formData.procedureLines, cptCodes, false);
         } else {
             formData.selectedCptCodes.forEach(code => {
                 const cpt = cptCodes.find(c => String(c.code) === String(code));
@@ -804,8 +855,10 @@ const SurgeryScheduler = ({
         };
 
         try {
+            let savedSurgeryId = null;
             if (editingSurgery) {
                 await onUpdate(editingSurgery.id, surgeryData);
+                savedSurgeryId = editingSurgery.id;
                 Swal.fire({
                     title: 'Updated!',
                     text: 'Surgery details have been updated successfully.',
@@ -816,7 +869,8 @@ const SurgeryScheduler = ({
                     color: 'var(--text-primary)'
                 });
             } else {
-                await onSchedule(surgeryData);
+                const res = await onSchedule(surgeryData);
+                savedSurgeryId = res?.id || (Array.isArray(res) ? res[0]?.id : null);
                 Swal.fire({
                     title: 'Scheduled!',
                     text: 'Surgery has been scheduled successfully.',
@@ -827,6 +881,16 @@ const SurgeryScheduler = ({
                     color: 'var(--text-primary)'
                 });
             }
+
+            // Sync 1NF Case CPT procedure line items to database
+            if (savedSurgeryId && formData.procedureLines && formData.procedureLines.length > 0) {
+                try {
+                    await db.syncSurgeryProcedures(savedSurgeryId, formData.procedureLines, surgeryData.facility_id);
+                } catch (procSyncErr) {
+                    console.warn('Syncing surgery procedures warning:', procSyncErr);
+                }
+            }
+
             handleCancelEdit();
         } catch (err) {
             console.error(err);
@@ -936,12 +1000,37 @@ const SurgeryScheduler = ({
     const handleCptChange = (code, action) => {
         setFormData(prev => {
             let newCodes = [...prev.selectedCptCodes];
+            let newLines = [...(prev.procedureLines || [])];
 
             if (action === 'add') {
                 newCodes.push(code);
+                const cpt = cptCodes.find(c => String(c.code) === String(code));
+                newLines.push({
+                    code: code,
+                    cpt_code_id: cpt?.id || null,
+                    procedure_description: cpt?.description || '',
+                    units: 1,
+                    modifiers: [],
+                    laterality: 'NOT_APPLICABLE',
+                    sequence_rank: newLines.length + 1,
+                    is_primary: newLines.length === 0,
+                    coding_status: 'Coded',
+                    gross_charge: parseFloat(cpt?.gross_charge || 0),
+                    baseline_charge: parseFloat(cpt?.gross_charge || 0),
+                    contracted_reimbursement: parseFloat(cpt?.reimbursement || 0)
+                });
             } else if (action === 'remove') {
                 const index = newCodes.lastIndexOf(code);
                 if (index > -1) newCodes.splice(index, 1);
+                const lineIndex = newLines.map(l => String(l.code)).lastIndexOf(String(code));
+                if (lineIndex > -1) {
+                    newLines.splice(lineIndex, 1);
+                    newLines = newLines.map((l, idx) => ({
+                        ...l,
+                        sequence_rank: idx + 1,
+                        is_primary: idx === 0
+                    }));
+                }
             }
 
             // Recalculate duration & turnover averages based on CPT codes
@@ -1002,7 +1091,6 @@ const SurgeryScheduler = ({
                     }
                 });
             } else {
-                // If no CPT codes are selected, revert to whatever they were before (or keep global intact)
                 totalSupplies = parseFloat(prev.suppliesCost || 0);
                 totalImplants = parseFloat(prev.implantsCost || 0);
                 totalMeds = parseFloat(prev.medicationsCost || 0);
@@ -1014,6 +1102,7 @@ const SurgeryScheduler = ({
             return {
                 ...prev,
                 selectedCptCodes: newCodes,
+                procedureLines: newLines,
                 cptExpenses: newCptExpenses,
                 durationMinutes: totalDuration > 0 ? totalDuration : prev.durationMinutes,
                 turnoverTime: totalTurnover > 0 ? totalTurnover : prev.turnoverTime,
@@ -1023,6 +1112,133 @@ const SurgeryScheduler = ({
                 trayCost: totalTray,
                 labourCost: totalLabour,
                 orRoomCost: totalOrRoom
+            };
+        });
+    };
+
+    // ----- Procedure Line Handlers (Phase 32 Canonical 1NF) -----
+    const handleProcedureLineChange = (index, field, value) => {
+        setFormData(prev => {
+            const updated = [...(prev.procedureLines || [])];
+            if (!updated[index]) return prev;
+
+            let val = value;
+            if (field === 'units') {
+                val = Math.min(99, Math.max(1, parseInt(value, 10) || 1));
+            }
+
+            const line = { ...updated[index], [field]: val };
+
+            // Automatic modifier 50 sync if laterality changed to BILATERAL
+            if (field === 'laterality' && val === 'BILATERAL') {
+                const currentMods = line.modifiers || [];
+                if (!currentMods.includes('50') && currentMods.length < 4) {
+                    line.modifiers = [...currentMods, '50'];
+                }
+            }
+
+            updated[index] = line;
+            return {
+                ...prev,
+                procedureLines: updated
+            };
+        });
+    };
+
+    const handleToggleModifier = (index, modCode) => {
+        setFormData(prev => {
+            const updated = [...(prev.procedureLines || [])];
+            if (!updated[index]) return prev;
+
+            const currentMods = [...(updated[index].modifiers || [])];
+            const modIdx = currentMods.indexOf(modCode);
+
+            if (modIdx > -1) {
+                currentMods.splice(modIdx, 1);
+            } else {
+                if (currentMods.length >= 4) {
+                    Swal.fire({
+                        title: 'Max Modifiers Reached',
+                        text: 'A procedure line can have at most 4 modifiers.',
+                        icon: 'info',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        background: 'var(--bg-card)',
+                        color: 'var(--text-primary)'
+                    });
+                    return prev;
+                }
+                currentMods.push(modCode);
+            }
+
+            let lat = updated[index].laterality;
+            if (modCode === '50') {
+                lat = currentMods.includes('50') ? 'BILATERAL' : (lat === 'BILATERAL' ? 'NOT_APPLICABLE' : lat);
+            } else if (modCode === 'RT') {
+                lat = currentMods.includes('RT') ? 'RIGHT' : (lat === 'RIGHT' ? 'NOT_APPLICABLE' : lat);
+            } else if (modCode === 'LT') {
+                lat = currentMods.includes('LT') ? 'LEFT' : (lat === 'LEFT' ? 'NOT_APPLICABLE' : lat);
+            }
+
+            updated[index] = {
+                ...updated[index],
+                modifiers: currentMods,
+                laterality: lat
+            };
+
+            return {
+                ...prev,
+                procedureLines: updated
+            };
+        });
+    };
+
+    const handleMoveProcedureRank = (index, direction) => {
+        setFormData(prev => {
+            const lines = [...(prev.procedureLines || [])];
+            const targetIdx = direction === 'up' ? index - 1 : index + 1;
+            if (targetIdx < 0 || targetIdx >= lines.length) return prev;
+
+            const temp = lines[index];
+            lines[index] = lines[targetIdx];
+            lines[targetIdx] = temp;
+
+            const reordered = lines.map((l, idx) => ({
+                ...l,
+                sequence_rank: idx + 1,
+                is_primary: idx === 0
+            }));
+
+            const newCodes = reordered.map(l => l.code);
+
+            return {
+                ...prev,
+                procedureLines: reordered,
+                selectedCptCodes: newCodes
+            };
+        });
+    };
+
+    const handleRemoveProcedureLine = (index) => {
+        setFormData(prev => {
+            const lines = [...(prev.procedureLines || [])];
+            if (index < 0 || index >= lines.length) return prev;
+
+            const removed = lines.splice(index, 1)[0];
+            const reordered = lines.map((l, idx) => ({
+                ...l,
+                sequence_rank: idx + 1,
+                is_primary: idx === 0
+            }));
+
+            const newCodes = [...prev.selectedCptCodes];
+            const cIdx = newCodes.lastIndexOf(removed.code);
+            if (cIdx > -1) newCodes.splice(cIdx, 1);
+
+            return {
+                ...prev,
+                procedureLines: reordered,
+                selectedCptCodes: newCodes
             };
         });
     };
@@ -1645,6 +1861,280 @@ const SurgeryScheduler = ({
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Case CPT Procedure Line Items (1NF Canonical Spec) */}
+                            {formData.procedureLines && formData.procedureLines.length > 0 && (
+                                <div style={{
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '8px',
+                                    padding: '14px',
+                                    marginBottom: '16px',
+                                    background: 'rgba(255, 255, 255, 0.02)'
+                                }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                        <div>
+                                            <h4 style={{
+                                                fontSize: '0.85rem',
+                                                color: 'var(--text-primary)',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.5px',
+                                                margin: 0,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px'
+                                            }}>
+                                                <Tag size={14} style={{ color: 'var(--color-blue)' }} />
+                                                Case CPT Procedure Line Items (1NF)
+                                            </h4>
+                                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                                Set units, modifiers (e.g. 50 Bilateral = 150%), laterality, and sequencing priority.
+                                            </span>
+                                        </div>
+                                        <span style={{
+                                            fontSize: '0.75rem',
+                                            fontWeight: '700',
+                                            color: 'var(--color-blue)',
+                                            background: 'rgba(59, 130, 246, 0.1)',
+                                            padding: '3px 8px',
+                                            borderRadius: '4px'
+                                        }}>
+                                            {formData.procedureLines.length} {formData.procedureLines.length === 1 ? 'Line Item' : 'Line Items'}
+                                        </span>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        {formData.procedureLines.map((line, idx) => {
+                                            const availableModifiers = ['50', '51', '59', 'RT', 'LT', '76', '78'];
+                                            const isBilateral = line.modifiers?.includes('50') || line.laterality === 'BILATERAL';
+                                            const effectiveCharge = (line.gross_charge || 0) * (isBilateral ? 1.5 : 1) * (line.units || 1);
+
+                                            return (
+                                                <div
+                                                    key={`${line.code}-${idx}`}
+                                                    style={{
+                                                        display: 'grid',
+                                                        gridTemplateColumns: '70px 1.4fr 85px 1.5fr 110px 110px 95px 65px',
+                                                        alignItems: 'center',
+                                                        gap: '8px',
+                                                        padding: '10px',
+                                                        borderRadius: '6px',
+                                                        border: line.is_primary ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid var(--border-color)',
+                                                        background: line.is_primary ? 'rgba(59, 130, 246, 0.04)' : 'rgba(0, 0, 0, 0.1)'
+                                                    }}
+                                                >
+                                                    {/* Rank & Move Controls */}
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                            <button
+                                                                type="button"
+                                                                disabled={idx === 0}
+                                                                onClick={() => handleMoveProcedureRank(idx, 'up')}
+                                                                style={{
+                                                                    background: 'none',
+                                                                    border: 'none',
+                                                                    padding: 0,
+                                                                    cursor: idx === 0 ? 'not-allowed' : 'pointer',
+                                                                    color: idx === 0 ? 'var(--text-muted)' : 'var(--text-primary)',
+                                                                    lineHeight: 1
+                                                                }}
+                                                                title="Move Up"
+                                                            >
+                                                                <ArrowUp size={11} />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                disabled={idx === formData.procedureLines.length - 1}
+                                                                onClick={() => handleMoveProcedureRank(idx, 'down')}
+                                                                style={{
+                                                                    background: 'none',
+                                                                    border: 'none',
+                                                                    padding: 0,
+                                                                    cursor: idx === formData.procedureLines.length - 1 ? 'not-allowed' : 'pointer',
+                                                                    color: idx === formData.procedureLines.length - 1 ? 'var(--text-muted)' : 'var(--text-primary)',
+                                                                    lineHeight: 1
+                                                                }}
+                                                                title="Move Down"
+                                                            >
+                                                                <ArrowDown size={11} />
+                                                            </button>
+                                                        </div>
+                                                        <span style={{
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: '700',
+                                                            color: line.is_primary ? 'var(--color-blue)' : 'var(--text-muted)'
+                                                        }}>
+                                                            #{line.sequence_rank || (idx + 1)}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Code & Description */}
+                                                    <div style={{ minWidth: 0 }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                            <span style={{
+                                                                fontSize: '0.8rem',
+                                                                fontWeight: '800',
+                                                                color: 'var(--text-primary)',
+                                                                fontFamily: 'monospace',
+                                                                background: 'rgba(255, 255, 255, 0.05)',
+                                                                padding: '2px 5px',
+                                                                borderRadius: '4px'
+                                                            }}>
+                                                                {line.code}
+                                                            </span>
+                                                            {line.is_primary && (
+                                                                <span style={{
+                                                                    fontSize: '0.65rem',
+                                                                    fontWeight: '700',
+                                                                    color: '#fbbf24',
+                                                                    background: 'rgba(251, 191, 36, 0.1)',
+                                                                    padding: '1px 5px',
+                                                                    borderRadius: '4px',
+                                                                    display: 'inline-flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '2px'
+                                                                }}>
+                                                                    <Star size={9} /> Primary
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div style={{
+                                                            fontSize: '0.72rem',
+                                                            color: 'var(--text-muted)',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap',
+                                                            marginTop: '2px'
+                                                        }}>
+                                                            {line.procedure_description || 'CPT Procedure'}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Units Input */}
+                                                    <div>
+                                                        <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>Units</label>
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            max="99"
+                                                            value={line.units || 1}
+                                                            onChange={(e) => handleProcedureLineChange(idx, 'units', e.target.value)}
+                                                            className="form-input"
+                                                            style={{
+                                                                padding: '3px 6px',
+                                                                fontSize: '0.78rem',
+                                                                height: '28px',
+                                                                textAlign: 'center'
+                                                            }}
+                                                        />
+                                                    </div>
+
+                                                    {/* Modifiers Pill Toggles */}
+                                                    <div>
+                                                        <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>
+                                                            Modifiers ({line.modifiers?.length || 0}/4)
+                                                        </label>
+                                                        <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
+                                                            {availableModifiers.map(mod => {
+                                                                const active = line.modifiers?.includes(mod);
+                                                                return (
+                                                                    <button
+                                                                        key={mod}
+                                                                        type="button"
+                                                                        onClick={() => handleToggleModifier(idx, mod)}
+                                                                        style={{
+                                                                            padding: '2px 5px',
+                                                                            fontSize: '0.68rem',
+                                                                            fontWeight: active ? '700' : '500',
+                                                                            borderRadius: '3px',
+                                                                            cursor: 'pointer',
+                                                                            border: active ? '1px solid var(--color-blue)' : '1px solid var(--border-color)',
+                                                                            background: active ? 'var(--color-blue)' : 'transparent',
+                                                                            color: active ? '#fff' : 'var(--text-secondary)',
+                                                                            lineHeight: 1.2
+                                                                        }}
+                                                                        title={mod === '50' ? 'Modifier 50 (Bilateral Procedure - 150% allowable)' : `Modifier ${mod}`}
+                                                                    >
+                                                                        {mod}
+                                                                    </button>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Laterality Selector */}
+                                                    <div>
+                                                        <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>Laterality</label>
+                                                        <select
+                                                            value={line.laterality || 'NOT_APPLICABLE'}
+                                                            onChange={(e) => handleProcedureLineChange(idx, 'laterality', e.target.value)}
+                                                            className="filter-select"
+                                                            style={{ padding: '3px 6px', fontSize: '0.72rem', height: '28px' }}
+                                                        >
+                                                            <option value="NOT_APPLICABLE">N/A</option>
+                                                            <option value="LEFT">Left (LT)</option>
+                                                            <option value="RIGHT">Right (RT)</option>
+                                                            <option value="BILATERAL">Bilateral (50)</option>
+                                                            <option value="UNSPECIFIED">Unspecified</option>
+                                                        </select>
+                                                    </div>
+
+                                                    {/* Coding Status */}
+                                                    <div>
+                                                        <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>Status</label>
+                                                        <select
+                                                            value={line.coding_status || 'Coded'}
+                                                            onChange={(e) => handleProcedureLineChange(idx, 'coding_status', e.target.value)}
+                                                            className="filter-select"
+                                                            style={{ padding: '3px 6px', fontSize: '0.72rem', height: '28px' }}
+                                                        >
+                                                            <option value="Draft">Draft</option>
+                                                            <option value="Pending_Review">Pending Review</option>
+                                                            <option value="Coded">Coded</option>
+                                                            <option value="Approved">Approved</option>
+                                                        </select>
+                                                    </div>
+
+                                                    {/* Effective Charge */}
+                                                    <div style={{ textAlign: 'right' }}>
+                                                        <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>Total Charge</label>
+                                                        <div style={{
+                                                            fontSize: '0.78rem',
+                                                            fontWeight: '700',
+                                                            color: isBilateral ? '#10b981' : 'var(--text-primary)'
+                                                        }}>
+                                                            {formatCurrency(effectiveCharge)}
+                                                        </div>
+                                                        {isBilateral && (
+                                                            <span style={{ fontSize: '0.62rem', color: '#10b981', display: 'block' }}>
+                                                                150% Bilateral
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Remove Button */}
+                                                    <div style={{ textAlign: 'center' }}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveProcedureLine(idx)}
+                                                            style={{
+                                                                background: 'transparent',
+                                                                border: 'none',
+                                                                color: '#ef4444',
+                                                                cursor: 'pointer',
+                                                                padding: '4px',
+                                                                borderRadius: '4px'
+                                                            }}
+                                                            title="Remove Line Item"
+                                                        >
+                                                            <Trash2 size={13} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Supplies, Implants, Tray Cost, Medications, Labour, OR Room */}
                             <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: '4px' }}>

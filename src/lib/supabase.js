@@ -1349,6 +1349,102 @@ export const db = {
     return true;
   },
 
+  // Synchronize entire procedure line list for a surgery
+  async syncSurgeryProcedures(surgeryId, procedures = [], facilityId = null) {
+    const targetFac = facilityId || this.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002';
+    
+    // 1. Delete existing procedure rows for this case
+    try {
+      await supabase
+        .from('surgery_procedures')
+        .delete()
+        .eq('surgery_id', surgeryId);
+    } catch (delErr) {
+      console.warn('syncSurgeryProcedures cleanup warning:', delErr);
+    }
+
+    if (!procedures || procedures.length === 0) return [];
+
+    // Resolve missing cpt_code_ids if any
+    const missingCodes = procedures
+      .filter(p => !p.cpt_code_id && (p.code || p.cpt_code))
+      .map(p => String(p.code || p.cpt_code));
+    let codeMap = {};
+    if (missingCodes.length > 0) {
+      try {
+        const { data: matchedCpts } = await supabase
+          .from('cpt_codes')
+          .select('id, code, gross_charge, reimbursement, description')
+          .in('code', missingCodes);
+        if (matchedCpts) {
+          matchedCpts.forEach(c => { codeMap[String(c.code)] = c; });
+        }
+      } catch (lookupErr) {
+        console.warn('syncSurgeryProcedures CPT lookup warning:', lookupErr);
+      }
+    }
+
+    // 2. Prepare normalized line items
+    const rowsToInsert = procedures.map((proc, index) => {
+      const codeStr = String(proc.code || proc.cpt_code || '');
+      const cptObj = codeMap[codeStr];
+      const cptCodeId = proc.cpt_code_id || proc.cpt_codes?.id || cptObj?.id || null;
+      const units = Math.max(1, parseInt(proc.units) || 1);
+      const baseline = parseFloat(proc.baseline_charge || proc.gross_charge || cptObj?.gross_charge || 0);
+      const contracted = parseFloat(proc.contracted_reimbursement || proc.reimbursement || cptObj?.reimbursement || 0);
+      const isPrimary = proc.is_primary !== undefined ? proc.is_primary : (index === 0);
+      const rank = proc.sequence_rank || (index + 1);
+
+      return {
+        facility_id: targetFac,
+        surgery_id: surgeryId,
+        cpt_code_id: cptCodeId,
+        sequence_rank: rank,
+        is_primary: isPrimary,
+        units: units,
+        modifiers: Array.isArray(proc.modifiers) ? proc.modifiers : (proc.modifier_code ? [proc.modifier_code] : []),
+        laterality: proc.laterality || 'NOT_APPLICABLE',
+        procedure_description: proc.procedure_description || proc.description || cptObj?.description || null,
+        coding_status: proc.coding_status || 'Coded',
+        baseline_charge: baseline,
+        contracted_reimbursement: contracted,
+        line_gross_charge: baseline * units,
+        line_expected_reimbursement: contracted * units,
+        source_system: proc.source_system || 'MANUAL'
+      };
+    });
+
+    // 3. Batch insert
+    const { data, error } = await supabase
+      .from('surgery_procedures')
+      .insert(rowsToInsert)
+      .select();
+
+    if (error) {
+      console.error('syncSurgeryProcedures error:', error);
+      throw error;
+    }
+
+    return data || [];
+  },
+
+  async updateProcedureCodingStatus(procedureId, codingStatus, verifiedNotes = null) {
+    const updates = {
+      coding_status: codingStatus,
+      verified_at: new Date().toISOString()
+    };
+    if (verifiedNotes) updates.procedure_description = verifiedNotes;
+
+    const { data, error } = await supabase
+      .from('surgery_procedures')
+      .update(updates)
+      .eq('id', procedureId)
+      .select();
+
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
   // Payers & Fee Schedules
   async getPayers(facilityId) {
     try {
