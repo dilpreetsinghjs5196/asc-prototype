@@ -5163,7 +5163,26 @@ export default function App() {
               TAB: SETTINGS
               ========================================== */}
               {activeTab === 'settings' && (
-                <SettingsView />
+                <SettingsView
+                  activeFacility={activeFacility}
+                  currentRole={userRole}
+                  session={authUser}
+                  onFacilityUpdate={(updatedFac) => {
+                    setActiveFacility(updatedFac);
+                    db.setActiveFacility(updatedFac);
+                  }}
+                  onUpdate={async () => {
+                    const currentFacId = activeFacility?.id;
+                    if (currentFacId) {
+                      const facList = await db.getFacilities();
+                      const found = facList.find(f => f.id === currentFacId);
+                      if (found) {
+                        setActiveFacility(found);
+                        db.setActiveFacility(found);
+                      }
+                    }
+                  }}
+                />
               )}
 
               {/* ==========================================

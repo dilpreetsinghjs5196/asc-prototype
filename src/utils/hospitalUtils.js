@@ -109,13 +109,14 @@ export const calculateORCost = (durationMinutes) => {
 };
 
 // Calculate Medicare revenue with MPPR (Multiple Procedure Payment Reduction)
-// Pays 100% for highest-value code, 50% for all subsequent codes
-export const calculateMedicareRevenue = (cptCodesArray, cptDatabase, applyMPPR = false) => {
+// Pays 100% for highest-value code, 50% for eligible subsequent surgical codes.
+// Add-on codes (+) are exempt (100%), and device-intensive codes protect the device offset.
+export const calculateMedicareRevenue = (cptCodesArray, cptDatabase, applyMPPR = false, options = {}) => {
     if (!cptCodesArray || cptCodesArray.length === 0) return 0;
 
     // Get full CPT code objects with reimbursement values
     const cptObjects = cptCodesArray
-        .map(code => cptDatabase.find(c => c.code === code))
+        .map(code => cptDatabase.find(c => String(c.code) === String(code)))
         .filter(Boolean); // Remove any not found
 
     if (cptObjects.length === 0) return 0;
@@ -132,20 +133,46 @@ export const calculateMedicareRevenue = (cptCodesArray, cptDatabase, applyMPPR =
         return cptObjects.reduce((sum, cpt) => sum + getPrice(cpt), 0);
     }
 
+    // Payer scoping: If options specify a commercial or non-Medicare payer, do not apply Medicare MPPR
+    const payerType = options?.payerType || options?.payer_type || 'Medicare';
+    const isMedicare = ['Medicare', 'Medicare Advantage', 'Medicaid'].some(p => 
+        String(payerType).toLowerCase().includes(p.toLowerCase())
+    );
+
+    if (!isMedicare && options?.strictPayerCheck) {
+        return cptObjects.reduce((sum, cpt) => sum + getPrice(cpt), 0);
+    }
+
     // Sort by price (highest first) for MPPR
     const sortedCpts = [...cptObjects].sort((a, b) => getPrice(b) - getPrice(a));
 
     // Calculate total with MPPR
     let totalRevenue = 0;
+    let eligibleRank = 1;
 
-    sortedCpts.forEach((cpt, index) => {
+    sortedCpts.forEach((cpt) => {
         const price = getPrice(cpt);
-        if (index === 0) {
-            // First (highest value) code gets 100%
+        const isAddOn = String(cpt.code || '').startsWith('+') || Boolean(cpt.is_add_on) || Boolean(cpt.is_mppr_exempt);
+        const isDeviceIntensive = cpt.payment_indicator === 'J8' || (cpt.device_offset_amount && parseFloat(cpt.device_offset_amount) > 0);
+        const deviceOffset = parseFloat(cpt.device_offset_amount || 0);
+
+        if (isAddOn) {
+            // Add-on codes are exempt from multiple procedure reduction per CMS rules
             totalRevenue += price;
+        } else if (eligibleRank === 1) {
+            // First (highest value) eligible surgical code gets 100%
+            totalRevenue += price;
+            eligibleRank++;
         } else {
-            // All subsequent codes get 50%
-            totalRevenue += price * 0.5;
+            // Subsequent eligible surgical codes get 50%
+            if (isDeviceIntensive && deviceOffset > 0 && deviceOffset < price) {
+                // Device-intensive: 50% applies ONLY to the non-device service portion
+                const servicePortion = price - deviceOffset;
+                totalRevenue += deviceOffset + (servicePortion * 0.5);
+            } else {
+                totalRevenue += price * 0.5;
+            }
+            eligibleRank++;
         }
     });
 
@@ -275,7 +302,13 @@ export const getSurgeryMetrics = (surgery, cptCodes, settings = {}, procedureGro
         // Actual margin is Revenue minus all costs (including internal room/labor)
         netProfit = totalValue - (internalRoomCost + laborCost + supplyCosts + anesthesiaRevenue);
     } else {
-        cptTotal = calculateMedicareRevenue(surgery.cpt_codes || surgery.cptCodes || [], cptCodes, settings?.apply_medicare_mppr || false);
+        const payerType = surgery.patients?.payer_type || surgery.patients?.insurance_type || surgery.payer_type || surgery.insurance_provider || 'Medicare';
+        cptTotal = calculateMedicareRevenue(
+            surgery.cpt_codes || surgery.cptCodes || [], 
+            cptCodes, 
+            Boolean(settings?.apply_medicare_mppr),
+            { payerType }
+        );
         internalRoomCost = calculateORCost(duration + turnover); // Full room usage cost
 
         if (surgery.notes && surgery.notes.includes('Self-Pay Anesthesia')) {
