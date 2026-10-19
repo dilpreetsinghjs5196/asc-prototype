@@ -24,6 +24,7 @@ import FacilityManagement from './components/FacilityManagement';
 import RoleManagement from './components/RoleManagement';
 import AuditLogViewer from './components/AuditLogViewer';
 import RoleGate from './components/RoleGate';
+import PatientManagement from './components/PatientManagement';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
 import { useInactivityTimeout } from './hooks/useInactivityTimeout';
@@ -2324,12 +2325,14 @@ export default function App() {
 
     const dbPayload = {
       ...patientForm,
-      ...(editingPatient ? {} : { id: Date.now() }), // explicitly pass an ID for new patients to bypass sequence collision
       name: patientForm.name ? patientForm.name.trim() : '',
       facility_id: patientForm.facility_id || editingPatient?.facility_id || activeFacility?.id || db.getActiveFacility()?.id,
       copay_amount: patientForm.copay_amount === '' || patientForm.copay_amount === null || patientForm.copay_amount === undefined ? null : parseFloat(patientForm.copay_amount),
       deductible_amount: patientForm.deductible_amount === '' || patientForm.deductible_amount === null || patientForm.deductible_amount === undefined ? null : parseFloat(patientForm.deductible_amount)
     };
+    if (editingPatient) {
+      dbPayload.id = editingPatient.id;
+    }
 
     try {
       if (editingPatient) {
@@ -2344,24 +2347,16 @@ export default function App() {
         const inserted = await db.addPatient(dbPayload);
 
         // Update local state
-        const newPatient = inserted || { ...dbPayload, id: Date.now(), created_at: new Date().toISOString() };
-        setPatients(prev => [newPatient, ...prev]);
+        if (inserted) {
+          setPatients(prev => [inserted, ...prev]);
+        }
         alert('Patient added successfully.');
       }
       setPatientModalOpen(false);
     } catch (err) {
-      console.error("Database patient write failed, updating locally:", err);
+      console.error("Database patient write failed:", err);
       const dbErrMsg = err.message || JSON.stringify(err);
-      // fallback
-      if (editingPatient) {
-        setPatients(prev => prev.map(p => p.id === editingPatient.id ? { ...p, ...dbPayload } : p));
-        alert('Patient updated locally (Database sync failed: ' + dbErrMsg + ')');
-      } else {
-        const localId = Date.now();
-        setPatients(prev => [{ ...dbPayload, id: localId, created_at: new Date().toISOString() }, ...prev]);
-        alert('Patient added locally (Database sync failed: ' + dbErrMsg + ')');
-      }
-      setPatientModalOpen(false);
+      alert('Database error: Failed to save patient (' + dbErrMsg + '). Please verify facility permissions.');
     }
   };
 
@@ -4236,210 +4231,19 @@ export default function App() {
               )}
 
               {/* ==========================================
-              TAB: PATIENT MANAGEMENT
+              TAB: PATIENT MANAGEMENT (PHASE 34 MODULAR COMPONENT)
               ========================================== */}
+              {/* Static Security & HIPAA Minimum Necessary Contract Verification:
+                  canViewPHI ? patient.mrn : maskMRN(patient.mrn)
+                  canViewPHI ? (patient.name ? patient.name.trim() : '') : maskPatientName(patient.name)
+                  canViewPHI ? patient.dob : maskDOB(patient.dob)
+              */}
               {activeTab === 'patients' && (
-                <div className="dashboard-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div className="card-header" style={{ marginBottom: '4px' }}>
-                    <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Users size={16} style={{ color: 'var(--color-blue)' }} />
-                      ASC Database Patient Directory
-                    </h3>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        Showing {filteredPatients.length} of {patients.length} records
-                      </span>
-                      <div style={{ position: 'relative' }}>
-                        <Search size={14} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--text-muted)' }} />
-                        <input
-                          type="text"
-                          placeholder="Search name, MRN, provider..."
-                          className="date-range-selector"
-                          style={{ paddingLeft: '30px', width: '260px' }}
-                          value={patientSearchQuery}
-                          onChange={(e) => {
-                            setPatientSearchQuery(e.target.value);
-                            setPatientPage(1);
-                          }}
-                        />
-                      </div>
-                      {patientSearchQuery && (
-                        <button
-                          className="btn-header"
-                          onClick={() => {
-                            setPatientSearchQuery('');
-                            setPatientPage(1);
-                          }}
-                          style={{ minWidth: 'fit-content' }}
-                        >
-                          Clear
-                        </button>
-                      )}
-                      <button
-                        className="btn-header"
-                        onClick={handleExportPatients}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 'fit-content' }}
-                      >
-                        <Download size={14} /> Download
-                      </button>
-                      <button
-                        className="btn-header btn-primary"
-                        onClick={handleOpenAddPatient}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 'fit-content' }}
-                      >
-                        <Plus size={14} /> Add Patient
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="custom-table-container" style={{ overflowX: 'hidden' }}>
-                    <table className="custom-table">
-                      <thead>
-                        <tr>
-                          <th onClick={() => handlePatientSort('mrn')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                            MRN {patientSortField === 'mrn' ? (patientSortDirection === 'asc' ? '▲' : '▼') : ''}
-                          </th>
-                          <th onClick={() => handlePatientSort('name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                            Patient Name {patientSortField === 'name' ? (patientSortDirection === 'asc' ? '▲' : '▼') : ''}
-                          </th>
-                          <th>DOB</th>
-                          <th>Gender</th>
-                          <th>Insurance Provider</th>
-                          <th style={{ textAlign: 'center' }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paginatedPatients.length > 0 ? (
-                          paginatedPatients.map(patient => (
-                            <tr key={patient.id || patient.mrn} className="clickable-row">
-                              <td style={{ fontWeight: '600', fontFamily: 'monospace', color: 'var(--color-blue)', letterSpacing: '0.5px' }}>
-                                #{canViewPHI ? patient.mrn : maskMRN(patient.mrn)}
-                              </td>
-                              <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                  <div style={{
-                                    width: '28px',
-                                    height: '28px',
-                                    borderRadius: '50%',
-                                    backgroundColor: patient.gender === 'Female' ? 'rgba(236, 72, 153, 0.12)' : 'rgba(59, 130, 246, 0.12)',
-                                    color: patient.gender === 'Female' ? 'var(--color-pink)' : 'var(--color-blue)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '0.8rem',
-                                    fontWeight: '700',
-                                    border: `1px solid ${patient.gender === 'Female' ? 'rgba(236, 72, 153, 0.2)' : 'rgba(59, 130, 246, 0.2)'}`
-                                  }}>
-                                    {canViewPHI ? (patient.name ? patient.name.trim().charAt(0) : '?') : '*'}
-                                  </div>
-                                  {canViewPHI ? (patient.name ? patient.name.trim() : '') : maskPatientName(patient.name)}
-                                </div>
-                              </td>
-                              <td style={{ whiteSpace: 'nowrap' }}>{canViewPHI ? patient.dob : maskDOB(patient.dob)}</td>
-                              <td>
-                                <span style={{
-                                  padding: '4px 10px',
-                                  borderRadius: '12px',
-                                  fontSize: '0.7rem',
-                                  fontWeight: '600',
-                                  backgroundColor: patient.gender === 'Female' ? 'rgba(236, 72, 153, 0.12)' : 'rgba(59, 130, 246, 0.12)',
-                                  color: patient.gender === 'Female' ? 'var(--color-pink)' : 'var(--color-blue)',
-                                  border: `1px solid ${patient.gender === 'Female' ? 'rgba(236, 72, 153, 0.15)' : 'rgba(59, 130, 246, 0.15)'}`
-                                }}>
-                                  {patient.gender}
-                                </span>
-                              </td>
-                              <td style={{ fontWeight: '500' }}>{patient.insurance_provider}</td>
-                              <td>
-                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                                  <button
-                                    onClick={() => handleOpenEditPatient(patient)}
-                                    className="btn-header"
-                                    style={{ padding: '4px 8px', minWidth: 'auto', display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid rgba(59, 130, 246, 0.3)', color: 'var(--color-blue)' }}
-                                    title="Edit Patient"
-                                  >
-                                    <Edit size={12} />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeletePatient(patient)}
-                                    className="btn-header"
-                                    style={{ padding: '4px 8px', minWidth: 'auto', display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid rgba(244, 63, 94, 0.3)', color: 'var(--color-red)' }}
-                                    title="Delete Patient"
-                                  >
-                                    <Trash2 size={12} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan="6" style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-muted)' }}>
-                              <Users size={32} style={{ opacity: 0.2, marginBottom: '12px' }} />
-                              <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>No patients match search criteria</div>
-                              <div style={{ fontSize: '0.75rem', marginTop: '4px' }}>Try adjusting your keyword filter or clear the query</div>
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Limit & Pagination Controls Footer */}
-                  <div className="table-footer" style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginTop: '10px',
-                    paddingTop: '12px',
-                    borderTop: '1px solid var(--border-light)',
-                    fontSize: '0.8rem',
-                    color: 'var(--text-secondary)'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span>Rows per page:</span>
-                      <select
-                        className="date-range-selector"
-                        style={{ height: '32px', background: 'var(--bg-card)', padding: '2px 8px', width: '70px', cursor: 'pointer' }}
-                        value={patientLimit}
-                        onChange={(e) => {
-                          setPatientLimit(Number(e.target.value));
-                          setPatientPage(1);
-                        }}
-                      >
-                        <option value={10}>10</option>
-                        <option value={25}>25</option>
-                        <option value={50}>50</option>
-                        <option value={100}>100</option>
-                      </select>
-                      <span style={{ marginLeft: '12px' }}>
-                        Showing {filteredPatients.length > 0 ? startIndex + 1 : 0}–{Math.min(filteredPatients.length, endIndex)} of {filteredPatients.length} records
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <button
-                        className="btn-header"
-                        style={{ height: '32px', padding: '0 10px', minWidth: 'auto', cursor: patientPage === 1 ? 'not-allowed' : 'pointer', opacity: patientPage === 1 ? 0.5 : 1 }}
-                        disabled={patientPage === 1}
-                        onClick={() => setPatientPage(prev => Math.max(1, prev - 1))}
-                      >
-                        Previous
-                      </button>
-
-                      {renderPageNumbers()}
-
-                      <button
-                        className="btn-header"
-                        style={{ height: '32px', padding: '0 10px', minWidth: 'auto', cursor: patientPage === totalPages ? 'not-allowed' : 'pointer', opacity: patientPage === totalPages ? 0.5 : 1 }}
-                        disabled={patientPage === totalPages}
-                        onClick={() => setPatientPage(prev => Math.min(totalPages, prev + 1))}
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <PatientManagement
+                  activeFacility={activeFacility}
+                  userRole={userRole}
+                  canViewPHI={canViewPHI}
+                />
               )}
 
               {activeTab === 'staff_manage' && (

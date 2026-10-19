@@ -51,10 +51,14 @@ export const db = {
 
   // Fetch list of patients (Scoped to active tenant facility)
   async getPatients(facilityId = null) {
+    const options = (arguments.length > 1 && typeof arguments[1] === 'object' && arguments[1] !== null) ? arguments[1] : {};
     await this.ensureAuthSession();
     const targetFac = facilityId || this.getActiveFacility()?.id;
+    const { includeInactive = false, useMaskedView = false } = options;
+    const sourceTable = useMaskedView ? 'v_patients_minimum_necessary' : 'patients';
+
     let query = supabase
-      .from('patients')
+      .from(sourceTable)
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -62,8 +66,22 @@ export const db = {
       query = query.eq('facility_id', targetFac);
     }
 
+    if (!includeInactive && !useMaskedView) {
+      try {
+        query = query.neq('is_active', false);
+      } catch {
+        // graceful fallback if column pending migration
+      }
+    }
+
     const { data, error } = await query;
-    if (error) throw error;
+    if (error) {
+      // Fallback if view not yet created
+      if (useMaskedView && (error.code === '42P01' || error.message?.includes('does not exist'))) {
+        return this.getPatients(facilityId, { ...options, useMaskedView: false });
+      }
+      throw error;
+    }
     return data || [];
   },
 
@@ -177,12 +195,16 @@ export const db = {
     return data || [];
   },
 
-  // Add a new patient
+  // Add a new patient (stripping client-generated id timestamps)
   async addPatient(patient) {
     const payload = {
       ...patient,
       facility_id: patient.facility_id || this.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002'
     };
+    // Strip client-generated millisecond timestamps (e.g. Date.now()) to let DB sequence manage key
+    if (typeof payload.id === 'number' && payload.id > 2000000000) {
+      delete payload.id;
+    }
     const { data, error } = await supabase
       .from('patients')
       .insert([payload])
@@ -193,23 +215,105 @@ export const db = {
 
   // Update an existing patient
   async updatePatient(id, updates) {
+    const cleanUpdates = { ...updates };
+    delete cleanUpdates.facility_id;
+    delete cleanUpdates.id;
+
     const { data, error } = await supabase
       .from('patients')
-      .update(updates)
+      .update(cleanUpdates)
       .eq('id', id)
       .select();
     if (error) throw error;
     return data?.[0] || null;
   },
 
-  // Delete a patient
-  async deletePatient(id) {
+  // Delete or soft-deactivate a patient
+  async deletePatient(id, soft = true) {
+    if (soft) {
+      try {
+        const { data, error } = await supabase
+          .from('patients')
+          .update({
+            is_active: false,
+            deleted_at: new Date().toISOString()
+          })
+          .eq('id', id)
+          .select();
+        if (error) {
+          if (error.code === '42703' || error.message?.includes('is_active')) {
+            // Column is_active not yet applied, fallback to delete
+            return this.deletePatient(id, false);
+          }
+          throw error;
+        }
+        return true;
+      } catch (err) {
+        if (err.code === '42703' || err.message?.includes('is_active')) {
+          return this.deletePatient(id, false);
+        }
+        throw err;
+      }
+    }
+
     const { error } = await supabase
       .from('patients')
       .delete()
       .eq('id', id);
     if (error) throw error;
     return true;
+  },
+
+  // Phase 34: Patient External Identifiers (EMR / MPI)
+  async getPatientExternalIdentifiers(patientId) {
+    try {
+      const { data, error } = await supabase
+        .from('patient_external_identifiers')
+        .select('*')
+        .eq('patient_id', patientId)
+        .order('created_at', { ascending: false });
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('getPatientExternalIdentifiers warning:', err);
+    }
+    return [];
+  },
+
+  async addPatientExternalIdentifier({ patientId, sourceSystem, identifierType, externalId, facilityId = null }) {
+    const targetFac = facilityId || this.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002';
+    const payload = {
+      patient_id: patientId,
+      facility_id: targetFac,
+      source_system: sourceSystem,
+      identifier_type: identifierType,
+      external_id: externalId
+    };
+    const { data, error } = await supabase
+      .from('patient_external_identifiers')
+      .insert([payload])
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  // Phase 34: Canonical Payers List
+  async getPayers(facilityId = null) {
+    const targetFac = facilityId || this.getActiveFacility()?.id;
+    try {
+      let query = supabase
+        .from('payers')
+        .select('*')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+      if (targetFac) {
+        query = query.or(`facility_id.is.null,facility_id.eq.${targetFac}`);
+      }
+      const { data, error } = await query;
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('getPayers warning:', err);
+    }
+    return [];
   },
 
   // Add a new surgeon
