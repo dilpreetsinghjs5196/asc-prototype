@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { calculateMedicareRevenue } from '../utils/hospitalUtils';
 import ORBlockSchedule from './ORBlockSchedule';
+import CaseTimelineModal from './CaseTimelineModal';
 import './SurgeryScheduler.css';
 
 // Format currency helper
@@ -78,6 +79,7 @@ const SurgeryScheduler = ({
     const [orBlocks, setOrBlocks] = useState([]);
     const [staffList, setStaffList] = useState([]);
     const [facilitiesList, setFacilitiesList] = useState(facilities || []);
+    const [timelineSurgery, setTimelineSurgery] = useState(null);
 
     const session = db.getSession();
     const isSuperAdmin = propIsSuperAdmin !== undefined ? propIsSuperAdmin : (session?.role === 'super_admin');
@@ -1679,6 +1681,8 @@ const SurgeryScheduler = ({
                                             <option value="PACU">PACU</option>
                                             <option value="Completed">Completed</option>
                                             <option value="Cancelled">Cancelled</option>
+                                            <option value="Billed">Billed</option>
+                                            <option value="Void">Void</option>
                                         </select>
                                     </div>
                                 </div>
@@ -2875,7 +2879,10 @@ const SurgeryScheduler = ({
                                                                             <button className="btn-icon btn-notes" title="Notes" onClick={() => handleNotes(s)}>
                                                                                 <MessageSquare size={16} />
                                                                             </button>
-                                                                            {s.status !== 'completed' && s.status !== 'cancelled' && (
+                                                                            <button className="btn-icon btn-timeline" title="View Case Timeline" onClick={() => setTimelineSurgery(s)}>
+                                                                                <Clock size={16} />
+                                                                            </button>
+                                                                            {String(s.status || '').toLowerCase() !== 'completed' && String(s.status || '').toLowerCase() !== 'cancelled' && String(s.status || '').toLowerCase() !== 'billed' && String(s.status || '').toLowerCase() !== 'void' && (
                                                                                 <>
                                                                                     <button className="btn-icon btn-reschedule" title="Complete" onClick={() => handleCompleteSurgery(s.id)}>
                                                                                         <Check size={12} />
@@ -2937,6 +2944,13 @@ const SurgeryScheduler = ({
                 </div>
 
             </div>
+
+            {/* Case Timeline Drawer / Modal */}
+            <CaseTimelineModal
+                surgery={timelineSurgery}
+                isOpen={!!timelineSurgery}
+                onClose={() => setTimelineSurgery(null)}
+            />
         </div>
     );
 };

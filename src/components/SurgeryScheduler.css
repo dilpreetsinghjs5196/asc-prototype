@@ -187,10 +187,15 @@
     letter-spacing: 0.5px;
 }
 
-.status-scheduled { background-color: rgba(59, 130, 246, 0.12); color: var(--color-blue); }
-.status-completed { background-color: rgba(16, 185, 129, 0.12); color: var(--color-green); }
-.status-cancelled { background-color: rgba(239, 68, 68, 0.12); color: var(--color-red); }
-.status-in-progress { background-color: rgba(245, 158, 11, 0.12); color: var(--color-orange); }
+.status-scheduled, .status-Scheduled { background-color: rgba(59, 130, 246, 0.12); color: var(--color-blue); }
+.status-completed, .status-Completed { background-color: rgba(16, 185, 129, 0.12); color: var(--color-green); }
+.status-cancelled, .status-Cancelled { background-color: rgba(239, 68, 68, 0.12); color: var(--color-red); }
+.status-in-progress, .status-In-OR, .status-Closing { background-color: rgba(245, 158, 11, 0.12); color: var(--color-orange); }
+.status-pre-op, .status-Pre-Op { background-color: rgba(14, 165, 233, 0.12); color: #0284c7; }
+.status-pacu, .status-PACU { background-color: rgba(168, 85, 247, 0.12); color: #9333ea; }
+.status-billed, .status-Billed { background-color: rgba(16, 185, 129, 0.2); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3); }
+.status-void, .status-Void { background-color: rgba(100, 116, 139, 0.15); color: #64748b; text-decoration: line-through; }
+.status-draft, .status-Draft { background-color: rgba(148, 163, 184, 0.12); color: #64748b; }
 
 /* Buttons */
 .btn-add {
@@ -288,6 +293,16 @@
 .btn-notes:hover {
     background: rgba(167, 139, 250, 0.3);
     color: #7c3aed;
+}
+
+.btn-timeline {
+    background: rgba(14, 165, 233, 0.18);
+    color: #0284c7;
+}
+
+.btn-timeline:hover {
+    background: rgba(14, 165, 233, 0.3);
+    color: #0369a1;
 }
 
 .btn-reschedule {

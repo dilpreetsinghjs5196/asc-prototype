@@ -1680,6 +1680,58 @@ export const db = {
     return data?.[0] || null;
   },
 
+  // Phase 33: Case Events Ledger & Status History
+  async getCaseEvents(surgeryId) {
+    try {
+      const { data, error } = await supabase
+        .from('case_events')
+        .select('*')
+        .eq('surgery_id', surgeryId)
+        .order('event_timestamp', { ascending: true });
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('getCaseEvents error:', err);
+    }
+    return [];
+  },
+
+  async recordCaseEvent({
+    surgeryId,
+    eventType,
+    fromStatus = null,
+    toStatus = null,
+    reasonCode = null,
+    reasonText = null,
+    payload = {},
+    source = 'UI',
+    facilityId = null
+  }) {
+    const targetFac = facilityId || this.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002';
+    const eventRecord = {
+      facility_id: targetFac,
+      surgery_id: surgeryId,
+      event_type: eventType,
+      from_status: fromStatus,
+      to_status: toStatus,
+      reason_code: reasonCode,
+      reason_text: reasonText,
+      source: source,
+      payload: payload,
+      event_timestamp: new Date().toISOString()
+    };
+    try {
+      const { data, error } = await supabase
+        .from('case_events')
+        .insert([eventRecord])
+        .select();
+      if (error) throw error;
+      return data?.[0] || null;
+    } catch (err) {
+      console.warn('recordCaseEvent warning:', err);
+      return null;
+    }
+  },
+
   // Phase 31: Structured Case Cancellation
   async cancelSurgeryCase(surgeryId, reasonCode = 'SCHEDULING_ERROR', reasonText = '') {
     const payload = {
