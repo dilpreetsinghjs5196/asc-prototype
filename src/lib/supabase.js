@@ -270,12 +270,26 @@ export const db = {
 
   // Update an existing surgery
   async updateSurgery(id, updates) {
+    const payload = {
+      ...updates,
+      updated_at: new Date().toISOString()
+    };
     const { data, error } = await supabase
       .from('surgeries')
-      .update(updates)
+      .update(payload)
       .eq('id', id)
       .select();
     if (error) throw error;
+
+    // Phase 31: Auto-freeze financial snapshot when case completes or is billed
+    if (updates.status && ['completed', 'billed'].includes(String(updates.status).toLowerCase())) {
+      try {
+        await this.calculateSurgeryFinancials(id, true);
+      } catch (freezeErr) {
+        console.warn('Auto-freeze financial snapshot non-blocking warning:', freezeErr);
+      }
+    }
+
     return data?.[0] || null;
   },
 
@@ -1537,6 +1551,86 @@ export const db = {
       .select();
     if (error) throw error;
     return data?.[0] || null;
+  },
+
+  // Phase 31: Case Master Milestones
+  async getCaseMilestones(surgeryId) {
+    try {
+      const { data, error } = await supabase
+        .from('case_milestones')
+        .select('*')
+        .eq('surgery_id', surgeryId)
+        .order('milestone_timestamp', { ascending: true });
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('getCaseMilestones fallback:', err);
+    }
+    return [];
+  },
+
+  async recordCaseMilestone({ surgeryId, milestoneCode, timestamp, notes = null }) {
+    const payload = {
+      surgery_id: surgeryId,
+      facility_id: this.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002',
+      milestone_code: milestoneCode,
+      milestone_timestamp: timestamp || new Date().toISOString(),
+      verification_notes: notes
+    };
+    const { data, error } = await supabase
+      .from('case_milestones')
+      .upsert(payload, { onConflict: 'surgery_id,milestone_code' })
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  // Phase 31: Structured Case Cancellation
+  async cancelSurgeryCase(surgeryId, reasonCode = 'SCHEDULING_ERROR', reasonText = '') {
+    const payload = {
+      status: 'Cancelled',
+      cancellation_reason_code: reasonCode,
+      cancellation_reason_text: reasonText,
+      cancelled_at: new Date().toISOString(),
+      notes: reasonText ? `Cancelled: ${reasonText}` : 'Cancelled'
+    };
+    return await this.updateSurgery(surgeryId, payload);
+  },
+
+  // Phase 31: Server-Authoritative Financials & Snapshot Freeze
+  async calculateSurgeryFinancials(surgeryId, freeze = false) {
+    try {
+      const { data, error } = await supabase
+        .rpc('calculate_surgery_financials', {
+          p_surgery_id: surgeryId,
+          p_freeze: Boolean(freeze)
+        });
+      if (!error && data) return data;
+    } catch (rpcErr) {
+      console.warn('calculate_surgery_financials RPC fallback to client snapshot:', rpcErr);
+    }
+
+    // Client fallback if RPC not installed
+    if (freeze) {
+      const targetFac = this.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002';
+      return await this.saveSurgeryFinancialSnapshot({
+        surgery_id: surgeryId,
+        facility_id: targetFac,
+        gross_revenue: 0,
+        expected_reimbursement: 0,
+        room_cost: 0,
+        labor_cost: 0,
+        supplies_cost: 0,
+        implants_cost: 0,
+        medications_cost: 0,
+        total_cost: 0,
+        net_margin: 0,
+        margin_per_or_minute: 0,
+        calculation_version: 'v1.0-cms2026',
+        snapshot_data: { fallback: true, surgery_id: surgeryId },
+        frozen_at: new Date().toISOString()
+      });
+    }
+    return null;
   }
 };
 

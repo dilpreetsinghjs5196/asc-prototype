@@ -227,8 +227,10 @@ export const formatCurrency = (amount) => {
 
 // Calculate all metrics for a surgery consistently across the app
 export const getSurgeryMetrics = (surgery, cptCodes, settings = {}, procedureGroupItems = [], billing = []) => {
-    const isCosmetic = surgery.notes && surgery.notes.includes('Fixed Facility Fee Case');
-    const isProbono = !!(surgery.is_probono || surgery.isProbono);
+    const isCosmetic = surgery.payment_model === 'Cosmetic_Fixed' || 
+        Boolean(surgery.is_cosmetic) || 
+        (surgery.notes && surgery.notes.includes('Fixed Facility Fee Case'));
+    const isProbono = surgery.payment_model === 'Pro_Bono' || !!(surgery.is_probono || surgery.isProbono);
     let cptTotal = 0;
     let orCost = 0; // Billable Facility Fee
     let internalRoomCost;
@@ -263,18 +265,19 @@ export const getSurgeryMetrics = (surgery, cptCodes, settings = {}, procedureGro
     const turnover = parseInt(surgery.turnover_time || surgery.turnoverTime || 0);
 
     if (isCosmetic) {
-        // Parse cosmetic fees from notes or use calculated defaults
-        let facilityFee = 0;
-        let anesthesiaFee = 0;
+        // Priority 1: Read structured numeric columns from Migration 009
+        let facilityFee = parseFloat(surgery.cosmetic_facility_fee || 0);
+        let anesthesiaFee = parseFloat(surgery.cosmetic_anesthesia_fee || 0);
 
-        if (surgery.notes) {
+        // Priority 2: Fallback to regex parsing on surgery.notes for historical legacy records
+        if (facilityFee === 0 && anesthesiaFee === 0 && surgery.notes) {
             const facilityMatch = surgery.notes.match(/(?:Facility|Cosmetic|CSC|Faculty)(?:\s+Fee)?:\s*\$?\s*([\d,.]+)/i);
             const anesthesiaMatch = surgery.notes.match(/(?:Anesthesia|Quantum)(?:\s+Fee)?:\s*\$?\s*([\d,.]+)/i);
             facilityFee = facilityMatch ? parseFloat(facilityMatch[1].replace(/,/g, '')) : 0;
             anesthesiaFee = anesthesiaMatch ? parseFloat(anesthesiaMatch[1].replace(/,/g, '')) : 0;
         }
 
-        // Fallback to defaults if not in notes
+        // Priority 3: Fallback to piecewise duration defaults if still zero
         if (facilityFee === 0 && anesthesiaFee === 0) {
             const defaults = calculateCosmeticFees(duration);
             facilityFee = defaults.facilityFee;
@@ -311,7 +314,10 @@ export const getSurgeryMetrics = (surgery, cptCodes, settings = {}, procedureGro
         );
         internalRoomCost = calculateORCost(duration + turnover); // Full room usage cost
 
-        if (surgery.notes && surgery.notes.includes('Self-Pay Anesthesia')) {
+        // Check structured self-pay anesthesia fee, fallback to notes regex
+        if (parseFloat(surgery.self_pay_anesthesia_fee || 0) > 0) {
+            anesthesiaRevenue = parseFloat(surgery.self_pay_anesthesia_fee);
+        } else if (surgery.notes && surgery.notes.includes('Self-Pay Anesthesia')) {
             const match = surgery.notes.match(/Self-Pay Anesthesia(?: \(([^)]+)\))?:?\s*\$?\s*([\d,]+)/i);
             if (match) {
                 anesthesiaRevenue = parseFloat(match[2].replace(/,/g, ''));

@@ -5028,7 +5028,7 @@ export default function App() {
                                   let statusDisplay = 'Scheduled (On Time)';
                                   let statusColor = 'var(--color-blue)';
                                   if (isCancelled) {
-                                    statusDisplay = `Cancelled: ${c.cancellation_reason || (c.notes && !c.notes.includes('Facility') ? c.notes.replace(/^Cancelled:\s*/i, '') : 'Medical / Pre-op clearance issue')}`;
+                                    statusDisplay = `Cancelled: ${c.cancellation_reason_text || c.cancellation_reason || (c.notes && !c.notes.includes('Facility') ? c.notes.replace(/^Cancelled:\s*/i, '') : 'Medical / Pre-op clearance issue')}`;
                                     statusColor = 'var(--color-red)';
                                   } else if (isRescheduled) {
                                     statusDisplay = `Rescheduled ${c.notes && !c.notes.includes('Facility') ? `(${c.notes})` : ''}`;
@@ -5036,6 +5036,18 @@ export default function App() {
                                   } else if (isCompleted) {
                                     statusDisplay = 'Completed (Procedure Successful)';
                                     statusColor = 'var(--color-green)';
+                                  } else if (statusLower === 'in-or' || statusLower === 'in progress') {
+                                    statusDisplay = 'In-OR (Procedure In Progress)';
+                                    statusColor = 'var(--color-orange)';
+                                  } else if (statusLower === 'pre-op') {
+                                    statusDisplay = 'Pre-Op (Patient Arrived)';
+                                    statusColor = 'var(--color-blue)';
+                                  } else if (statusLower === 'pacu') {
+                                    statusDisplay = 'PACU (Post-Anesthesia Recovery)';
+                                    statusColor = '#0d9488';
+                                  } else if (statusLower === 'billed') {
+                                    statusDisplay = 'Billed (Claim Submitted)';
+                                    statusColor = '#6366f1';
                                   }
 
                                   return (

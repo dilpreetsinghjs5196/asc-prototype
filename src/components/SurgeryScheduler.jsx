@@ -107,6 +107,12 @@ const SurgeryScheduler = ({
         turnoverTime: 20,
         selectedCptCodes: [],
         trayCost: 0,
+        paymentModel: 'Insurance',
+        caseClassification: 'Elective',
+        status: 'Scheduled',
+        selfPayAnesthesiaFee: 0,
+        preOpDiagnosis: '',
+        clinicalNotes: '',
         suppliesCost: 0,
         implantsCost: 0,
         medicationsCost: 0,
@@ -207,6 +213,12 @@ const SurgeryScheduler = ({
             turnoverTime: 20,
             selectedCptCodes: [],
             trayCost: 0,
+            paymentModel: 'Insurance',
+            caseClassification: 'Elective',
+            status: 'Scheduled',
+            selfPayAnesthesiaFee: 0,
+            preOpDiagnosis: '',
+            clinicalNotes: '',
             suppliesCost: 0,
             implantsCost: 0,
             medicationsCost: 0,
@@ -360,6 +372,12 @@ const SurgeryScheduler = ({
             turnoverTime: surgery.turnover_time || 20,
             selectedCptCodes: selectedCpts,
             trayCost: trayCostVal || calcTray || 0,
+            paymentModel: surgery.payment_model || (surgery.is_probono ? 'Pro_Bono' : ((surgery.notes && surgery.notes.includes('Fixed Facility Fee Case')) ? 'Cosmetic_Fixed' : 'Insurance')),
+            caseClassification: surgery.case_classification || 'Elective',
+            status: surgery.status || 'Scheduled',
+            selfPayAnesthesiaFee: parseFloat(surgery.self_pay_anesthesia_fee || 0),
+            preOpDiagnosis: surgery.pre_op_diagnosis || '',
+            clinicalNotes: surgery.clinical_notes || '',
             suppliesCost: surgery.supplies_cost || calcSupplies || 0,
             implantsCost: surgery.implants_cost || calcImplants || 0,
             medicationsCost: surgery.medications_cost || calcMeds || 0,
@@ -369,12 +387,12 @@ const SurgeryScheduler = ({
             actualEndTime: formatTimeForInput(surgery.actual_end_time),
             actualDurationMinutes: surgery.actual_duration_minutes || surgery.duration_minutes || 0,
             writeOff: surgery.write_off || 0,
-            isProbono: !!surgery.is_probono,
+            isProbono: surgery.payment_model === 'Pro_Bono' || !!surgery.is_probono,
             orRoom: surgery.or_room ? (String(surgery.or_room).startsWith('OR') ? surgery.or_room : `OR ${surgery.or_room}`) : 'OR 1',
             cptExpenses: calcCptExpenses,
-            applyFixedCosmeticFee: false, // Per request: always off by default when starting edit, or pull from DB if it existed? Let's default to false as in old system
-            cosmeticFacilityFee: calculateCosmeticFees(surgery.duration_minutes || 60).facilityFee,
-            cosmeticAnesthesiaFee: calculateCosmeticFees(surgery.duration_minutes || 60).anesthesiaFee,
+            applyFixedCosmeticFee: surgery.payment_model === 'Cosmetic_Fixed' || parseFloat(surgery.cosmetic_facility_fee || 0) > 0,
+            cosmeticFacilityFee: parseFloat(surgery.cosmetic_facility_fee) || calculateCosmeticFees(surgery.duration_minutes || 60).facilityFee,
+            cosmeticAnesthesiaFee: parseFloat(surgery.cosmetic_anesthesia_fee) || calculateCosmeticFees(surgery.duration_minutes || 60).anesthesiaFee,
             orStaffIds: surgery.cpt_expenses?._or_staff_ids || [],
             calculateStaffFee: surgery.cpt_expenses?._calculate_staff_fee || false,
             facilityId: surgery.facility_id || activeFacility?.id || (facilitiesList[0]?.id || '')
@@ -757,11 +775,22 @@ const SurgeryScheduler = ({
             duration_minutes: parseInt(formData.durationMinutes),
             turnover_time: parseInt(formData.turnoverTime),
             cpt_codes: formData.selectedCptCodes,
-            status: editingSurgery ? editingSurgery.status : 'scheduled',
+            status: formData.status || (editingSurgery ? (editingSurgery.status || 'Scheduled') : 'Scheduled'),
+            payment_model: formData.paymentModel || (formData.isProbono ? 'Pro_Bono' : (formData.applyFixedCosmeticFee ? 'Cosmetic_Fixed' : 'Insurance')),
+            case_classification: formData.caseClassification || 'Elective',
+            cosmetic_facility_fee: (formData.paymentModel === 'Cosmetic_Fixed' || formData.applyFixedCosmeticFee) ? parseFloat(formData.cosmeticFacilityFee || 0) : 0,
+            cosmetic_anesthesia_fee: (formData.paymentModel === 'Cosmetic_Fixed' || formData.applyFixedCosmeticFee) ? parseFloat(formData.cosmeticAnesthesiaFee || 0) : 0,
+            self_pay_anesthesia_fee: (formData.paymentModel === 'Self_Pay') ? parseFloat(formData.selfPayAnesthesiaFee || formData.cosmeticAnesthesiaFee || 0) : 0,
+            tray_cost: parseFloat(formData.trayCost || 0),
+            pre_op_diagnosis: formData.preOpDiagnosis || null,
+            clinical_notes: formData.clinicalNotes || null,
+            scheduled_start_time: formData.startTime || '08:00:00',
+            scheduled_duration_minutes: parseInt(formData.durationMinutes || 60),
+            scheduled_turnover_minutes: parseInt(formData.turnoverTime || 15),
             supplies_cost: parseFloat(formData.suppliesCost || 0),
             implants_cost: parseFloat(formData.implantsCost || 0),
             medications_cost: parseFloat(formData.medicationsCost || 0),
-            notes: noteText || null, // Fallback notes container
+            notes: (formData.clinicalNotes ? `${formData.clinicalNotes} ` : '') + (noteText || ''),
             actual_start_time: formData.actualStartTime || formData.startTime || null,
             actual_end_time: formData.actualEndTime || null,
             actual_duration_minutes: parseInt(formData.actualDurationMinutes) || null,
@@ -769,7 +798,7 @@ const SurgeryScheduler = ({
             actual_labor_cost: parseFloat(laborCost),
             expected_reimbursement: parseFloat(reimbursementSum),
             write_off: parseFloat(formData.writeOff || 0),
-            is_probono: formData.isProbono,
+            is_probono: formData.paymentModel === 'Pro_Bono' || formData.isProbono,
             or_room: formData.orRoom ? parseInt(formData.orRoom.replace(/\D/g, '')) || null : null,
             cpt_expenses: enhancedCptExpenses
         };
@@ -830,7 +859,10 @@ const SurgeryScheduler = ({
 
         if (reason) {
             await onUpdate(id, {
-                status: 'cancelled',
+                status: 'Cancelled',
+                cancellation_reason_code: 'SCHEDULING_ERROR',
+                cancellation_reason_text: reason,
+                cancelled_at: new Date().toISOString(),
                 notes: `Cancelled: ${reason}`
             });
             Swal.fire({
@@ -858,7 +890,10 @@ const SurgeryScheduler = ({
         });
 
         if (confirm.isConfirmed) {
-            await onUpdate(id, { status: 'completed' });
+            await onUpdate(id, { 
+                status: 'Completed',
+                actual_end_time: new Date().toTimeString().split(' ')[0]
+            });
             Swal.fire({
                 title: 'Completed!',
                 text: 'Surgery marked as completed.',
@@ -1343,38 +1378,195 @@ const SurgeryScheduler = ({
                                 </div>
                             </div>
 
-                            {isCosmeticSurgeon && (
-                                <div className="form-group" style={{
-                                    marginTop: '8px',
-                                    marginBottom: '16px',
-                                    padding: '12px',
-                                    borderRadius: '8px',
-                                    background: formData.applyFixedCosmeticFee ? '#fff7ed' : '#f8fafc',
-                                    border: `2px solid ${formData.applyFixedCosmeticFee ? '#fb923c' : '#e2e8f0'}`,
-                                    transition: 'all 0.2s ease'
-                                }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0 }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.applyFixedCosmeticFee}
-                                            onChange={(e) => setFormData({ ...formData, applyFixedCosmeticFee: e.target.checked })}
-                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                                        />
-                                        <span style={{ fontSize: '0.95rem', fontWeight: '700', color: formData.applyFixedCosmeticFee ? '#c2410c' : 'var(--text-color)' }}>
-                                            Apply Fixed Facility Fee (Cosmetic/Plastics)
+                            {/* Phase 31 Case Master Parameters */}
+                            <div style={{
+                                padding: '16px',
+                                borderRadius: '10px',
+                                background: 'rgba(59, 130, 246, 0.04)',
+                                border: '1px solid rgba(59, 130, 246, 0.25)',
+                                marginTop: '12px',
+                                marginBottom: '16px'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <div style={{
+                                            width: '8px',
+                                            height: '8px',
+                                            borderRadius: '50%',
+                                            background: 'var(--color-blue)',
+                                            boxShadow: '0 0 8px rgba(59, 130, 246, 0.6)'
+                                        }} />
+                                        <span style={{ fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-blue)' }}>
+                                            Case Master Parameters & Billing Model
                                         </span>
-                                    </label>
+                                    </div>
+                                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.04)', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                                        Phase 31 Master
+                                    </span>
+                                </div>
 
-                                    {formData.applyFixedCosmeticFee && (
-                                        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #fed7aa' }}>
-                                            <div>
-                                                <div style={{ fontSize: '0.75rem', color: '#9a3412', fontWeight: '600', marginBottom: '4px', textTransform: 'uppercase' }}>Est. Facility Fee</div>
-                                                <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#ea580c' }}>{formatCurrency(formData.cosmeticFacilityFee)}</div>
+                                <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+                                    <div className="form-group">
+                                        <label htmlFor="caseClassification">Case Classification</label>
+                                        <select
+                                            id="caseClassification"
+                                            className="form-input"
+                                            value={formData.caseClassification || 'Elective'}
+                                            onChange={(e) => setFormData({ ...formData, caseClassification: e.target.value })}
+                                        >
+                                            <option value="Elective">Elective (Planned Case)</option>
+                                            <option value="Urgent">Urgent (Within 24-48h)</option>
+                                            <option value="Emergency">Emergency (Immediate)</option>
+                                            <option value="Add-On">Add-On (Same-Day Schedule)</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label htmlFor="paymentModel">Payment / Reimbursement Model</label>
+                                        <select
+                                            id="paymentModel"
+                                            className="form-input"
+                                            value={formData.paymentModel || 'Insurance'}
+                                            onChange={(e) => {
+                                                const model = e.target.value;
+                                                const isCosmetic = model === 'Cosmetic_Fixed';
+                                                const isProBono = model === 'Pro_Bono';
+                                                setFormData({
+                                                    ...formData,
+                                                    paymentModel: model,
+                                                    applyFixedCosmeticFee: isCosmetic,
+                                                    isProbono: isProBono
+                                                });
+                                            }}
+                                        >
+                                            <option value="Insurance">Insurance (Fee-for-Service CPT)</option>
+                                            <option value="Cosmetic_Fixed">Cosmetic Fixed Fee (Flat Rate)</option>
+                                            <option value="Self_Pay">Self-Pay Package</option>
+                                            <option value="Pro_Bono">Pro-Bono / Charity (Zero Fee)</option>
+                                            <option value="Workers_Comp">Workers' Comp Schedule</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label htmlFor="caseStatus">Case Lifecycle Status (FSM)</label>
+                                        <select
+                                            id="caseStatus"
+                                            className="form-input"
+                                            value={formData.status || 'Scheduled'}
+                                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                        >
+                                            <option value="Draft">Draft</option>
+                                            <option value="Scheduled">Scheduled</option>
+                                            <option value="Pre-Op">Pre-Op</option>
+                                            <option value="In-OR">In-OR</option>
+                                            <option value="Closing">Closing</option>
+                                            <option value="PACU">PACU</option>
+                                            <option value="Completed">Completed</option>
+                                            <option value="Cancelled">Cancelled</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginTop: '12px' }}>
+                                    <div className="form-group">
+                                        <label htmlFor="trayCost">Sterile Instrument Tray Cost ($)</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <DollarSign size={13} style={{ position: 'absolute', left: '10px', top: '13px', color: 'var(--text-muted)' }} />
+                                            <input
+                                                id="trayCost"
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                className="form-input"
+                                                style={{ paddingLeft: '28px' }}
+                                                placeholder="e.g. 150.00"
+                                                value={formData.trayCost || ''}
+                                                onChange={(e) => setFormData({ ...formData, trayCost: parseFloat(e.target.value) || 0 })}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label htmlFor="preOpDiagnosis">Pre-Op Diagnosis / ICD-10</label>
+                                        <input
+                                            id="preOpDiagnosis"
+                                            type="text"
+                                            className="form-input"
+                                            placeholder="e.g. M17.11 / Osteoarthritis Knee"
+                                            value={formData.preOpDiagnosis || ''}
+                                            onChange={(e) => setFormData({ ...formData, preOpDiagnosis: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label htmlFor="clinicalNotes">Clinical / Operative Notes</label>
+                                        <input
+                                            id="clinicalNotes"
+                                            type="text"
+                                            className="form-input"
+                                            placeholder="e.g. Right knee arthroscopy, prep verified"
+                                            value={formData.clinicalNotes || ''}
+                                            onChange={(e) => setFormData({ ...formData, clinicalNotes: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Dynamic Fee Overrides for Cosmetic & Self-Pay Cases */}
+                                {(formData.paymentModel === 'Cosmetic_Fixed' || formData.paymentModel === 'Self_Pay' || formData.applyFixedCosmeticFee || isCosmeticSurgeon) && (
+                                    <div style={{
+                                        marginTop: '12px',
+                                        padding: '12px',
+                                        borderRadius: '8px',
+                                        background: 'rgba(249, 115, 22, 0.08)',
+                                        border: '1px solid rgba(249, 115, 22, 0.3)'
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                            <span style={{ fontSize: '0.78rem', fontWeight: '700', color: '#ea580c', textTransform: 'uppercase' }}>
+                                                Cosmetic & Self-Pay Fee Overrides
+                                            </span>
+                                            <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                                                Applied to facility revenue calculations
+                                            </span>
+                                        </div>
+                                        <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                            <div className="form-group">
+                                                <label htmlFor="cosmeticFacilityFee">Facility Fee Override ($)</label>
+                                                <div style={{ position: 'relative' }}>
+                                                    <DollarSign size={13} style={{ position: 'absolute', left: '10px', top: '13px', color: 'var(--text-muted)' }} />
+                                                    <input
+                                                        id="cosmeticFacilityFee"
+                                                        type="number"
+                                                        step="0.01"
+                                                        min="0"
+                                                        className="form-input"
+                                                        style={{ paddingLeft: '28px' }}
+                                                        placeholder="Auto-calculated or enter override"
+                                                        value={formData.cosmeticFacilityFee || ''}
+                                                        onChange={(e) => setFormData({ ...formData, cosmeticFacilityFee: parseFloat(e.target.value) || 0 })}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="form-group">
+                                                <label htmlFor="cosmeticAnesthesiaFee">Anesthesia Fee Override ($)</label>
+                                                <div style={{ position: 'relative' }}>
+                                                    <DollarSign size={13} style={{ position: 'absolute', left: '10px', top: '13px', color: 'var(--text-muted)' }} />
+                                                    <input
+                                                        id="cosmeticAnesthesiaFee"
+                                                        type="number"
+                                                        step="0.01"
+                                                        min="0"
+                                                        className="form-input"
+                                                        style={{ paddingLeft: '28px' }}
+                                                        placeholder="e.g. 750.00"
+                                                        value={formData.cosmeticAnesthesiaFee || ''}
+                                                        onChange={(e) => setFormData({ ...formData, cosmeticAnesthesiaFee: parseFloat(e.target.value) || 0, selfPayAnesthesiaFee: parseFloat(e.target.value) || 0 })}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
-                                    )}
-                                </div>
-                            )}
+                                    </div>
+                                )}
+                            </div>
 
                             {/* CPT Codes Selection */}
                             <div className="form-group">
