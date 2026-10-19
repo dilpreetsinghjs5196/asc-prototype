@@ -131,8 +131,10 @@ SELECT
     END AS mrn,
     CASE 
         WHEN public.user_has_facility_role(p.facility_id, ARRAY['super_admin', 'org_admin', 'facility_admin', 'clinical_manager', 'scheduler', 'biller', 'billing_rcm'])
-        THEN p.dob
-        ELSE '**/**/' || COALESCE(SUBSTRING(p.dob FROM '\d{4}'), '****')
+        THEN p.dob::text
+        WHEN p.dob IS NOT NULL
+        THEN '**/**/' || TO_CHAR(p.dob, 'YYYY')
+        ELSE '****'
     END AS dob,
     p.gender,
     CASE 
