@@ -58,8 +58,9 @@ test('SQL Exporter & Facility Scoping Verification Suite', async (t) => {
     );
   });
 
-  await t.test('3. Table Catalog Metadata: AVAILABLE_TABLES categorizes all 34 database tables', () => {
-    assert.equal(AVAILABLE_TABLES.length, 34, 'Must catalog all 34 system tables across the platform');
+  await t.test('3. Table Catalog Metadata: AVAILABLE_TABLES categorizes all platform database tables', () => {
+    assert.ok(AVAILABLE_TABLES.length >= 34, 'Must catalog all platform database tables');
+    assert.equal(AVAILABLE_TABLES.length, 40, 'Must catalog all 40 system tables across the platform');
     
     const facilitiesEntry = AVAILABLE_TABLES.find(t => t.id === 'facilities');
     assert.ok(facilitiesEntry, 'facilities table must be in catalog');

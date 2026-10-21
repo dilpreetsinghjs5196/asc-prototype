@@ -24,6 +24,10 @@ export const AVAILABLE_TABLES = [
   { id: 'surgeon_facility_affiliations', label: 'Surgeon Facility Affiliations', defaultChecked: false, hasFacilityScope: true },
   { id: 'surgeon_privileges', label: 'Surgeon Privileges', defaultChecked: false, hasFacilityScope: true },
   { id: 'surgeon_time_off', label: 'Surgeon Time Off / Blackouts', defaultChecked: false, hasFacilityScope: true },
+  { id: 'staff_facility_affiliations', label: 'Staff Facility Affiliations', defaultChecked: false, hasFacilityScope: true },
+  { id: 'staff_credentials', label: 'Staff Credentials & Licenses', defaultChecked: false, hasFacilityScope: true },
+  { id: 'staff_shifts', label: 'Staff Shifts & Availability', defaultChecked: false, hasFacilityScope: true },
+  { id: 'staff_time_off', label: 'Staff Time Off / Leave', defaultChecked: false, hasFacilityScope: true },
 
   // Patients
   { id: 'patients', label: 'Patients', defaultChecked: false, hasFacilityScope: true },
@@ -35,6 +39,8 @@ export const AVAILABLE_TABLES = [
   { id: 'case_milestones', label: 'Case Milestones', defaultChecked: false, hasFacilityScope: true },
   { id: 'case_events', label: 'Case Lifecycle Events', defaultChecked: false, hasFacilityScope: true },
   { id: 'case_surgeons', label: 'Case Surgeons Attribution', defaultChecked: false, hasFacilityScope: true },
+  { id: 'case_staff_assignments', label: 'Case Staff & Nursing Assignments', defaultChecked: false, hasFacilityScope: true },
+  { id: 'anesthesia_records', label: 'Anesthesia Records & Encounters', defaultChecked: false, hasFacilityScope: true },
   { id: 'surgery_procedures', label: 'Surgery Procedures (CPT Codes)', defaultChecked: false, hasFacilityScope: true },
   { id: 'surgery_financial_snapshots', label: 'Surgery Financial Snapshots', defaultChecked: false, hasFacilityScope: true },
   { id: 'ot_extra_cost', label: 'Overtime & Extra Costs', defaultChecked: false, hasFacilityScope: true },

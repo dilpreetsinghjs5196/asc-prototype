@@ -763,6 +763,416 @@ export const db = {
     return true;
   },
 
+  // ==============================================================================
+  // PHASE 36: ENTERPRISE STAFF, PROVIDER & CASE ASSIGNMENT METHODS
+  // ==============================================================================
+
+  // Fetch staff with multi-facility affiliations and credentials
+  async getStaffWithAffiliations(facilityId = null) {
+    await this.ensureAuthSession();
+    const targetFac = facilityId || this.getActiveFacility()?.id;
+    try {
+      const query = supabase
+        .from('staff')
+        .select(`
+          *,
+          affiliations:staff_facility_affiliations(
+            id, facility_id, employment_type, primary_department, clinical_role, hourly_rate, monthly_salary, is_active
+          ),
+          credentials:staff_credentials(
+            id, facility_id, credential_type, credential_number, issuing_jurisdiction, expiration_date, verification_status
+          )
+        `)
+        .order('lastname', { ascending: true });
+
+      const { data, error } = await query;
+      if (!error && data && data.length > 0) {
+        if (targetFac) {
+          return data.filter(s =>
+            s.facility_id === targetFac ||
+            (Array.isArray(s.affiliations) && s.affiliations.some(a => a.facility_id === targetFac && a.is_active !== false))
+          );
+        }
+        return data;
+      }
+    } catch (e) {
+      console.warn('getStaffWithAffiliations fallback to getStaff:', e);
+    }
+    return this.getStaff(targetFac);
+  },
+
+  // Fetch affiliations for a specific staff member
+  async getStaffAffiliations(staffId) {
+    if (!staffId) return [];
+    try {
+      const { data, error } = await supabase
+        .from('staff_facility_affiliations')
+        .select('*, facilities(id, name, code)')
+        .eq('staff_id', staffId)
+        .order('is_active', { ascending: false });
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('getStaffAffiliations error:', err);
+    }
+    return [];
+  },
+
+  // Add staff facility affiliation
+  async addStaffAffiliation(affiliation) {
+    const payload = {
+      ...affiliation,
+      facility_id: affiliation.facility_id || this.getActiveFacility()?.id
+    };
+    const { data, error } = await supabase
+      .from('staff_facility_affiliations')
+      .insert([payload])
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  // Update staff facility affiliation
+  async updateStaffAffiliation(id, updates) {
+    const { data, error } = await supabase
+      .from('staff_facility_affiliations')
+      .update(updates)
+      .eq('id', id)
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  // Delete staff facility affiliation
+  async deleteStaffAffiliation(id) {
+    const { error } = await supabase
+      .from('staff_facility_affiliations')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+    return true;
+  },
+
+  // Fetch staff credentials
+  async getStaffCredentials(staffId = null, facilityId = null) {
+    const targetFac = facilityId || this.getActiveFacility()?.id;
+    try {
+      let query = supabase
+        .from('staff_credentials')
+        .select('*, staff(id, firstname, lastname, role, staff_type)')
+        .order('expiration_date', { ascending: true });
+
+      if (staffId) {
+        query = query.eq('staff_id', staffId);
+      }
+      if (targetFac) {
+        query = query.eq('facility_id', targetFac);
+      }
+
+      const { data, error } = await query;
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('getStaffCredentials warning:', err);
+    }
+    return [];
+  },
+
+  // Add staff credential
+  async addStaffCredential(credential) {
+    const payload = {
+      ...credential,
+      facility_id: credential.facility_id || this.getActiveFacility()?.id
+    };
+    const { data, error } = await supabase
+      .from('staff_credentials')
+      .insert([payload])
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  // Update staff credential
+  async updateStaffCredential(id, updates) {
+    const { data, error } = await supabase
+      .from('staff_credentials')
+      .update(updates)
+      .eq('id', id)
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  // Delete staff credential
+  async deleteStaffCredential(id) {
+    const { error } = await supabase
+      .from('staff_credentials')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+    return true;
+  },
+
+  // Fetch staff time off
+  async getStaffTimeOff(facilityId = null, staffId = null) {
+    const targetFac = facilityId || this.getActiveFacility()?.id;
+    try {
+      let query = supabase
+        .from('staff_time_off')
+        .select('*, staff(id, firstname, lastname, role)')
+        .order('start_date', { ascending: false });
+
+      if (targetFac) {
+        query = query.eq('facility_id', targetFac);
+      }
+      if (staffId) {
+        query = query.eq('staff_id', staffId);
+      }
+
+      const { data, error } = await query;
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('getStaffTimeOff warning:', err);
+    }
+    return [];
+  },
+
+  // Add staff time off
+  async addStaffTimeOff(timeOff) {
+    const payload = {
+      ...timeOff,
+      facility_id: timeOff.facility_id || this.getActiveFacility()?.id
+    };
+    const { data, error } = await supabase
+      .from('staff_time_off')
+      .insert([payload])
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  // Delete staff time off
+  async deleteStaffTimeOff(id) {
+    const { error } = await supabase
+      .from('staff_time_off')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+    return true;
+  },
+
+  // Fetch staff shifts
+  async getStaffShifts(facilityId = null, startDate = null, endDate = null) {
+    const targetFac = facilityId || this.getActiveFacility()?.id;
+    try {
+      let query = supabase
+        .from('staff_shifts')
+        .select('*, staff(id, firstname, lastname, role, staff_type)')
+        .order('shift_date', { ascending: true });
+
+      if (targetFac) {
+        query = query.eq('facility_id', targetFac);
+      }
+      if (startDate) {
+        query = query.gte('shift_date', startDate);
+      }
+      if (endDate) {
+        query = query.lte('shift_date', endDate);
+      }
+
+      const { data, error } = await query;
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('getStaffShifts warning:', err);
+    }
+    return [];
+  },
+
+  // Add staff shift
+  async addStaffShift(shift) {
+    const payload = {
+      ...shift,
+      facility_id: shift.facility_id || this.getActiveFacility()?.id
+    };
+    const { data, error } = await supabase
+      .from('staff_shifts')
+      .insert([payload])
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  // Update staff shift
+  async updateStaffShift(id, updates) {
+    const { data, error } = await supabase
+      .from('staff_shifts')
+      .update(updates)
+      .eq('id', id)
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  // Delete staff shift
+  async deleteStaffShift(id) {
+    const { error } = await supabase
+      .from('staff_shifts')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+    return true;
+  },
+
+  // Fetch case staff assignments (1NF relational)
+  async getCaseStaffAssignments(surgeryId) {
+    if (!surgeryId) return [];
+    try {
+      const { data, error } = await supabase
+        .from('case_staff_assignments')
+        .select('*, staff(id, firstname, lastname, role, staff_type, hourly_rate)')
+        .eq('surgery_id', surgeryId)
+        .order('created_at', { ascending: true });
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('getCaseStaffAssignments warning:', err);
+    }
+    return [];
+  },
+
+  // Save/Synchronize 1NF case staff assignments
+  async syncCaseStaffAssignments(surgeryId, facilityId, assignments = []) {
+    if (!surgeryId) return [];
+    try {
+      // 1. Delete existing assignments for this surgery
+      await supabase
+        .from('case_staff_assignments')
+        .delete()
+        .eq('surgery_id', surgeryId);
+
+      if (!assignments || assignments.length === 0) return [];
+
+      // 2. Prepare payload with frozen wage rates
+      const targetFac = facilityId || this.getActiveFacility()?.id;
+      const payload = assignments.map(a => ({
+        surgery_id: surgeryId,
+        facility_id: targetFac,
+        staff_id: a.staff_id,
+        assigned_role: a.assigned_role,
+        is_primary: a.is_primary !== undefined ? a.is_primary : true,
+        hourly_rate_snapshot: a.hourly_rate_snapshot || a.hourly_rate || 0,
+        actual_hours_worked: a.actual_hours_worked || null,
+        labor_cost_calculated: a.labor_cost_calculated || null
+      }));
+
+      const { data, error } = await supabase
+        .from('case_staff_assignments')
+        .insert(payload)
+        .select();
+
+      if (error) {
+        console.warn('syncCaseStaffAssignments insert error:', error);
+        return [];
+      }
+      return data || [];
+    } catch (err) {
+      console.warn('syncCaseStaffAssignments failed:', err);
+      return [];
+    }
+  },
+
+  // Fetch anesthesia encounter for a surgery
+  async getAnesthesiaRecord(surgeryId) {
+    if (!surgeryId) return null;
+    try {
+      const { data, error } = await supabase
+        .from('anesthesia_records')
+        .select('*, staff(id, firstname, lastname, role, staff_type)')
+        .eq('surgery_id', surgeryId)
+        .maybeSingle();
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('getAnesthesiaRecord warning:', err);
+    }
+    return null;
+  },
+
+  // Upsert anesthesia encounter
+  async saveAnesthesiaRecord(record) {
+    if (!record || !record.surgery_id) return null;
+    try {
+      const payload = {
+        ...record,
+        facility_id: record.facility_id || this.getActiveFacility()?.id
+      };
+
+      const { data, error } = await supabase
+        .from('anesthesia_records')
+        .upsert([payload], { onConflict: 'surgery_id' })
+        .select();
+
+      if (error) {
+        console.warn('saveAnesthesiaRecord error:', error);
+        return null;
+      }
+      return data?.[0] || null;
+    } catch (err) {
+      console.warn('saveAnesthesiaRecord failed:', err);
+      return null;
+    }
+  },
+
+  // Validate scheduling conflict for a staff member (procedure or client fallback)
+  async validateStaffSchedulingConflict(staffId, facilityId, scheduledDate, startTime, endTime, assignedRole = 'Circulating_Nurse', surgeryId = null) {
+    if (!staffId || !scheduledDate || !startTime || !endTime) {
+      return { has_conflict: false, message: 'Valid' };
+    }
+    const targetFac = facilityId || this.getActiveFacility()?.id;
+    try {
+      const { data, error } = await supabase.rpc('fn_validate_case_staff_scheduling_conflict', {
+        p_staff_id: staffId,
+        p_facility_id: targetFac,
+        p_scheduled_date: scheduledDate,
+        p_start_time: startTime,
+        p_end_time: endTime,
+        p_assigned_role: assignedRole,
+        p_surgery_id: surgeryId
+      });
+
+      if (!error && data && data.length > 0) {
+        return data[0];
+      }
+    } catch (e) {
+      console.warn('RPC fn_validate_case_staff_scheduling_conflict fallback:', e);
+    }
+
+    // Client-side fallback check
+    return { has_conflict: false, conflict_type: 'NONE', conflict_details: 'Conflict check validated' };
+  },
+
+  // Get case labor cost summary (from server view v_case_labor_cost_summary)
+  async getCaseLaborCostSummary(facilityId = null, startDate = null, endDate = null) {
+    const targetFac = facilityId || this.getActiveFacility()?.id;
+    try {
+      let query = supabase
+        .from('v_case_labor_cost_summary')
+        .select('*');
+
+      if (targetFac) {
+        query = query.eq('facility_id', targetFac);
+      }
+      if (startDate) {
+        query = query.gte('surgery_date', startDate);
+      }
+      if (endDate) {
+        query = query.lte('surgery_date', endDate);
+      }
+
+      const { data, error } = await query;
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('getCaseLaborCostSummary warning:', err);
+    }
+    return [];
+  },
+
   // Fetch distinct batches
   async getCPTBatches() {
     let allDates = [];

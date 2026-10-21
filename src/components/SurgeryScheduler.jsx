@@ -133,6 +133,11 @@ const SurgeryScheduler = ({
         applyFixedCosmeticFee: false,
         cosmeticFacilityFee: calculateCosmeticFees(60).facilityFee,
         cosmeticAnesthesiaFee: calculateCosmeticFees(60).anesthesiaFee,
+        circulatorStaffId: '',
+        scrubStaffId: '',
+        anesthesiaStaffId: '',
+        asaStatus: 'ASA_II',
+        anesthesiaTechnique: 'General_GETA',
         orStaffIds: [],
         calculateStaffFee: false
     });
@@ -240,6 +245,11 @@ const SurgeryScheduler = ({
             applyFixedCosmeticFee: false,
             cosmeticFacilityFee: calculateCosmeticFees(60).facilityFee,
             cosmeticAnesthesiaFee: calculateCosmeticFees(60).anesthesiaFee,
+            circulatorStaffId: '',
+            scrubStaffId: '',
+            anesthesiaStaffId: '',
+            asaStatus: 'ASA_II',
+            anesthesiaTechnique: 'General_GETA',
             orStaffIds: [],
             calculateStaffFee: false,
             facilityId: activeFacility?.id || (facilitiesList[0]?.id || '')
@@ -418,12 +428,18 @@ const SurgeryScheduler = ({
             applyFixedCosmeticFee: surgery.payment_model === 'Cosmetic_Fixed' || parseFloat(surgery.cosmetic_facility_fee || 0) > 0,
             cosmeticFacilityFee: parseFloat(surgery.cosmetic_facility_fee) || calculateCosmeticFees(surgery.duration_minutes || 60).facilityFee,
             cosmeticAnesthesiaFee: parseFloat(surgery.cosmetic_anesthesia_fee) || calculateCosmeticFees(surgery.duration_minutes || 60).anesthesiaFee,
+            circulatorStaffId: '',
+            scrubStaffId: '',
+            anesthesiaStaffId: '',
+            asaStatus: 'ASA_II',
+            anesthesiaTechnique: 'General_GETA',
             orStaffIds: surgery.cpt_expenses?._or_staff_ids || [],
             calculateStaffFee: surgery.cpt_expenses?._calculate_staff_fee || false,
             facilityId: surgery.facility_id || activeFacility?.id || (facilitiesList[0]?.id || '')
         });
 
         if (surgery.id) {
+            // Load 1NF CPT procedure line items
             db.getSurgeryProcedures(surgery.id).then(fetchedProcs => {
                 if (fetchedProcs && fetchedProcs.length > 0) {
                     const mapped = fetchedProcs.map((p, idx) => ({
@@ -444,6 +460,43 @@ const SurgeryScheduler = ({
                     setFormData(prev => ({
                         ...prev,
                         procedureLines: mapped
+                    }));
+                }
+            }).catch(console.error);
+
+            // Phase 36: Load 1NF Case Staff Assignments
+            db.getCaseStaffAssignments(surgery.id).then(assignments => {
+                if (assignments && assignments.length > 0) {
+                    const circ = assignments.find(a => a.assigned_role === 'Circulating_Nurse');
+                    const scrub = assignments.find(a => a.assigned_role === 'Scrub_Tech' || a.assigned_role === 'Scrub_Nurse');
+                    const anes = assignments.find(a => a.assigned_role === 'Anesthesiologist_Attending' || a.assigned_role === 'CRNA_Assigned');
+                    setFormData(prev => ({
+                        ...prev,
+                        circulatorStaffId: circ ? String(circ.staff_id) : prev.circulatorStaffId,
+                        scrubStaffId: scrub ? String(scrub.staff_id) : prev.scrubStaffId,
+                        anesthesiaStaffId: anes ? String(anes.staff_id) : prev.anesthesiaStaffId
+                    }));
+                } else if (surgery.cpt_expenses?._or_staff_ids && surgery.cpt_expenses._or_staff_ids.length > 0) {
+                    // Fallback to legacy snapshot
+                    const legacyIds = surgery.cpt_expenses._or_staff_ids;
+                    const circStaff = staffList.find(s => legacyIds.includes(s.id) && s.department === 'Operating Room RN');
+                    const scrubStaff = staffList.find(s => legacyIds.includes(s.id) && s.department === 'Scrub Tech');
+                    setFormData(prev => ({
+                        ...prev,
+                        circulatorStaffId: circStaff ? String(circStaff.id) : prev.circulatorStaffId,
+                        scrubStaffId: scrubStaff ? String(scrubStaff.id) : prev.scrubStaffId
+                    }));
+                }
+            }).catch(console.error);
+
+            // Phase 36: Load 1NF Clinical Anesthesia Record
+            db.getAnesthesiaRecord(surgery.id).then(anesRecord => {
+                if (anesRecord) {
+                    setFormData(prev => ({
+                        ...prev,
+                        anesthesiaStaffId: anesRecord.provider_id ? String(anesRecord.provider_id) : prev.anesthesiaStaffId,
+                        asaStatus: anesRecord.asa_status || prev.asaStatus,
+                        anesthesiaTechnique: anesRecord.anesthesia_technique || prev.anesthesiaTechnique
                     }));
                 }
             }).catch(console.error);
@@ -773,11 +826,17 @@ const SurgeryScheduler = ({
         const roomCost = parseFloat(formData.orRoomCost || 0);
         const laborCost = parseFloat(formData.labourCost || 0);
 
+        const allAssignedStaffIds = [...new Set([
+            formData.circulatorStaffId ? parseInt(formData.circulatorStaffId) : null,
+            formData.scrubStaffId ? parseInt(formData.scrubStaffId) : null,
+            ...(formData.orStaffIds || []).map(id => parseInt(id))
+        ].filter(Boolean))];
+
         // Add calculated staff fees if checkbox is checked
         let calculatedStaffFee = 0;
-        if (formData.calculateStaffFee && formData.orStaffIds && formData.orStaffIds.length > 0) {
+        if (formData.calculateStaffFee && allAssignedStaffIds.length > 0) {
             let totalHourlyRate = 0;
-            formData.orStaffIds.forEach(staffId => {
+            allAssignedStaffIds.forEach(staffId => {
                 const staff = staffList.find(s => s.id === staffId);
                 if (staff && staff.hourly_rate) {
                     totalHourlyRate += parseFloat(staff.hourly_rate);
@@ -813,7 +872,12 @@ const SurgeryScheduler = ({
             _full_total: patientBillTotal,
             _net_profit: netProfit,
             _include_labor_supplies: includeLaborSupplies,
-            _or_staff_ids: formData.orStaffIds,
+            _or_staff_ids: allAssignedStaffIds,
+            _circulator_staff_id: formData.circulatorStaffId || null,
+            _scrub_staff_id: formData.scrubStaffId || null,
+            _anesthesia_staff_id: formData.anesthesiaStaffId || null,
+            _asa_status: formData.asaStatus || 'ASA_II',
+            _anesthesia_technique: formData.anesthesiaTechnique || 'General_GETA',
             _calculate_staff_fee: formData.calculateStaffFee,
             _staff_fee_total: calculatedStaffFee
         };
@@ -927,6 +991,73 @@ const SurgeryScheduler = ({
                     await db.syncSurgeryProcedures(savedSurgeryId, formData.procedureLines, surgeryData.facility_id);
                 } catch (procSyncErr) {
                     console.warn('Syncing surgery procedures warning:', procSyncErr);
+                }
+            }
+
+            // Phase 36: Sync 1NF Case Staff Assignments to database
+            if (savedSurgeryId) {
+                try {
+                    const assignments = [];
+                    if (formData.circulatorStaffId) {
+                        const staffMember = staffList.find(s => s.id === parseInt(formData.circulatorStaffId));
+                        assignments.push({
+                            staff_id: parseInt(formData.circulatorStaffId),
+                            assigned_role: 'Circulating_Nurse',
+                            is_primary: true,
+                            hourly_rate_snapshot: staffMember?.hourly_rate || 0
+                        });
+                    }
+                    if (formData.scrubStaffId) {
+                        const staffMember = staffList.find(s => s.id === parseInt(formData.scrubStaffId));
+                        assignments.push({
+                            staff_id: parseInt(formData.scrubStaffId),
+                            assigned_role: staffMember?.department === 'Scrub Tech' ? 'Scrub_Tech' : 'Scrub_Nurse',
+                            is_primary: true,
+                            hourly_rate_snapshot: staffMember?.hourly_rate || 0
+                        });
+                    }
+                    if (formData.anesthesiaStaffId) {
+                        const staffMember = staffList.find(s => s.id === parseInt(formData.anesthesiaStaffId));
+                        assignments.push({
+                            staff_id: parseInt(formData.anesthesiaStaffId),
+                            assigned_role: staffMember?.staff_type === 'CRNA' ? 'CRNA_Assigned' : 'Anesthesiologist_Attending',
+                            is_primary: true,
+                            hourly_rate_snapshot: staffMember?.hourly_rate || 0
+                        });
+                    }
+                    // Additional selected OR staff
+                    (formData.orStaffIds || []).forEach(staffId => {
+                        const parsedId = parseInt(staffId);
+                        if (parsedId !== parseInt(formData.circulatorStaffId) &&
+                            parsedId !== parseInt(formData.scrubStaffId) &&
+                            parsedId !== parseInt(formData.anesthesiaStaffId)) {
+                            const staffMember = staffList.find(s => s.id === parsedId);
+                            assignments.push({
+                                staff_id: parsedId,
+                                assigned_role: staffMember?.department === 'Scrub Tech' ? 'Scrub_Tech' : 'Circulating_Nurse',
+                                is_primary: false,
+                                hourly_rate_snapshot: staffMember?.hourly_rate || 0
+                            });
+                        }
+                    });
+
+                    await db.syncCaseStaffAssignments(savedSurgeryId, surgeryData.facility_id, assignments);
+                } catch (staffSyncErr) {
+                    console.warn('Syncing case staff assignments warning:', staffSyncErr);
+                }
+
+                // Phase 36: Sync 1NF Clinical Anesthesia Record
+                try {
+                    await db.saveAnesthesiaRecord({
+                        surgery_id: savedSurgeryId,
+                        facility_id: surgeryData.facility_id,
+                        provider_id: formData.anesthesiaStaffId ? parseInt(formData.anesthesiaStaffId) : null,
+                        asa_status: formData.asaStatus || 'ASA_II',
+                        anesthesia_technique: formData.anesthesiaTechnique || 'General_GETA',
+                        cosmetic_anesthesia_fee: surgeryData.cosmetic_anesthesia_fee || surgeryData.self_pay_anesthesia_fee || null
+                    });
+                } catch (anesSyncErr) {
+                    console.warn('Syncing anesthesia record warning:', anesSyncErr);
                 }
             }
 
@@ -2428,60 +2559,193 @@ const SurgeryScheduler = ({
                                 </div>
                             </div>
 
-                            {/* OR Staff Selection */}
+                            {/* OR Staff & Anesthesia Care Team Selection (Phase 36) */}
                             <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: '4px' }}>
-                                <h4 style={{ fontSize: '0.85rem', color: 'var(--text-primary)', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.5px' }}>OR Staff Management</h4>
-                                <div className="form-row" style={{ gridTemplateColumns: '1fr' }}>
+                                <h4 style={{ fontSize: '0.85rem', color: 'var(--text-primary)', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Users size={16} style={{ color: 'var(--color-blue)' }} />
+                                    Perioperative Care Team & Anesthesia
+                                </h4>
+
+                                <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '12px' }}>
+                                    {/* Primary Circulating Nurse */}
                                     <div className="form-group">
-                                        <label>Select OR Staff</label>
-                                        <div style={{
-                                            maxHeight: '150px',
-                                            overflowY: 'auto',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '6px',
-                                            padding: '8px',
-                                            background: 'var(--bg-input)'
-                                        }}>
-                                            {staffList.filter(staff => staff.department === 'Operating Room RN').map(staff => {
-                                                const isSelected = (formData.orStaffIds || []).includes(staff.id);
-                                                return (
-                                                    <label key={staff.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px', cursor: 'pointer', borderRadius: '4px', background: isSelected ? 'rgba(59, 130, 246, 0.1)' : 'transparent', transition: 'background 0.2s' }}>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={isSelected}
-                                                            onChange={(e) => {
-                                                                const currentIds = formData.orStaffIds || [];
-                                                                if (e.target.checked) {
-                                                                    setFormData({ ...formData, orStaffIds: [...currentIds, staff.id] });
-                                                                } else {
-                                                                    setFormData({ ...formData, orStaffIds: currentIds.filter(id => id !== staff.id) });
-                                                                }
-                                                            }}
-                                                            style={{ cursor: 'pointer', width: '16px', height: '16px' }}
-                                                        />
-                                                        <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
-                                                            {staff.firstname} {staff.lastname} - {staff.department} (${staff.hourly_rate}/hr)
-                                                        </span>
-                                                    </label>
-                                                );
-                                            })}
-                                            {staffList.filter(staff => staff.department === 'Operating Room RN').length === 0 && (
-                                                <div style={{ padding: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>No OR RNs found.</div>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '8px' }}>
-                                        <input
-                                            type="checkbox"
-                                            id="calculateStaffFee"
-                                            checked={formData.calculateStaffFee}
-                                            onChange={(e) => setFormData({ ...formData, calculateStaffFee: e.target.checked })}
-                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                                        />
-                                        <label htmlFor="calculateStaffFee" style={{ fontSize: '0.85rem', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: '600' }}>
-                                            Calculate staff fees based on actual OR time (overrides Labour Cost)
+                                        <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                            Circulating Nurse (RN)
                                         </label>
+                                        <select
+                                            className="form-input"
+                                            value={formData.circulatorStaffId || ''}
+                                            onChange={(e) => setFormData({ ...formData, circulatorStaffId: e.target.value })}
+                                        >
+                                            <option value="">Select Circulating Nurse...</option>
+                                            {staffList
+                                                .filter(s => s.department === 'Operating Room RN' || s.staff_type === 'Registered_Nurse' || (s.role && s.role.includes('RN')))
+                                                .map(s => (
+                                                    <option key={s.id} value={s.id}>
+                                                        {s.firstname} {s.lastname} ({s.credentials || 'RN'}) - ${s.hourly_rate || 0}/hr
+                                                    </option>
+                                                ))}
+                                        </select>
                                     </div>
+
+                                    {/* Primary Scrub Tech / Scrub Nurse */}
+                                    <div className="form-group">
+                                        <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                            Scrub Nurse / Scrub Tech
+                                        </label>
+                                        <select
+                                            className="form-input"
+                                            value={formData.scrubStaffId || ''}
+                                            onChange={(e) => setFormData({ ...formData, scrubStaffId: e.target.value })}
+                                        >
+                                            <option value="">Select Scrub Provider...</option>
+                                            {staffList
+                                                .filter(s => s.department === 'Scrub Tech' || s.staff_type === 'Surgical_Technologist' || s.department === 'Operating Room RN')
+                                                .map(s => (
+                                                    <option key={s.id} value={s.id}>
+                                                        {s.firstname} {s.lastname} ({s.department}) - ${s.hourly_rate || 0}/hr
+                                                    </option>
+                                                ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '12px' }}>
+                                    {/* Anesthesia Provider */}
+                                    <div className="form-group">
+                                        <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                            Anesthesia Provider (MD / CRNA)
+                                        </label>
+                                        <select
+                                            className="form-input"
+                                            value={formData.anesthesiaStaffId || ''}
+                                            onChange={(e) => setFormData({ ...formData, anesthesiaStaffId: e.target.value })}
+                                        >
+                                            <option value="">Select Anesthesiologist / CRNA...</option>
+                                            {staffList
+                                                .filter(s => s.department === 'Anesthesia' || s.staff_type === 'Physician_Anesthesiologist' || s.staff_type === 'CRNA' || (s.role && s.role.toLowerCase().includes('anesthes')) || (s.role && s.role.toLowerCase().includes('crna')))
+                                                .map(s => (
+                                                    <option key={s.id} value={s.id}>
+                                                        {s.firstname} {s.lastname} ({s.credentials || 'MD'})
+                                                    </option>
+                                                ))}
+                                        </select>
+                                    </div>
+
+                                    {/* ASA Physical Status */}
+                                    <div className="form-group">
+                                        <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                            ASA Physical Status
+                                        </label>
+                                        <select
+                                            className="form-input"
+                                            value={formData.asaStatus || 'ASA_II'}
+                                            onChange={(e) => setFormData({ ...formData, asaStatus: e.target.value })}
+                                        >
+                                            <option value="ASA_I">ASA I - Normal Healthy Patient</option>
+                                            <option value="ASA_II">ASA II - Mild Systemic Disease</option>
+                                            <option value="ASA_III">ASA III - Severe Systemic Disease</option>
+                                            <option value="ASA_IV">ASA IV - Severe Disease Threat to Life</option>
+                                            <option value="ASA_V">ASA V - Moribund Patient</option>
+                                            <option value="ASA_VI">ASA VI - Declared Brain-Dead</option>
+                                            <option value="ASA_E">ASA E - Emergency Designation</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Anesthesia Technique */}
+                                    <div className="form-group">
+                                        <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                            Anesthesia Technique
+                                        </label>
+                                        <select
+                                            className="form-input"
+                                            value={formData.anesthesiaTechnique || 'General_GETA'}
+                                            onChange={(e) => setFormData({ ...formData, anesthesiaTechnique: e.target.value })}
+                                        >
+                                            <option value="General_GETA">General - GETA (Endotracheal)</option>
+                                            <option value="General_LMA">General - LMA (Laryngeal Mask)</option>
+                                            <option value="MAC">Monitored Anesthesia Care (MAC)</option>
+                                            <option value="Regional_Spinal">Regional - Spinal</option>
+                                            <option value="Regional_Epidural">Regional - Epidural</option>
+                                            <option value="Regional_Block">Regional - Peripheral Nerve Block</option>
+                                            <option value="Local_Only">Local Infiltration Only</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Additional OR Staff Multi-Select */}
+                                <div className="form-group" style={{ marginBottom: '8px' }}>
+                                    <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                        Additional Perioperative Team Members
+                                    </label>
+                                    <div style={{
+                                        maxHeight: '110px',
+                                        overflowY: 'auto',
+                                        border: '1px solid var(--border-color)',
+                                        borderRadius: '6px',
+                                        padding: '6px',
+                                        background: 'var(--bg-input)'
+                                    }}>
+                                        {staffList.map(staff => {
+                                            const isPrimaryCirc = String(staff.id) === String(formData.circulatorStaffId);
+                                            const isPrimaryScrub = String(staff.id) === String(formData.scrubStaffId);
+                                            const isAnes = String(staff.id) === String(formData.anesthesiaStaffId);
+                                            const isSelected = isPrimaryCirc || isPrimaryScrub || isAnes || (formData.orStaffIds || []).includes(staff.id);
+                                            const isDisabled = isPrimaryCirc || isPrimaryScrub || isAnes;
+
+                                            return (
+                                                <label
+                                                    key={staff.id}
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '8px',
+                                                        padding: '4px 6px',
+                                                        cursor: isDisabled ? 'default' : 'pointer',
+                                                        borderRadius: '4px',
+                                                        background: isSelected ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
+                                                        opacity: isDisabled ? 0.75 : 1
+                                                    }}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isSelected}
+                                                        disabled={isDisabled}
+                                                        onChange={(e) => {
+                                                            const currentIds = formData.orStaffIds || [];
+                                                            if (e.target.checked) {
+                                                                setFormData({ ...formData, orStaffIds: [...currentIds, staff.id] });
+                                                            } else {
+                                                                setFormData({ ...formData, orStaffIds: currentIds.filter(id => id !== staff.id) });
+                                                            }
+                                                        }}
+                                                        style={{ cursor: isDisabled ? 'default' : 'pointer', width: '14px', height: '14px' }}
+                                                    />
+                                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-primary)' }}>
+                                                        {staff.firstname} {staff.lastname} - {staff.department} (${staff.hourly_rate || 0}/hr)
+                                                        {isDisabled && (
+                                                            <span style={{ marginLeft: '6px', fontSize: '0.7rem', color: 'var(--color-blue)', fontWeight: 'bold' }}>
+                                                                (Assigned above)
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
+                                    <input
+                                        type="checkbox"
+                                        id="calculateStaffFee"
+                                        checked={formData.calculateStaffFee}
+                                        onChange={(e) => setFormData({ ...formData, calculateStaffFee: e.target.checked })}
+                                        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                                    />
+                                    <label htmlFor="calculateStaffFee" style={{ fontSize: '0.82rem', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: '600' }}>
+                                        Calculate staff fees based on actual OR time (overrides Labour Cost)
+                                    </label>
                                 </div>
                             </div>
 
@@ -2612,10 +2876,16 @@ const SurgeryScheduler = ({
                                         const room = parseFloat(formData.orRoomCost || 0);
                                         const labor = parseFloat(formData.labourCost || 0);
 
+                                        const allActiveStaffIds = [...new Set([
+                                            formData.circulatorStaffId ? parseInt(formData.circulatorStaffId) : null,
+                                            formData.scrubStaffId ? parseInt(formData.scrubStaffId) : null,
+                                            ...(formData.orStaffIds || []).map(id => parseInt(id))
+                                        ].filter(Boolean))];
+
                                         let calculatedStaffFee = 0;
-                                        if (formData.calculateStaffFee && formData.orStaffIds && formData.orStaffIds.length > 0) {
+                                        if (formData.calculateStaffFee && allActiveStaffIds.length > 0) {
                                             let totalHourlyRate = 0;
-                                            formData.orStaffIds.forEach(staffId => {
+                                            allActiveStaffIds.forEach(staffId => {
                                                 const staff = staffList.find(s => s.id === staffId);
                                                 if (staff && staff.hourly_rate) {
                                                     totalHourlyRate += parseFloat(staff.hourly_rate);
