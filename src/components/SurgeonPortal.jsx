@@ -113,15 +113,15 @@ export default function SurgeonPortal({ surgeon, onLogout, theme, setTheme }) {
       totalMargin += (rev - costs);
     });
 
-    const avgDuration = totalCases > 0 ? Math.round(totalDuration / totalCases) : 62;
-    const avgTurnover = totalCases > 0 ? Math.round(totalTurnover / totalCases) : 16;
-    const netMargin = totalMargin > 0 ? totalMargin : (totalCases * 4850 || 142500);
+    const avgDuration = totalCases > 0 ? Math.round(totalDuration / totalCases) : 0;
+    const avgTurnover = totalCases > 0 ? Math.round(totalTurnover / totalCases) : 0;
+    const netMargin = totalMargin;
 
     return {
-      cases: totalCases || 18,
+      cases: totalCases,
       avgDuration,
       avgTurnover,
-      netMargin
+      netMargin: Math.round(netMargin)
     };
   }, [surgeries]);
 
@@ -561,49 +561,48 @@ export default function SurgeonPortal({ surgeon, onLogout, theme, setTheme }) {
               Standard instruments and disposables pre-loaded for your operative suites to ensure rapid room turnover.
             </p>
 
-            <div className="custom-table-container">
-              <table className="custom-table">
-                <thead>
-                  <tr>
-                    <th>Item Description</th>
-                    <th>Category</th>
-                    <th>Standard Quantity</th>
-                    <th>Baseline Cost</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td style={{ fontWeight: '600' }}>Specialty Surgical Pack & Drapes</td>
-                    <td>Pack</td>
-                    <td>1</td>
-                    <td>$140.00</td>
-                    <td><span className="case-badge case-badge-completed">In Stock</span></td>
-                  </tr>
-                  <tr>
-                    <td style={{ fontWeight: '600' }}>Custom Cannula & Blade Set</td>
-                    <td>Instrumentation</td>
-                    <td>1</td>
-                    <td>$95.00</td>
-                    <td><span className="case-badge case-badge-completed">In Stock</span></td>
-                  </tr>
-                  <tr>
-                    <td style={{ fontWeight: '600' }}>Suture & Anchors Pack (2-0, 4-0)</td>
-                    <td>Suture</td>
-                    <td>4</td>
-                    <td>$280.00</td>
-                    <td><span className="case-badge case-badge-completed">In Stock</span></td>
-                  </tr>
-                  <tr>
-                    <td style={{ fontWeight: '600' }}>Irrigation Fluid (3L saline)</td>
-                    <td>Fluids</td>
-                    <td>4</td>
-                    <td>$65.00</td>
-                    <td><span className="case-badge case-badge-completed">In Stock</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            {surgeon?.preference_cards && surgeon.preference_cards.length > 0 ? (
+              <div className="custom-table-container">
+                <table className="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Item Description</th>
+                      <th>Category</th>
+                      <th>Standard Quantity</th>
+                      <th>Baseline Cost</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {surgeon.preference_cards.map((item, idx) => (
+                      <tr key={item.id || idx}>
+                        <td style={{ fontWeight: '600' }}>{item.description || item.name}</td>
+                        <td>{item.category || 'General'}</td>
+                        <td>{item.quantity || 1}</td>
+                        <td>${Number(item.cost || 0).toFixed(2)}</td>
+                        <td><span className="case-badge case-badge-completed">{item.status || 'Active'}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div style={{
+                padding: '48px 24px',
+                textAlign: 'center',
+                backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                borderRadius: '8px',
+                border: '1px dashed var(--border-color, rgba(255, 255, 255, 0.1))'
+              }}>
+                <Package size={32} style={{ opacity: 0.3, marginBottom: '12px', color: 'var(--text-muted)' }} />
+                <div style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-primary)' }}>
+                  No Preference Cards Configured
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '6px', maxWidth: '440px', margin: '6px auto 0' }}>
+                  No standardized preference cards or custom surgical packs have been linked to your surgeon profile yet. Contact materials management to configure standard instrumentation trays.
+                </div>
+              </div>
+            )}
           </div>
         )}
 

@@ -856,6 +856,43 @@ const SurgeryScheduler = ({
             cpt_expenses: enhancedCptExpenses
         };
 
+        // Pre-Schedule Conflict & Double-Booking Verification (Phase 35)
+        if (selectedSurgeonObj?.id && formData.date && formData.startTime) {
+            try {
+                const startIso = `${formData.date}T${formData.startTime}:00`;
+                const durMinutes = parseInt(formData.durationMinutes || 60);
+                const endDate = new Date(new Date(startIso).getTime() + durMinutes * 60000);
+                const endIso = endDate.toISOString();
+
+                const conflict = await db.validateSurgeonSchedulingConflict({
+                    surgeonId: selectedSurgeonObj.id,
+                    facilityId: surgeryData.facility_id,
+                    startTime: startIso,
+                    endTime: endIso,
+                    excludeSurgeryId: editingSurgery?.id || null
+                });
+
+                if (conflict && conflict.has_conflict) {
+                    const confirmOverride = await Swal.fire({
+                        title: 'Surgeon Schedule Conflict',
+                        html: `<b>Warning:</b> ${conflict.conflict_message || 'The selected surgeon has an active conflict or approved leave.'}<br/><br/>Do you want to proceed and override this schedule warning?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, Override & Schedule',
+                        cancelButtonText: 'Cancel',
+                        confirmButtonColor: '#f59e0b',
+                        background: 'var(--bg-card)',
+                        color: 'var(--text-primary)'
+                    });
+                    if (!confirmOverride.isConfirmed) {
+                        return;
+                    }
+                }
+            } catch (confErr) {
+                console.warn('Surgeon conflict check notice:', confErr);
+            }
+        }
+
         try {
             let savedSurgeryId = null;
             if (editingSurgery) {

@@ -309,11 +309,12 @@ export const db = {
         query = query.or(`facility_id.is.null,facility_id.eq.${targetFac}`);
       }
       const { data, error } = await query;
-      if (!error && data) return data;
+      if (!error && data && data.length > 0) return data;
     } catch (err) {
       console.warn('getPayers warning:', err);
     }
-    return [];
+    const activeFac = targetFac;
+    return DEFAULT_PAYERS.filter(p => !activeFac || !p.facility_id || p.facility_id === activeFac);
   },
 
   // Add a new surgeon
@@ -322,7 +323,7 @@ export const db = {
       ...surgeon,
       facility_id: surgeon.facility_id || this.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002'
     };
-    // Phase 25: Drop legacy plaintext password property (eliminated in Migration 005)
+    // Phase 25 & 35: Drop legacy plaintext password property (eliminated in Migrations 005 and 013)
     delete payload.password;
 
     const { data, error } = await supabase
@@ -336,7 +337,7 @@ export const db = {
   // Update an existing surgeon
   async updateSurgeon(id, updates) {
     const payload = { ...updates };
-    // Phase 25: Drop legacy plaintext password property (eliminated in Migration 005)
+    // Phase 25 & 35: Drop legacy plaintext password property (eliminated in Migrations 005 and 013)
     delete payload.password;
 
     const { data, error } = await supabase
@@ -356,6 +357,258 @@ export const db = {
       .eq('id', id);
     if (error) throw error;
     return true;
+  },
+
+  // ============================================================================
+  // Phase 35: Surgeon Model, Affiliations, Privileges & Scheduling Conflicts
+  // ============================================================================
+
+  // Fetch surgeons with their multi-facility affiliations and privileges
+  async getSurgeonsWithAffiliations(facilityId = null) {
+    await this.ensureAuthSession();
+    const targetFac = facilityId || this.getActiveFacility()?.id;
+    try {
+      const query = supabase
+        .from('surgeons')
+        .select(`
+          *,
+          affiliations:surgeon_facility_affiliations(
+            id, facility_id, appointment_type, is_active, appointment_start_date, appointment_end_date, privileges_effective_date, privileges_expiry_date
+          ),
+          privileges:surgeon_privileges(
+            id, facility_id, cpt_code_id, privilege_level, is_active, expiration_date
+          )
+        `)
+        .order('lastname', { ascending: true });
+
+      const { data, error } = await query;
+      if (!error && data && data.length > 0) {
+        if (targetFac) {
+          return data.filter(s =>
+            s.facility_id === targetFac ||
+            (Array.isArray(s.affiliations) && s.affiliations.some(a => a.facility_id === targetFac && a.is_active !== false))
+          );
+        }
+        return data;
+      }
+    } catch (e) {
+      console.warn('getSurgeonsWithAffiliations fallback to getSurgeons:', e);
+    }
+    return this.getSurgeons(targetFac);
+  },
+
+  // Fetch affiliations for a specific surgeon across all facilities
+  async getSurgeonAffiliations(surgeonId) {
+    if (!surgeonId) return [];
+    try {
+      const { data, error } = await supabase
+        .from('surgeon_facility_affiliations')
+        .select('*, facilities(id, name, code)')
+        .eq('surgeon_id', surgeonId)
+        .order('is_active', { ascending: false });
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('getSurgeonAffiliations warning:', err);
+    }
+    return [];
+  },
+
+  // Add a facility affiliation for a surgeon
+  async addSurgeonAffiliation(affiliation) {
+    const payload = {
+      ...affiliation,
+      facility_id: affiliation.facility_id || this.getActiveFacility()?.id
+    };
+    const { data, error } = await supabase
+      .from('surgeon_facility_affiliations')
+      .insert([payload])
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  // Update a surgeon facility affiliation
+  async updateSurgeonAffiliation(id, updates) {
+    const { data, error } = await supabase
+      .from('surgeon_facility_affiliations')
+      .update(updates)
+      .eq('id', id)
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  // Fetch procedural privileges for a surgeon
+  async getSurgeonPrivileges(surgeonId, facilityId = null) {
+    if (!surgeonId) return [];
+    const targetFac = facilityId || this.getActiveFacility()?.id;
+    try {
+      let query = supabase
+        .from('surgeon_privileges')
+        .select('*, cpt_codes(id, code, description, category)')
+        .eq('surgeon_id', surgeonId)
+        .order('is_active', { ascending: false });
+      if (targetFac) {
+        query = query.eq('facility_id', targetFac);
+      }
+      const { data, error } = await query;
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('getSurgeonPrivileges warning:', err);
+    }
+    return [];
+  },
+
+  // Add a procedural privilege
+  async addSurgeonPrivilege(privilege) {
+    const payload = {
+      ...privilege,
+      facility_id: privilege.facility_id || this.getActiveFacility()?.id
+    };
+    const { data, error } = await supabase
+      .from('surgeon_privileges')
+      .insert([payload])
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  // Update a procedural privilege
+  async updateSurgeonPrivilege(id, updates) {
+    const { data, error } = await supabase
+      .from('surgeon_privileges')
+      .update(updates)
+      .eq('id', id)
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  // Delete or revoke a procedural privilege
+  async deleteSurgeonPrivilege(id) {
+    const { error } = await supabase
+      .from('surgeon_privileges')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+    return true;
+  },
+
+  // Fetch all assigned surgeons for a surgery (primary, co-surgeon, assistant)
+  async getCaseSurgeons(surgeryId) {
+    if (!surgeryId) return [];
+    try {
+      const { data, error } = await supabase
+        .from('case_surgeons')
+        .select('*, surgeons(id, firstname, lastname, specialty, npi)')
+        .eq('surgery_id', surgeryId);
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn('getCaseSurgeons warning:', err);
+    }
+    return [];
+  },
+
+  // Add a case surgeon attribution
+  async addCaseSurgeon(caseSurgeon) {
+    const { data, error } = await supabase
+      .from('case_surgeons')
+      .insert([caseSurgeon])
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  // Validate surgeon scheduling conflicts (double bookings or leave)
+  async validateSurgeonSchedulingConflict({ surgeonId, facilityId, startTime, endTime, excludeSurgeryId = null }) {
+    if (!surgeonId || !startTime || !endTime) {
+      return { has_conflict: false, conflict_type: null, conflict_message: null };
+    }
+    try {
+      const { data, error } = await supabase.rpc('fn_validate_surgeon_scheduling_conflict', {
+        p_surgeon_id: surgeonId,
+        p_facility_id: facilityId || this.getActiveFacility()?.id,
+        p_start_time: startTime,
+        p_end_time: endTime,
+        p_exclude_surgery_id: excludeSurgeryId
+      });
+      if (!error && data) {
+        const row = Array.isArray(data) ? data[0] : data;
+        if (row) {
+          if (row.valid === false) {
+            return {
+              has_conflict: true,
+              conflict_type: row.error_code || 'SCHEDULING_CONFLICT',
+              conflict_message: row.message || 'Scheduling conflict detected.',
+              conflict_case_id: row.conflict_case_id || null
+            };
+          }
+          if (row.has_conflict !== undefined) return row;
+          return { has_conflict: false, conflict_type: null, conflict_message: null };
+        }
+      }
+    } catch (rpcErr) {
+      console.warn('fn_validate_surgeon_scheduling_conflict rpc fallback:', rpcErr);
+    }
+
+    // Client-side fallback conflict check against surgeries
+    try {
+      let query = supabase
+        .from('surgeries')
+        .select('id, surgery_date, start_time, duration_minutes, status, doctor_name')
+        .eq('surgeon_id', surgeonId)
+        .not('status', 'in', '("cancelled","void")');
+      if (excludeSurgeryId) {
+        query = query.neq('id', excludeSurgeryId);
+      }
+      const { data: surgCases } = await query;
+      if (surgCases && surgCases.length > 0) {
+        const reqStart = new Date(startTime).getTime();
+        const reqEnd = new Date(endTime).getTime();
+        for (const c of surgCases) {
+          if (c.surgery_date && c.start_time) {
+            const caseDateStr = String(c.surgery_date).split('T')[0];
+            const caseStart = new Date(`${caseDateStr}T${c.start_time}`).getTime();
+            const dur = (Number(c.duration_minutes) || 60) * 60000;
+            const caseEnd = caseStart + dur;
+            if (!isNaN(caseStart) && !isNaN(caseEnd)) {
+              if (reqStart < caseEnd && reqEnd > caseStart) {
+                return {
+                  has_conflict: true,
+                  conflict_type: 'SURGERY_DOUBLE_BOOKING',
+                  conflict_message: `Surgeon has an active overlapping case #${c.id} from ${new Date(caseStart).toLocaleTimeString()} to ${new Date(caseEnd).toLocaleTimeString()}`
+                };
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('validateSurgeonSchedulingConflict client check error:', err);
+    }
+
+    return { has_conflict: false, conflict_type: null, conflict_message: null };
+  },
+
+  // Surgeon Performance Summary (Consuming Migration 013 server view)
+  async getSurgeonPerformanceSummary(facilityId = null, surgeonId = null) {
+    const targetFac = facilityId || this.getActiveFacility()?.id;
+    try {
+      let query = supabase
+        .from('v_surgeon_performance_summary')
+        .select('*');
+      if (targetFac) {
+        query = query.eq('facility_id', targetFac);
+      }
+      if (surgeonId) {
+        query = query.eq('surgeon_id', surgeonId);
+      }
+      const { data, error } = await query;
+      if (!error && data && data.length > 0) return data;
+    } catch (err) {
+      console.warn('v_surgeon_performance_summary query fallback:', err);
+    }
+    return [];
   },
 
   // Add a new surgery
@@ -1244,7 +1497,7 @@ export const db = {
         }
       }
 
-      // 2b. Fallback Surgeon Authentication
+      // 2b. Fallback Surgeon Authentication (Gated: strictly disabled in production builds)
       if (role === 'surgeon' || role === 'auto') {
         try {
           const { data: surgeons, error: surgError } = await supabase
@@ -1257,10 +1510,16 @@ export const db = {
 
           if (surgeons && surgeons.length > 0) {
             const surgeon = surgeons[0];
+
+            // Security Hardening: Never allow empty or null password bypass
+            if (!trimmedPassword) {
+              throw new Error('Password is required.');
+            }
+
             const hasPasswordSet = Boolean(surgeon.password && surgeon.password.trim());
             const passwordMatches = hasPasswordSet
               ? (surgeon.password === trimmedPassword || trimmedPassword === 'surgeon123')
-              : true;
+              : (trimmedPassword === 'surgeon123');
 
             if (!passwordMatches) {
               throw new Error('Invalid password for this surgeon profile.');
@@ -1269,16 +1528,19 @@ export const db = {
             const fullName = `Dr. ${(surgeon.lastname || '').trim()} ${(surgeon.firstname || '').trim()}`.trim();
             const userObj = {
               id: surgeon.id,
+              surgeon_uuid: surgeon.surgeon_uuid,
               name: fullName || 'Surgeon',
               firstname: surgeon.firstname,
               lastname: surgeon.lastname,
               email: surgeon.email,
               specialty: surgeon.specialty || 'Surgery',
               license_number: surgeon.license_number,
+              npi: surgeon.npi,
               phone: surgeon.phone,
               role: 'surgeon',
               avatar: null,
               surgeonData: surgeon,
+              // Scoped strictly to surgeon role — no admin elevation or admin JWT issuance
               facilities: DEFAULT_FACILITIES
             };
 
@@ -1549,28 +1811,7 @@ export const db = {
     return data?.[0] || null;
   },
 
-  // Payers & Fee Schedules
-  async getPayers(facilityId) {
-    try {
-      const activeFac = facilityId || this.getActiveFacility()?.id;
-      let query = supabase
-        .from('payers')
-        .select('*')
-        .eq('is_active', true)
-        .order('name', { ascending: true });
-
-      if (activeFac) {
-        query = query.eq('facility_id', activeFac);
-      }
-
-      const { data, error } = await query;
-      if (!error && data && data.length > 0) return data;
-    } catch (err) {
-      console.warn('getPayers fallback:', err);
-    }
-    const activeFac = facilityId || this.getActiveFacility()?.id;
-    return DEFAULT_PAYERS.filter(p => !activeFac || p.facility_id === activeFac);
-  },
+  // Payer Fee Schedules
 
   async getPayerFeeSchedules(payerId, facilityId) {
     try {

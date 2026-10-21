@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { db } from '../lib/supabase';
 import { rbacService } from '../lib/rbacService';
-import { exportDatabaseSql } from '../utils/sqlExporter';
+import { 
+    exportDatabaseSql, 
+    ALL_EXPORT_TABLES 
+} from '../utils/sqlExporter';
 import './Management.css';
 
 const Settings = ({ onUpdate, activeFacility, currentRole, session, onFacilityUpdate }) => {
@@ -235,7 +238,7 @@ const Settings = ({ onUpdate, activeFacility, currentRole, session, onFacilityUp
         setExportingSql(true);
         Swal.fire({
             title: 'Generating Database SQL Dump',
-            html: 'Connecting to database and compiling complete SQL statements...<br/><br/><div class="spinner"></div>',
+            html: 'Connecting to database and compiling complete SQL statements...<br/><br/><div id="swal2-html-progress" style="color: var(--text-secondary); font-size: 0.9rem;">Initializing full database dump...</div><br/><div class="spinner"></div>',
             allowOutsideClick: false,
             showConfirmButton: false,
             willOpen: () => {
@@ -244,17 +247,28 @@ const Settings = ({ onUpdate, activeFacility, currentRole, session, onFacilityUp
         });
 
         try {
-            const { totalRecords, tableStats } = await exportDatabaseSql((tbl, current, total) => {
-                const content = document.getElementById('swal2-html-container');
-                if (content) {
-                    content.innerHTML = `Extracting table <b>${tbl}</b> (${current}/${total})...<br/><br/><div class="spinner"></div>`;
+            const { totalRecords, tableStats, tables, totalCatalogTables, filename, skippedTables } = await exportDatabaseSql({
+                scope: 'full',
+                tables: ALL_EXPORT_TABLES,
+                onProgress: (tbl, current, total) => {
+                    const el = document.getElementById('swal2-html-progress');
+                    if (el) {
+                        el.innerHTML = `Extracting table <b>${tbl}</b> (${current}/${total})...`;
+                    }
                 }
             });
+
+            const processedCount = totalCatalogTables || (tables ? tables.length : ALL_EXPORT_TABLES.length);
+            const exportedCount = Object.keys(tableStats).length;
 
             Swal.fire({
                 icon: 'success',
                 title: 'SQL File Downloaded!',
-                html: `Successfully compiled and downloaded full database SQL dump.<br/><br/><b>Total Records:</b> ${totalRecords}<br/><b>Tables Exported:</b> ${Object.keys(tableStats).length}`,
+                html: `Successfully compiled and downloaded <code>${filename}</code>.<br/><br/>
+                    <b>Total Records:</b> ${totalRecords.toLocaleString()}<br/>
+                    <b>Database Tables Processed:</b> ${processedCount}<br/>
+                    <b>Tables with Exported Data:</b> ${exportedCount}
+                    ${skippedTables && skippedTables.length > 0 ? `<br/><small style="color: var(--text-secondary); margin-top: 0.5rem; display: inline-block;">(${skippedTables.length} tables pending schema migration or restricted by RLS)</small>` : ''}`,
                 confirmButtonColor: '#10b981'
             });
         } catch (err) {
