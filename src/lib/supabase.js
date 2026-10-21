@@ -725,7 +725,20 @@ export const db = {
 
     const { data, error } = await query;
     if (error) throw error;
-    return data || [];
+    return (data || []).map(s => {
+      let cred = 'RN';
+      if (typeof s.credentials === 'string' && s.credentials.trim()) {
+        cred = s.credentials;
+      } else if (Array.isArray(s.credentials) && s.credentials.length > 0) {
+        cred = s.credentials.map(c => typeof c === 'string' ? c : (c.credential_type || c.credential_number || '')).filter(Boolean).join(', ') || 'RN';
+      } else if (typeof s.credentials === 'object' && s.credentials !== null) {
+        cred = s.credentials.credential_type || s.credentials.credential_number || 'RN';
+      }
+      return {
+        ...s,
+        credentials: typeof cred === 'string' ? cred.replace(/_/g, ' ') : 'RN'
+      };
+    });
   },
 
   // Add a new staff member
@@ -779,7 +792,7 @@ export const db = {
           affiliations:staff_facility_affiliations(
             id, facility_id, employment_type, primary_department, clinical_role, hourly_rate, monthly_salary, is_active
           ),
-          credentials:staff_credentials(
+          credentials_records:staff_credentials(
             id, facility_id, credential_type, credential_number, issuing_jurisdiction, expiration_date, verification_status
           )
         `)
@@ -787,13 +800,29 @@ export const db = {
 
       const { data, error } = await query;
       if (!error && data && data.length > 0) {
+        // Ensure credentials column is always a string and does not get mutated
+        const sanitized = data.map(s => {
+          let cred = 'RN';
+          if (typeof s.credentials === 'string' && s.credentials.trim()) {
+            cred = s.credentials;
+          } else if (Array.isArray(s.credentials) && s.credentials.length > 0) {
+            cred = s.credentials.map(c => typeof c === 'string' ? c : (c.credential_type || c.credential_number || '')).filter(Boolean).join(', ') || 'RN';
+          } else if (typeof s.credentials === 'object' && s.credentials !== null) {
+            cred = s.credentials.credential_type || s.credentials.credential_number || 'RN';
+          }
+          return {
+            ...s,
+            credentials: typeof cred === 'string' ? cred.replace(/_/g, ' ') : 'RN'
+          };
+        });
+
         if (targetFac) {
-          return data.filter(s =>
+          return sanitized.filter(s =>
             s.facility_id === targetFac ||
             (Array.isArray(s.affiliations) && s.affiliations.some(a => a.facility_id === targetFac && a.is_active !== false))
           );
         }
-        return data;
+        return sanitized;
       }
     } catch (e) {
       console.warn('getStaffWithAffiliations fallback to getStaff:', e);

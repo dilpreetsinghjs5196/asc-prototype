@@ -575,7 +575,7 @@ export default function SurgeonManagement({ activeFacility, facilities = [], isS
                           {initial}
                         </div>
                         <div>
-                          <div>{fullName} {surgeon.credentials && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({surgeon.credentials})</span>}</div>
+                          <div>{fullName} {surgeon.credentials && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({typeof surgeon.credentials === 'string' ? surgeon.credentials : (surgeon.credentials?.credential_type || 'MD')})</span>}</div>
                           {surgeon.surgeon_uuid && (
                             <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
                               UUID: {surgeon.surgeon_uuid.slice(0, 8)}...

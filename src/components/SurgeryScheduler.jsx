@@ -22,6 +22,20 @@ const formatCurrency = (amount) => {
     }).format(amount);
 };
 
+// Safe credentials formatter
+const formatCredentials = (creds, fallback = '') => {
+    if (!creds) return fallback;
+    if (typeof creds === 'string') return creds;
+    if (Array.isArray(creds)) {
+        return creds.map(c => (typeof c === 'string' ? c : (c.credential_number || c.credential_type || ''))).filter(Boolean).join(', ') || fallback;
+    }
+    if (typeof creds === 'object') {
+        const val = creds.credential_number || creds.credential_type;
+        return val ? String(val).replace(/_/g, ' ') : fallback;
+    }
+    return String(creds);
+};
+
 // Round up helper for time display
 const formatTimeForInput = (time) => {
     if (!time) return '';
@@ -2582,7 +2596,7 @@ const SurgeryScheduler = ({
                                                 .filter(s => s.department === 'Operating Room RN' || s.staff_type === 'Registered_Nurse' || (s.role && s.role.includes('RN')))
                                                 .map(s => (
                                                     <option key={s.id} value={s.id}>
-                                                        {s.firstname} {s.lastname} ({s.credentials || 'RN'}) - ${s.hourly_rate || 0}/hr
+                                                        {s.firstname} {s.lastname} ({formatCredentials(s.credentials, 'RN')}) - ${s.hourly_rate || 0}/hr
                                                     </option>
                                                 ))}
                                         </select>
@@ -2626,7 +2640,7 @@ const SurgeryScheduler = ({
                                                 .filter(s => s.department === 'Anesthesia' || s.staff_type === 'Physician_Anesthesiologist' || s.staff_type === 'CRNA' || (s.role && s.role.toLowerCase().includes('anesthes')) || (s.role && s.role.toLowerCase().includes('crna')))
                                                 .map(s => (
                                                     <option key={s.id} value={s.id}>
-                                                        {s.firstname} {s.lastname} ({s.credentials || 'MD'})
+                                                        {s.firstname} {s.lastname} ({formatCredentials(s.credentials, 'MD')})
                                                     </option>
                                                 ))}
                                         </select>

@@ -65,6 +65,19 @@ const EMPLOYMENT_TYPES = [
   { value: 'Temporary', label: 'Temporary' }
 ];
 
+export const formatCredentials = (creds, fallback = 'RN') => {
+  if (!creds) return fallback;
+  if (typeof creds === 'string') return creds;
+  if (Array.isArray(creds)) {
+    return creds.map(c => (typeof c === 'string' ? c : (c.credential_number || c.credential_type || ''))).filter(Boolean).join(', ') || fallback;
+  }
+  if (typeof creds === 'object') {
+    const val = creds.credential_number || creds.credential_type;
+    return val ? String(val).replace(/_/g, ' ') : fallback;
+  }
+  return String(creds);
+};
+
 const StaffManagement = ({ activeFacility, facilities = [], isSuperAdmin: propIsSuperAdmin }) => {
   // Navigation View Tabs: 'directory' | 'credentials' | 'time_off' | 'anesthesia'
   const [activeTab, setActiveTab] = useState('directory');
@@ -182,7 +195,7 @@ const StaffManagement = ({ activeFacility, facilities = [], isSuperAdmin: propIs
         role: staff.role || '',
         specialty: staff.specialty || '',
         staff_type: staff.staff_type || (staff.department === 'Operating Room RN' ? 'Registered_Nurse' : 'Other'),
-        credentials: staff.credentials || (staff.department === 'Operating Room RN' ? 'RN, BSN' : ''),
+        credentials: formatCredentials(staff.credentials, staff.department === 'Operating Room RN' ? 'RN, BSN' : ''),
         employment_type: staff.affiliations?.[0]?.employment_type || (staff.lastname?.includes('(PT)') ? 'Part_Time' : 'Full_Time'),
         license_id: staff.license_id || '',
         phone: staff.phone || '',
@@ -441,7 +454,7 @@ const StaffManagement = ({ activeFacility, facilities = [], isSuperAdmin: propIs
         `"${s.firstname || ''}"`,
         `"${s.lastname || ''}"`,
         `"${s.role || ''}"`,
-        `"${s.credentials || ''}"`,
+        `"${formatCredentials(s.credentials, '')}"`,
         `"${s.specialty || ''}"`,
         `"${s.license_id || ''}"`,
         `"${s.phone || ''}"`,
@@ -478,7 +491,7 @@ const StaffManagement = ({ activeFacility, facilities = [], isSuperAdmin: propIs
         s.department?.toLowerCase().includes(search) ||
         s.specialty?.toLowerCase().includes(search) ||
         s.license_id?.toLowerCase().includes(search) ||
-        s.credentials?.toLowerCase().includes(search)
+        formatCredentials(s.credentials, '').toLowerCase().includes(search)
       );
       const matchesDept = (deptFilter === 'ALL' || s.department === deptFilter);
       return matchesSearch && matchesDept;
@@ -757,7 +770,7 @@ const StaffManagement = ({ activeFacility, facilities = [], isSuperAdmin: propIs
                         <td>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                             <span style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-primary)' }}>
-                              {staff.credentials || 'RN'}
+                              {formatCredentials(staff.credentials, 'RN')}
                             </span>
                             <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
                               {staff.staff_type ? staff.staff_type.replace(/_/g, ' ') : 'Registered Nurse'}
@@ -1084,7 +1097,7 @@ const StaffManagement = ({ activeFacility, facilities = [], isSuperAdmin: propIs
                           {s.staff_type ? s.staff_type.replace(/_/g, ' ') : 'Anesthesia Provider'}
                         </span>
                       </td>
-                      <td style={{ fontWeight: '600' }}>{s.credentials || 'MD'}</td>
+                      <td style={{ fontWeight: '600' }}>{formatCredentials(s.credentials, 'MD')}</td>
                       <td>{s.role || 'Staff Anesthesiologist'}</td>
                       <td style={{ fontFamily: 'monospace' }}>{s.license_id || '-'}</td>
                       <td style={{ fontWeight: '500' }}>
