@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { db } from '../lib/supabase';
-import { exportDatabaseSql } from '../utils/sqlExporter';
+import { rbacService } from '../lib/rbacService';
+import { 
+    exportDatabaseSql, 
+    ALL_EXPORT_TABLES 
+} from '../utils/sqlExporter';
 import './Management.css';
 
-const Settings = ({ onUpdate }) => {
+const Settings = ({ onUpdate, activeFacility, currentRole, session, onFacilityUpdate }) => {
+    const sessionUser = session || db.getSession();
+    const userRole = rbacService.normalizeRole(currentRole || sessionUser?.role);
+    const isSuperAdmin = userRole === 'super_admin';
+    const isFacilityAdmin = userRole === 'facility_admin';
+    const canToggleMPPR = isSuperAdmin || isFacilityAdmin;
+
     const [settings, setSettings] = useState({
         facility_name: 'Naples Surgery Center',
         facility_address: '123 Medical Blvd',
@@ -27,12 +37,34 @@ const Settings = ({ onUpdate }) => {
         dark_label_color: '#cbd5e1',
         dark_portal_color: '#1E3A5F'
     });
+    const [initialFacilityMppr, setInitialFacilityMppr] = useState(false);
+    const [facilityDetails, setFacilityDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
     const loadSettings = async () => {
         try {
             setLoading(true);
+
+            // 1. Resolve active facility from props or storage
+            const targetFac = activeFacility || db.getActiveFacility();
+            let matchedFac = null;
+            if (targetFac?.id) {
+                try {
+                    const facilities = await db.getFacilities();
+                    matchedFac = (facilities || []).find(f => f.id === targetFac.id) || null;
+                } catch (facErr) {
+                    console.warn('Failed to fetch facilities list:', facErr);
+                }
+            }
+
+            const currentFacilityMppr = matchedFac 
+                ? Boolean(matchedFac.apply_medicare_mppr) 
+                : Boolean(targetFac?.apply_medicare_mppr);
+            setInitialFacilityMppr(currentFacilityMppr);
+            setFacilityDetails(matchedFac || targetFac);
+
+            // 2. Load general non-tenancy settings
             const data = await db.getSettings();
             
             // Load local AI config for email just in case it's not in DB
@@ -50,11 +82,20 @@ const Settings = ({ onUpdate }) => {
                 dark_portal_color: localStorage.getItem('dark_portal_color') || '#1E3A5F'
             };
 
-            if (data) {
-                setSettings({ ...data, ...localAI });
-            } else {
-                setSettings(prev => ({ ...prev, ...localAI }));
-            }
+            const baseData = data || {};
+            setSettings({
+                ...baseData,
+                ...localAI,
+                facility_name: matchedFac?.name || targetFac?.name || baseData.facility_name || 'Naples Surgery Center',
+                facility_address: matchedFac?.address || targetFac?.address || baseData.facility_address || '',
+                facility_city: matchedFac?.city || targetFac?.city || baseData.facility_city || '',
+                facility_state: matchedFac?.state || targetFac?.state || baseData.facility_state || '',
+                facility_zip: matchedFac?.zip || targetFac?.zip || baseData.facility_zip || '',
+                facility_phone: matchedFac?.phone || targetFac?.phone || baseData.facility_phone || '',
+                tax_id: matchedFac?.tax_id || targetFac?.tax_id || baseData.tax_id || '',
+                npi: matchedFac?.npi || targetFac?.npi || baseData.npi || '',
+                apply_medicare_mppr: currentFacilityMppr
+            });
         } catch (error) {
             console.error('Error loading settings:', error);
             Swal.fire('Error', 'Failed to load settings', 'error');
@@ -68,10 +109,18 @@ const Settings = ({ onUpdate }) => {
             loadSettings();
         }, 0);
         return () => clearTimeout(timer);
-    }, []);
+    }, [activeFacility?.id, userRole]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+        if (name === 'apply_medicare_mppr' && !canToggleMPPR) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Permission Denied',
+                text: 'Only Super Administrators and Facility Administrators can toggle MPPR configuration.'
+            });
+            return;
+        }
         setSettings(prev => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value
@@ -97,10 +146,51 @@ const Settings = ({ onUpdate }) => {
     const handleSave = async (e) => {
         e.preventDefault();
 
+        // RBAC Enforcement: If unauthorized user changed apply_medicare_mppr, reject
+        if (settings.apply_medicare_mppr !== initialFacilityMppr && !canToggleMPPR) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Access Denied',
+                text: `Your user role (${userRole}) is not authorized to modify facility financial MPPR configuration.`
+            });
+            return;
+        }
+
         try {
             setSaving(true);
 
-            // Separate AI settings to store locally to prevent Supabase schema errors for email
+            const targetFacId = activeFacility?.id || facilityDetails?.id || db.getActiveFacility()?.id;
+
+            // 1. Authoritative update of facility in PostgreSQL via RPC
+            if (targetFacId && canToggleMPPR) {
+                const facUpdates = {
+                    name: settings.facility_name,
+                    address: settings.facility_address,
+                    city: settings.facility_city,
+                    state: settings.facility_state,
+                    zip: settings.facility_zip,
+                    phone: settings.facility_phone,
+                    tax_id: settings.tax_id,
+                    npi: settings.npi,
+                    apply_medicare_mppr: Boolean(settings.apply_medicare_mppr)
+                };
+                const updatedFacResult = await db.updateFacility(targetFacId, facUpdates);
+                
+                // Update local active facility cache
+                const activeFacObj = db.getActiveFacility();
+                if (activeFacObj && activeFacObj.id === targetFacId) {
+                    const mergedFac = {
+                        ...activeFacObj,
+                        ...facUpdates,
+                        ...(updatedFacResult || {})
+                    };
+                    db.setActiveFacility(mergedFac);
+                    if (onFacilityUpdate) onFacilityUpdate(mergedFac);
+                }
+                setInitialFacilityMppr(Boolean(settings.apply_medicare_mppr));
+            }
+
+            // 2. Separate AI settings to store locally to prevent Supabase schema errors for email
             const { id: _id, ai_allowed_email, light_sidebar_color, light_bg_color, light_text_color, light_label_color, light_portal_color, dark_sidebar_color, dark_bg_color, dark_text_color, dark_label_color, dark_portal_color, ...settingsToUpdate } = settings;
 
             // Save local settings
@@ -130,13 +220,13 @@ const Settings = ({ onUpdate }) => {
             Swal.fire({
                 icon: 'success',
                 title: 'Settings Saved',
-                text: 'Facility settings have been updated successfully',
+                text: 'Facility settings and financial configuration have been updated successfully',
                 timer: 2000,
                 showConfirmButton: false
             });
         } catch (error) {
             console.error('Error saving settings:', error);
-            Swal.fire('Error', 'Failed to save settings', 'error');
+            Swal.fire('Error', 'Failed to save settings: ' + (error.message || 'Unknown error'), 'error');
         } finally {
             setSaving(false);
         }
@@ -148,7 +238,7 @@ const Settings = ({ onUpdate }) => {
         setExportingSql(true);
         Swal.fire({
             title: 'Generating Database SQL Dump',
-            html: 'Connecting to database and compiling complete SQL statements...<br/><br/><div class="spinner"></div>',
+            html: 'Connecting to database and compiling complete SQL statements...<br/><br/><div id="swal2-html-progress" style="color: var(--text-secondary); font-size: 0.9rem;">Initializing full database dump...</div><br/><div class="spinner"></div>',
             allowOutsideClick: false,
             showConfirmButton: false,
             willOpen: () => {
@@ -157,17 +247,28 @@ const Settings = ({ onUpdate }) => {
         });
 
         try {
-            const { totalRecords, tableStats } = await exportDatabaseSql((tbl, current, total) => {
-                const content = document.getElementById('swal2-html-container');
-                if (content) {
-                    content.innerHTML = `Extracting table <b>${tbl}</b> (${current}/${total})...<br/><br/><div class="spinner"></div>`;
+            const { totalRecords, tableStats, tables, totalCatalogTables, filename, skippedTables } = await exportDatabaseSql({
+                scope: 'full',
+                tables: ALL_EXPORT_TABLES,
+                onProgress: (tbl, current, total) => {
+                    const el = document.getElementById('swal2-html-progress');
+                    if (el) {
+                        el.innerHTML = `Extracting table <b>${tbl}</b> (${current}/${total})...`;
+                    }
                 }
             });
+
+            const processedCount = totalCatalogTables || (tables ? tables.length : ALL_EXPORT_TABLES.length);
+            const exportedCount = Object.keys(tableStats).length;
 
             Swal.fire({
                 icon: 'success',
                 title: 'SQL File Downloaded!',
-                html: `Successfully compiled and downloaded full database SQL dump.<br/><br/><b>Total Records:</b> ${totalRecords}<br/><b>Tables Exported:</b> ${Object.keys(tableStats).length}`,
+                html: `Successfully compiled and downloaded <code>${filename}</code>.<br/><br/>
+                    <b>Total Records:</b> ${totalRecords.toLocaleString()}<br/>
+                    <b>Database Tables Processed:</b> ${processedCount}<br/>
+                    <b>Tables with Exported Data:</b> ${exportedCount}
+                    ${skippedTables && skippedTables.length > 0 ? `<br/><small style="color: var(--text-secondary); margin-top: 0.5rem; display: inline-block;">(${skippedTables.length} tables pending schema migration or restricted by RLS)</small>` : ''}`,
                 confirmButtonColor: '#10b981'
             });
         } catch (err) {
@@ -491,20 +592,96 @@ const Settings = ({ onUpdate }) => {
 
                     {/* Section 4: Financial Logic */}
                     <div className="setting-content-card" style={{ padding: '2rem', border: '2px solid #e2e8f0' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)' }}>
-                            <div style={{ background: 'rgba(234, 88, 12, 0.1)', padding: '0.5rem', borderRadius: '8px', color: '#ea580c' }}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <div style={{ background: 'rgba(234, 88, 12, 0.1)', padding: '0.5rem', borderRadius: '8px', color: '#ea580c' }}>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+                                </div>
+                                <div>
+                                    <h3 style={{ fontSize: '1.125rem', color: 'var(--text-primary)', margin: 0 }}>Financial Configurations</h3>
+                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                        Facility: <strong>{facilityDetails?.name || activeFacility?.name || settings.facility_name || 'Naples Surgery Center'}</strong>
+                                    </span>
+                                </div>
                             </div>
-                            <h3 style={{ fontSize: '1.125rem', color: 'var(--text-primary)', margin: 0 }}>Financial Configurations</h3>
+
+                            {/* Status Badge */}
+                            <div>
+                                {settings.apply_medicare_mppr ? (
+                                    <span style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        fontSize: '0.8rem',
+                                        fontWeight: 600,
+                                        color: '#065f46',
+                                        background: '#ecfdf5',
+                                        border: '1px solid #a7f3d0',
+                                        padding: '4px 12px',
+                                        borderRadius: '9999px'
+                                    }}>
+                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }}></span>
+                                        Enabled
+                                    </span>
+                                ) : (
+                                    <span style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        fontSize: '0.8rem',
+                                        fontWeight: 600,
+                                        color: '#64748b',
+                                        background: '#f8fafc',
+                                        border: '1px solid #cbd5e1',
+                                        padding: '4px 12px',
+                                        borderRadius: '9999px'
+                                    }}>
+                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#94a3b8' }}></span>
+                                        Disabled (Default)
+                                    </span>
+                                )}
+                            </div>
                         </div>
 
-                        <label style={{ display: 'flex', gap: '1rem', cursor: 'pointer', padding: '1rem', borderRadius: '12px', transition: 'background 0.2s', background: settings.apply_medicare_mppr ? '#fffbeb' : 'transparent', border: settings.apply_medicare_mppr ? '1px solid #fcd34d' : '1px solid transparent' }}>
+                        {/* Security Banner for Read-Only Roles */}
+                        {!canToggleMPPR && (
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.75rem',
+                                background: 'rgba(239, 68, 68, 0.08)',
+                                border: '1px solid rgba(239, 68, 68, 0.25)',
+                                color: '#b91c1c',
+                                padding: '0.75rem 1rem',
+                                borderRadius: '8px',
+                                marginBottom: '1.25rem',
+                                fontSize: '0.85rem'
+                            }}>
+                                <span style={{ fontSize: '1.1rem' }}>🔒</span>
+                                <div>
+                                    <strong>Read-Only Access:</strong> Only <strong>Super Administrators</strong> and <strong>Facility Administrators</strong> can modify facility financial settings. Your assigned role is <code>{userRole}</code>.
+                                </div>
+                            </div>
+                        )}
+
+                        <label style={{
+                            display: 'flex',
+                            gap: '1rem',
+                            cursor: canToggleMPPR ? 'pointer' : 'not-allowed',
+                            padding: '1.25rem',
+                            borderRadius: '12px',
+                            transition: 'all 0.2s ease',
+                            background: settings.apply_medicare_mppr ? 'rgba(16, 185, 129, 0.06)' : 'rgba(255, 255, 255, 0.02)',
+                            border: settings.apply_medicare_mppr ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--border-color)',
+                            opacity: canToggleMPPR ? 1 : 0.8
+                        }}>
                             <div style={{ position: 'relative', width: '48px', height: '28px', flexShrink: 0 }}>
                                 <input
                                     type="checkbox"
                                     name="apply_medicare_mppr"
                                     checked={settings.apply_medicare_mppr || false}
                                     onChange={handleChange}
+                                    disabled={!canToggleMPPR}
                                     style={{ opacity: 0, width: 0, height: 0 }}
                                 />
                                 <div style={{
@@ -527,16 +704,29 @@ const Settings = ({ onUpdate }) => {
                                     boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                                 }}></div>
                             </div>
-                            <div>
-                                <strong style={{ fontSize: '1rem', color: 'var(--text-primary)', display: 'block', marginBottom: '0.25rem' }}>
-                                    Apply Medicare MPPR Rule
-                                </strong>
-                                <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '0.75rem' }}>
-                                    Automatically reduce reimbursement by 50% for secondary procedures on the same claim.
+                            <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                                    <strong style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>
+                                        Apply Medicare MPPR Rule
+                                    </strong>
                                 </div>
+                                <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '0.75rem' }}>
+                                    Enforce CMS Multiple Procedure Payment Reduction for multi-procedure surgical encounters.
+                                </div>
+
+                                <div style={{ background: 'rgba(0, 0, 0, 0.03)', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                                    <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                                        <li><strong>Primary Procedure:</strong> Reimbursed at 100% of the allowable rate.</li>
+                                        <li><strong>Secondary Procedures:</strong> Reduced by 50% for eligible surgical CPT codes.</li>
+                                        <li><strong>Add-on Codes (+):</strong> Exempt from reduction (reimbursed at 100%).</li>
+                                        <li><strong>Device-Intensive Codes (J8):</strong> 50% discount applies strictly to the non-device service portion.</li>
+                                        <li><strong>Commercial Payers:</strong> Not affected by this Medicare setting unless explicitly contracted.</li>
+                                    </ul>
+                                </div>
+
                                 {settings.apply_medicare_mppr && (
-                                    <div style={{ fontSize: '0.8rem', color: '#b45309', background: '#fffbeb', padding: '0.5rem 0.75rem', borderRadius: '6px', display: 'inline-block' }}>
-                                        ✅ MPPR Active: Secondary procedures will be billed at 50%.
+                                    <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: '#065f46', background: '#ecfdf5', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #a7f3d0', display: 'inline-block' }}>
+                                        ✅ MPPR Active: Secondary Medicare surgical lines will be billed at 50%.
                                     </div>
                                 )}
                             </div>

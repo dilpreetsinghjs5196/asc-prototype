@@ -4,9 +4,12 @@ import { db } from '../lib/supabase';
 import jsPDF from 'jspdf';
 import {
     Search, Edit, Trash2, Clock,
-    DollarSign, AlertCircle, Check, ChevronDown, ChevronUp, Wand2, MessageSquare
+    DollarSign, AlertCircle, Check, ChevronDown, ChevronUp, Wand2, MessageSquare,
+    ArrowUp, ArrowDown, Plus, Tag, Star
 } from 'lucide-react';
+import { calculateMedicareRevenue } from '../utils/hospitalUtils';
 import ORBlockSchedule from './ORBlockSchedule';
+import CaseTimelineModal from './CaseTimelineModal';
 import './SurgeryScheduler.css';
 
 // Format currency helper
@@ -17,6 +20,20 @@ const formatCurrency = (amount) => {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
     }).format(amount);
+};
+
+// Safe credentials formatter
+const formatCredentials = (creds, fallback = '') => {
+    if (!creds) return fallback;
+    if (typeof creds === 'string') return creds;
+    if (Array.isArray(creds)) {
+        return creds.map(c => (typeof c === 'string' ? c : (c.credential_number || c.credential_type || ''))).filter(Boolean).join(', ') || fallback;
+    }
+    if (typeof creds === 'object') {
+        const val = creds.credential_number || creds.credential_type;
+        return val ? String(val).replace(/_/g, ' ') : fallback;
+    }
+    return String(creds);
 };
 
 // Round up helper for time display
@@ -76,6 +93,7 @@ const SurgeryScheduler = ({
     const [orBlocks, setOrBlocks] = useState([]);
     const [staffList, setStaffList] = useState([]);
     const [facilitiesList, setFacilitiesList] = useState(facilities || []);
+    const [timelineSurgery, setTimelineSurgery] = useState(null);
 
     const session = db.getSession();
     const isSuperAdmin = propIsSuperAdmin !== undefined ? propIsSuperAdmin : (session?.role === 'super_admin');
@@ -106,7 +124,14 @@ const SurgeryScheduler = ({
         durationMinutes: 60,
         turnoverTime: 20,
         selectedCptCodes: [],
+        procedureLines: [],
         trayCost: 0,
+        paymentModel: 'Insurance',
+        caseClassification: 'Elective',
+        status: 'Scheduled',
+        selfPayAnesthesiaFee: 0,
+        preOpDiagnosis: '',
+        clinicalNotes: '',
         suppliesCost: 0,
         implantsCost: 0,
         medicationsCost: 0,
@@ -122,6 +147,11 @@ const SurgeryScheduler = ({
         applyFixedCosmeticFee: false,
         cosmeticFacilityFee: calculateCosmeticFees(60).facilityFee,
         cosmeticAnesthesiaFee: calculateCosmeticFees(60).anesthesiaFee,
+        circulatorStaffId: '',
+        scrubStaffId: '',
+        anesthesiaStaffId: '',
+        asaStatus: 'ASA_II',
+        anesthesiaTechnique: 'General_GETA',
         orStaffIds: [],
         calculateStaffFee: false
     });
@@ -206,7 +236,14 @@ const SurgeryScheduler = ({
             durationMinutes: 60,
             turnoverTime: 20,
             selectedCptCodes: [],
+            procedureLines: [],
             trayCost: 0,
+            paymentModel: 'Insurance',
+            caseClassification: 'Elective',
+            status: 'Scheduled',
+            selfPayAnesthesiaFee: 0,
+            preOpDiagnosis: '',
+            clinicalNotes: '',
             suppliesCost: 0,
             implantsCost: 0,
             medicationsCost: 0,
@@ -222,6 +259,11 @@ const SurgeryScheduler = ({
             applyFixedCosmeticFee: false,
             cosmeticFacilityFee: calculateCosmeticFees(60).facilityFee,
             cosmeticAnesthesiaFee: calculateCosmeticFees(60).anesthesiaFee,
+            circulatorStaffId: '',
+            scrubStaffId: '',
+            anesthesiaStaffId: '',
+            asaStatus: 'ASA_II',
+            anesthesiaTechnique: 'General_GETA',
             orStaffIds: [],
             calculateStaffFee: false,
             facilityId: activeFacility?.id || (facilitiesList[0]?.id || '')
@@ -351,6 +393,24 @@ const SurgeryScheduler = ({
             }
         }
 
+        const initialProcedures = selectedCpts.map((cCode, idx) => {
+            const cpt = cptCodes.find(c => String(c.code) === String(cCode));
+            return {
+                code: cCode,
+                cpt_code_id: cpt?.id || null,
+                procedure_description: cpt?.description || '',
+                units: 1,
+                modifiers: [],
+                laterality: 'NOT_APPLICABLE',
+                sequence_rank: idx + 1,
+                is_primary: idx === 0,
+                coding_status: 'Coded',
+                gross_charge: parseFloat(cpt?.gross_charge || 0),
+                baseline_charge: parseFloat(cpt?.gross_charge || 0),
+                contracted_reimbursement: parseFloat(cpt?.reimbursement || 0)
+            };
+        });
+
         setFormData({
             patientId: surgery.patient_id || '',
             doctorName: formattedDoctorName,
@@ -359,7 +419,14 @@ const SurgeryScheduler = ({
             durationMinutes: surgery.duration_minutes || 60,
             turnoverTime: surgery.turnover_time || 20,
             selectedCptCodes: selectedCpts,
+            procedureLines: initialProcedures,
             trayCost: trayCostVal || calcTray || 0,
+            paymentModel: surgery.payment_model || (surgery.is_probono ? 'Pro_Bono' : ((surgery.notes && surgery.notes.includes('Fixed Facility Fee Case')) ? 'Cosmetic_Fixed' : 'Insurance')),
+            caseClassification: surgery.case_classification || 'Elective',
+            status: surgery.status || 'Scheduled',
+            selfPayAnesthesiaFee: parseFloat(surgery.self_pay_anesthesia_fee || 0),
+            preOpDiagnosis: surgery.pre_op_diagnosis || '',
+            clinicalNotes: surgery.clinical_notes || '',
             suppliesCost: surgery.supplies_cost || calcSupplies || 0,
             implantsCost: surgery.implants_cost || calcImplants || 0,
             medicationsCost: surgery.medications_cost || calcMeds || 0,
@@ -369,16 +436,85 @@ const SurgeryScheduler = ({
             actualEndTime: formatTimeForInput(surgery.actual_end_time),
             actualDurationMinutes: surgery.actual_duration_minutes || surgery.duration_minutes || 0,
             writeOff: surgery.write_off || 0,
-            isProbono: !!surgery.is_probono,
+            isProbono: surgery.payment_model === 'Pro_Bono' || !!surgery.is_probono,
             orRoom: surgery.or_room ? (String(surgery.or_room).startsWith('OR') ? surgery.or_room : `OR ${surgery.or_room}`) : 'OR 1',
             cptExpenses: calcCptExpenses,
-            applyFixedCosmeticFee: false, // Per request: always off by default when starting edit, or pull from DB if it existed? Let's default to false as in old system
-            cosmeticFacilityFee: calculateCosmeticFees(surgery.duration_minutes || 60).facilityFee,
-            cosmeticAnesthesiaFee: calculateCosmeticFees(surgery.duration_minutes || 60).anesthesiaFee,
+            applyFixedCosmeticFee: surgery.payment_model === 'Cosmetic_Fixed' || parseFloat(surgery.cosmetic_facility_fee || 0) > 0,
+            cosmeticFacilityFee: parseFloat(surgery.cosmetic_facility_fee) || calculateCosmeticFees(surgery.duration_minutes || 60).facilityFee,
+            cosmeticAnesthesiaFee: parseFloat(surgery.cosmetic_anesthesia_fee) || calculateCosmeticFees(surgery.duration_minutes || 60).anesthesiaFee,
+            circulatorStaffId: '',
+            scrubStaffId: '',
+            anesthesiaStaffId: '',
+            asaStatus: 'ASA_II',
+            anesthesiaTechnique: 'General_GETA',
             orStaffIds: surgery.cpt_expenses?._or_staff_ids || [],
             calculateStaffFee: surgery.cpt_expenses?._calculate_staff_fee || false,
             facilityId: surgery.facility_id || activeFacility?.id || (facilitiesList[0]?.id || '')
         });
+
+        if (surgery.id) {
+            // Load 1NF CPT procedure line items
+            db.getSurgeryProcedures(surgery.id).then(fetchedProcs => {
+                if (fetchedProcs && fetchedProcs.length > 0) {
+                    const mapped = fetchedProcs.map((p, idx) => ({
+                        id: p.id,
+                        code: p.cpt_codes?.code || p.cpt_code || '',
+                        cpt_code_id: p.cpt_code_id,
+                        procedure_description: p.procedure_description || p.cpt_codes?.description || '',
+                        units: Math.max(1, parseInt(p.units) || 1),
+                        modifiers: Array.isArray(p.modifiers) ? p.modifiers : [],
+                        laterality: p.laterality || 'NOT_APPLICABLE',
+                        sequence_rank: p.sequence_rank || (idx + 1),
+                        is_primary: p.is_primary !== undefined ? p.is_primary : (idx === 0),
+                        coding_status: p.coding_status || 'Coded',
+                        gross_charge: parseFloat(p.line_gross_charge || p.baseline_charge || p.cpt_codes?.gross_charge || 0),
+                        baseline_charge: parseFloat(p.baseline_charge || p.cpt_codes?.gross_charge || 0),
+                        contracted_reimbursement: parseFloat(p.contracted_reimbursement || p.cpt_codes?.reimbursement || 0)
+                    }));
+                    setFormData(prev => ({
+                        ...prev,
+                        procedureLines: mapped
+                    }));
+                }
+            }).catch(console.error);
+
+            // Phase 36: Load 1NF Case Staff Assignments
+            db.getCaseStaffAssignments(surgery.id).then(assignments => {
+                if (assignments && assignments.length > 0) {
+                    const circ = assignments.find(a => a.assigned_role === 'Circulating_Nurse');
+                    const scrub = assignments.find(a => a.assigned_role === 'Scrub_Tech' || a.assigned_role === 'Scrub_Nurse');
+                    const anes = assignments.find(a => a.assigned_role === 'Anesthesiologist_Attending' || a.assigned_role === 'CRNA_Assigned');
+                    setFormData(prev => ({
+                        ...prev,
+                        circulatorStaffId: circ ? String(circ.staff_id) : prev.circulatorStaffId,
+                        scrubStaffId: scrub ? String(scrub.staff_id) : prev.scrubStaffId,
+                        anesthesiaStaffId: anes ? String(anes.staff_id) : prev.anesthesiaStaffId
+                    }));
+                } else if (surgery.cpt_expenses?._or_staff_ids && surgery.cpt_expenses._or_staff_ids.length > 0) {
+                    // Fallback to legacy snapshot
+                    const legacyIds = surgery.cpt_expenses._or_staff_ids;
+                    const circStaff = staffList.find(s => legacyIds.includes(s.id) && s.department === 'Operating Room RN');
+                    const scrubStaff = staffList.find(s => legacyIds.includes(s.id) && s.department === 'Scrub Tech');
+                    setFormData(prev => ({
+                        ...prev,
+                        circulatorStaffId: circStaff ? String(circStaff.id) : prev.circulatorStaffId,
+                        scrubStaffId: scrubStaff ? String(scrubStaff.id) : prev.scrubStaffId
+                    }));
+                }
+            }).catch(console.error);
+
+            // Phase 36: Load 1NF Clinical Anesthesia Record
+            db.getAnesthesiaRecord(surgery.id).then(anesRecord => {
+                if (anesRecord) {
+                    setFormData(prev => ({
+                        ...prev,
+                        anesthesiaStaffId: anesRecord.provider_id ? String(anesRecord.provider_id) : prev.anesthesiaStaffId,
+                        asaStatus: anesRecord.asa_status || prev.asaStatus,
+                        anesthesiaTechnique: anesRecord.anesthesia_technique || prev.anesthesiaTechnique
+                    }));
+                }
+            }).catch(console.error);
+        }
 
         setIsFormOpen(true);
         setTimeout(() => {
@@ -689,6 +825,8 @@ const SurgeryScheduler = ({
         if (formData.applyFixedCosmeticFee) {
             reimbursementSum = formData.cosmeticFacilityFee;
             noteText += (noteText ? '; ' : '') + `Fixed Facility Fee Case - Facility: $${formData.cosmeticFacilityFee.toLocaleString()}, Anesthesia: $${formData.cosmeticAnesthesiaFee.toLocaleString()}`;
+        } else if (formData.procedureLines && formData.procedureLines.length > 0) {
+            reimbursementSum = calculateMedicareRevenue(formData.procedureLines, cptCodes, false);
         } else {
             formData.selectedCptCodes.forEach(code => {
                 const cpt = cptCodes.find(c => String(c.code) === String(code));
@@ -702,11 +840,17 @@ const SurgeryScheduler = ({
         const roomCost = parseFloat(formData.orRoomCost || 0);
         const laborCost = parseFloat(formData.labourCost || 0);
 
+        const allAssignedStaffIds = [...new Set([
+            formData.circulatorStaffId ? parseInt(formData.circulatorStaffId) : null,
+            formData.scrubStaffId ? parseInt(formData.scrubStaffId) : null,
+            ...(formData.orStaffIds || []).map(id => parseInt(id))
+        ].filter(Boolean))];
+
         // Add calculated staff fees if checkbox is checked
         let calculatedStaffFee = 0;
-        if (formData.calculateStaffFee && formData.orStaffIds && formData.orStaffIds.length > 0) {
+        if (formData.calculateStaffFee && allAssignedStaffIds.length > 0) {
             let totalHourlyRate = 0;
-            formData.orStaffIds.forEach(staffId => {
+            allAssignedStaffIds.forEach(staffId => {
                 const staff = staffList.find(s => s.id === staffId);
                 if (staff && staff.hourly_rate) {
                     totalHourlyRate += parseFloat(staff.hourly_rate);
@@ -742,7 +886,12 @@ const SurgeryScheduler = ({
             _full_total: patientBillTotal,
             _net_profit: netProfit,
             _include_labor_supplies: includeLaborSupplies,
-            _or_staff_ids: formData.orStaffIds,
+            _or_staff_ids: allAssignedStaffIds,
+            _circulator_staff_id: formData.circulatorStaffId || null,
+            _scrub_staff_id: formData.scrubStaffId || null,
+            _anesthesia_staff_id: formData.anesthesiaStaffId || null,
+            _asa_status: formData.asaStatus || 'ASA_II',
+            _anesthesia_technique: formData.anesthesiaTechnique || 'General_GETA',
             _calculate_staff_fee: formData.calculateStaffFee,
             _staff_fee_total: calculatedStaffFee
         };
@@ -757,11 +906,22 @@ const SurgeryScheduler = ({
             duration_minutes: parseInt(formData.durationMinutes),
             turnover_time: parseInt(formData.turnoverTime),
             cpt_codes: formData.selectedCptCodes,
-            status: editingSurgery ? editingSurgery.status : 'scheduled',
+            status: formData.status || (editingSurgery ? (editingSurgery.status || 'Scheduled') : 'Scheduled'),
+            payment_model: formData.paymentModel || (formData.isProbono ? 'Pro_Bono' : (formData.applyFixedCosmeticFee ? 'Cosmetic_Fixed' : 'Insurance')),
+            case_classification: formData.caseClassification || 'Elective',
+            cosmetic_facility_fee: (formData.paymentModel === 'Cosmetic_Fixed' || formData.applyFixedCosmeticFee) ? parseFloat(formData.cosmeticFacilityFee || 0) : 0,
+            cosmetic_anesthesia_fee: (formData.paymentModel === 'Cosmetic_Fixed' || formData.applyFixedCosmeticFee) ? parseFloat(formData.cosmeticAnesthesiaFee || 0) : 0,
+            self_pay_anesthesia_fee: (formData.paymentModel === 'Self_Pay') ? parseFloat(formData.selfPayAnesthesiaFee || formData.cosmeticAnesthesiaFee || 0) : 0,
+            tray_cost: parseFloat(formData.trayCost || 0),
+            pre_op_diagnosis: formData.preOpDiagnosis || null,
+            clinical_notes: formData.clinicalNotes || null,
+            scheduled_start_time: formData.startTime || '08:00:00',
+            scheduled_duration_minutes: parseInt(formData.durationMinutes || 60),
+            scheduled_turnover_minutes: parseInt(formData.turnoverTime || 15),
             supplies_cost: parseFloat(formData.suppliesCost || 0),
             implants_cost: parseFloat(formData.implantsCost || 0),
             medications_cost: parseFloat(formData.medicationsCost || 0),
-            notes: noteText || null, // Fallback notes container
+            notes: (formData.clinicalNotes ? `${formData.clinicalNotes} ` : '') + (noteText || ''),
             actual_start_time: formData.actualStartTime || formData.startTime || null,
             actual_end_time: formData.actualEndTime || null,
             actual_duration_minutes: parseInt(formData.actualDurationMinutes) || null,
@@ -769,14 +929,53 @@ const SurgeryScheduler = ({
             actual_labor_cost: parseFloat(laborCost),
             expected_reimbursement: parseFloat(reimbursementSum),
             write_off: parseFloat(formData.writeOff || 0),
-            is_probono: formData.isProbono,
+            is_probono: formData.paymentModel === 'Pro_Bono' || formData.isProbono,
             or_room: formData.orRoom ? parseInt(formData.orRoom.replace(/\D/g, '')) || null : null,
             cpt_expenses: enhancedCptExpenses
         };
 
+        // Pre-Schedule Conflict & Double-Booking Verification (Phase 35)
+        if (selectedSurgeonObj?.id && formData.date && formData.startTime) {
+            try {
+                const startIso = `${formData.date}T${formData.startTime}:00`;
+                const durMinutes = parseInt(formData.durationMinutes || 60);
+                const endDate = new Date(new Date(startIso).getTime() + durMinutes * 60000);
+                const endIso = endDate.toISOString();
+
+                const conflict = await db.validateSurgeonSchedulingConflict({
+                    surgeonId: selectedSurgeonObj.id,
+                    facilityId: surgeryData.facility_id,
+                    startTime: startIso,
+                    endTime: endIso,
+                    excludeSurgeryId: editingSurgery?.id || null
+                });
+
+                if (conflict && conflict.has_conflict) {
+                    const confirmOverride = await Swal.fire({
+                        title: 'Surgeon Schedule Conflict',
+                        html: `<b>Warning:</b> ${conflict.conflict_message || 'The selected surgeon has an active conflict or approved leave.'}<br/><br/>Do you want to proceed and override this schedule warning?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, Override & Schedule',
+                        cancelButtonText: 'Cancel',
+                        confirmButtonColor: '#f59e0b',
+                        background: 'var(--bg-card)',
+                        color: 'var(--text-primary)'
+                    });
+                    if (!confirmOverride.isConfirmed) {
+                        return;
+                    }
+                }
+            } catch (confErr) {
+                console.warn('Surgeon conflict check notice:', confErr);
+            }
+        }
+
         try {
+            let savedSurgeryId = null;
             if (editingSurgery) {
                 await onUpdate(editingSurgery.id, surgeryData);
+                savedSurgeryId = editingSurgery.id;
                 Swal.fire({
                     title: 'Updated!',
                     text: 'Surgery details have been updated successfully.',
@@ -787,7 +986,8 @@ const SurgeryScheduler = ({
                     color: 'var(--text-primary)'
                 });
             } else {
-                await onSchedule(surgeryData);
+                const res = await onSchedule(surgeryData);
+                savedSurgeryId = res?.id || (Array.isArray(res) ? res[0]?.id : null);
                 Swal.fire({
                     title: 'Scheduled!',
                     text: 'Surgery has been scheduled successfully.',
@@ -798,6 +998,83 @@ const SurgeryScheduler = ({
                     color: 'var(--text-primary)'
                 });
             }
+
+            // Sync 1NF Case CPT procedure line items to database
+            if (savedSurgeryId && formData.procedureLines && formData.procedureLines.length > 0) {
+                try {
+                    await db.syncSurgeryProcedures(savedSurgeryId, formData.procedureLines, surgeryData.facility_id);
+                } catch (procSyncErr) {
+                    console.warn('Syncing surgery procedures warning:', procSyncErr);
+                }
+            }
+
+            // Phase 36: Sync 1NF Case Staff Assignments to database
+            if (savedSurgeryId) {
+                try {
+                    const assignments = [];
+                    if (formData.circulatorStaffId) {
+                        const staffMember = staffList.find(s => s.id === parseInt(formData.circulatorStaffId));
+                        assignments.push({
+                            staff_id: parseInt(formData.circulatorStaffId),
+                            assigned_role: 'Circulating_Nurse',
+                            is_primary: true,
+                            hourly_rate_snapshot: staffMember?.hourly_rate || 0
+                        });
+                    }
+                    if (formData.scrubStaffId) {
+                        const staffMember = staffList.find(s => s.id === parseInt(formData.scrubStaffId));
+                        assignments.push({
+                            staff_id: parseInt(formData.scrubStaffId),
+                            assigned_role: staffMember?.department === 'Scrub Tech' ? 'Scrub_Tech' : 'Scrub_Nurse',
+                            is_primary: true,
+                            hourly_rate_snapshot: staffMember?.hourly_rate || 0
+                        });
+                    }
+                    if (formData.anesthesiaStaffId) {
+                        const staffMember = staffList.find(s => s.id === parseInt(formData.anesthesiaStaffId));
+                        assignments.push({
+                            staff_id: parseInt(formData.anesthesiaStaffId),
+                            assigned_role: staffMember?.staff_type === 'CRNA' ? 'CRNA_Assigned' : 'Anesthesiologist_Attending',
+                            is_primary: true,
+                            hourly_rate_snapshot: staffMember?.hourly_rate || 0
+                        });
+                    }
+                    // Additional selected OR staff
+                    (formData.orStaffIds || []).forEach(staffId => {
+                        const parsedId = parseInt(staffId);
+                        if (parsedId !== parseInt(formData.circulatorStaffId) &&
+                            parsedId !== parseInt(formData.scrubStaffId) &&
+                            parsedId !== parseInt(formData.anesthesiaStaffId)) {
+                            const staffMember = staffList.find(s => s.id === parsedId);
+                            assignments.push({
+                                staff_id: parsedId,
+                                assigned_role: staffMember?.department === 'Scrub Tech' ? 'Scrub_Tech' : 'Circulating_Nurse',
+                                is_primary: false,
+                                hourly_rate_snapshot: staffMember?.hourly_rate || 0
+                            });
+                        }
+                    });
+
+                    await db.syncCaseStaffAssignments(savedSurgeryId, surgeryData.facility_id, assignments);
+                } catch (staffSyncErr) {
+                    console.warn('Syncing case staff assignments warning:', staffSyncErr);
+                }
+
+                // Phase 36: Sync 1NF Clinical Anesthesia Record
+                try {
+                    await db.saveAnesthesiaRecord({
+                        surgery_id: savedSurgeryId,
+                        facility_id: surgeryData.facility_id,
+                        provider_id: formData.anesthesiaStaffId ? parseInt(formData.anesthesiaStaffId) : null,
+                        asa_status: formData.asaStatus || 'ASA_II',
+                        anesthesia_technique: formData.anesthesiaTechnique || 'General_GETA',
+                        cosmetic_anesthesia_fee: surgeryData.cosmetic_anesthesia_fee || surgeryData.self_pay_anesthesia_fee || null
+                    });
+                } catch (anesSyncErr) {
+                    console.warn('Syncing anesthesia record warning:', anesSyncErr);
+                }
+            }
+
             handleCancelEdit();
         } catch (err) {
             console.error(err);
@@ -830,7 +1107,10 @@ const SurgeryScheduler = ({
 
         if (reason) {
             await onUpdate(id, {
-                status: 'cancelled',
+                status: 'Cancelled',
+                cancellation_reason_code: 'SCHEDULING_ERROR',
+                cancellation_reason_text: reason,
+                cancelled_at: new Date().toISOString(),
                 notes: `Cancelled: ${reason}`
             });
             Swal.fire({
@@ -858,7 +1138,10 @@ const SurgeryScheduler = ({
         });
 
         if (confirm.isConfirmed) {
-            await onUpdate(id, { status: 'completed' });
+            await onUpdate(id, { 
+                status: 'Completed',
+                actual_end_time: new Date().toTimeString().split(' ')[0]
+            });
             Swal.fire({
                 title: 'Completed!',
                 text: 'Surgery marked as completed.',
@@ -901,12 +1184,37 @@ const SurgeryScheduler = ({
     const handleCptChange = (code, action) => {
         setFormData(prev => {
             let newCodes = [...prev.selectedCptCodes];
+            let newLines = [...(prev.procedureLines || [])];
 
             if (action === 'add') {
                 newCodes.push(code);
+                const cpt = cptCodes.find(c => String(c.code) === String(code));
+                newLines.push({
+                    code: code,
+                    cpt_code_id: cpt?.id || null,
+                    procedure_description: cpt?.description || '',
+                    units: 1,
+                    modifiers: [],
+                    laterality: 'NOT_APPLICABLE',
+                    sequence_rank: newLines.length + 1,
+                    is_primary: newLines.length === 0,
+                    coding_status: 'Coded',
+                    gross_charge: parseFloat(cpt?.gross_charge || 0),
+                    baseline_charge: parseFloat(cpt?.gross_charge || 0),
+                    contracted_reimbursement: parseFloat(cpt?.reimbursement || 0)
+                });
             } else if (action === 'remove') {
                 const index = newCodes.lastIndexOf(code);
                 if (index > -1) newCodes.splice(index, 1);
+                const lineIndex = newLines.map(l => String(l.code)).lastIndexOf(String(code));
+                if (lineIndex > -1) {
+                    newLines.splice(lineIndex, 1);
+                    newLines = newLines.map((l, idx) => ({
+                        ...l,
+                        sequence_rank: idx + 1,
+                        is_primary: idx === 0
+                    }));
+                }
             }
 
             // Recalculate duration & turnover averages based on CPT codes
@@ -967,7 +1275,6 @@ const SurgeryScheduler = ({
                     }
                 });
             } else {
-                // If no CPT codes are selected, revert to whatever they were before (or keep global intact)
                 totalSupplies = parseFloat(prev.suppliesCost || 0);
                 totalImplants = parseFloat(prev.implantsCost || 0);
                 totalMeds = parseFloat(prev.medicationsCost || 0);
@@ -979,6 +1286,7 @@ const SurgeryScheduler = ({
             return {
                 ...prev,
                 selectedCptCodes: newCodes,
+                procedureLines: newLines,
                 cptExpenses: newCptExpenses,
                 durationMinutes: totalDuration > 0 ? totalDuration : prev.durationMinutes,
                 turnoverTime: totalTurnover > 0 ? totalTurnover : prev.turnoverTime,
@@ -988,6 +1296,133 @@ const SurgeryScheduler = ({
                 trayCost: totalTray,
                 labourCost: totalLabour,
                 orRoomCost: totalOrRoom
+            };
+        });
+    };
+
+    // ----- Procedure Line Handlers (Phase 32 Canonical 1NF) -----
+    const handleProcedureLineChange = (index, field, value) => {
+        setFormData(prev => {
+            const updated = [...(prev.procedureLines || [])];
+            if (!updated[index]) return prev;
+
+            let val = value;
+            if (field === 'units') {
+                val = Math.min(99, Math.max(1, parseInt(value, 10) || 1));
+            }
+
+            const line = { ...updated[index], [field]: val };
+
+            // Automatic modifier 50 sync if laterality changed to BILATERAL
+            if (field === 'laterality' && val === 'BILATERAL') {
+                const currentMods = line.modifiers || [];
+                if (!currentMods.includes('50') && currentMods.length < 4) {
+                    line.modifiers = [...currentMods, '50'];
+                }
+            }
+
+            updated[index] = line;
+            return {
+                ...prev,
+                procedureLines: updated
+            };
+        });
+    };
+
+    const handleToggleModifier = (index, modCode) => {
+        setFormData(prev => {
+            const updated = [...(prev.procedureLines || [])];
+            if (!updated[index]) return prev;
+
+            const currentMods = [...(updated[index].modifiers || [])];
+            const modIdx = currentMods.indexOf(modCode);
+
+            if (modIdx > -1) {
+                currentMods.splice(modIdx, 1);
+            } else {
+                if (currentMods.length >= 4) {
+                    Swal.fire({
+                        title: 'Max Modifiers Reached',
+                        text: 'A procedure line can have at most 4 modifiers.',
+                        icon: 'info',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        background: 'var(--bg-card)',
+                        color: 'var(--text-primary)'
+                    });
+                    return prev;
+                }
+                currentMods.push(modCode);
+            }
+
+            let lat = updated[index].laterality;
+            if (modCode === '50') {
+                lat = currentMods.includes('50') ? 'BILATERAL' : (lat === 'BILATERAL' ? 'NOT_APPLICABLE' : lat);
+            } else if (modCode === 'RT') {
+                lat = currentMods.includes('RT') ? 'RIGHT' : (lat === 'RIGHT' ? 'NOT_APPLICABLE' : lat);
+            } else if (modCode === 'LT') {
+                lat = currentMods.includes('LT') ? 'LEFT' : (lat === 'LEFT' ? 'NOT_APPLICABLE' : lat);
+            }
+
+            updated[index] = {
+                ...updated[index],
+                modifiers: currentMods,
+                laterality: lat
+            };
+
+            return {
+                ...prev,
+                procedureLines: updated
+            };
+        });
+    };
+
+    const handleMoveProcedureRank = (index, direction) => {
+        setFormData(prev => {
+            const lines = [...(prev.procedureLines || [])];
+            const targetIdx = direction === 'up' ? index - 1 : index + 1;
+            if (targetIdx < 0 || targetIdx >= lines.length) return prev;
+
+            const temp = lines[index];
+            lines[index] = lines[targetIdx];
+            lines[targetIdx] = temp;
+
+            const reordered = lines.map((l, idx) => ({
+                ...l,
+                sequence_rank: idx + 1,
+                is_primary: idx === 0
+            }));
+
+            const newCodes = reordered.map(l => l.code);
+
+            return {
+                ...prev,
+                procedureLines: reordered,
+                selectedCptCodes: newCodes
+            };
+        });
+    };
+
+    const handleRemoveProcedureLine = (index) => {
+        setFormData(prev => {
+            const lines = [...(prev.procedureLines || [])];
+            if (index < 0 || index >= lines.length) return prev;
+
+            const removed = lines.splice(index, 1)[0];
+            const reordered = lines.map((l, idx) => ({
+                ...l,
+                sequence_rank: idx + 1,
+                is_primary: idx === 0
+            }));
+
+            const newCodes = [...prev.selectedCptCodes];
+            const cIdx = newCodes.lastIndexOf(removed.code);
+            if (cIdx > -1) newCodes.splice(cIdx, 1);
+
+            return {
+                ...prev,
+                procedureLines: reordered,
+                selectedCptCodes: newCodes
             };
         });
     };
@@ -1343,38 +1778,197 @@ const SurgeryScheduler = ({
                                 </div>
                             </div>
 
-                            {isCosmeticSurgeon && (
-                                <div className="form-group" style={{
-                                    marginTop: '8px',
-                                    marginBottom: '16px',
-                                    padding: '12px',
-                                    borderRadius: '8px',
-                                    background: formData.applyFixedCosmeticFee ? '#fff7ed' : '#f8fafc',
-                                    border: `2px solid ${formData.applyFixedCosmeticFee ? '#fb923c' : '#e2e8f0'}`,
-                                    transition: 'all 0.2s ease'
-                                }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0 }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.applyFixedCosmeticFee}
-                                            onChange={(e) => setFormData({ ...formData, applyFixedCosmeticFee: e.target.checked })}
-                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                                        />
-                                        <span style={{ fontSize: '0.95rem', fontWeight: '700', color: formData.applyFixedCosmeticFee ? '#c2410c' : 'var(--text-color)' }}>
-                                            Apply Fixed Facility Fee (Cosmetic/Plastics)
+                            {/* Phase 31 Case Master Parameters */}
+                            <div style={{
+                                padding: '16px',
+                                borderRadius: '10px',
+                                background: 'rgba(59, 130, 246, 0.04)',
+                                border: '1px solid rgba(59, 130, 246, 0.25)',
+                                marginTop: '12px',
+                                marginBottom: '16px'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <div style={{
+                                            width: '8px',
+                                            height: '8px',
+                                            borderRadius: '50%',
+                                            background: 'var(--color-blue)',
+                                            boxShadow: '0 0 8px rgba(59, 130, 246, 0.6)'
+                                        }} />
+                                        <span style={{ fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-blue)' }}>
+                                            Case Master Parameters & Billing Model
                                         </span>
-                                    </label>
+                                    </div>
+                                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.04)', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                                        Phase 31 Master
+                                    </span>
+                                </div>
 
-                                    {formData.applyFixedCosmeticFee && (
-                                        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #fed7aa' }}>
-                                            <div>
-                                                <div style={{ fontSize: '0.75rem', color: '#9a3412', fontWeight: '600', marginBottom: '4px', textTransform: 'uppercase' }}>Est. Facility Fee</div>
-                                                <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#ea580c' }}>{formatCurrency(formData.cosmeticFacilityFee)}</div>
+                                <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+                                    <div className="form-group">
+                                        <label htmlFor="caseClassification">Case Classification</label>
+                                        <select
+                                            id="caseClassification"
+                                            className="form-input"
+                                            value={formData.caseClassification || 'Elective'}
+                                            onChange={(e) => setFormData({ ...formData, caseClassification: e.target.value })}
+                                        >
+                                            <option value="Elective">Elective (Planned Case)</option>
+                                            <option value="Urgent">Urgent (Within 24-48h)</option>
+                                            <option value="Emergency">Emergency (Immediate)</option>
+                                            <option value="Add-On">Add-On (Same-Day Schedule)</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label htmlFor="paymentModel">Payment / Reimbursement Model</label>
+                                        <select
+                                            id="paymentModel"
+                                            className="form-input"
+                                            value={formData.paymentModel || 'Insurance'}
+                                            onChange={(e) => {
+                                                const model = e.target.value;
+                                                const isCosmetic = model === 'Cosmetic_Fixed';
+                                                const isProBono = model === 'Pro_Bono';
+                                                setFormData({
+                                                    ...formData,
+                                                    paymentModel: model,
+                                                    applyFixedCosmeticFee: isCosmetic,
+                                                    isProbono: isProBono
+                                                });
+                                            }}
+                                        >
+                                            <option value="Insurance">Insurance (Fee-for-Service CPT)</option>
+                                            <option value="Cosmetic_Fixed">Cosmetic Fixed Fee (Flat Rate)</option>
+                                            <option value="Self_Pay">Self-Pay Package</option>
+                                            <option value="Pro_Bono">Pro-Bono / Charity (Zero Fee)</option>
+                                            <option value="Workers_Comp">Workers' Comp Schedule</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label htmlFor="caseStatus">Case Lifecycle Status (FSM)</label>
+                                        <select
+                                            id="caseStatus"
+                                            className="form-input"
+                                            value={formData.status || 'Scheduled'}
+                                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                        >
+                                            <option value="Draft">Draft</option>
+                                            <option value="Scheduled">Scheduled</option>
+                                            <option value="Pre-Op">Pre-Op</option>
+                                            <option value="In-OR">In-OR</option>
+                                            <option value="Closing">Closing</option>
+                                            <option value="PACU">PACU</option>
+                                            <option value="Completed">Completed</option>
+                                            <option value="Cancelled">Cancelled</option>
+                                            <option value="Billed">Billed</option>
+                                            <option value="Void">Void</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginTop: '12px' }}>
+                                    <div className="form-group">
+                                        <label htmlFor="trayCost">Sterile Instrument Tray Cost ($)</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <DollarSign size={13} style={{ position: 'absolute', left: '10px', top: '13px', color: 'var(--text-muted)' }} />
+                                            <input
+                                                id="trayCost"
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                className="form-input"
+                                                style={{ paddingLeft: '28px' }}
+                                                placeholder="e.g. 150.00"
+                                                value={formData.trayCost || ''}
+                                                onChange={(e) => setFormData({ ...formData, trayCost: parseFloat(e.target.value) || 0 })}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label htmlFor="preOpDiagnosis">Pre-Op Diagnosis / ICD-10</label>
+                                        <input
+                                            id="preOpDiagnosis"
+                                            type="text"
+                                            className="form-input"
+                                            placeholder="e.g. M17.11 / Osteoarthritis Knee"
+                                            value={formData.preOpDiagnosis || ''}
+                                            onChange={(e) => setFormData({ ...formData, preOpDiagnosis: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label htmlFor="clinicalNotes">Clinical / Operative Notes</label>
+                                        <input
+                                            id="clinicalNotes"
+                                            type="text"
+                                            className="form-input"
+                                            placeholder="e.g. Right knee arthroscopy, prep verified"
+                                            value={formData.clinicalNotes || ''}
+                                            onChange={(e) => setFormData({ ...formData, clinicalNotes: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Dynamic Fee Overrides for Cosmetic & Self-Pay Cases */}
+                                {(formData.paymentModel === 'Cosmetic_Fixed' || formData.paymentModel === 'Self_Pay' || formData.applyFixedCosmeticFee || isCosmeticSurgeon) && (
+                                    <div style={{
+                                        marginTop: '12px',
+                                        padding: '12px',
+                                        borderRadius: '8px',
+                                        background: 'rgba(249, 115, 22, 0.08)',
+                                        border: '1px solid rgba(249, 115, 22, 0.3)'
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                            <span style={{ fontSize: '0.78rem', fontWeight: '700', color: '#ea580c', textTransform: 'uppercase' }}>
+                                                Cosmetic & Self-Pay Fee Overrides
+                                            </span>
+                                            <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                                                Applied to facility revenue calculations
+                                            </span>
+                                        </div>
+                                        <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                            <div className="form-group">
+                                                <label htmlFor="cosmeticFacilityFee">Facility Fee Override ($)</label>
+                                                <div style={{ position: 'relative' }}>
+                                                    <DollarSign size={13} style={{ position: 'absolute', left: '10px', top: '13px', color: 'var(--text-muted)' }} />
+                                                    <input
+                                                        id="cosmeticFacilityFee"
+                                                        type="number"
+                                                        step="0.01"
+                                                        min="0"
+                                                        className="form-input"
+                                                        style={{ paddingLeft: '28px' }}
+                                                        placeholder="Auto-calculated or enter override"
+                                                        value={formData.cosmeticFacilityFee || ''}
+                                                        onChange={(e) => setFormData({ ...formData, cosmeticFacilityFee: parseFloat(e.target.value) || 0 })}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="form-group">
+                                                <label htmlFor="cosmeticAnesthesiaFee">Anesthesia Fee Override ($)</label>
+                                                <div style={{ position: 'relative' }}>
+                                                    <DollarSign size={13} style={{ position: 'absolute', left: '10px', top: '13px', color: 'var(--text-muted)' }} />
+                                                    <input
+                                                        id="cosmeticAnesthesiaFee"
+                                                        type="number"
+                                                        step="0.01"
+                                                        min="0"
+                                                        className="form-input"
+                                                        style={{ paddingLeft: '28px' }}
+                                                        placeholder="e.g. 750.00"
+                                                        value={formData.cosmeticAnesthesiaFee || ''}
+                                                        onChange={(e) => setFormData({ ...formData, cosmeticAnesthesiaFee: parseFloat(e.target.value) || 0, selfPayAnesthesiaFee: parseFloat(e.target.value) || 0 })}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
-                                    )}
-                                </div>
-                            )}
+                                    </div>
+                                )}
+                            </div>
 
                             {/* CPT Codes Selection */}
                             <div className="form-group">
@@ -1453,6 +2047,280 @@ const SurgeryScheduler = ({
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Case CPT Procedure Line Items (1NF Canonical Spec) */}
+                            {formData.procedureLines && formData.procedureLines.length > 0 && (
+                                <div style={{
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '8px',
+                                    padding: '14px',
+                                    marginBottom: '16px',
+                                    background: 'rgba(255, 255, 255, 0.02)'
+                                }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                        <div>
+                                            <h4 style={{
+                                                fontSize: '0.85rem',
+                                                color: 'var(--text-primary)',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.5px',
+                                                margin: 0,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px'
+                                            }}>
+                                                <Tag size={14} style={{ color: 'var(--color-blue)' }} />
+                                                Case CPT Procedure Line Items (1NF)
+                                            </h4>
+                                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                                Set units, modifiers (e.g. 50 Bilateral = 150%), laterality, and sequencing priority.
+                                            </span>
+                                        </div>
+                                        <span style={{
+                                            fontSize: '0.75rem',
+                                            fontWeight: '700',
+                                            color: 'var(--color-blue)',
+                                            background: 'rgba(59, 130, 246, 0.1)',
+                                            padding: '3px 8px',
+                                            borderRadius: '4px'
+                                        }}>
+                                            {formData.procedureLines.length} {formData.procedureLines.length === 1 ? 'Line Item' : 'Line Items'}
+                                        </span>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        {formData.procedureLines.map((line, idx) => {
+                                            const availableModifiers = ['50', '51', '59', 'RT', 'LT', '76', '78'];
+                                            const isBilateral = line.modifiers?.includes('50') || line.laterality === 'BILATERAL';
+                                            const effectiveCharge = (line.gross_charge || 0) * (isBilateral ? 1.5 : 1) * (line.units || 1);
+
+                                            return (
+                                                <div
+                                                    key={`${line.code}-${idx}`}
+                                                    style={{
+                                                        display: 'grid',
+                                                        gridTemplateColumns: '70px 1.4fr 85px 1.5fr 110px 110px 95px 65px',
+                                                        alignItems: 'center',
+                                                        gap: '8px',
+                                                        padding: '10px',
+                                                        borderRadius: '6px',
+                                                        border: line.is_primary ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid var(--border-color)',
+                                                        background: line.is_primary ? 'rgba(59, 130, 246, 0.04)' : 'rgba(0, 0, 0, 0.1)'
+                                                    }}
+                                                >
+                                                    {/* Rank & Move Controls */}
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                            <button
+                                                                type="button"
+                                                                disabled={idx === 0}
+                                                                onClick={() => handleMoveProcedureRank(idx, 'up')}
+                                                                style={{
+                                                                    background: 'none',
+                                                                    border: 'none',
+                                                                    padding: 0,
+                                                                    cursor: idx === 0 ? 'not-allowed' : 'pointer',
+                                                                    color: idx === 0 ? 'var(--text-muted)' : 'var(--text-primary)',
+                                                                    lineHeight: 1
+                                                                }}
+                                                                title="Move Up"
+                                                            >
+                                                                <ArrowUp size={11} />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                disabled={idx === formData.procedureLines.length - 1}
+                                                                onClick={() => handleMoveProcedureRank(idx, 'down')}
+                                                                style={{
+                                                                    background: 'none',
+                                                                    border: 'none',
+                                                                    padding: 0,
+                                                                    cursor: idx === formData.procedureLines.length - 1 ? 'not-allowed' : 'pointer',
+                                                                    color: idx === formData.procedureLines.length - 1 ? 'var(--text-muted)' : 'var(--text-primary)',
+                                                                    lineHeight: 1
+                                                                }}
+                                                                title="Move Down"
+                                                            >
+                                                                <ArrowDown size={11} />
+                                                            </button>
+                                                        </div>
+                                                        <span style={{
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: '700',
+                                                            color: line.is_primary ? 'var(--color-blue)' : 'var(--text-muted)'
+                                                        }}>
+                                                            #{line.sequence_rank || (idx + 1)}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Code & Description */}
+                                                    <div style={{ minWidth: 0 }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                            <span style={{
+                                                                fontSize: '0.8rem',
+                                                                fontWeight: '800',
+                                                                color: 'var(--text-primary)',
+                                                                fontFamily: 'monospace',
+                                                                background: 'rgba(255, 255, 255, 0.05)',
+                                                                padding: '2px 5px',
+                                                                borderRadius: '4px'
+                                                            }}>
+                                                                {line.code}
+                                                            </span>
+                                                            {line.is_primary && (
+                                                                <span style={{
+                                                                    fontSize: '0.65rem',
+                                                                    fontWeight: '700',
+                                                                    color: '#fbbf24',
+                                                                    background: 'rgba(251, 191, 36, 0.1)',
+                                                                    padding: '1px 5px',
+                                                                    borderRadius: '4px',
+                                                                    display: 'inline-flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '2px'
+                                                                }}>
+                                                                    <Star size={9} /> Primary
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div style={{
+                                                            fontSize: '0.72rem',
+                                                            color: 'var(--text-muted)',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap',
+                                                            marginTop: '2px'
+                                                        }}>
+                                                            {line.procedure_description || 'CPT Procedure'}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Units Input */}
+                                                    <div>
+                                                        <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>Units</label>
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            max="99"
+                                                            value={line.units || 1}
+                                                            onChange={(e) => handleProcedureLineChange(idx, 'units', e.target.value)}
+                                                            className="form-input"
+                                                            style={{
+                                                                padding: '3px 6px',
+                                                                fontSize: '0.78rem',
+                                                                height: '28px',
+                                                                textAlign: 'center'
+                                                            }}
+                                                        />
+                                                    </div>
+
+                                                    {/* Modifiers Pill Toggles */}
+                                                    <div>
+                                                        <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>
+                                                            Modifiers ({line.modifiers?.length || 0}/4)
+                                                        </label>
+                                                        <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
+                                                            {availableModifiers.map(mod => {
+                                                                const active = line.modifiers?.includes(mod);
+                                                                return (
+                                                                    <button
+                                                                        key={mod}
+                                                                        type="button"
+                                                                        onClick={() => handleToggleModifier(idx, mod)}
+                                                                        style={{
+                                                                            padding: '2px 5px',
+                                                                            fontSize: '0.68rem',
+                                                                            fontWeight: active ? '700' : '500',
+                                                                            borderRadius: '3px',
+                                                                            cursor: 'pointer',
+                                                                            border: active ? '1px solid var(--color-blue)' : '1px solid var(--border-color)',
+                                                                            background: active ? 'var(--color-blue)' : 'transparent',
+                                                                            color: active ? '#fff' : 'var(--text-secondary)',
+                                                                            lineHeight: 1.2
+                                                                        }}
+                                                                        title={mod === '50' ? 'Modifier 50 (Bilateral Procedure - 150% allowable)' : `Modifier ${mod}`}
+                                                                    >
+                                                                        {mod}
+                                                                    </button>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Laterality Selector */}
+                                                    <div>
+                                                        <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>Laterality</label>
+                                                        <select
+                                                            value={line.laterality || 'NOT_APPLICABLE'}
+                                                            onChange={(e) => handleProcedureLineChange(idx, 'laterality', e.target.value)}
+                                                            className="filter-select"
+                                                            style={{ padding: '3px 6px', fontSize: '0.72rem', height: '28px' }}
+                                                        >
+                                                            <option value="NOT_APPLICABLE">N/A</option>
+                                                            <option value="LEFT">Left (LT)</option>
+                                                            <option value="RIGHT">Right (RT)</option>
+                                                            <option value="BILATERAL">Bilateral (50)</option>
+                                                            <option value="UNSPECIFIED">Unspecified</option>
+                                                        </select>
+                                                    </div>
+
+                                                    {/* Coding Status */}
+                                                    <div>
+                                                        <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>Status</label>
+                                                        <select
+                                                            value={line.coding_status || 'Coded'}
+                                                            onChange={(e) => handleProcedureLineChange(idx, 'coding_status', e.target.value)}
+                                                            className="filter-select"
+                                                            style={{ padding: '3px 6px', fontSize: '0.72rem', height: '28px' }}
+                                                        >
+                                                            <option value="Draft">Draft</option>
+                                                            <option value="Pending_Review">Pending Review</option>
+                                                            <option value="Coded">Coded</option>
+                                                            <option value="Approved">Approved</option>
+                                                        </select>
+                                                    </div>
+
+                                                    {/* Effective Charge */}
+                                                    <div style={{ textAlign: 'right' }}>
+                                                        <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>Total Charge</label>
+                                                        <div style={{
+                                                            fontSize: '0.78rem',
+                                                            fontWeight: '700',
+                                                            color: isBilateral ? '#10b981' : 'var(--text-primary)'
+                                                        }}>
+                                                            {formatCurrency(effectiveCharge)}
+                                                        </div>
+                                                        {isBilateral && (
+                                                            <span style={{ fontSize: '0.62rem', color: '#10b981', display: 'block' }}>
+                                                                150% Bilateral
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Remove Button */}
+                                                    <div style={{ textAlign: 'center' }}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveProcedureLine(idx)}
+                                                            style={{
+                                                                background: 'transparent',
+                                                                border: 'none',
+                                                                color: '#ef4444',
+                                                                cursor: 'pointer',
+                                                                padding: '4px',
+                                                                borderRadius: '4px'
+                                                            }}
+                                                            title="Remove Line Item"
+                                                        >
+                                                            <Trash2 size={13} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Supplies, Implants, Tray Cost, Medications, Labour, OR Room */}
                             <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: '4px' }}>
@@ -1705,60 +2573,193 @@ const SurgeryScheduler = ({
                                 </div>
                             </div>
 
-                            {/* OR Staff Selection */}
+                            {/* OR Staff & Anesthesia Care Team Selection (Phase 36) */}
                             <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: '4px' }}>
-                                <h4 style={{ fontSize: '0.85rem', color: 'var(--text-primary)', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.5px' }}>OR Staff Management</h4>
-                                <div className="form-row" style={{ gridTemplateColumns: '1fr' }}>
+                                <h4 style={{ fontSize: '0.85rem', color: 'var(--text-primary)', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Users size={16} style={{ color: 'var(--color-blue)' }} />
+                                    Perioperative Care Team & Anesthesia
+                                </h4>
+
+                                <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '12px' }}>
+                                    {/* Primary Circulating Nurse */}
                                     <div className="form-group">
-                                        <label>Select OR Staff</label>
-                                        <div style={{
-                                            maxHeight: '150px',
-                                            overflowY: 'auto',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '6px',
-                                            padding: '8px',
-                                            background: 'var(--bg-input)'
-                                        }}>
-                                            {staffList.filter(staff => staff.department === 'Operating Room RN').map(staff => {
-                                                const isSelected = (formData.orStaffIds || []).includes(staff.id);
-                                                return (
-                                                    <label key={staff.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px', cursor: 'pointer', borderRadius: '4px', background: isSelected ? 'rgba(59, 130, 246, 0.1)' : 'transparent', transition: 'background 0.2s' }}>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={isSelected}
-                                                            onChange={(e) => {
-                                                                const currentIds = formData.orStaffIds || [];
-                                                                if (e.target.checked) {
-                                                                    setFormData({ ...formData, orStaffIds: [...currentIds, staff.id] });
-                                                                } else {
-                                                                    setFormData({ ...formData, orStaffIds: currentIds.filter(id => id !== staff.id) });
-                                                                }
-                                                            }}
-                                                            style={{ cursor: 'pointer', width: '16px', height: '16px' }}
-                                                        />
-                                                        <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
-                                                            {staff.firstname} {staff.lastname} - {staff.department} (${staff.hourly_rate}/hr)
-                                                        </span>
-                                                    </label>
-                                                );
-                                            })}
-                                            {staffList.filter(staff => staff.department === 'Operating Room RN').length === 0 && (
-                                                <div style={{ padding: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>No OR RNs found.</div>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '8px' }}>
-                                        <input
-                                            type="checkbox"
-                                            id="calculateStaffFee"
-                                            checked={formData.calculateStaffFee}
-                                            onChange={(e) => setFormData({ ...formData, calculateStaffFee: e.target.checked })}
-                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                                        />
-                                        <label htmlFor="calculateStaffFee" style={{ fontSize: '0.85rem', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: '600' }}>
-                                            Calculate staff fees based on actual OR time (overrides Labour Cost)
+                                        <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                            Circulating Nurse (RN)
                                         </label>
+                                        <select
+                                            className="form-input"
+                                            value={formData.circulatorStaffId || ''}
+                                            onChange={(e) => setFormData({ ...formData, circulatorStaffId: e.target.value })}
+                                        >
+                                            <option value="">Select Circulating Nurse...</option>
+                                            {staffList
+                                                .filter(s => s.department === 'Operating Room RN' || s.staff_type === 'Registered_Nurse' || (s.role && s.role.includes('RN')))
+                                                .map(s => (
+                                                    <option key={s.id} value={s.id}>
+                                                        {s.firstname} {s.lastname} ({formatCredentials(s.credentials, 'RN')}) - ${s.hourly_rate || 0}/hr
+                                                    </option>
+                                                ))}
+                                        </select>
                                     </div>
+
+                                    {/* Primary Scrub Tech / Scrub Nurse */}
+                                    <div className="form-group">
+                                        <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                            Scrub Nurse / Scrub Tech
+                                        </label>
+                                        <select
+                                            className="form-input"
+                                            value={formData.scrubStaffId || ''}
+                                            onChange={(e) => setFormData({ ...formData, scrubStaffId: e.target.value })}
+                                        >
+                                            <option value="">Select Scrub Provider...</option>
+                                            {staffList
+                                                .filter(s => s.department === 'Scrub Tech' || s.staff_type === 'Surgical_Technologist' || s.department === 'Operating Room RN')
+                                                .map(s => (
+                                                    <option key={s.id} value={s.id}>
+                                                        {s.firstname} {s.lastname} ({s.department}) - ${s.hourly_rate || 0}/hr
+                                                    </option>
+                                                ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '12px' }}>
+                                    {/* Anesthesia Provider */}
+                                    <div className="form-group">
+                                        <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                            Anesthesia Provider (MD / CRNA)
+                                        </label>
+                                        <select
+                                            className="form-input"
+                                            value={formData.anesthesiaStaffId || ''}
+                                            onChange={(e) => setFormData({ ...formData, anesthesiaStaffId: e.target.value })}
+                                        >
+                                            <option value="">Select Anesthesiologist / CRNA...</option>
+                                            {staffList
+                                                .filter(s => s.department === 'Anesthesia' || s.staff_type === 'Physician_Anesthesiologist' || s.staff_type === 'CRNA' || (s.role && s.role.toLowerCase().includes('anesthes')) || (s.role && s.role.toLowerCase().includes('crna')))
+                                                .map(s => (
+                                                    <option key={s.id} value={s.id}>
+                                                        {s.firstname} {s.lastname} ({formatCredentials(s.credentials, 'MD')})
+                                                    </option>
+                                                ))}
+                                        </select>
+                                    </div>
+
+                                    {/* ASA Physical Status */}
+                                    <div className="form-group">
+                                        <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                            ASA Physical Status
+                                        </label>
+                                        <select
+                                            className="form-input"
+                                            value={formData.asaStatus || 'ASA_II'}
+                                            onChange={(e) => setFormData({ ...formData, asaStatus: e.target.value })}
+                                        >
+                                            <option value="ASA_I">ASA I - Normal Healthy Patient</option>
+                                            <option value="ASA_II">ASA II - Mild Systemic Disease</option>
+                                            <option value="ASA_III">ASA III - Severe Systemic Disease</option>
+                                            <option value="ASA_IV">ASA IV - Severe Disease Threat to Life</option>
+                                            <option value="ASA_V">ASA V - Moribund Patient</option>
+                                            <option value="ASA_VI">ASA VI - Declared Brain-Dead</option>
+                                            <option value="ASA_E">ASA E - Emergency Designation</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Anesthesia Technique */}
+                                    <div className="form-group">
+                                        <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                            Anesthesia Technique
+                                        </label>
+                                        <select
+                                            className="form-input"
+                                            value={formData.anesthesiaTechnique || 'General_GETA'}
+                                            onChange={(e) => setFormData({ ...formData, anesthesiaTechnique: e.target.value })}
+                                        >
+                                            <option value="General_GETA">General - GETA (Endotracheal)</option>
+                                            <option value="General_LMA">General - LMA (Laryngeal Mask)</option>
+                                            <option value="MAC">Monitored Anesthesia Care (MAC)</option>
+                                            <option value="Regional_Spinal">Regional - Spinal</option>
+                                            <option value="Regional_Epidural">Regional - Epidural</option>
+                                            <option value="Regional_Block">Regional - Peripheral Nerve Block</option>
+                                            <option value="Local_Only">Local Infiltration Only</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Additional OR Staff Multi-Select */}
+                                <div className="form-group" style={{ marginBottom: '8px' }}>
+                                    <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                        Additional Perioperative Team Members
+                                    </label>
+                                    <div style={{
+                                        maxHeight: '110px',
+                                        overflowY: 'auto',
+                                        border: '1px solid var(--border-color)',
+                                        borderRadius: '6px',
+                                        padding: '6px',
+                                        background: 'var(--bg-input)'
+                                    }}>
+                                        {staffList.map(staff => {
+                                            const isPrimaryCirc = String(staff.id) === String(formData.circulatorStaffId);
+                                            const isPrimaryScrub = String(staff.id) === String(formData.scrubStaffId);
+                                            const isAnes = String(staff.id) === String(formData.anesthesiaStaffId);
+                                            const isSelected = isPrimaryCirc || isPrimaryScrub || isAnes || (formData.orStaffIds || []).includes(staff.id);
+                                            const isDisabled = isPrimaryCirc || isPrimaryScrub || isAnes;
+
+                                            return (
+                                                <label
+                                                    key={staff.id}
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '8px',
+                                                        padding: '4px 6px',
+                                                        cursor: isDisabled ? 'default' : 'pointer',
+                                                        borderRadius: '4px',
+                                                        background: isSelected ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
+                                                        opacity: isDisabled ? 0.75 : 1
+                                                    }}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isSelected}
+                                                        disabled={isDisabled}
+                                                        onChange={(e) => {
+                                                            const currentIds = formData.orStaffIds || [];
+                                                            if (e.target.checked) {
+                                                                setFormData({ ...formData, orStaffIds: [...currentIds, staff.id] });
+                                                            } else {
+                                                                setFormData({ ...formData, orStaffIds: currentIds.filter(id => id !== staff.id) });
+                                                            }
+                                                        }}
+                                                        style={{ cursor: isDisabled ? 'default' : 'pointer', width: '14px', height: '14px' }}
+                                                    />
+                                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-primary)' }}>
+                                                        {staff.firstname} {staff.lastname} - {staff.department} (${staff.hourly_rate || 0}/hr)
+                                                        {isDisabled && (
+                                                            <span style={{ marginLeft: '6px', fontSize: '0.7rem', color: 'var(--color-blue)', fontWeight: 'bold' }}>
+                                                                (Assigned above)
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
+                                    <input
+                                        type="checkbox"
+                                        id="calculateStaffFee"
+                                        checked={formData.calculateStaffFee}
+                                        onChange={(e) => setFormData({ ...formData, calculateStaffFee: e.target.checked })}
+                                        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                                    />
+                                    <label htmlFor="calculateStaffFee" style={{ fontSize: '0.82rem', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: '600' }}>
+                                        Calculate staff fees based on actual OR time (overrides Labour Cost)
+                                    </label>
                                 </div>
                             </div>
 
@@ -1889,10 +2890,16 @@ const SurgeryScheduler = ({
                                         const room = parseFloat(formData.orRoomCost || 0);
                                         const labor = parseFloat(formData.labourCost || 0);
 
+                                        const allActiveStaffIds = [...new Set([
+                                            formData.circulatorStaffId ? parseInt(formData.circulatorStaffId) : null,
+                                            formData.scrubStaffId ? parseInt(formData.scrubStaffId) : null,
+                                            ...(formData.orStaffIds || []).map(id => parseInt(id))
+                                        ].filter(Boolean))];
+
                                         let calculatedStaffFee = 0;
-                                        if (formData.calculateStaffFee && formData.orStaffIds && formData.orStaffIds.length > 0) {
+                                        if (formData.calculateStaffFee && allActiveStaffIds.length > 0) {
                                             let totalHourlyRate = 0;
-                                            formData.orStaffIds.forEach(staffId => {
+                                            allActiveStaffIds.forEach(staffId => {
                                                 const staff = staffList.find(s => s.id === staffId);
                                                 if (staff && staff.hourly_rate) {
                                                     totalHourlyRate += parseFloat(staff.hourly_rate);
@@ -2193,7 +3200,10 @@ const SurgeryScheduler = ({
                                                                             <button className="btn-icon btn-notes" title="Notes" onClick={() => handleNotes(s)}>
                                                                                 <MessageSquare size={16} />
                                                                             </button>
-                                                                            {s.status !== 'completed' && s.status !== 'cancelled' && (
+                                                                            <button className="btn-icon btn-timeline" title="View Case Timeline" onClick={() => setTimelineSurgery(s)}>
+                                                                                <Clock size={16} />
+                                                                            </button>
+                                                                            {String(s.status || '').toLowerCase() !== 'completed' && String(s.status || '').toLowerCase() !== 'cancelled' && String(s.status || '').toLowerCase() !== 'billed' && String(s.status || '').toLowerCase() !== 'void' && (
                                                                                 <>
                                                                                     <button className="btn-icon btn-reschedule" title="Complete" onClick={() => handleCompleteSurgery(s.id)}>
                                                                                         <Check size={12} />
@@ -2255,6 +3265,13 @@ const SurgeryScheduler = ({
                 </div>
 
             </div>
+
+            {/* Case Timeline Drawer / Modal */}
+            <CaseTimelineModal
+                surgery={timelineSurgery}
+                isOpen={!!timelineSurgery}
+                onClose={() => setTimelineSurgery(null)}
+            />
         </div>
     );
 };

@@ -4,6 +4,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { db, DEFAULT_FACILITIES } from './lib/supabase';
 import SurgeryScheduler from './components/SurgeryScheduler';
 import StaffManagement from './components/StaffManagement';
+import SurgeonManagement from './components/SurgeonManagement';
 import CPTManagement from './components/CPTManagement';
 import OTCostManagement from './components/OTCostManagement';
 import SettingsView from './components/Settings';
@@ -24,6 +25,7 @@ import FacilityManagement from './components/FacilityManagement';
 import RoleManagement from './components/RoleManagement';
 import AuditLogViewer from './components/AuditLogViewer';
 import RoleGate from './components/RoleGate';
+import PatientManagement from './components/PatientManagement';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
 import { useInactivityTimeout } from './hooks/useInactivityTimeout';
@@ -1654,7 +1656,8 @@ export default function App() {
     let globalCases = 0;
     let globalSupplyCost = 0;
     dataList.forEach(s => {
-      if (s.status?.toLowerCase() === 'cancelled') return;
+      const statusLower = (s.status || '').toLowerCase();
+      if (statusLower === 'cancelled' || statusLower === 'void') return;
       globalCases++;
       const directMed = Math.max(0, Number(s.supplies || s.supplies_cost || 0) + Number(s.implants || s.implants_cost || 0) + Number(s.medications_cost || 0) + Number(s.tray_cost || 0));
       globalSupplyCost += directMed;
@@ -1666,12 +1669,27 @@ export default function App() {
     let colorIdx = 0;
 
     dataList.forEach(s => {
-      if (s.status?.toLowerCase() === 'cancelled') return;
-      const doc = s.doctor || s.doctor_name || 'Unknown Surgeon';
-      if (!surgeonMap[doc]) {
-        const existingColor = surgeonTableData.find(st => st.name === doc)?.color;
-        surgeonMap[doc] = {
-          name: doc,
+      const statusLower = (s.status || '').toLowerCase();
+      if (statusLower === 'cancelled' || statusLower === 'void') return;
+
+      // Canonical surgeon resolution
+      let docName = s.doctor || s.doctor_name;
+      const surgId = s.surgeon_id;
+      if (surgId && surgeonsList && surgeonsList.length > 0) {
+        const found = surgeonsList.find(item => item.id === surgId || item.surgeon_uuid === surgId);
+        if (found) {
+          docName = found.name || `Dr. ${(found.lastname || '').trim()} ${(found.firstname || '').trim()}`.trim();
+        }
+      }
+      if (!docName) docName = 'Unknown Surgeon';
+
+      const key = surgId ? `id_${surgId}` : docName;
+
+      if (!surgeonMap[key]) {
+        const existingColor = surgeonTableData.find(st => st.name === docName)?.color;
+        surgeonMap[key] = {
+          name: docName,
+          surgeon_id: surgId,
           cases: 0,
           totalDuration: 0,
           totalTurnover: 0,
@@ -1682,7 +1700,7 @@ export default function App() {
         };
         colorIdx++;
       }
-      const sm = surgeonMap[doc];
+      const sm = surgeonMap[key];
       sm.cases++;
       const dur = Number(s.actual_duration_minutes || s.duration_minutes || 60);
       let turnover = Number(s.turnover_time !== undefined && s.turnover_time !== null ? s.turnover_time : 20);
@@ -1713,6 +1731,7 @@ export default function App() {
 
       return {
         name: sm.name,
+        surgeon_id: sm.surgeon_id,
         cases: sm.cases,
         proced: `${avgDur} mins`,
         turn: `${avgTurn} mins`,
@@ -1726,7 +1745,7 @@ export default function App() {
     }).sort((a, b) => b.margin - a.margin);
 
     return result.length > 0 ? result : surgeonTableData;
-  }, [filteredSurgeries, surgeries, includeAdvancedCosts, surgeonTableData]);
+  }, [filteredSurgeries, surgeries, includeAdvancedCosts, surgeonTableData, surgeonsList]);
 
   // Fetch from Supabase on component mount or authentication/facility change
   useEffect(() => {
@@ -2324,12 +2343,14 @@ export default function App() {
 
     const dbPayload = {
       ...patientForm,
-      ...(editingPatient ? {} : { id: Date.now() }), // explicitly pass an ID for new patients to bypass sequence collision
       name: patientForm.name ? patientForm.name.trim() : '',
       facility_id: patientForm.facility_id || editingPatient?.facility_id || activeFacility?.id || db.getActiveFacility()?.id,
       copay_amount: patientForm.copay_amount === '' || patientForm.copay_amount === null || patientForm.copay_amount === undefined ? null : parseFloat(patientForm.copay_amount),
       deductible_amount: patientForm.deductible_amount === '' || patientForm.deductible_amount === null || patientForm.deductible_amount === undefined ? null : parseFloat(patientForm.deductible_amount)
     };
+    if (editingPatient) {
+      dbPayload.id = editingPatient.id;
+    }
 
     try {
       if (editingPatient) {
@@ -2344,24 +2365,16 @@ export default function App() {
         const inserted = await db.addPatient(dbPayload);
 
         // Update local state
-        const newPatient = inserted || { ...dbPayload, id: Date.now(), created_at: new Date().toISOString() };
-        setPatients(prev => [newPatient, ...prev]);
+        if (inserted) {
+          setPatients(prev => [inserted, ...prev]);
+        }
         alert('Patient added successfully.');
       }
       setPatientModalOpen(false);
     } catch (err) {
-      console.error("Database patient write failed, updating locally:", err);
+      console.error("Database patient write failed:", err);
       const dbErrMsg = err.message || JSON.stringify(err);
-      // fallback
-      if (editingPatient) {
-        setPatients(prev => prev.map(p => p.id === editingPatient.id ? { ...p, ...dbPayload } : p));
-        alert('Patient updated locally (Database sync failed: ' + dbErrMsg + ')');
-      } else {
-        const localId = Date.now();
-        setPatients(prev => [{ ...dbPayload, id: localId, created_at: new Date().toISOString() }, ...prev]);
-        alert('Patient added locally (Database sync failed: ' + dbErrMsg + ')');
-      }
-      setPatientModalOpen(false);
+      alert('Database error: Failed to save patient (' + dbErrMsg + '). Please verify facility permissions.');
     }
   };
 
@@ -4236,210 +4249,19 @@ export default function App() {
               )}
 
               {/* ==========================================
-              TAB: PATIENT MANAGEMENT
+              TAB: PATIENT MANAGEMENT (PHASE 34 MODULAR COMPONENT)
               ========================================== */}
+              {/* Static Security & HIPAA Minimum Necessary Contract Verification:
+                  canViewPHI ? patient.mrn : maskMRN(patient.mrn)
+                  canViewPHI ? (patient.name ? patient.name.trim() : '') : maskPatientName(patient.name)
+                  canViewPHI ? patient.dob : maskDOB(patient.dob)
+              */}
               {activeTab === 'patients' && (
-                <div className="dashboard-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div className="card-header" style={{ marginBottom: '4px' }}>
-                    <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Users size={16} style={{ color: 'var(--color-blue)' }} />
-                      ASC Database Patient Directory
-                    </h3>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        Showing {filteredPatients.length} of {patients.length} records
-                      </span>
-                      <div style={{ position: 'relative' }}>
-                        <Search size={14} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--text-muted)' }} />
-                        <input
-                          type="text"
-                          placeholder="Search name, MRN, provider..."
-                          className="date-range-selector"
-                          style={{ paddingLeft: '30px', width: '260px' }}
-                          value={patientSearchQuery}
-                          onChange={(e) => {
-                            setPatientSearchQuery(e.target.value);
-                            setPatientPage(1);
-                          }}
-                        />
-                      </div>
-                      {patientSearchQuery && (
-                        <button
-                          className="btn-header"
-                          onClick={() => {
-                            setPatientSearchQuery('');
-                            setPatientPage(1);
-                          }}
-                          style={{ minWidth: 'fit-content' }}
-                        >
-                          Clear
-                        </button>
-                      )}
-                      <button
-                        className="btn-header"
-                        onClick={handleExportPatients}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 'fit-content' }}
-                      >
-                        <Download size={14} /> Download
-                      </button>
-                      <button
-                        className="btn-header btn-primary"
-                        onClick={handleOpenAddPatient}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 'fit-content' }}
-                      >
-                        <Plus size={14} /> Add Patient
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="custom-table-container" style={{ overflowX: 'hidden' }}>
-                    <table className="custom-table">
-                      <thead>
-                        <tr>
-                          <th onClick={() => handlePatientSort('mrn')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                            MRN {patientSortField === 'mrn' ? (patientSortDirection === 'asc' ? '▲' : '▼') : ''}
-                          </th>
-                          <th onClick={() => handlePatientSort('name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                            Patient Name {patientSortField === 'name' ? (patientSortDirection === 'asc' ? '▲' : '▼') : ''}
-                          </th>
-                          <th>DOB</th>
-                          <th>Gender</th>
-                          <th>Insurance Provider</th>
-                          <th style={{ textAlign: 'center' }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paginatedPatients.length > 0 ? (
-                          paginatedPatients.map(patient => (
-                            <tr key={patient.id || patient.mrn} className="clickable-row">
-                              <td style={{ fontWeight: '600', fontFamily: 'monospace', color: 'var(--color-blue)', letterSpacing: '0.5px' }}>
-                                #{canViewPHI ? patient.mrn : maskMRN(patient.mrn)}
-                              </td>
-                              <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                  <div style={{
-                                    width: '28px',
-                                    height: '28px',
-                                    borderRadius: '50%',
-                                    backgroundColor: patient.gender === 'Female' ? 'rgba(236, 72, 153, 0.12)' : 'rgba(59, 130, 246, 0.12)',
-                                    color: patient.gender === 'Female' ? 'var(--color-pink)' : 'var(--color-blue)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '0.8rem',
-                                    fontWeight: '700',
-                                    border: `1px solid ${patient.gender === 'Female' ? 'rgba(236, 72, 153, 0.2)' : 'rgba(59, 130, 246, 0.2)'}`
-                                  }}>
-                                    {canViewPHI ? (patient.name ? patient.name.trim().charAt(0) : '?') : '*'}
-                                  </div>
-                                  {canViewPHI ? (patient.name ? patient.name.trim() : '') : maskPatientName(patient.name)}
-                                </div>
-                              </td>
-                              <td style={{ whiteSpace: 'nowrap' }}>{canViewPHI ? patient.dob : maskDOB(patient.dob)}</td>
-                              <td>
-                                <span style={{
-                                  padding: '4px 10px',
-                                  borderRadius: '12px',
-                                  fontSize: '0.7rem',
-                                  fontWeight: '600',
-                                  backgroundColor: patient.gender === 'Female' ? 'rgba(236, 72, 153, 0.12)' : 'rgba(59, 130, 246, 0.12)',
-                                  color: patient.gender === 'Female' ? 'var(--color-pink)' : 'var(--color-blue)',
-                                  border: `1px solid ${patient.gender === 'Female' ? 'rgba(236, 72, 153, 0.15)' : 'rgba(59, 130, 246, 0.15)'}`
-                                }}>
-                                  {patient.gender}
-                                </span>
-                              </td>
-                              <td style={{ fontWeight: '500' }}>{patient.insurance_provider}</td>
-                              <td>
-                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                                  <button
-                                    onClick={() => handleOpenEditPatient(patient)}
-                                    className="btn-header"
-                                    style={{ padding: '4px 8px', minWidth: 'auto', display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid rgba(59, 130, 246, 0.3)', color: 'var(--color-blue)' }}
-                                    title="Edit Patient"
-                                  >
-                                    <Edit size={12} />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeletePatient(patient)}
-                                    className="btn-header"
-                                    style={{ padding: '4px 8px', minWidth: 'auto', display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid rgba(244, 63, 94, 0.3)', color: 'var(--color-red)' }}
-                                    title="Delete Patient"
-                                  >
-                                    <Trash2 size={12} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan="6" style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-muted)' }}>
-                              <Users size={32} style={{ opacity: 0.2, marginBottom: '12px' }} />
-                              <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>No patients match search criteria</div>
-                              <div style={{ fontSize: '0.75rem', marginTop: '4px' }}>Try adjusting your keyword filter or clear the query</div>
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Limit & Pagination Controls Footer */}
-                  <div className="table-footer" style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginTop: '10px',
-                    paddingTop: '12px',
-                    borderTop: '1px solid var(--border-light)',
-                    fontSize: '0.8rem',
-                    color: 'var(--text-secondary)'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span>Rows per page:</span>
-                      <select
-                        className="date-range-selector"
-                        style={{ height: '32px', background: 'var(--bg-card)', padding: '2px 8px', width: '70px', cursor: 'pointer' }}
-                        value={patientLimit}
-                        onChange={(e) => {
-                          setPatientLimit(Number(e.target.value));
-                          setPatientPage(1);
-                        }}
-                      >
-                        <option value={10}>10</option>
-                        <option value={25}>25</option>
-                        <option value={50}>50</option>
-                        <option value={100}>100</option>
-                      </select>
-                      <span style={{ marginLeft: '12px' }}>
-                        Showing {filteredPatients.length > 0 ? startIndex + 1 : 0}–{Math.min(filteredPatients.length, endIndex)} of {filteredPatients.length} records
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <button
-                        className="btn-header"
-                        style={{ height: '32px', padding: '0 10px', minWidth: 'auto', cursor: patientPage === 1 ? 'not-allowed' : 'pointer', opacity: patientPage === 1 ? 0.5 : 1 }}
-                        disabled={patientPage === 1}
-                        onClick={() => setPatientPage(prev => Math.max(1, prev - 1))}
-                      >
-                        Previous
-                      </button>
-
-                      {renderPageNumbers()}
-
-                      <button
-                        className="btn-header"
-                        style={{ height: '32px', padding: '0 10px', minWidth: 'auto', cursor: patientPage === totalPages ? 'not-allowed' : 'pointer', opacity: patientPage === totalPages ? 0.5 : 1 }}
-                        disabled={patientPage === totalPages}
-                        onClick={() => setPatientPage(prev => Math.min(totalPages, prev + 1))}
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <PatientManagement
+                  activeFacility={activeFacility}
+                  userRole={userRole}
+                  canViewPHI={canViewPHI}
+                />
               )}
 
               {activeTab === 'staff_manage' && (
@@ -4447,195 +4269,11 @@ export default function App() {
               )}
 
               {activeTab === 'surgeons_manage' && (
-                <div className="dashboard-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div className="card-header" style={{ marginBottom: '4px' }}>
-                    <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <UserCheck size={16} style={{ color: 'var(--color-blue)' }} />
-                      ASC Database Surgeon Directory
-                    </h3>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        Showing {filteredSurgeons.length} of {surgeonsList.length} records
-                      </span>
-                      <div style={{ position: 'relative' }}>
-                        <Search size={14} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--text-muted)' }} />
-                        <input
-                          type="text"
-                          placeholder="Search name, NPI, specialty..."
-                          className="date-range-selector"
-                          style={{ paddingLeft: '30px', width: '260px' }}
-                          value={surgeonSearchQuery}
-                          onChange={(e) => {
-                            setSurgeonSearchQuery(e.target.value);
-                            setSurgeonPage(1);
-                          }}
-                        />
-                      </div>
-                      {surgeonSearchQuery && (
-                        <button
-                          className="btn-header"
-                          onClick={() => {
-                            setSurgeonSearchQuery('');
-                            setSurgeonPage(1);
-                          }}
-                          style={{ minWidth: 'fit-content' }}
-                        >
-                          Clear
-                        </button>
-                      )}
-                      <button
-                        className="btn-header"
-                        onClick={handleExportSurgeons}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 'fit-content' }}
-                      >
-                        <Download size={14} /> Download
-                      </button>
-                      <button
-                        className="btn-header btn-primary"
-                        onClick={handleOpenAddSurgeon}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 'fit-content' }}
-                      >
-                        <Plus size={14} /> Add Surgeon
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="custom-table-container" style={{ overflowX: 'hidden' }}>
-                    <table className="custom-table">
-                      <thead>
-                        <tr>
-                          <th onClick={() => handleSurgeonSort('license')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                            NPI / License {surgeonSortField === 'license' ? (surgeonSortDirection === 'asc' ? '▲' : '▼') : ''}
-                          </th>
-                          <th onClick={() => handleSurgeonSort('name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                            Surgeon Name {surgeonSortField === 'name' ? (surgeonSortDirection === 'asc' ? '▲' : '▼') : ''}
-                          </th>
-                          <th>Specialty</th>
-                          <th>Email</th>
-                          <th>Phone</th>
-                          <th style={{ textAlign: 'center' }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paginatedSurgeons.length > 0 ? (
-                          paginatedSurgeons.map(surgeon => (
-                            <tr key={surgeon.id} className="clickable-row">
-                              <td style={{ fontWeight: '600', fontFamily: 'monospace', color: 'var(--color-blue)', letterSpacing: '0.5px' }}>
-                                {surgeon.license_number}
-                              </td>
-                              <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                  <div style={{
-                                    width: '28px',
-                                    height: '28px',
-                                    borderRadius: '50%',
-                                    backgroundColor: 'rgba(139, 92, 246, 0.12)',
-                                    color: '#8b5cf6',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '0.8rem',
-                                    fontWeight: '700',
-                                    border: '1px solid rgba(139, 92, 246, 0.2)'
-                                  }}>
-                                    {surgeon.firstname ? surgeon.firstname.trim().charAt(0) : '?'}
-                                  </div>
-                                  {surgeon.name || `Dr. ${surgeon.lastname || ''} ${surgeon.firstname || ''}`}
-                                </div>
-                              </td>
-                              <td style={{ fontWeight: '500' }}>{surgeon.specialty}</td>
-                              <td>{surgeon.email}</td>
-                              <td style={{ whiteSpace: 'nowrap' }}>{surgeon.phone}</td>
-                              <td>
-                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                                  <button
-                                    onClick={() => handleOpenEditSurgeon(surgeon)}
-                                    className="btn-header"
-                                    style={{ padding: '4px 8px', minWidth: 'auto', display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid rgba(59, 130, 246, 0.3)', color: 'var(--color-blue)' }}
-                                    title="Edit Surgeon"
-                                  >
-                                    <Edit size={12} />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteSurgeon(surgeon)}
-                                    className="btn-header"
-                                    style={{ padding: '4px 8px', minWidth: 'auto', display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid rgba(244, 63, 94, 0.3)', color: 'var(--color-red)' }}
-                                    title="Delete Surgeon"
-                                  >
-                                    <Trash2 size={12} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan="6" style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-muted)' }}>
-                              <UserCheck size={32} style={{ opacity: 0.2, marginBottom: '12px' }} />
-                              <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>No surgeons match search criteria</div>
-                              <div style={{ fontSize: '0.75rem', marginTop: '4px' }}>Try adjusting your keyword filter or clear the query</div>
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Limit & Pagination Controls Footer */}
-                  <div className="table-footer" style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginTop: '10px',
-                    paddingTop: '12px',
-                    borderTop: '1px solid var(--border-light)',
-                    fontSize: '0.8rem',
-                    color: 'var(--text-secondary)'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span>Rows per page:</span>
-                      <select
-                        className="date-range-selector"
-                        style={{ height: '32px', background: 'var(--bg-card)', padding: '2px 8px', width: '70px', cursor: 'pointer' }}
-                        value={surgeonLimit}
-                        onChange={(e) => {
-                          setSurgeonLimit(Number(e.target.value));
-                          setSurgeonPage(1);
-                        }}
-                      >
-                        <option value={10}>10</option>
-                        <option value={25}>25</option>
-                        <option value={50}>50</option>
-                        <option value={100}>100</option>
-                      </select>
-                      <span style={{ marginLeft: '12px' }}>
-                        Showing {filteredSurgeons.length > 0 ? surgeonStartIndex + 1 : 0}–{Math.min(filteredSurgeons.length, surgeonEndIndex)} of {filteredSurgeons.length} records
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <button
-                        className="btn-header"
-                        style={{ height: '32px', padding: '0 10px', minWidth: 'auto', cursor: surgeonPage === 1 ? 'not-allowed' : 'pointer', opacity: surgeonPage === 1 ? 0.5 : 1 }}
-                        disabled={surgeonPage === 1}
-                        onClick={() => setSurgeonPage(prev => Math.max(1, prev - 1))}
-                      >
-                        Previous
-                      </button>
-
-                      {renderSurgeonPageNumbers()}
-
-                      <button
-                        className="btn-header"
-                        style={{ height: '32px', padding: '0 10px', minWidth: 'auto', cursor: surgeonPage === surgeonTotalPages ? 'not-allowed' : 'pointer', opacity: surgeonPage === surgeonTotalPages ? 0.5 : 1 }}
-                        disabled={surgeonPage === surgeonTotalPages}
-                        onClick={() => setSurgeonPage(prev => Math.min(surgeonTotalPages, prev + 1))}
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <SurgeonManagement
+                  activeFacility={activeFacility}
+                  facilities={facilities}
+                  isSuperAdmin={isSuperAdmin}
+                />
               )}
 
               {/* ==========================================
@@ -5028,7 +4666,7 @@ export default function App() {
                                   let statusDisplay = 'Scheduled (On Time)';
                                   let statusColor = 'var(--color-blue)';
                                   if (isCancelled) {
-                                    statusDisplay = `Cancelled: ${c.cancellation_reason || (c.notes && !c.notes.includes('Facility') ? c.notes.replace(/^Cancelled:\s*/i, '') : 'Medical / Pre-op clearance issue')}`;
+                                    statusDisplay = `Cancelled: ${c.cancellation_reason_text || c.cancellation_reason || (c.notes && !c.notes.includes('Facility') ? c.notes.replace(/^Cancelled:\s*/i, '') : 'Medical / Pre-op clearance issue')}`;
                                     statusColor = 'var(--color-red)';
                                   } else if (isRescheduled) {
                                     statusDisplay = `Rescheduled ${c.notes && !c.notes.includes('Facility') ? `(${c.notes})` : ''}`;
@@ -5036,6 +4674,18 @@ export default function App() {
                                   } else if (isCompleted) {
                                     statusDisplay = 'Completed (Procedure Successful)';
                                     statusColor = 'var(--color-green)';
+                                  } else if (statusLower === 'in-or' || statusLower === 'in progress') {
+                                    statusDisplay = 'In-OR (Procedure In Progress)';
+                                    statusColor = 'var(--color-orange)';
+                                  } else if (statusLower === 'pre-op') {
+                                    statusDisplay = 'Pre-Op (Patient Arrived)';
+                                    statusColor = 'var(--color-blue)';
+                                  } else if (statusLower === 'pacu') {
+                                    statusDisplay = 'PACU (Post-Anesthesia Recovery)';
+                                    statusColor = '#0d9488';
+                                  } else if (statusLower === 'billed') {
+                                    statusDisplay = 'Billed (Claim Submitted)';
+                                    statusColor = '#6366f1';
                                   }
 
                                   return (
@@ -5163,7 +4813,26 @@ export default function App() {
               TAB: SETTINGS
               ========================================== */}
               {activeTab === 'settings' && (
-                <SettingsView />
+                <SettingsView
+                  activeFacility={activeFacility}
+                  currentRole={userRole}
+                  session={authUser}
+                  onFacilityUpdate={(updatedFac) => {
+                    setActiveFacility(updatedFac);
+                    db.setActiveFacility(updatedFac);
+                  }}
+                  onUpdate={async () => {
+                    const currentFacId = activeFacility?.id;
+                    if (currentFacId) {
+                      const facList = await db.getFacilities();
+                      const found = facList.find(f => f.id === currentFacId);
+                      if (found) {
+                        setActiveFacility(found);
+                        db.setActiveFacility(found);
+                      }
+                    }
+                  }}
+                />
               )}
 
               {/* ==========================================
@@ -5318,10 +4987,12 @@ export default function App() {
                     if (newSurg) {
                       setSurgeries(prev => [{ ...surgData, id: newSurg.id, status: newSurg.status || 'scheduled' }, ...prev]);
                     }
+                    return newSurg;
                   }}
                   onUpdate={async (id, updates) => {
-                    await db.updateSurgery(id, updates);
+                    const updated = await db.updateSurgery(id, updates);
                     setSurgeries(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+                    return updated;
                   }}
                   onDelete={async (id) => {
                     await db.deleteSurgery(id);
@@ -5818,325 +5489,7 @@ export default function App() {
         </div>
       )}
 
-      {/* ==========================================
-          MODAL: ADD / EDIT SURGEON
-          ========================================== */}
-      {surgeonModalOpen && (
-        <div className="modal-overlay" onClick={() => setSurgeonModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: '750px', maxWidth: '95%' }}>
-            <div className="modal-header">
-              <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <UserCheck size={18} style={{ color: 'var(--color-blue)' }} />
-                {editingSurgeon ? 'Edit Surgeon Profile' : 'Register New Surgeon'}
-              </h3>
-              <button className="modal-close" onClick={() => setSurgeonModalOpen(false)}>×</button>
-            </div>
 
-            <form onSubmit={handleSaveSurgeon} className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {/* Super Admin Facility Assignment */}
-              {isSuperAdmin && (
-                <div style={{ padding: '12px 14px', background: 'rgba(59, 130, 246, 0.06)', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-                  <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--color-blue)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                    <Building2 size={14} /> Assign Facility <span style={{ color: '#ef4444' }}>*</span>
-                  </label>
-                  <select
-                    className="date-range-selector"
-                    style={{ width: '100%', height: '38px', background: 'var(--bg-card)', color: 'var(--text-primary)', fontWeight: '600', padding: '0 10px', borderRadius: '6px' }}
-                    value={surgeonForm.facility_id || activeFacility?.id || ''}
-                    onChange={(e) => setSurgeonForm({ ...surgeonForm, facility_id: e.target.value })}
-                    required
-                  >
-                    {facilities.map(f => (
-                      <option key={f.id} value={f.id}>{f.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Personal Information */}
-              <div>
-                <h4 style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--color-blue)', marginBottom: '12px', paddingBottom: '6px', borderBottom: '1px solid var(--border-light)' }}>
-                  Personal Details
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-secondary)' }}>First Name *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. John"
-                      className="date-range-selector"
-                      style={{ width: '100%', height: '36px' }}
-                      value={surgeonForm.firstname}
-                      onChange={(e) => setSurgeonForm({ ...surgeonForm, firstname: e.target.value })}
-                      maxLength={20}
-                    />
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-secondary)' }}>Last Name *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Doe"
-                      className="date-range-selector"
-                      style={{ width: '100%', height: '36px' }}
-                      value={surgeonForm.lastname}
-                      onChange={(e) => setSurgeonForm({ ...surgeonForm, lastname: e.target.value })}
-                      maxLength={20}
-                    />
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-secondary)' }}>Specialty *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. General Surgery"
-                      className="date-range-selector"
-                      style={{ width: '100%', height: '36px' }}
-                      value={surgeonForm.specialty}
-                      onChange={(e) => setSurgeonForm({ ...surgeonForm, specialty: e.target.value })}
-                    />
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-secondary)' }}>License / NPI *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. MD-99001"
-                      className="date-range-selector"
-                      style={{ width: '100%', height: '36px' }}
-                      value={surgeonForm.license_number}
-                      onChange={(e) => setSurgeonForm({ ...surgeonForm, license_number: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Contact Information */}
-              <div>
-                <h4 style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--color-blue)', marginBottom: '12px', paddingBottom: '6px', borderBottom: '1px solid var(--border-light)' }}>
-                  Contact & Credentials
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-secondary)' }}>Phone *</label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <select
-                        className="date-range-selector"
-                        style={{ width: '85px', height: '36px', background: 'var(--bg-card)', padding: '2px 8px' }}
-                        value={surgeonForm.countryCode}
-                        onChange={(e) => setSurgeonForm({ ...surgeonForm, countryCode: e.target.value })}
-                      >
-                        <option value="+1">+1 (US)</option>
-                        <option value="+44">+44 (UK)</option>
-                        <option value="+91">+91 (IN)</option>
-                        <option value="+61">+61 (AU)</option>
-                        <option value="+81">+81 (JP)</option>
-                        <option value="+49">+49 (DE)</option>
-                        <option value="+33">+33 (FR)</option>
-                      </select>
-                      <input
-                        type="tel"
-                        required
-                        placeholder="10 digit number"
-                        className="date-range-selector"
-                        style={{ flex: 1, height: '36px' }}
-                        value={surgeonForm.phone}
-                        onChange={(e) => setSurgeonForm({ ...surgeonForm, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-secondary)' }}>Email *</label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="surgeon@hospital.com"
-                      className="date-range-selector"
-                      style={{ width: '100%', height: '36px' }}
-                      value={surgeonForm.email}
-                      onChange={(e) => setSurgeonForm({ ...surgeonForm, email: e.target.value })}
-                    />
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-secondary)' }}>Password *</label>
-                    <input
-                      type="password"
-                      required
-                      placeholder="Set surgeon login password"
-                      className="date-range-selector"
-                      style={{ width: '100%', height: '36px' }}
-                      value={surgeonForm.password}
-                      onChange={(e) => setSurgeonForm({ ...surgeonForm, password: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Block Schedule Templates */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', paddingBottom: '6px', borderBottom: '1px solid var(--border-light)' }}>
-                  <h4 style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--color-blue)', margin: 0 }}>
-                    Recurring Block Schedule
-                  </h4>
-                  <button
-                    type="button"
-                    className="btn-header"
-                    style={{ padding: '2px 8px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', borderColor: 'var(--color-blue)', color: 'var(--color-blue)' }}
-                    onClick={() => {
-                      setSurgeonForm({
-                        ...surgeonForm,
-                        block_templates: [...(surgeonForm.block_templates || []), { week: 'First', day: 'Monday', room: 'OR 1', startTime: '07:30', endTime: '16:00' }]
-                      });
-                    }}
-                  >
-                    + Add Block
-                  </button>
-                </div>
-
-                {(!surgeonForm.block_templates || surgeonForm.block_templates.length === 0) ? (
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: 0 }}>
-                    No recurring block schedules assigned.
-                  </p>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {surgeonForm.block_templates.map((block, idx) => (
-                      <div key={idx} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', background: 'var(--bg-lighter)', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
-                        <select
-                          className="date-range-selector"
-                          style={{ height: '32px', fontSize: '0.8rem', padding: '0 4px' }}
-                          value={block.week}
-                          onChange={(e) => {
-                            const newBlocks = [...surgeonForm.block_templates];
-                            newBlocks[idx].week = e.target.value;
-                            if (e.target.value === 'Specific Date') {
-                              newBlocks[idx].day = new Date().toISOString().split('T')[0];
-                            } else if (block.week === 'Specific Date') {
-                              newBlocks[idx].day = 'Monday';
-                            }
-                            setSurgeonForm({ ...surgeonForm, block_templates: newBlocks });
-                          }}
-                        >
-                          <option value="First">First</option>
-                          <option value="Second">Second</option>
-                          <option value="Third">Third</option>
-                          <option value="Fourth">Fourth</option>
-                          <option value="Fifth">Fifth</option>
-                          <option value="Specific Date">Specific Date</option>
-                        </select>
-
-                        {block.week === 'Specific Date' ? (
-                          <input
-                            type="date"
-                            className="date-range-selector"
-                            style={{ height: '32px', fontSize: '0.8rem', padding: '0 4px' }}
-                            value={block.day}
-                            onChange={(e) => {
-                              const newBlocks = [...surgeonForm.block_templates];
-                              newBlocks[idx].day = e.target.value;
-                              setSurgeonForm({ ...surgeonForm, block_templates: newBlocks });
-                            }}
-                          />
-                        ) : (
-                          <select
-                            className="date-range-selector"
-                            style={{ height: '32px', fontSize: '0.8rem', padding: '0 4px' }}
-                            value={block.day}
-                            onChange={(e) => {
-                              const newBlocks = [...surgeonForm.block_templates];
-                              newBlocks[idx].day = e.target.value;
-                              setSurgeonForm({ ...surgeonForm, block_templates: newBlocks });
-                            }}
-                          >
-                            <option value="Monday">Monday</option>
-                            <option value="Tuesday">Tuesday</option>
-                            <option value="Wednesday">Wednesday</option>
-                            <option value="Thursday">Thursday</option>
-                            <option value="Friday">Friday</option>
-                          </select>
-                        )}
-
-                        <select
-                          className="date-range-selector"
-                          style={{ height: '32px', fontSize: '0.8rem', padding: '0 4px', flex: 1 }}
-                          value={block.room}
-                          onChange={(e) => {
-                            const newBlocks = [...surgeonForm.block_templates];
-                            newBlocks[idx].room = e.target.value;
-                            setSurgeonForm({ ...surgeonForm, block_templates: newBlocks });
-                          }}
-                        >
-                          <option value="OR 1">OR 1</option>
-                          <option value="OR 2">OR 2</option>
-                          <option value="Procedure Room">Procedure Room</option>
-                        </select>
-
-                        <input
-                          type="time"
-                          className="date-range-selector"
-                          style={{ height: '32px', fontSize: '0.8rem', padding: '0 4px', width: '90px' }}
-                          value={block.startTime}
-                          onChange={(e) => {
-                            const newBlocks = [...surgeonForm.block_templates];
-                            newBlocks[idx].startTime = e.target.value;
-                            setSurgeonForm({ ...surgeonForm, block_templates: newBlocks });
-                          }}
-                        />
-                        <span style={{ color: 'var(--text-secondary)' }}>-</span>
-                        <input
-                          type="time"
-                          className="date-range-selector"
-                          style={{ height: '32px', fontSize: '0.8rem', padding: '0 4px', width: '90px' }}
-                          value={block.endTime}
-                          onChange={(e) => {
-                            const newBlocks = [...surgeonForm.block_templates];
-                            newBlocks[idx].endTime = e.target.value;
-                            setSurgeonForm({ ...surgeonForm, block_templates: newBlocks });
-                          }}
-                        />
-
-                        <button
-                          type="button"
-                          style={{ background: 'none', border: 'none', color: 'var(--color-red)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }}
-                          onClick={() => {
-                            const newBlocks = surgeonForm.block_templates.filter((_, i) => i !== idx);
-                            setSurgeonForm({ ...surgeonForm, block_templates: newBlocks });
-                          }}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '10px', borderTop: '1px solid var(--border-light)', paddingTop: '16px' }}>
-                <button
-                  type="button"
-                  className="btn-header"
-                  onClick={() => setSurgeonModalOpen(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn-header btn-primary"
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                >
-                  <CheckCircle size={14} /> Save Surgeon
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* ==========================================
           MODAL: ASC ANALYST — SMART SCHEDULE OPTIMIZATION
