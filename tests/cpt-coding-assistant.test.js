@@ -26,7 +26,8 @@ describe('Phase 43 — AI CPT Coding Assistant & Human-in-the-Loop Review Suite'
     it('Migration 020 creates public.cpt_coding_sessions table with SHA-256 hash tracking', () => {
       const sql = fs.readFileSync(migPath, 'utf8');
       assert.ok(sql.includes('CREATE TABLE IF NOT EXISTS public.cpt_coding_sessions'), 'Must create cpt_coding_sessions table');
-      assert.ok(sql.includes('case_id UUID NOT NULL REFERENCES public.cases(id)'), 'Must reference cases table');
+      assert.ok(sql.includes('surgery_id BIGINT REFERENCES public.surgeries(id)'), 'Must reference surgeries table');
+      assert.ok(sql.includes('case_id TEXT'), 'Must track case_id for encounter context');
       assert.ok(sql.includes('facility_id UUID NOT NULL REFERENCES public.facilities(id)'), 'Must reference facilities table');
       assert.ok(sql.includes('source_document_text TEXT NOT NULL'), 'source_document_text must be tracked');
       assert.ok(sql.includes('source_document_hash VARCHAR(64) NOT NULL'), 'source_document_hash must be 64-char SHA-256');

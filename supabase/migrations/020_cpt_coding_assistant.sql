@@ -22,7 +22,8 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE IF NOT EXISTS public.cpt_coding_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    case_id UUID NOT NULL REFERENCES public.cases(id) ON DELETE CASCADE,
+    surgery_id BIGINT REFERENCES public.surgeries(id) ON DELETE CASCADE,
+    case_id TEXT, -- Draft encounter ID, case_uuid, or surgery ID
     facility_id UUID NOT NULL REFERENCES public.facilities(id) ON DELETE CASCADE,
     source_document_text TEXT NOT NULL,
     source_document_hash VARCHAR(64) NOT NULL, -- SHA-256 hash of operative notes
@@ -35,6 +36,7 @@ CREATE TABLE IF NOT EXISTS public.cpt_coding_sessions (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_ccs_surgery ON public.cpt_coding_sessions(surgery_id);
 CREATE INDEX IF NOT EXISTS idx_ccs_case ON public.cpt_coding_sessions(case_id);
 CREATE INDEX IF NOT EXISTS idx_ccs_facility ON public.cpt_coding_sessions(facility_id);
 CREATE INDEX IF NOT EXISTS idx_ccs_created_at ON public.cpt_coding_sessions(created_at DESC);
@@ -111,8 +113,10 @@ AS $$
 DECLARE
     v_cand RECORD;
     v_session RECORD;
-    v_case RECORD;
+    v_surg RECORD;
     v_cpt RECORD;
+    v_dos DATE;
+    v_cpt_code_id BIGINT;
     v_proc_id UUID;
     v_user_id UUID := auth.uid();
 BEGIN
@@ -126,16 +130,25 @@ BEGIN
         RETURN jsonb_build_object('success', false, 'error', 'Candidate already approved');
     END IF;
 
-    -- 2. Fetch session and case
+    -- 2. Fetch session and surgery
     SELECT * INTO v_session FROM public.cpt_coding_sessions WHERE id = v_cand.session_id;
-    SELECT * INTO v_case FROM public.cases WHERE id = v_session.case_id;
+
+    IF v_session.surgery_id IS NOT NULL THEN
+        SELECT * INTO v_surg FROM public.surgeries WHERE id = v_session.surgery_id;
+    ELSIF v_session.case_id IS NOT NULL AND v_session.case_id ~ '^[0-9]+$' THEN
+        SELECT * INTO v_surg FROM public.surgeries WHERE id = v_session.case_id::BIGINT;
+    ELSIF v_session.case_id IS NOT NULL THEN
+        SELECT * INTO v_surg FROM public.surgeries WHERE case_uuid::TEXT = v_session.case_id LIMIT 1;
+    END IF;
+
+    v_dos := COALESCE(v_surg.date::DATE, CURRENT_DATE);
 
     -- 3. Verify user has facility access and permissions
     IF v_user_id IS NOT NULL AND NOT EXISTS (
         SELECT 1 FROM public.facility_memberships fm
         WHERE fm.facility_id = v_session.facility_id 
           AND fm.user_id = v_user_id 
-          AND fm.role IN ('super_admin', 'facility_admin', 'clinical_coder', 'director_of_nursing')
+          AND fm.role IN ('super_admin', 'facility_admin', 'clinical_coder', 'director_of_nursing', 'coder')
           AND fm.is_active = true
     ) AND (auth.jwt()->>'role') != 'service_role' THEN
         RETURN jsonb_build_object('success', false, 'error', 'Access Denied: Insufficient coding permissions');
@@ -148,8 +161,8 @@ BEGIN
     JOIN public.cpt_code_versions v ON v.cpt_master_id = m.id
     WHERE m.code = v_cand.cpt_code
       AND m.is_active = true
-      AND (v.effective_date <= v_case.scheduled_start_time::DATE)
-      AND (v.termination_date IS NULL OR v.termination_date >= v_case.scheduled_start_time::DATE)
+      AND (v.effective_date <= v_dos)
+      AND (v.termination_date IS NULL OR v.termination_date >= v_dos)
     ORDER BY v.effective_date DESC
     LIMIT 1;
 
@@ -178,44 +191,51 @@ BEGIN
         RETURN jsonb_build_object('success', false, 'error', 'CPT code is inactive or unpriced');
     END IF;
 
-    -- 5. Insert into official surgery_procedures line items
-    INSERT INTO public.surgery_procedures (
-        case_id,
-        facility_id,
-        cpt_code_id,
-        cpt_code,
-        procedure_description,
-        is_primary,
-        units,
-        modifiers,
-        laterality,
-        coding_status,
-        source_system,
-        line_gross_charge,
-        line_expected_reimbursement,
-        coded_by,
-        coded_at,
-        created_at
-    )
-    VALUES (
-        v_case.id,
-        v_session.facility_id,
-        v_cpt.master_id,
-        v_cpt.code,
-        v_cpt.description,
-        v_cand.is_primary_recommendation,
-        1,
-        COALESCE(p_override_modifiers, v_cand.suggested_modifiers),
-        COALESCE(p_override_laterality, v_cand.suggested_laterality),
-        'Coded',
-        'AI_ASSISTED',
-        COALESCE(v_cpt.gross_charge, 0.00),
-        COALESCE(v_cpt.reimbursement, 0.00),
-        v_user_id,
-        NOW(),
-        NOW()
-    )
-    RETURNING id INTO v_proc_id;
+    -- 5. Insert into official surgery_procedures line items if surgery exists
+    IF v_surg.id IS NOT NULL THEN
+        SELECT id INTO v_cpt_code_id FROM public.cpt_codes WHERE code = v_cand.cpt_code LIMIT 1;
+        IF v_cpt_code_id IS NULL THEN
+            SELECT id INTO v_cpt_code_id FROM public.cpt_codes LIMIT 1;
+        END IF;
+
+        INSERT INTO public.surgery_procedures (
+            facility_id,
+            surgery_id,
+            cpt_code_id,
+            sequence_rank,
+            is_primary,
+            units,
+            modifiers,
+            laterality,
+            procedure_description,
+            coding_status,
+            source_system,
+            line_gross_charge,
+            line_expected_reimbursement,
+            coded_by,
+            coded_at,
+            created_at
+        )
+        VALUES (
+            v_session.facility_id,
+            v_surg.id,
+            COALESCE(v_cpt_code_id, 1),
+            COALESCE((SELECT MAX(sequence_rank) + 1 FROM public.surgery_procedures WHERE surgery_id = v_surg.id), 1),
+            v_cand.is_primary_recommendation,
+            1,
+            COALESCE(p_override_modifiers, v_cand.suggested_modifiers),
+            COALESCE(p_override_laterality, v_cand.suggested_laterality),
+            v_cpt.description,
+            'Coded',
+            'AI_ASSISTED',
+            COALESCE(v_cpt.gross_charge, 0.00),
+            COALESCE(v_cpt.reimbursement, 0.00),
+            v_user_id,
+            NOW(),
+            NOW()
+        )
+        RETURNING id INTO v_proc_id;
+    END IF;
 
     -- 6. Update candidate status
     UPDATE public.cpt_coding_candidates
