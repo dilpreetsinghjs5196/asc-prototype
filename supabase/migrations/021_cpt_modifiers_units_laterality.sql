@@ -459,7 +459,11 @@ CREATE OR REPLACE FUNCTION public.calculate_surgery_financials(
     p_surgery_id BIGINT,
     p_freeze BOOLEAN DEFAULT false
 )
-RETURNS JSONB AS $$
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
     v_surg RECORD;
     v_proc RECORD;
@@ -599,8 +603,10 @@ BEGIN
             medications_cost,
             total_cost,
             net_margin,
-            margin_per_minute,
-            snapshot_reason,
+            margin_per_or_minute,
+            calculation_version,
+            snapshot_data,
+            frozen_at,
             frozen_by
         ) VALUES (
             p_surgery_id,
@@ -615,24 +621,43 @@ BEGIN
             v_total_cost,
             v_net_margin,
             v_margin_per_min,
-            CASE WHEN p_freeze = true THEN 'MANUAL_FREEZE' ELSE 'AUTO_STATUS_CHANGE' END,
+            'v1.2-phase44-bilateral',
+            jsonb_build_object(
+                'case_id', p_surgery_id,
+                'status', v_surg.status,
+                'payment_model', v_surg.payment_model,
+                'total_minutes', v_total_minutes,
+                'mppr_applied', v_is_mppr_enabled
+            ),
+            NOW(),
             auth.uid()
         )
         ON CONFLICT (surgery_id) DO UPDATE SET
             gross_revenue = EXCLUDED.gross_revenue,
             expected_reimbursement = EXCLUDED.expected_reimbursement,
+            room_cost = EXCLUDED.room_cost,
+            labor_cost = EXCLUDED.labor_cost,
+            supplies_cost = EXCLUDED.supplies_cost,
+            implants_cost = EXCLUDED.implants_cost,
+            medications_cost = EXCLUDED.medications_cost,
             total_cost = EXCLUDED.total_cost,
             net_margin = EXCLUDED.net_margin,
-            margin_per_minute = EXCLUDED.margin_per_minute,
-            created_at = NOW();
+            margin_per_or_minute = EXCLUDED.margin_per_or_minute,
+            calculation_version = EXCLUDED.calculation_version,
+            snapshot_data = EXCLUDED.snapshot_data,
+            frozen_at = NOW(),
+            frozen_by = auth.uid();
     END IF;
 
     RETURN jsonb_build_object(
         'surgery_id', p_surgery_id,
+        'gross_revenue', v_total_revenue,
+        'expected_reimbursement', v_total_revenue,
         'total_revenue', v_total_revenue,
         'total_cost', v_total_cost,
         'net_margin', v_net_margin,
         'margin_per_minute', v_margin_per_min,
+        'margin_per_or_minute', v_margin_per_min,
         'is_mppr_applied', v_is_mppr_enabled
     );
 END;
