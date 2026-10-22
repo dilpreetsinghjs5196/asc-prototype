@@ -52,7 +52,7 @@ describe('Phase 37 — Data Migration from Surgeries & Relational Normalization 
       const sql = fs.readFileSync(migPath, 'utf8');
       assert.ok(sql.includes('public.case_staff_assignments'), 'Must insert into case_staff_assignments');
       assert.ok(sql.includes('9, 8, 12, 10, 11'), 'Must extract staff array for Case 254');
-      assert.ok(sql.includes('Circulating_RN'), 'Must assign proper clinical roles');
+      assert.ok(sql.includes('Circulating_Nurse'), 'Must assign proper clinical roles');
     });
 
     it('Migration 016 extracts notes tray cost and anesthesia fees into typed columns', () => {
@@ -61,10 +61,16 @@ describe('Phase 37 — Data Migration from Surgeries & Relational Normalization 
       assert.ok(sql.includes('cosmetic_anesthesia_fee'), 'Must extract anesthesia fees from notes');
     });
 
+    it('Migration 016 temporarily disables FSM trigger during maintenance update', () => {
+      const sql = fs.readFileSync(migPath, 'utf8');
+      assert.ok(sql.includes('DISABLE TRIGGER trg_validate_case_status_transition'), 'Must disable FSM trigger during migration');
+      assert.ok(sql.includes('ENABLE TRIGGER trg_validate_case_status_transition'), 'Must re-enable FSM trigger after update');
+    });
+
     it('Migration 016 freezes baseline snapshots for Completed cases', () => {
       const sql = fs.readFileSync(migPath, 'utf8');
       assert.ok(sql.includes('public.surgery_financial_snapshots'), 'Must insert into surgery_financial_snapshots');
-      assert.ok(sql.includes("'MIGRATION_BASELINE_FREEZE'"), 'Must tag snapshot_type MIGRATION_BASELINE_FREEZE');
+      assert.ok(sql.includes('PHASE_37_HISTORICAL_BASELINE_FREEZE'), 'Must tag snapshot with baseline freeze source');
       assert.ok(sql.includes("s.status = 'Completed'"), 'Must freeze all Completed cases');
     });
 

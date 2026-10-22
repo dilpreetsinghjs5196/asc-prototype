@@ -19,11 +19,11 @@ ALTER TABLE public.surgeries
 
 -- 4. Delete migration baseline financial snapshots
 DELETE FROM public.surgery_financial_snapshots
-WHERE snapshot_type = 'MIGRATION_BASELINE_FREEZE';
+WHERE snapshot_data ->> 'source' = 'PHASE_37_HISTORICAL_BASELINE_FREEZE';
 
 -- 5. Delete migration perioperative milestones
 DELETE FROM public.case_milestones
-WHERE notes = 'Historical migration baseline milestone';
+WHERE verification_notes = 'Historical migration baseline milestone';
 
 -- 6. Delete Case 254 extracted staff assignments
 DELETE FROM public.case_staff_assignments
@@ -33,10 +33,9 @@ WHERE surgery_id = 254;
 DROP INDEX IF EXISTS public.uq_facility_source_case;
 DROP INDEX IF EXISTS public.uq_surgeries_case_uuid;
 
--- 8. Restore quarantined AI prototype cases to Scheduled
+-- 8. Restore quarantined AI prototype cases
 UPDATE public.surgeries
-SET status = 'Scheduled',
-    source_system = 'MANUAL',
+SET source_system = 'MANUAL',
     source_case_id = NULL
 WHERE id IN (244, 253, 257, 258);
 
