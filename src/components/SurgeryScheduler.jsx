@@ -5,7 +5,7 @@ import jsPDF from 'jspdf';
 import {
     Search, Edit, Trash2, Clock,
     DollarSign, AlertCircle, Check, ChevronDown, ChevronUp, Wand2, MessageSquare,
-    ArrowUp, ArrowDown, Plus, Tag, Star
+    ArrowUp, ArrowDown, Plus, Tag, Star, Users
 } from 'lucide-react';
 import { calculateMedicareRevenue } from '../utils/hospitalUtils';
 import ORBlockSchedule from './ORBlockSchedule';

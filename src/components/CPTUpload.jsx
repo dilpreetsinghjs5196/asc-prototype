@@ -44,15 +44,18 @@ const CPTUpload = () => {
             const code = String(row[0]).trim();
             const description = row[1] ? String(row[1]).trim() : '';
             const reimbursement = row[5] !== undefined && row[5] !== '' ? parseFloat(row[5]) : null;
-            // 350% Gross Charge is in column H (index 7)
-            const grossCharge = row[7] !== undefined && row[7] !== '' ? parseFloat(row[7]) : null;
+            // 350% Gross Charge from column H (index 7) or calculated as ROUND(reimbursement * 3.5, 0)
+            let grossCharge = row[7] !== undefined && row[7] !== '' ? parseFloat(row[7]) : null;
+            if ((grossCharge === null || isNaN(grossCharge)) && reimbursement !== null && !isNaN(reimbursement)) {
+              grossCharge = Math.round(reimbursement * 3.5);
+            }
             
             // Only add rows that have a valid code AND a valid gross charge
             if (code && grossCharge !== null && !isNaN(grossCharge)) {
               parsedData.push({
                 code: code,
                 description: description,
-                reimbursement: isNaN(reimbursement) ? null : reimbursement,
+                reimbursement: isNaN(reimbursement) ? 0 : reimbursement,
                 gross_charge: grossCharge,
                 effective_date: new Date().toISOString().split('T')[0],
                 termination_date: null
@@ -81,24 +84,26 @@ const CPTUpload = () => {
     setProgress(0);
     
     try {
-      // First, get all existing codes in batches
+      const activeFacility = db.getActiveFacility()?.id || null;
+      const effectiveDateStr = new Date().toISOString().split('T')[0];
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+      // Fetch existing codes in chunks to identify rate changes & prior versions
       const existingMap = {};
-      const chunkSize = 100;
+      const chunkSize = 200;
       
       for (let i = 0; i < data.length; i += chunkSize) {
         const chunk = data.slice(i, i + chunkSize);
         const codes = chunk.map(d => d.code);
         
-        // Order by id descending to get the most recent version of the code
-        const { data: existingRecords, error: fetchError } = await supabase
+        const { data: existingRecords } = await supabase
           .from('cpt_codes')
-          .select('*')
+          .select('id, code, reimbursement, gross_charge, termination_date, effective_date')
           .in('code', codes)
-          .order('id', { ascending: false });
+          .order('effective_date', { ascending: false });
           
-        if (!fetchError && existingRecords) {
+        if (existingRecords) {
           existingRecords.forEach(record => {
-            // Since it's ordered descending, the first one we see is the latest.
             if (!existingMap[record.code]) {
               existingMap[record.code] = record;
             }
@@ -106,7 +111,7 @@ const CPTUpload = () => {
         }
       }
 
-      // Fetch max ID to handle cases where Postgres sequence is out of sync
+      // Fetch max ID to maintain sequence compatibility
       const { data: maxIdData } = await supabase
         .from('cpt_codes')
         .select('id')
@@ -115,41 +120,57 @@ const CPTUpload = () => {
         
       let nextId = maxIdData && maxIdData.length > 0 ? maxIdData[0].id + 1 : 1;
 
-      let processed = 0;
-      for (const item of data) {
+      // 1. Terminate previous versions that are currently active
+      const codesToTerminate = [];
+      data.forEach(item => {
+        const existing = existingMap[item.code];
+        if (existing && !existing.termination_date) {
+          codesToTerminate.push(existing.id);
+        }
+      });
+
+      if (codesToTerminate.length > 0) {
+        for (let i = 0; i < codesToTerminate.length; i += 200) {
+          const chunkIds = codesToTerminate.slice(i, i + 200);
+          await supabase
+            .from('cpt_codes')
+            .update({ termination_date: yesterday, is_active: false })
+            .in('id', chunkIds);
+        }
+      }
+
+      // 2. Insert new versions in chunks with 350% gross charge rule
+      const payloads = data.map(item => {
         const existing = existingMap[item.code] || {};
-        
-        // Remove fields from 'existing' that shouldn't be copied verbatim to a new row
-        const { id: _id, created_at: _created_at, ...restExisting } = existing;
-        
-        // Use existing value if new value is empty/null, and preserve other required columns
-        const payload = {
+        return {
           id: nextId++,
-          facility_id: existing.facility_id || db.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002',
+          facility_id: activeFacility, // NULL for global standard catalog or tenant facility
           is_active: true,
           turnover_time: 30,
           procedure_group: 'General Procedures',
-          category: 'General',
-          ...restExisting,
+          category: existing.category || 'General',
           code: item.code,
           description: item.description || existing.description || '',
           reimbursement: item.reimbursement !== null ? item.reimbursement : (existing.reimbursement ?? 0),
-          gross_charge: item.gross_charge !== null ? item.gross_charge : (existing.gross_charge ?? 0),
-          effective_date: item.effective_date, // Always use new effective date (today)
+          // Enforce whole-dollar 350% gross charge rule
+          gross_charge: item.gross_charge ? item.gross_charge : Math.round(Number(item.reimbursement || 0) * 3.5),
+          effective_date: effectiveDateStr,
           termination_date: null,
-          cost: existing.cost !== undefined ? existing.cost : 0
+          cost: existing.cost !== undefined ? existing.cost : 0,
+          original_filename: file?.name || 'CPT_EXCEL_UPLOAD'
         };
-        
-        // We ALWAYS insert a new row to preserve history (versioning)
-        const { error: insertError } = await supabase.from('cpt_codes').insert([payload]);
-        
+      });
+
+      let insertedCount = 0;
+      for (let i = 0; i < payloads.length; i += chunkSize) {
+        const batch = payloads.slice(i, i + chunkSize);
+        const { error: insertError } = await supabase.from('cpt_codes').insert(batch);
         if (insertError) {
-          console.error("Error inserting code", item.code, insertError);
+          console.error("Batch insert error:", insertError);
           throw insertError;
         }
-
-        processed++;
-        setProgress(Math.round((processed / data.length) * 100));
+        insertedCount += batch.length;
+        setProgress(Math.round((insertedCount / payloads.length) * 100));
       }
       
       setSuccess(true);
@@ -157,7 +178,7 @@ const CPTUpload = () => {
       setFile(null);
     } catch (err) {
       console.error("Database upload error:", err);
-      setError("Failed to upload data to the database.");
+      setError("Failed to upload data to the database: " + (err.message || String(err)));
     } finally {
       setLoading(false);
     }

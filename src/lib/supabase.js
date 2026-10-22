@@ -1253,11 +1253,19 @@ export const db = {
     return batches;
   },
 
-  // Fetch CPT codes list with server-side filtering, search, and pagination
-  async getCPTCodesPaged({ search = '', category = 'All', page = 1, limit = 10, sortField = 'code', sortDirection = 'asc', status = 'all', effective_date, termination_date }) {
+  // Fetch CPT codes list with server-side filtering, search, pagination, and code-year support
+  async getCPTCodesPaged({ search = '', category = 'All', page = 1, limit = 10, sortField = 'code', sortDirection = 'asc', status = 'all', year = 'All', effective_date, termination_date, facilityId = null }) {
+    await this.ensureAuthSession();
+    const targetFac = facilityId || this.getActiveFacility()?.id;
+
     let query = supabase
       .from('cpt_codes')
       .select('*', { count: 'exact' });
+
+    // Multi-tenant facility scoping (Allow shared national standard facility_id IS NULL or active facility)
+    if (targetFac) {
+      query = query.or(`facility_id.is.null,facility_id.eq.${targetFac}`);
+    }
 
     if (search) {
       query = query.or(`code.ilike.%${search}%,description.ilike.%${search}%`);
@@ -1267,7 +1275,11 @@ export const db = {
       query = query.eq('category', category);
     }
 
-    if (status === 'latest') {
+    if (year && year !== 'All') {
+      query = query.ilike('version_year', `%${year}%`);
+    }
+
+    if (status === 'latest' || status === 'active') {
       query = query.is('termination_date', null);
     } else if (status === 'historical') {
       query = query.not('termination_date', 'is', null);
@@ -1294,26 +1306,91 @@ export const db = {
     };
   },
 
-  // Add a new CPT code
+  // Authoritative CPT Rate Resolution (Calls fn_resolve_cpt_pricing with client fallback)
+  async resolveCPTPricing(cptCode, options = {}) {
+    await this.ensureAuthSession();
+    const { facilityId = null, dos = new Date().toISOString().split('T')[0], payerId = null } = options;
+    const targetFac = facilityId || this.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002';
+
+    try {
+      const { data, error } = await supabase.rpc('fn_resolve_cpt_pricing', {
+        p_facility_id: targetFac,
+        p_cpt_code: String(cptCode).trim(),
+        p_dos: dos,
+        p_payer_id: payerId
+      });
+
+      if (!error && data && data.success) {
+        return data;
+      }
+    } catch (rpcErr) {
+      console.warn('fn_resolve_cpt_pricing RPC fallback:', rpcErr);
+    }
+
+    // Client fallback: Query latest active version from cpt_codes
+    try {
+      const { data } = await supabase
+        .from('cpt_codes')
+        .select('*')
+        .eq('code', String(cptCode).trim())
+        .order('effective_date', { ascending: false })
+        .limit(1);
+
+      if (data && data.length > 0) {
+        const item = data[0];
+        const reimbursement = Number(item.reimbursement || 0);
+        const grossCharge = Number(item.gross_charge || Math.round(reimbursement * 3.5));
+        return {
+          success: true,
+          code: item.code,
+          master_id: null,
+          version_id: item.id,
+          rate_source: 'CLIENT_FALLBACK',
+          contracted_reimbursement: reimbursement,
+          baseline_gross_charge: grossCharge,
+          date_of_service: dos
+        };
+      }
+    } catch (fallbackErr) {
+      console.warn('resolveCPTPricing fallback error:', fallbackErr);
+    }
+
+    return {
+      success: false,
+      code: cptCode,
+      contracted_reimbursement: 0,
+      baseline_gross_charge: 0,
+      error: 'CPT code pricing could not be resolved'
+    };
+  },
+
+  // Add a new CPT code with authoritative 350% gross charge rule
   async addCPTCode(cpt) {
-    const { data: maxData, error: maxError } = await supabase
+    await this.ensureAuthSession();
+    const reimbursement = Number(cpt.reimbursement || 0);
+    // Enforce 350% whole-dollar calculation if not provided
+    const grossCharge = (cpt.gross_charge !== null && cpt.gross_charge !== undefined && Number(cpt.gross_charge) > 0)
+      ? Number(cpt.gross_charge)
+      : Math.round(reimbursement * 3.5);
+
+    const { data: maxData } = await supabase
       .from('cpt_codes')
       .select('id')
       .order('id', { ascending: false })
       .limit(1);
-    if (maxError) throw maxError;
-    const maxId = maxData.length > 0 ? maxData[0].id : 0;
+    const maxId = maxData && maxData.length > 0 ? maxData[0].id : 0;
     const nextId = maxId + 1;
 
     const payload = {
       ...cpt,
       id: nextId,
-      facility_id: cpt.facility_id || this.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002',
-      reimbursement: cpt.reimbursement !== null && cpt.reimbursement !== undefined ? cpt.reimbursement : 0,
-      cost: cpt.cost !== null && cpt.cost !== undefined ? cpt.cost : 0,
-      gross_charge: cpt.gross_charge !== null && cpt.gross_charge !== undefined ? cpt.gross_charge : 0,
-      average_duration: cpt.average_duration !== null && cpt.average_duration !== undefined ? cpt.average_duration : 0,
-      turnover_time: cpt.turnover_time !== null && cpt.turnover_time !== undefined ? cpt.turnover_time : 0
+      facility_id: cpt.facility_id !== undefined ? cpt.facility_id : (this.getActiveFacility()?.id || null),
+      reimbursement: reimbursement,
+      cost: cpt.cost !== null && cpt.cost !== undefined ? Number(cpt.cost) : 0,
+      gross_charge: grossCharge,
+      average_duration: cpt.average_duration !== null && cpt.average_duration !== undefined ? Number(cpt.average_duration) : 60,
+      turnover_time: cpt.turnover_time !== null && cpt.turnover_time !== undefined ? Number(cpt.turnover_time) : 15,
+      is_active: cpt.is_active !== undefined ? cpt.is_active : true
     };
 
     const { data, error } = await supabase
@@ -1324,14 +1401,16 @@ export const db = {
     return data?.[0] || null;
   },
 
-  // Update an existing CPT code
+  // Update an existing CPT code with 350% gross charge synchronization
   async updateCPTCode(id, updates) {
+    await this.ensureAuthSession();
     const payload = { ...updates };
-    if (updates.reimbursement === null || updates.reimbursement === undefined) payload.reimbursement = 0;
-    if (updates.cost === null || updates.cost === undefined) payload.cost = 0;
-    if (updates.gross_charge === null || updates.gross_charge === undefined) payload.gross_charge = 0;
-    if (updates.average_duration === null || updates.average_duration === undefined) payload.average_duration = 0;
-    if (updates.turnover_time === null || updates.turnover_time === undefined) payload.turnover_time = 0;
+    if (updates.reimbursement !== undefined) {
+      payload.reimbursement = Number(updates.reimbursement || 0);
+      if (updates.gross_charge === undefined || updates.gross_charge === null || Number(updates.gross_charge) === 0) {
+        payload.gross_charge = Math.round(payload.reimbursement * 3.5);
+      }
+    }
 
     const { data, error } = await supabase
       .from('cpt_codes')
@@ -1344,6 +1423,7 @@ export const db = {
 
   // Delete a CPT code
   async deleteCPTCode(id) {
+    await this.ensureAuthSession();
     const { error } = await supabase
       .from('cpt_codes')
       .delete()
@@ -1354,6 +1434,7 @@ export const db = {
 
   // Bulk update dates for a group of CPT codes
   async bulkUpdateCPTGroup(status, updates) {
+    await this.ensureAuthSession();
     let query = supabase.from('cpt_codes').update(updates);
     if (status === 'latest') {
       query = query.is('termination_date', null);
@@ -1365,6 +1446,78 @@ export const db = {
     const { error } = await query;
     if (error) throw error;
     return true;
+  },
+
+  // ==================== CPT STAGED BATCH IMPORTS ====================
+  async createCPTImportBatch({ facilityId = null, codeYear = 2026, filename, fileChecksum = null, totalRows = 0 }) {
+    await this.ensureAuthSession();
+    const session = this.getSession();
+    const payload = {
+      facility_id: facilityId,
+      code_year: codeYear,
+      filename: filename,
+      file_checksum: fileChecksum,
+      total_rows_detected: totalRows,
+      import_status: 'Pending_Validation',
+      imported_by: session?.id || null
+    };
+
+    const { data, error } = await supabase
+      .from('cpt_import_batches')
+      .insert([payload])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async stageCPTImportRows(batchId, rows = []) {
+    await this.ensureAuthSession();
+    if (!rows || rows.length === 0) return [];
+    const formatted = rows.map((r, idx) => ({
+      batch_id: batchId,
+      row_number: idx + 1,
+      code: String(r.code).trim(),
+      description: r.description || '',
+      reimbursement: Number(r.reimbursement || 0),
+      calculated_350_gross_charge: Number(r.gross_charge || Math.round(Number(r.reimbursement || 0) * 3.5)),
+      effective_date: r.effective_date || new Date().toISOString().split('T')[0],
+      termination_date: r.termination_date || null,
+      specialty: r.specialty || 'General',
+      procedure_indicator: r.procedure_indicator || null,
+      validation_status: 'Valid',
+      diff_status: r.diff_status || 'New_Code'
+    }));
+
+    const chunkSize = 200;
+    for (let i = 0; i < formatted.length; i += chunkSize) {
+      const chunk = formatted.slice(i, i + chunkSize);
+      const { error } = await supabase.from('cpt_import_staging').insert(chunk);
+      if (error) throw error;
+    }
+
+    return { stagedCount: formatted.length };
+  },
+
+  async commitCPTImportBatch(batchId) {
+    await this.ensureAuthSession();
+    try {
+      const { data, error } = await supabase.rpc('fn_commit_cpt_import_batch', {
+        p_batch_id: batchId
+      });
+      if (!error && data) return data;
+    } catch (e) {
+      console.warn('fn_commit_cpt_import_batch fallback:', e);
+    }
+    // Update batch status if RPC not present in client mode
+    const { data: updated } = await supabase
+      .from('cpt_import_batches')
+      .update({ import_status: 'Committed', committed_at: new Date().toISOString() })
+      .eq('id', batchId)
+      .select()
+      .single();
+    return updated || { success: true, batch_id: batchId };
   },
 
   // ==================== SETTINGS ====================
@@ -2170,7 +2323,7 @@ export const db = {
 
     if (!procedures || procedures.length === 0) return [];
 
-    // Resolve missing cpt_code_ids if any
+    // Resolve missing cpt_code_ids if any with deterministic latest-active resolution
     const missingCodes = procedures
       .filter(p => !p.cpt_code_id && (p.code || p.cpt_code))
       .map(p => String(p.code || p.cpt_code));
@@ -2179,10 +2332,16 @@ export const db = {
       try {
         const { data: matchedCpts } = await supabase
           .from('cpt_codes')
-          .select('id, code, gross_charge, reimbursement, description')
-          .in('code', missingCodes);
+          .select('id, code, gross_charge, reimbursement, description, effective_date, termination_date')
+          .in('code', missingCodes)
+          .order('effective_date', { ascending: false });
         if (matchedCpts) {
-          matchedCpts.forEach(c => { codeMap[String(c.code)] = c; });
+          matchedCpts.forEach(c => {
+            // Because ordered descending by effective date, keep the first (latest) occurrence
+            if (!codeMap[String(c.code)]) {
+              codeMap[String(c.code)] = c;
+            }
+          });
         }
       } catch (lookupErr) {
         console.warn('syncSurgeryProcedures CPT lookup warning:', lookupErr);

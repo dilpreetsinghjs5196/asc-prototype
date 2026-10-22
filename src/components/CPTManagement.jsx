@@ -273,7 +273,10 @@ export default function CPTManagement({
       cost: form.cost === '' ? 0 : parseFloat(form.cost),
       average_duration: form.average_duration === '' ? 0 : parseInt(form.average_duration, 10),
       turnover_time: form.turnover_time === '' ? 0 : parseInt(form.turnover_time, 10),
-      gross_charge: form.gross_charge === '' ? 0 : parseFloat(form.gross_charge),
+      // Enforce authoritative whole-dollar 350% gross charge rule
+      gross_charge: (form.gross_charge !== '' && !isNaN(parseFloat(form.gross_charge)) && parseFloat(form.gross_charge) > 0)
+        ? parseFloat(form.gross_charge)
+        : Math.round(parseFloat(form.reimbursement || 0) * 3.5),
       is_active: form.active_published && form.active_code,
       facility_id: form.facility_id || activeFacility?.id || null
     };
@@ -521,6 +524,11 @@ export default function CPTManagement({
                     <tr key={cpt.id} className="clickable-row" style={isHistorical ? { backgroundColor: 'rgba(0,0,0,0.1)', opacity: 0.8 } : {}}>
                       <td style={{ fontWeight: '700', fontFamily: 'monospace', color: 'var(--color-blue)', letterSpacing: '0.5px' }}>
                         {cpt.code}
+                        {cpt.facility_id === null && (
+                          <span style={{ marginLeft: '6px', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '4px', background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', fontWeight: '500' }} title="CMS National Standard Catalog">
+                            CMS
+                          </span>
+                        )}
                       </td>
                       <td style={{ fontWeight: '500', color: 'var(--text-primary)' }}>{cpt.description}</td>
                       <td>{cpt.category || 'N/A'}</td>
