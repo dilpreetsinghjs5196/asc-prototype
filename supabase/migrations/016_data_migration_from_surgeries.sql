@@ -194,8 +194,8 @@ SELECT
         ELSE 'Circulating_Nurse'
     END,
     true,
-    (s.date::TEXT || ' ' || COALESCE(s.scheduled_start_time, '08:00:00'::TIME)::TEXT)::TIMESTAMPTZ,
-    (s.date::TEXT || ' ' || COALESCE(s.scheduled_start_time, '08:00:00'::TIME)::TEXT)::TIMESTAMPTZ + INTERVAL '60 minutes',
+    (s.date::TEXT || ' ' || COALESCE(s.scheduled_start_time::TEXT, s.start_time::TEXT, '08:00:00'))::TIMESTAMPTZ,
+    (s.date::TEXT || ' ' || COALESCE(s.scheduled_start_time::TEXT, s.start_time::TEXT, '08:00:00'))::TIMESTAMPTZ + INTERVAL '60 minutes',
     60,
     COALESCE(st.hourly_rate, 45.00),
     COALESCE(st.hourly_rate, 45.00),
@@ -227,7 +227,7 @@ SELECT
     s.facility_id,
     s.id,
     'WHEELS_IN_OR',
-    (s.date::TEXT || ' ' || COALESCE(s.actual_start_time, s.scheduled_start_time, '08:00:00'::TIME)::TEXT)::TIMESTAMPTZ,
+    (s.date::TEXT || ' ' || COALESCE(s.actual_start_time::TEXT, s.scheduled_start_time::TEXT, s.start_time::TEXT, '08:00:00'))::TIMESTAMPTZ,
     NOW(),
     'Historical migration baseline milestone'
 FROM public.surgeries s
@@ -247,7 +247,7 @@ SELECT
     s.facility_id,
     s.id,
     'SURGICAL_INCISION',
-    (s.date::TEXT || ' ' || COALESCE(s.actual_start_time, s.scheduled_start_time, '08:00:00'::TIME)::TEXT)::TIMESTAMPTZ,
+    (s.date::TEXT || ' ' || COALESCE(s.actual_start_time::TEXT, s.scheduled_start_time::TEXT, s.start_time::TEXT, '08:00:00'))::TIMESTAMPTZ,
     NOW(),
     'Historical migration baseline milestone'
 FROM public.surgeries s
@@ -267,7 +267,7 @@ SELECT
     s.facility_id,
     s.id,
     'WHEELS_OUT_OR',
-    (s.date::TEXT || ' ' || COALESCE(s.actual_end_time, '09:00:00'::TIME)::TEXT)::TIMESTAMPTZ,
+    (s.date::TEXT || ' ' || COALESCE(s.actual_end_time::TEXT, '09:00:00'))::TIMESTAMPTZ,
     NOW(),
     'Historical migration baseline milestone'
 FROM public.surgeries s
