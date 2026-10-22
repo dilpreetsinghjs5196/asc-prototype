@@ -646,15 +646,15 @@ ALTER TABLE public.cpt_modifier_master ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cpt_modifier_conflicts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cpt_billing_rules ENABLE ROW LEVEL SECURITY;
 
--- Read policies for authenticated users
+-- Read policies for authenticated and anon users
 CREATE POLICY rls_cmm_select ON public.cpt_modifier_master
-    FOR SELECT TO authenticated USING (true);
+    FOR SELECT TO authenticated, anon USING (true);
 
 CREATE POLICY rls_cmc_select ON public.cpt_modifier_conflicts
-    FOR SELECT TO authenticated USING (true);
+    FOR SELECT TO authenticated, anon USING (true);
 
 CREATE POLICY rls_cbr_select ON public.cpt_billing_rules
-    FOR SELECT TO authenticated USING (true);
+    FOR SELECT TO authenticated, anon USING (true);
 
 -- Super admin write policies
 CREATE POLICY rls_cmm_all ON public.cpt_modifier_master
