@@ -30,7 +30,8 @@ ALTER TABLE public.cpt_codes
     DROP COLUMN IF EXISTS coverage_status;
 
 -- Re-establish Migration 017 compatibility view
-CREATE OR REPLACE VIEW public.v_cpt_codes_compat AS
+DROP VIEW IF EXISTS public.v_cpt_codes_compat CASCADE;
+CREATE VIEW public.v_cpt_codes_compat AS
 SELECT 
     v.legacy_cpt_id AS id,
     m.code,

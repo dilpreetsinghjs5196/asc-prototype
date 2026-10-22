@@ -562,7 +562,8 @@ CREATE POLICY rls_cms_coverage_modify ON public.cms_coverage_determinations
 -- 10. REFRESH BACKWARD COMPATIBILITY VIEW
 -- ==============================================================================
 
-CREATE OR REPLACE VIEW public.v_cpt_codes_compat AS
+DROP VIEW IF EXISTS public.v_cpt_codes_compat CASCADE;
+CREATE VIEW public.v_cpt_codes_compat AS
 SELECT 
     v.legacy_cpt_id AS id,
     m.code,
