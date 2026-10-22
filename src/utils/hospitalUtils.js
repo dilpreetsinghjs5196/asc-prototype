@@ -463,3 +463,229 @@ export const redactPHI = (data) => {
 
     return data;
 };
+
+// ==============================================================================
+// PHASE 44: CPT MODIFIERS, UNITS & LATERALITY DETERMINISTIC RULES
+// ==============================================================================
+
+export const CANONICAL_ASC_MODIFIERS = [
+    { code: '50', name: 'Bilateral Procedure', category: 'bilateral', description: 'Bilateral procedure in same operative session (150% allowable)' },
+    { code: 'RT', name: 'Right Side', category: 'anatomical', description: 'Right side of paired anatomical structure' },
+    { code: 'LT', name: 'Left Side', category: 'anatomical', description: 'Left side of paired anatomical structure' },
+    { code: '59', name: 'Distinct Procedural Service', category: 'distinct_service', description: 'Procedure distinct/independent from other services on same day' },
+    { code: 'XS', name: 'Separate Structure', category: 'distinct_service', description: 'Service performed on a separate organ or incision' },
+    { code: 'XE', name: 'Separate Encounter', category: 'distinct_service', description: 'Service performed during a distinct operative encounter on same day' },
+    { code: 'XP', name: 'Separate Practitioner', category: 'distinct_service', description: 'Service performed by a different performing physician' },
+    { code: 'XU', name: 'Unusual Non-Overlapping', category: 'distinct_service', description: 'Service that does not overlap usual components of main service' },
+    { code: '51', name: 'Multiple Procedures', category: 'informational', description: 'Multiple procedures; informational in Medicare ASC' },
+    { code: '52', name: 'Reduced Services', category: 'discontinued', description: 'Procedural service reduced or eliminated' },
+    { code: '58', name: 'Staged Procedure', category: 'staged', description: 'Staged or related procedure during postoperative period' },
+    { code: '73', name: 'Discontinued Prior to Anesthesia', category: 'discontinued', description: 'Discontinued prior to anesthesia administration (50% facility fee)' },
+    { code: '74', name: 'Discontinued After Anesthesia', category: 'discontinued', description: 'Discontinued after anesthesia administration (100% facility fee)' },
+    { code: '76', name: 'Repeat Procedure Same MD', category: 'repeat', description: 'Repeat procedure by same performing provider on same day' },
+    { code: '77', name: 'Repeat Procedure Other MD', category: 'repeat', description: 'Repeat procedure by different performing provider on same day' },
+    { code: '78', name: 'Unplanned Return to OR', category: 'staged', description: 'Unplanned return to OR for related procedure during post-op period' },
+    { code: '79', name: 'Unrelated Procedure Post-Op', category: 'staged', description: 'Unrelated procedure by same physician during post-op period' }
+];
+
+export const INCOMPATIBLE_MODIFIER_PAIRS = [
+    { a: 'RT', b: 'LT', message: 'Modifiers RT and LT cannot appear on the same procedure line.' },
+    { a: '50', b: 'RT', message: 'Modifier 50 represents bilateral service and cannot combine with unilateral modifier RT.' },
+    { a: '50', b: 'LT', message: 'Modifier 50 represents bilateral service and cannot combine with unilateral modifier LT.' },
+    { a: '73', b: '74', message: 'Modifiers 73 and 74 are mutually exclusive. A procedure cannot be discontinued both prior to (73) and after (74) anesthesia.' },
+    { a: '73', b: '50', message: 'Modifier 73 cannot be billed with bilateral modifier 50.' },
+    { a: '76', b: '77', message: 'Modifiers 76 and 77 are mutually exclusive. Repeat procedure cannot be reported simultaneously by same (76) and other (77) physician.' },
+    { a: '59', b: 'XE', message: 'Modifier 59 is redundant when specific subset XE is reported.' },
+    { a: '59', b: 'XS', message: 'Modifier 59 is redundant when specific subset XS is reported.' },
+    { a: '59', b: 'XP', message: 'Modifier 59 is redundant when specific subset XP is reported.' },
+    { a: '59', b: 'XU', message: 'Modifier 59 is redundant when specific subset XU is reported.' }
+];
+
+const PAIRED_ANATOMY_KEYWORDS = ['knee', 'shoulder', 'eye', 'ear', 'hip', 'wrist', 'elbow', 'hand', 'foot', 'breast', 'ankle', 'finger', 'toe', 'cataract', 'carpal', 'rotator'];
+const MIDLINE_ANATOMY_KEYWORDS = ['colon', 'spine', 'stomach', 'gallbladder', 'appendix', 'endoscopy', 'liver', 'rectum', 'esophagus', 'throat', 'tongue', 'tonsil', 'back'];
+
+/**
+ * Validates a single procedure line against Phase 44 deterministic rules
+ */
+export const validateProcedureLineClient = (line, allLines = [], cptCatalog = []) => {
+    const errors = [];
+    const warnings = [];
+
+    if (!line) {
+        return { isValid: false, status: 'error', errors: [{ code: 'REQ-001', message: 'Procedure line is required' }], warnings: [] };
+    }
+
+    const codeStr = String(line.code || '');
+    const units = parseInt(line.units, 10) || 1;
+    const modifiers = Array.isArray(line.modifiers) ? line.modifiers : [];
+    const laterality = String(line.laterality || 'NOT_APPLICABLE').toUpperCase();
+
+    // Catalog lookup for anatomical context
+    const catalogItem = cptCatalog.find(c => String(c.code) === codeStr) || {};
+    const descriptor = String(catalogItem.description || line.description || '').toLowerCase();
+    const bodyPart = String(catalogItem.body_part || line.body_part || '').toLowerCase();
+    const combinedText = `${descriptor} ${bodyPart}`;
+
+    const isPaired = PAIRED_ANATOMY_KEYWORDS.some(k => combinedText.includes(k));
+    const isMidline = !isPaired && MIDLINE_ANATOMY_KEYWORDS.some(k => combinedText.includes(k));
+
+    // LAT-001: Midline structure marked with laterality
+    if (isMidline && ['LEFT', 'RIGHT', 'BILATERAL'].includes(laterality)) {
+        errors.push({
+            code: 'LAT-001',
+            message: `Laterality is not applicable to midline procedure "${catalogItem.description || codeStr}". Must be NOT_APPLICABLE.`
+        });
+    }
+
+    // LAT-002: Paired structure marked NOT_APPLICABLE
+    if (isPaired && laterality === 'NOT_APPLICABLE') {
+        errors.push({
+            code: 'LAT-002',
+            message: `Paired anatomical procedure "${catalogItem.description || codeStr}" requires specific laterality (LEFT, RIGHT, or BILATERAL).`
+        });
+    }
+
+    // Modifiers vs Laterality Alignment
+    if (modifiers.includes('RT') && ['LEFT', 'BILATERAL'].includes(laterality)) {
+        errors.push({ code: 'LAT-004', message: 'Modifier RT contradicts assigned laterality.' });
+    }
+    if (modifiers.includes('LT') && ['RIGHT', 'BILATERAL'].includes(laterality)) {
+        errors.push({ code: 'LAT-005', message: 'Modifier LT contradicts assigned laterality.' });
+    }
+    if (modifiers.includes('50') && laterality !== 'BILATERAL') {
+        errors.push({ code: 'LAT-006', message: 'Modifier 50 requires laterality to be BILATERAL.' });
+    }
+
+    // BILAT-001: Modifier 50 with units > 1
+    if (modifiers.includes('50') && units > 1) {
+        errors.push({
+            code: 'BILAT-001',
+            message: 'Modifier 50 requires units = 1. Doubled units with modifier 50 cause improper 300% billing inflation.'
+        });
+    }
+
+    // Inherently bilateral descriptor check (e.g., bilateral oophorectomy, screening)
+    if (descriptor.includes('bilateral') && !descriptor.includes('unilateral or bilateral')) {
+        if (modifiers.includes('50')) {
+            errors.push({
+                code: 'BILAT-002',
+                message: `CPT code ${codeStr} is inherently bilateral. Modifier 50 is prohibited.`
+            });
+        }
+    }
+
+    // Maximum 4 modifiers (EDI 837P loop 2400 SV101 limit)
+    if (modifiers.length > 4) {
+        errors.push({ code: 'MOD-006', message: 'Exceeds maximum of 4 modifiers per procedure line.' });
+    }
+
+    // Mutually exclusive modifier pairs
+    INCOMPATIBLE_MODIFIER_PAIRS.forEach(({ a, b, message }) => {
+        if (modifiers.includes(a) && modifiers.includes(b)) {
+            errors.push({ code: 'MOD-CONFLICT', message });
+        }
+    });
+
+    // MUE Limits Check
+    const mueValue = parseInt(catalogItem.mue_value || line.mue_value, 10) || 1;
+    if (units > mueValue && mueValue > 0) {
+        warnings.push({
+            code: 'MUE-002',
+            message: `Units (${units}) exceed standard CMS MUE cap (${mueValue}) for CPT ${codeStr}. Requires clinical review.`
+        });
+    }
+
+    // Duplicate Line Detection
+    if (allLines.length > 1) {
+        const matchingLines = allLines.filter(l => String(l.code) === codeStr);
+        if (matchingLines.length > 1) {
+            const hasDistinctLaterality = matchingLines.some(l => (l.modifiers || []).includes('RT')) && matchingLines.some(l => (l.modifiers || []).includes('LT'));
+            const hasRepeatMod = modifiers.includes('76') || modifiers.includes('77');
+            if (!hasDistinctLaterality && !hasRepeatMod) {
+                errors.push({
+                    code: 'DUP-001',
+                    message: `Duplicate CPT code ${codeStr} on encounter requires repeat modifier (76/77) or distinct laterality (RT/LT).`
+                });
+            }
+        }
+    }
+
+    const isValid = errors.length === 0;
+    const status = errors.length > 0 ? 'error' : (warnings.length > 0 ? 'warning' : 'valid');
+
+    return { isValid, status, errors, warnings };
+};
+
+/**
+ * Authoritative ASC Revenue Calculation (Phase 44 Production Logic)
+ * Enforces 150% single-line bilateral rule, discontinued procedure adjustments, and MPPR.
+ */
+export const calculateAuthoritativeAscRevenue = (procedureLines, cptDatabase = [], options = {}) => {
+    if (!Array.isArray(procedureLines) || procedureLines.length === 0) return 0;
+
+    const resolvedLines = procedureLines.map(line => {
+        const item = typeof line === 'string' ? { code: line.trim() } : line;
+        const catalogItem = cptDatabase.find(c => String(c.code) === String(item.code));
+        return {
+            ...catalogItem,
+            ...item,
+            units: Math.max(1, parseInt(item.units, 10) || 1),
+            modifiers: Array.isArray(item.modifiers) ? item.modifiers : [],
+            laterality: item.laterality || 'NOT_APPLICABLE'
+        };
+    });
+
+    const applyMPPR = options.applyMPPR !== false;
+    let totalRevenue = 0;
+
+    // Helper to compute line base price with bilateral and discontinued modifiers
+    const getAdjustedLinePrice = (line) => {
+        const rawRate = parseFloat(line.gross_charge !== undefined ? line.gross_charge : (line.contracted_reimbursement !== undefined ? line.contracted_reimbursement : (line.reimbursement || 0)));
+        const isBilateral = (line.modifiers && line.modifiers.includes('50')) || line.laterality === 'BILATERAL';
+        const isDiscontinuedPre = line.modifiers && line.modifiers.includes('73');
+
+        if (isDiscontinuedPre) {
+            return rawRate * 0.50; // Modifier 73: 50% facility fee
+        }
+        if (isBilateral) {
+            return rawRate * 1.50; // Modifier 50: 150% allowable
+        }
+        return rawRate;
+    };
+
+    if (!applyMPPR) {
+        return resolvedLines.reduce((sum, line) => {
+            const price = getAdjustedLinePrice(line);
+            const isBilateral = (line.modifiers && line.modifiers.includes('50')) || line.laterality === 'BILATERAL';
+            // Under statutory single-line bilateral billing, 150% applies to 1 unit
+            const effectiveUnits = isBilateral ? 1 : line.units;
+            return sum + (price * effectiveUnits);
+        }, 0);
+    }
+
+    // Sort by adjusted line price descending for MPPR ranking
+    const sortedLines = [...resolvedLines].sort((a, b) => getAdjustedLinePrice(b) - getAdjustedLinePrice(a));
+    let eligibleRank = 1;
+
+    sortedLines.forEach(line => {
+        const price = getAdjustedLinePrice(line);
+        const isBilateral = (line.modifiers && line.modifiers.includes('50')) || line.laterality === 'BILATERAL';
+        const effectiveUnits = isBilateral ? 1 : line.units;
+        const isAddOn = String(line.code || '').startsWith('+') || Boolean(line.is_add_on) || Boolean(line.is_mppr_exempt);
+
+        if (isAddOn) {
+            totalRevenue += price * effectiveUnits;
+        } else if (eligibleRank === 1) {
+            // Rank 1 gets 100% on first unit, 50% on subsequent units
+            totalRevenue += price + (price * 0.50 * (effectiveUnits - 1));
+            eligibleRank++;
+        } else {
+            // Rank 2+ gets 50% under MPPR
+            totalRevenue += price * 0.50 * effectiveUnits;
+            eligibleRank++;
+        }
+    });
+
+    return Math.round(totalRevenue * 100) / 100;
+};
+

@@ -55,6 +55,7 @@ export const PERMISSIONS_CATALOG = [
   { code: 'coding.assist', category: 'cpt_codes', name: 'Generate AI Coding Candidates', risk_level: 'standard' },
   { code: 'coding.review', category: 'cpt_codes', name: 'Review & Reject Coding Candidates', risk_level: 'standard' },
   { code: 'coding.approve', category: 'cpt_codes', name: 'Commit Approved CPT Codes to Case', risk_level: 'sensitive' },
+  { code: 'coding.override_validation', category: 'cpt_codes', name: 'Override Coding Validation Warnings', risk_level: 'sensitive' },
   { code: 'coding.export', category: 'reports', name: 'Export Coding Provenance Audit Logs', risk_level: 'sensitive' },
 
   // Finance
@@ -176,7 +177,7 @@ export const rbacService = {
         'surgeons.view', 'surgeons.create', 'surgeons.edit',
         'surgeries.view', 'surgeries.schedule', 'surgeries.edit', 'surgeries.delete', 'surgeries.approve',
         'or.view', 'or.reserve_blocks', 'or.edit_allocations', 'or.release_blocks', 'or.approve_schedule',
-        'cpt.view', 'finance.view_margins', 'reports.export_volume',
+        'cpt.view', 'coding.override_validation', 'finance.view_margins', 'reports.export_volume',
         'ai.run_insights', 'ai.run_simulation', 'ai.auto_schedule',
         'users.view', 'roles.view', 'audit.view_clinical'
       ];
@@ -196,6 +197,7 @@ export const rbacService = {
         'patients.view', 'patients.view_phi', 'patients.edit',
         'surgeons.view', 'surgeries.view', 'surgeries.edit',
         'or.view', 'cpt.view', 'cpt.create', 'cpt.edit', 'cpt.delete',
+        'coding.override_validation',
         'finance.view_margins', 'finance.manage_overtime',
         'billing.view_yield', 'billing.apply_mppr', 'billing.freeze_monthly',
         'reports.export_volume', 'reports.export_margins',
@@ -207,7 +209,7 @@ export const rbacService = {
         'patients.view', 'patients.view_phi',
         'surgeons.view', 'surgeries.view', 'surgeries.edit',
         'cpt.view', 'cpt.create',
-        'coding.assist', 'coding.review', 'coding.approve', 'coding.export',
+        'coding.assist', 'coding.review', 'coding.approve', 'coding.override_validation', 'coding.export',
         'reports.export_volume', 'ai.run_insights'
       ];
     }

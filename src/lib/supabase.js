@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from './env.js';
+import { CANONICAL_ASC_MODIFIERS, INCOMPATIBLE_MODIFIER_PAIRS, validateProcedureLineClient } from '../utils/hospitalUtils.js';
 
 const supabaseUrl = ENV.supabaseUrl || '';
 const supabaseAnonKey = ENV.supabaseAnonKey || '';
@@ -2995,6 +2996,80 @@ export const db = {
       .eq('id', procedureId)
       .select();
 
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  // Phase 44: CPT Modifiers, Units & Laterality Deterministic Rules
+  async validateProcedureLine(surgeryId, cptCode, units = 1, modifiers = [], laterality = 'NOT_APPLICABLE', lineId = null) {
+    try {
+      const { data, error } = await supabase.rpc('fn_validate_procedure_line', {
+        p_surgery_id: surgeryId,
+        p_cpt_code: cptCode,
+        p_units: units,
+        p_modifiers: modifiers,
+        p_laterality: laterality,
+        p_line_id: lineId
+      });
+      if (!error && data) return data;
+    } catch (e) {
+      console.warn('fn_validate_procedure_line fallback:', e);
+    }
+    return validateProcedureLineClient({ code: cptCode, units, modifiers, laterality });
+  },
+
+  async validateCaseProcedures(surgeryId) {
+    if (!surgeryId) return null;
+    try {
+      const { data, error } = await supabase.rpc('fn_validate_case_procedures', {
+        p_surgery_id: surgeryId
+      });
+      if (!error && data) return data;
+    } catch (e) {
+      console.warn('fn_validate_case_procedures fallback:', e);
+    }
+    return { can_approve: true, valid_lines: 0, warning_lines: 0, error_lines: 0 };
+  },
+
+  async getModifierCatalog() {
+    try {
+      const { data, error } = await supabase
+        .from('cpt_modifier_master')
+        .select('*')
+        .eq('is_active', true)
+        .order('category', { ascending: true });
+      if (!error && Array.isArray(data) && data.length > 0) return data;
+    } catch (e) {
+      console.warn('getModifierCatalog fallback:', e);
+    }
+    return CANONICAL_ASC_MODIFIERS;
+  },
+
+  async getModifierConflicts() {
+    try {
+      const { data, error } = await supabase
+        .from('cpt_modifier_conflicts')
+        .select('*');
+      if (!error && Array.isArray(data) && data.length > 0) return data;
+    } catch (e) {
+      console.warn('getModifierConflicts fallback:', e);
+    }
+    return INCOMPATIBLE_MODIFIER_PAIRS;
+  },
+
+  async overrideProcedureLineValidation(procedureId, overrideReason) {
+    if (!procedureId || !overrideReason) {
+      throw new Error('Procedure ID and override reason are required.');
+    }
+    const { data, error } = await supabase
+      .from('surgery_procedures')
+      .update({
+        validation_status: 'warning',
+        override_reason: overrideReason,
+        override_at: new Date().toISOString()
+      })
+      .eq('id', procedureId)
+      .select();
     if (error) throw error;
     return data?.[0] || null;
   },

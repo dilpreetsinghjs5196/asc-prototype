@@ -7,7 +7,7 @@ import {
     DollarSign, AlertCircle, Check, ChevronDown, ChevronUp, Wand2, MessageSquare,
     ArrowUp, ArrowDown, Plus, Tag, Star, Users
 } from 'lucide-react';
-import { calculateMedicareRevenue } from '../utils/hospitalUtils';
+import { calculateMedicareRevenue, validateProcedureLineClient } from '../utils/hospitalUtils';
 import ORBlockSchedule from './ORBlockSchedule';
 import CaseTimelineModal from './CaseTimelineModal';
 import CodingAssistantModal from './CodingAssistantModal';
@@ -1376,6 +1376,18 @@ const SurgeryScheduler = ({
             let val = value;
             if (field === 'units') {
                 val = Math.min(99, Math.max(1, parseInt(value, 10) || 1));
+                // Phase 44: If modifier 50 is present, warn if units > 1
+                if (val > 1 && (updated[index].modifiers || []).includes('50')) {
+                    Swal.fire({
+                        title: 'Bilateral Unit Notice',
+                        text: 'Under CMS Medicare ASC rules, modifier 50 must have units = 1 (150% allowable). Units > 1 cause improper billing inflation.',
+                        icon: 'warning',
+                        timer: 2500,
+                        showConfirmButton: false,
+                        background: 'var(--bg-card)',
+                        color: 'var(--text-primary)'
+                    });
+                }
             }
 
             const line = { ...updated[index], [field]: val };
@@ -1384,7 +1396,8 @@ const SurgeryScheduler = ({
             if (field === 'laterality' && val === 'BILATERAL') {
                 const currentMods = line.modifiers || [];
                 if (!currentMods.includes('50') && currentMods.length < 4) {
-                    line.modifiers = [...currentMods, '50'];
+                    // Remove conflicting unilateral modifiers
+                    line.modifiers = currentMods.filter(m => m !== 'RT' && m !== 'LT').concat('50');
                 }
             }
 
@@ -1407,6 +1420,52 @@ const SurgeryScheduler = ({
             if (modIdx > -1) {
                 currentMods.splice(modIdx, 1);
             } else {
+                // Incompatible modifier resolution
+                if (modCode === 'RT') {
+                    const ltIdx = currentMods.indexOf('LT');
+                    if (ltIdx > -1) currentMods.splice(ltIdx, 1);
+                    const bIdx = currentMods.indexOf('50');
+                    if (bIdx > -1) currentMods.splice(bIdx, 1);
+                } else if (modCode === 'LT') {
+                    const rtIdx = currentMods.indexOf('RT');
+                    if (rtIdx > -1) currentMods.splice(rtIdx, 1);
+                    const bIdx = currentMods.indexOf('50');
+                    if (bIdx > -1) currentMods.splice(bIdx, 1);
+                } else if (modCode === '50') {
+                    const rtIdx = currentMods.indexOf('RT');
+                    if (rtIdx > -1) currentMods.splice(rtIdx, 1);
+                    const ltIdx = currentMods.indexOf('LT');
+                    if (ltIdx > -1) currentMods.splice(ltIdx, 1);
+                    const dIdx = currentMods.indexOf('73');
+                    if (dIdx > -1) currentMods.splice(dIdx, 1);
+                    // Single-line bilateral unit clamp
+                    if ((updated[index].units || 1) > 1) {
+                        updated[index].units = 1;
+                    }
+                } else if (modCode === '73') {
+                    const d74 = currentMods.indexOf('74');
+                    if (d74 > -1) currentMods.splice(d74, 1);
+                    const b50 = currentMods.indexOf('50');
+                    if (b50 > -1) currentMods.splice(b50, 1);
+                } else if (modCode === '74') {
+                    const d73 = currentMods.indexOf('73');
+                    if (d73 > -1) currentMods.splice(d73, 1);
+                } else if (modCode === '76') {
+                    const m77 = currentMods.indexOf('77');
+                    if (m77 > -1) currentMods.splice(m77, 1);
+                } else if (modCode === '77') {
+                    const m76 = currentMods.indexOf('76');
+                    if (m76 > -1) currentMods.splice(m76, 1);
+                } else if (modCode === '59') {
+                    ['XS', 'XE', 'XP', 'XU'].forEach(x => {
+                        const xi = currentMods.indexOf(x);
+                        if (xi > -1) currentMods.splice(xi, 1);
+                    });
+                } else if (['XS', 'XE', 'XP', 'XU'].includes(modCode)) {
+                    const m59 = currentMods.indexOf('59');
+                    if (m59 > -1) currentMods.splice(m59, 1);
+                }
+
                 if (currentMods.length >= 4) {
                     Swal.fire({
                         title: 'Max Modifiers Reached',
@@ -2215,23 +2274,31 @@ const SurgeryScheduler = ({
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                         {formData.procedureLines.map((line, idx) => {
                                             const availableModifiers = ['50', '51', '59', 'RT', 'LT', '76', '78'];
+                                            const extendedModifiers = ['73', '74', '52', '58', '77', 'XS', 'XE'];
                                             const isBilateral = line.modifiers?.includes('50') || line.laterality === 'BILATERAL';
-                                            const effectiveCharge = (line.gross_charge || 0) * (isBilateral ? 1.5 : 1) * (line.units || 1);
+                                            const effectiveUnits = isBilateral ? 1 : (line.units || 1);
+                                            const effectiveCharge = (line.gross_charge || 0) * (isBilateral ? 1.5 : 1) * effectiveUnits;
+                                            const lineVal = validateProcedureLineClient(line, formData.procedureLines, cptDatabase);
 
                                             return (
                                                 <div
                                                     key={`${line.code}-${idx}`}
                                                     style={{
-                                                        display: 'grid',
-                                                        gridTemplateColumns: '70px 1.4fr 85px 1.5fr 110px 110px 95px 65px',
-                                                        alignItems: 'center',
-                                                        gap: '8px',
-                                                        padding: '10px',
                                                         borderRadius: '6px',
-                                                        border: line.is_primary ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid var(--border-color)',
-                                                        background: line.is_primary ? 'rgba(59, 130, 246, 0.04)' : 'rgba(0, 0, 0, 0.1)'
+                                                        border: lineVal?.status === 'error' ? '1px solid rgba(239, 68, 68, 0.4)' : (line.is_primary ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid var(--border-color)'),
+                                                        background: line.is_primary ? 'rgba(59, 130, 246, 0.04)' : 'rgba(0, 0, 0, 0.1)',
+                                                        overflow: 'hidden'
                                                     }}
                                                 >
+                                                    <div
+                                                        style={{
+                                                            display: 'grid',
+                                                            gridTemplateColumns: '70px 1.4fr 85px 1.5fr 110px 110px 95px 65px',
+                                                            alignItems: 'center',
+                                                            gap: '8px',
+                                                            padding: '10px'
+                                                        }}
+                                                    >
                                                     {/* Rank & Move Controls */}
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -2349,6 +2416,21 @@ const SurgeryScheduler = ({
                                                                     {line.payment_indicator}
                                                                 </span>
                                                             ) : null}
+                                                            {lineVal?.status === 'valid' && (
+                                                                <span style={{ fontSize: '0.62rem', fontWeight: '700', color: '#10b981', background: 'rgba(16, 185, 129, 0.15)', padding: '1px 5px', borderRadius: '4px' }}>
+                                                                    ✓ Valid
+                                                                </span>
+                                                            )}
+                                                            {lineVal?.status === 'warning' && (
+                                                                <span style={{ fontSize: '0.62rem', fontWeight: '700', color: '#f59e0b', background: 'rgba(245, 158, 11, 0.15)', padding: '1px 5px', borderRadius: '4px' }} title={lineVal.warnings?.map(w => w.message).join(' | ')}>
+                                                                    ⚠ Review
+                                                                </span>
+                                                            )}
+                                                            {lineVal?.status === 'error' && (
+                                                                <span style={{ fontSize: '0.62rem', fontWeight: '700', color: '#ef4444', background: 'rgba(239, 68, 68, 0.15)', padding: '1px 5px', borderRadius: '4px' }} title={lineVal.errors?.map(e => e.message).join(' | ')}>
+                                                                    ⛔ Error
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         <div style={{
                                                             fontSize: '0.72rem',
@@ -2387,7 +2469,7 @@ const SurgeryScheduler = ({
                                                             Modifiers ({line.modifiers?.length || 0}/4)
                                                         </label>
                                                         <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
-                                                            {availableModifiers.map(mod => {
+                                                            {[...availableModifiers, ...extendedModifiers].map(mod => {
                                                                 const active = line.modifiers?.includes(mod);
                                                                 return (
                                                                     <button
@@ -2483,7 +2565,28 @@ const SurgeryScheduler = ({
                                                         </button>
                                                     </div>
                                                 </div>
-                                            );
+
+                                                {/* Phase 44: Validation Alerts Bar */}
+                                                {(lineVal?.errors?.length > 0 || lineVal?.warnings?.length > 0) && (
+                                                    <div style={{
+                                                        padding: '6px 12px',
+                                                        background: lineVal.errors?.length > 0 ? 'rgba(239, 68, 68, 0.08)' : 'rgba(245, 158, 11, 0.08)',
+                                                        borderTop: lineVal.errors?.length > 0 ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid rgba(245, 158, 11, 0.25)',
+                                                        fontSize: '0.72rem',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        gap: '3px'
+                                                    }}>
+                                                        {lineVal.errors?.map(err => (
+                                                            <span key={err.code} style={{ color: '#ef4444', fontWeight: '500' }}>⛔ [{err.code}] {err.message}</span>
+                                                        ))}
+                                                        {lineVal.warnings?.map(w => (
+                                                            <span key={w.code} style={{ color: '#f59e0b', fontWeight: '500' }}>⚠ [{w.code}] {w.message}</span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
                                         })}
                                     </div>
                                 </div>
