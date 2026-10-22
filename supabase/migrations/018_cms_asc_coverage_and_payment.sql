@@ -440,7 +440,7 @@ DECLARE
     v_rank INTEGER := 1;
     r RECORD;
 BEGIN
-    SELECT s.surgery_date, s.facility_id, s.payer_id
+    SELECT s.date, s.facility_id, s.primary_payer_id
     INTO v_surg_date, v_fac_id, v_payer_id
     FROM public.surgeries s
     WHERE s.id = p_surgery_id;
@@ -454,7 +454,7 @@ BEGIN
     FOR r IN (
         SELECT 
             sp.id AS proc_id,
-            sp.cpt_code,
+            COALESCE(c.code, '') AS cpt_code,
             sp.units,
             sp.is_primary,
             p.resolved_reimbursement AS base_rate,
@@ -464,9 +464,10 @@ BEGIN
             p.service_portion_rate,
             p.payment_indicator
         FROM public.surgery_procedures sp
+        LEFT JOIN public.cpt_codes c ON sp.cpt_code_id = c.id
         CROSS JOIN LATERAL public.fn_resolve_asc_procedure_pricing(
             COALESCE(v_surg_date, CURRENT_DATE),
-            sp.cpt_code,
+            COALESCE(c.code, ''),
             v_fac_id,
             v_payer_id
         ) p
@@ -521,25 +522,40 @@ CREATE POLICY rls_cms_coverage_select ON public.cms_coverage_determinations
 CREATE POLICY rls_cms_releases_modify ON public.cms_asc_releases
     FOR ALL TO authenticated USING (
         EXISTS (
-            SELECT 1 FROM public.users u 
-            WHERE u.id = auth.uid() AND u.role = 'super_admin'
+            SELECT 1 FROM public.facility_memberships fm 
+            WHERE fm.user_id = auth.uid() AND fm.role = 'super_admin' AND fm.is_active = true
         )
+        OR EXISTS (
+            SELECT 1 FROM public.users u 
+            WHERE u.id::text = auth.uid()::text AND u.role = 'super_admin'
+        )
+        OR (auth.jwt()->>'role') = 'service_role'
     );
 
 CREATE POLICY rls_cms_addenda_modify ON public.cms_asc_addenda
     FOR ALL TO authenticated USING (
         EXISTS (
-            SELECT 1 FROM public.users u 
-            WHERE u.id = auth.uid() AND u.role = 'super_admin'
+            SELECT 1 FROM public.facility_memberships fm 
+            WHERE fm.user_id = auth.uid() AND fm.role = 'super_admin' AND fm.is_active = true
         )
+        OR EXISTS (
+            SELECT 1 FROM public.users u 
+            WHERE u.id::text = auth.uid()::text AND u.role = 'super_admin'
+        )
+        OR (auth.jwt()->>'role') = 'service_role'
     );
 
 CREATE POLICY rls_cms_coverage_modify ON public.cms_coverage_determinations
     FOR ALL TO authenticated USING (
         EXISTS (
-            SELECT 1 FROM public.users u 
-            WHERE u.id = auth.uid() AND u.role = 'super_admin'
+            SELECT 1 FROM public.facility_memberships fm 
+            WHERE fm.user_id = auth.uid() AND fm.role = 'super_admin' AND fm.is_active = true
         )
+        OR EXISTS (
+            SELECT 1 FROM public.users u 
+            WHERE u.id::text = auth.uid()::text AND u.role = 'super_admin'
+        )
+        OR (auth.jwt()->>'role') = 'service_role'
     );
 
 -- ==============================================================================
