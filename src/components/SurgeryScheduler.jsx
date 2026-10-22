@@ -931,6 +931,16 @@ const SurgeryScheduler = ({
             write_off: parseFloat(formData.writeOff || 0),
             is_probono: formData.paymentModel === 'Pro_Bono' || formData.isProbono,
             or_room: formData.orRoom ? parseInt(formData.orRoom.replace(/\D/g, '')) || null : null,
+            operating_room_id: (() => {
+                const num = formData.orRoom ? parseInt(formData.orRoom.replace(/\D/g, '')) : 1;
+                const orMap = {
+                    1: '10000000-0000-0000-0000-000000000001',
+                    2: '10000000-0000-0000-0000-000000000002',
+                    3: '10000000-0000-0000-0000-000000000003',
+                    4: '10000000-0000-0000-0000-000000000004'
+                };
+                return orMap[num] || orMap[1];
+            })(),
             cpt_expenses: enhancedCptExpenses
         };
 

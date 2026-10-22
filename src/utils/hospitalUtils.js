@@ -256,6 +256,35 @@ export const getSurgeryMetrics = (surgery, cptCodes, settings = {}, procedureGro
         Boolean(surgery.is_cosmetic) || 
         (surgery.notes && surgery.notes.includes('Fixed Facility Fee Case'));
     const isProbono = surgery.payment_model === 'Pro_Bono' || !!(surgery.is_probono || surgery.isProbono);
+
+    // Prioritize immutable frozen snapshot from Phase 37 migration / billing freeze
+    const rawSnap = surgery.surgery_financial_snapshots;
+    const snapshot = Array.isArray(rawSnap) ? rawSnap[0] : rawSnap;
+    if (snapshot && (surgery.status === 'Completed' || surgery.status === 'Billed')) {
+        const frozenRevenue = parseFloat(snapshot.expected_reimbursement || snapshot.gross_revenue || surgery.expected_reimbursement || 0);
+        const frozenNetMargin = parseFloat(snapshot.net_margin || 0);
+        const frozenLabor = parseFloat(snapshot.labor_cost || surgery.actual_labor_cost || 0);
+        const frozenRoom = parseFloat(snapshot.room_cost || surgery.actual_room_cost || 0);
+        const frozenSupplies = parseFloat(snapshot.supplies_cost || surgery.supplies_cost || 0);
+        const frozenAnesthesia = parseFloat(snapshot.anesthesia_cost || 0);
+        const writeOff = parseFloat(snapshot.write_off_amount || surgery.write_off || surgery.writeOff || 0);
+
+        return {
+            cptRevenue: frozenRevenue,
+            facilityRevenue: 0,
+            anesthesiaRevenue: frozenAnesthesia,
+            totalRevenue: frozenRevenue,
+            netProfit: frozenNetMargin,
+            supplyCosts: frozenSupplies,
+            internalRoomCost: frozenRoom,
+            laborCost: frozenLabor,
+            writeOff,
+            isCosmetic,
+            isProbono,
+            isFrozenSnapshot: true
+        };
+    }
+
     let cptTotal = 0;
     let orCost = 0; // Billable Facility Fee
     let internalRoomCost;

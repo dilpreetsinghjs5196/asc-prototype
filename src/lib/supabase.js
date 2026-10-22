@@ -130,7 +130,7 @@ export const db = {
     try {
       let query = supabase
         .from('surgeries')
-        .select('*, patients(*), surgeons(*)')
+        .select('*, patients(*), surgeons(*), operating_rooms(*), surgery_procedures(*), surgery_financial_snapshots(*)')
         .order('date', { ascending: false });
 
       if (targetFac) {
