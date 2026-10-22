@@ -555,7 +555,7 @@ export const db = {
     try {
       let query = supabase
         .from('surgeries')
-        .select('id, surgery_date, start_time, duration_minutes, status, doctor_name')
+        .select('id, date, start_time, duration_minutes, status, doctor_name')
         .eq('surgeon_id', surgeonId)
         .not('status', 'in', '("cancelled","void")');
       if (excludeSurgeryId) {
@@ -566,8 +566,9 @@ export const db = {
         const reqStart = new Date(startTime).getTime();
         const reqEnd = new Date(endTime).getTime();
         for (const c of surgCases) {
-          if (c.surgery_date && c.start_time) {
-            const caseDateStr = String(c.surgery_date).split('T')[0];
+          const caseDate = c.date || c.surgery_date;
+          if (caseDate && c.start_time) {
+            const caseDateStr = String(caseDate).split('T')[0];
             const caseStart = new Date(`${caseDateStr}T${c.start_time}`).getTime();
             const dur = (Number(c.duration_minutes) || 60) * 60000;
             const caseEnd = caseStart + dur;
@@ -1518,6 +1519,129 @@ export const db = {
       .select()
       .single();
     return updated || { success: true, batch_id: batchId };
+  },
+
+  // ==================== CMS ASC ADDENDA & COVERAGE (PHASE 41) ====================
+  async getCMSReleases() {
+    await this.ensureAuthSession();
+    try {
+      const { data, error } = await supabase
+        .from('cms_asc_releases')
+        .select('*')
+        .order('release_year', { ascending: false })
+        .order('release_quarter', { ascending: false });
+      if (!error && data) return data;
+    } catch (e) {
+      console.warn('getCMSReleases fallback:', e);
+    }
+    return [
+      { id: '10000000-0000-0000-0000-000000002026', release_year: 2026, release_quarter: 'Q1', rule_type: 'Final', transmittal_number: 'CMS-1830-FC', is_active: true }
+    ];
+  },
+
+  async getCMSAddenda({ releaseId, addendumSource, paymentIndicator, search = '', page = 1, pageSize = 50 } = {}) {
+    await this.ensureAuthSession();
+    try {
+      let query = supabase.from('cms_asc_addenda').select('*', { count: 'exact' });
+      if (releaseId) query = query.eq('release_id', releaseId);
+      if (addendumSource) query = query.eq('addendum_source', addendumSource);
+      if (paymentIndicator) query = query.eq('payment_indicator', paymentIndicator);
+      if (search) {
+        query = query.or(`code.ilike.%${search}%,short_descriptor.ilike.%${search}%`);
+      }
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      const { data, count, error } = await query.order('code', { ascending: true }).range(from, to);
+      if (!error && data) {
+        return { data, total: count || data.length, page, pageSize };
+      }
+    } catch (e) {
+      console.warn('getCMSAddenda fallback:', e);
+    }
+    return { data: [], total: 0, page, pageSize };
+  },
+
+  async resolveASCProcedurePricing({ dos, code, facilityId = null, payerId = null }) {
+    await this.ensureAuthSession();
+    const dateOfService = dos || new Date().toISOString().split('T')[0];
+    const cleanCode = String(code || '').trim().toUpperCase();
+
+    try {
+      const { data, error } = await supabase.rpc('fn_resolve_asc_procedure_pricing', {
+        p_dos: dateOfService,
+        p_code: cleanCode,
+        p_facility_id: facilityId || this.getActiveFacility()?.id || null,
+        p_payer_id: payerId
+      });
+      if (!error && data && data.length > 0) {
+        return { success: true, ...data[0] };
+      }
+    } catch (rpcErr) {
+      console.warn('fn_resolve_asc_procedure_pricing RPC fallback:', rpcErr);
+    }
+
+    // Client fallback query against cpt_codes
+    try {
+      const { data: cpts } = await supabase
+        .from('cpt_codes')
+        .select('*')
+        .eq('code', cleanCode)
+        .order('effective_date', { ascending: false })
+        .limit(1);
+
+      if (cpts && cpts.length > 0) {
+        const c = cpts[0];
+        const reimb = Number(c.reimbursement || 0);
+        const gross = Number(c.gross_charge || Math.round(reimb * 3.5));
+        const pi = c.payment_indicator || (['A2', 'G2', 'J8', 'N1', 'P3', 'P2', 'R2'].includes(c.procedure_indicator) ? c.procedure_indicator : 'A2');
+        const isDev = pi === 'J8' || Boolean(c.is_device_intensive);
+        const devPct = Number(c.device_offset_percentage || (isDev ? 0.35 : 0));
+        const devAmt = Number(c.device_offset_amount || (isDev ? Math.round(reimb * devPct * 100) / 100 : 0));
+
+        return {
+          success: true,
+          code: cleanCode,
+          description: c.description,
+          payment_indicator: pi,
+          is_covered: pi !== 'C',
+          coverage_status: pi === 'N1' ? 'Packaged' : (pi === 'R2' ? 'Contractor_Priced' : 'Covered_Surgical'),
+          is_device_intensive: isDev,
+          device_offset_amount: devAmt,
+          service_portion_rate: Math.max(0, reimb - devAmt),
+          resolved_reimbursement: reimb,
+          gross_charge: gross,
+          rate_tier: 'Client_Fallback_CPT',
+          provenance_source: 'cpt_codes baseline fallback'
+        };
+      }
+    } catch (fbErr) {
+      console.warn('resolveASCProcedurePricing fallback failed:', fbErr);
+    }
+
+    return {
+      success: false,
+      code: cleanCode,
+      resolved_reimbursement: 0,
+      gross_charge: 0,
+      payment_indicator: 'N/A',
+      coverage_status: 'Unresolved',
+      is_covered: false
+    };
+  },
+
+  async calculateCaseReimbursement(surgeryId) {
+    await this.ensureAuthSession();
+    try {
+      const { data, error } = await supabase.rpc('fn_calculate_case_reimbursement', {
+        p_surgery_id: surgeryId
+      });
+      if (!error && data && data.length > 0) {
+        return { success: true, ...data[0] };
+      }
+    } catch (e) {
+      console.warn('fn_calculate_case_reimbursement fallback:', e);
+    }
+    return { success: false, total_reimbursement: 0, total_gross_charge: 0, line_item_count: 0 };
   },
 
   // ==================== SETTINGS ====================

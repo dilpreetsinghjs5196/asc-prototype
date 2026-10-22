@@ -120,7 +120,7 @@ const SurgeryScheduler = ({
         patientId: '',
         doctorName: '',
         date: new Date().toISOString().split('T')[0],
-        startTime: '',
+        startTime: '08:00',
         durationMinutes: 60,
         turnoverTime: 20,
         selectedCptCodes: [],
@@ -203,6 +203,24 @@ const SurgeryScheduler = ({
         });
     }, [targetDate, surgeons, orBlocks]);
 
+    // Phase 35/41: Selectable surgeons ensures non-block days or open scheduling allows selecting affiliated surgeons
+    const selectableSurgeons = useMemo(() => {
+        if (!surgeons || surgeons.length === 0) return [];
+        const blockSurgeonIds = new Set((availableSurgeons || []).map(s => s.id));
+        const withBlock = [];
+        const withoutBlock = [];
+
+        surgeons.forEach(s => {
+            if (blockSurgeonIds.has(s.id)) {
+                withBlock.push({ ...s, hasBlock: true });
+            } else {
+                withoutBlock.push({ ...s, hasBlock: false });
+            }
+        });
+
+        return [...withBlock, ...withoutBlock];
+    }, [surgeons, availableSurgeons]);
+
     // Pagination state used above
 
     useEffect(() => {
@@ -232,7 +250,7 @@ const SurgeryScheduler = ({
             patientId: '',
             doctorName: '',
             date: new Date().toISOString().split('T')[0],
-            startTime: '',
+            startTime: '08:00',
             durationMinutes: 60,
             turnoverTime: 20,
             selectedCptCodes: [],
@@ -461,6 +479,10 @@ const SurgeryScheduler = ({
                         code: p.cpt_codes?.code || p.cpt_code || '',
                         cpt_code_id: p.cpt_code_id,
                         procedure_description: p.procedure_description || p.cpt_codes?.description || '',
+                        payment_indicator: p.cpt_codes?.payment_indicator || (['A2', 'G2', 'J8', 'N1', 'P3', 'P2', 'R2'].includes(p.cpt_codes?.procedure_indicator) ? p.cpt_codes?.procedure_indicator : 'A2'),
+                        is_device_intensive: Boolean(p.cpt_codes?.is_device_intensive || p.cpt_codes?.payment_indicator === 'J8' || p.cpt_codes?.procedure_indicator === 'J8'),
+                        device_offset_amount: parseFloat(p.cpt_codes?.device_offset_amount || 0),
+                        coverage_status: p.cpt_codes?.coverage_status || (p.cpt_codes?.payment_indicator === 'N1' ? 'Packaged' : 'Covered_Surgical'),
                         units: Math.max(1, parseInt(p.units) || 1),
                         modifiers: Array.isArray(p.modifiers) ? p.modifiers : [],
                         laterality: p.laterality || 'NOT_APPLICABLE',
@@ -1199,10 +1221,19 @@ const SurgeryScheduler = ({
             if (action === 'add') {
                 newCodes.push(code);
                 const cpt = cptCodes.find(c => String(c.code) === String(code));
+                const pi = cpt?.payment_indicator || (['A2', 'G2', 'J8', 'N1', 'P3', 'P2', 'R2'].includes(cpt?.procedure_indicator) ? cpt?.procedure_indicator : 'A2');
+                const isDev = pi === 'J8' || Boolean(cpt?.is_device_intensive);
+                const devPct = Number(cpt?.device_offset_percentage || (isDev ? 0.35 : 0));
+                const devAmt = Number(cpt?.device_offset_amount || (isDev ? Math.round(parseFloat(cpt?.reimbursement || 0) * devPct * 100) / 100 : 0));
+
                 newLines.push({
                     code: code,
                     cpt_code_id: cpt?.id || null,
                     procedure_description: cpt?.description || '',
+                    payment_indicator: pi,
+                    is_device_intensive: isDev,
+                    device_offset_amount: devAmt,
+                    coverage_status: pi === 'N1' ? 'Packaged' : (pi === 'R2' ? 'Contractor_Priced' : 'Covered_Surgical'),
                     units: 1,
                     modifiers: [],
                     laterality: 'NOT_APPLICABLE',
@@ -1683,16 +1714,16 @@ const SurgeryScheduler = ({
                                         onChange={(e) => setFormData({ ...formData, doctorName: e.target.value })}
                                     >
                                         <option value="">-- Select Surgeon --</option>
-                                        {availableSurgeons.map(s => {
+                                        {selectableSurgeons.map(s => {
                                             const name = `Dr. ${s.lastname} ${s.firstname}`.trim();
                                             return (
                                                 <option key={s.id} value={name}>
-                                                    {name} - {s.specialty}
+                                                    {name} - {s.specialty}{s.hasBlock ? ' ★ (Block Assigned)' : ''}
                                                 </option>
                                             );
                                         })}
-                                        {availableSurgeons.length === 0 && (
-                                            <option value="" disabled>No surgeons scheduled for this date</option>
+                                        {selectableSurgeons.length === 0 && (
+                                            <option value="" disabled>No surgeons available for this facility</option>
                                         )}
                                     </select>
                                 </div>
@@ -2192,6 +2223,49 @@ const SurgeryScheduler = ({
                                                                     <Star size={9} /> Primary
                                                                 </span>
                                                             )}
+                                                            {(line.payment_indicator === 'J8' || line.is_device_intensive) ? (
+                                                                <span 
+                                                                    title={`CMS Device-Intensive (J8): Device portion ($${line.device_offset_amount || 0}) is protected from MPPR 50% reduction`}
+                                                                    style={{
+                                                                        fontSize: '0.65rem',
+                                                                        fontWeight: '700',
+                                                                        color: '#c084fc',
+                                                                        background: 'rgba(168, 85, 247, 0.15)',
+                                                                        padding: '1px 5px',
+                                                                        borderRadius: '4px'
+                                                                    }}
+                                                                >
+                                                                    J8 Device
+                                                                </span>
+                                                            ) : (line.payment_indicator === 'N1' || line.coverage_status === 'Packaged') ? (
+                                                                <span 
+                                                                    title="CMS Packaged Code (N1): Bundled into primary surgical case ($0.00 separate payment)"
+                                                                    style={{
+                                                                        fontSize: '0.65rem',
+                                                                        fontWeight: '700',
+                                                                        color: '#fb923c',
+                                                                        background: 'rgba(249, 115, 22, 0.15)',
+                                                                        padding: '1px 5px',
+                                                                        borderRadius: '4px'
+                                                                    }}
+                                                                >
+                                                                    N1 Packaged
+                                                                </span>
+                                                            ) : line.payment_indicator ? (
+                                                                <span 
+                                                                    title={`CMS Payment Indicator: ${line.payment_indicator}`}
+                                                                    style={{
+                                                                        fontSize: '0.65rem',
+                                                                        fontWeight: '600',
+                                                                        color: '#60a5fa',
+                                                                        background: 'rgba(59, 130, 246, 0.12)',
+                                                                        padding: '1px 4px',
+                                                                        borderRadius: '4px'
+                                                                    }}
+                                                                >
+                                                                    {line.payment_indicator}
+                                                                </span>
+                                                            ) : null}
                                                         </div>
                                                         <div style={{
                                                             fontSize: '0.72rem',

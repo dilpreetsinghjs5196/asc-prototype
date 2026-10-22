@@ -58,7 +58,7 @@ const PROCEDURE_GROUPS = [
   'General Procedures'
 ];
 
-const INDICATORS = ['A2', 'J8', 'G2', 'P3', 'N1', 'S', 'A', 'P2'];
+const INDICATORS = ['A2', 'G2', 'J8', 'N1', 'P2', 'P3', 'R2', 'Z2', 'K2', 'S'];
 
 export default function CPTManagement({
   cptCodes,
@@ -206,7 +206,8 @@ export default function CPTManagement({
       turnover_time: '',
       body_part: '',
       procedure_group: '',
-      procedure_indicator: '',
+      procedure_indicator: 'A2',
+      payment_indicator: 'A2',
       gross_charge: '',
       active_published: true,
       active_code: true,
@@ -218,6 +219,7 @@ export default function CPTManagement({
   // Open modal for edit
   const handleOpenEdit = (cpt) => {
     setEditingCpt(cpt);
+    const pi = cpt.payment_indicator || (['A2', 'G2', 'J8', 'N1', 'P3', 'P2', 'R2'].includes(cpt.procedure_indicator) ? cpt.procedure_indicator : 'A2');
     setForm({
       code: cpt.code || '',
       description: cpt.description || '',
@@ -228,7 +230,8 @@ export default function CPTManagement({
       turnover_time: cpt.turnover_time !== null && cpt.turnover_time !== undefined ? String(cpt.turnover_time) : '',
       body_part: cpt.body_part || '',
       procedure_group: cpt.procedure_group || '',
-      procedure_indicator: cpt.procedure_indicator || '',
+      procedure_indicator: pi,
+      payment_indicator: pi,
       gross_charge: cpt.gross_charge !== null && cpt.gross_charge !== undefined ? String(cpt.gross_charge) : '',
       active_published: cpt.is_active !== false,
       active_code: cpt.is_active !== false,
@@ -262,13 +265,21 @@ export default function CPTManagement({
       return;
     }
 
+    const pi = form.procedure_indicator || form.payment_indicator || 'A2';
+    const isDev = pi === 'J8';
+    const isPackaged = pi === 'N1';
+
     const payload = {
       code,
       description,
       category: form.category,
       body_part: form.body_part.trim() || null,
       procedure_group: form.procedure_group || null,
-      procedure_indicator: form.procedure_indicator || null,
+      procedure_indicator: 'S',
+      payment_indicator: pi,
+      is_device_intensive: isDev,
+      device_offset_percentage: isDev ? 0.3500 : 0.0000,
+      coverage_status: isPackaged ? 'Packaged' : (pi === 'R2' ? 'Contractor_Priced' : 'Covered_Surgical'),
       reimbursement: parseFloat(form.reimbursement),
       cost: form.cost === '' ? 0 : parseFloat(form.cost),
       average_duration: form.average_duration === '' ? 0 : parseInt(form.average_duration, 10),
@@ -485,7 +496,7 @@ export default function CPTManagement({
                   <th>Description</th>
                   <th>Category</th>
                   <th>Procedure Group</th>
-                  <th>Indicator</th>
+                  <th>Payment Indicator (PI)</th>
                   <th>Body Part</th>
                   <th onClick={() => handleSort('average_duration')} style={{ cursor: 'pointer', userSelect: 'none' }}>
                     Duration {sortField === 'average_duration' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
@@ -520,23 +531,42 @@ export default function CPTManagement({
               
               return (
                 <tbody>
-                  {data.map(cpt => (
-                    <tr key={cpt.id} className="clickable-row" style={isHistorical ? { backgroundColor: 'rgba(0,0,0,0.1)', opacity: 0.8 } : {}}>
-                      <td style={{ fontWeight: '700', fontFamily: 'monospace', color: 'var(--color-blue)', letterSpacing: '0.5px' }}>
-                        {cpt.code}
-                        {cpt.facility_id === null && (
-                          <span style={{ marginLeft: '6px', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '4px', background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', fontWeight: '500' }} title="CMS National Standard Catalog">
-                            CMS
-                          </span>
-                        )}
-                      </td>
-                      <td style={{ fontWeight: '500', color: 'var(--text-primary)' }}>{cpt.description}</td>
-                      <td>{cpt.category || 'N/A'}</td>
-                      <td>{cpt.procedure_group || 'N/A'}</td>
-                      <td style={{ textAlign: 'center', fontWeight: '600', color: 'var(--text-primary)' }}>{cpt.procedure_indicator || 'N/A'}</td>
-                      <td>{cpt.body_part || 'N/A'}</td>
-                      <td>{cpt.average_duration ? `${cpt.average_duration} mins` : 'N/A'}</td>
-                      <td>{cpt.turnover_time ? `${cpt.turnover_time} mins` : 'N/A'}</td>
+                  {data.map(cpt => {
+                    const pi = cpt.payment_indicator || (['A2', 'G2', 'J8', 'N1', 'P3', 'P2', 'R2'].includes(cpt.procedure_indicator) ? cpt.procedure_indicator : 'A2');
+                    const isDev = pi === 'J8' || cpt.is_device_intensive;
+                    const isPackaged = pi === 'N1' || cpt.coverage_status === 'Packaged';
+
+                    return (
+                      <tr key={cpt.id} className="clickable-row" style={isHistorical ? { backgroundColor: 'rgba(0,0,0,0.1)', opacity: 0.8 } : {}}>
+                        <td style={{ fontWeight: '700', fontFamily: 'monospace', color: 'var(--color-blue)', letterSpacing: '0.5px' }}>
+                          {cpt.code}
+                          {cpt.facility_id === null && (
+                            <span style={{ marginLeft: '6px', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '4px', background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', fontWeight: '500' }} title="CMS National Standard Catalog">
+                              CMS
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ fontWeight: '500', color: 'var(--text-primary)' }}>{cpt.description}</td>
+                        <td>{cpt.category || 'N/A'}</td>
+                        <td>{cpt.procedure_group || 'N/A'}</td>
+                        <td style={{ textAlign: 'center' }}>
+                          {isDev ? (
+                            <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', fontWeight: '700', fontSize: '0.72rem' }} title={`CMS Device-Intensive Procedure (J8): Device offset ($${cpt.device_offset_amount || 0})`}>
+                              J8 Device
+                            </span>
+                          ) : isPackaged ? (
+                            <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'rgba(249, 115, 22, 0.15)', color: '#fb923c', fontWeight: '700', fontSize: '0.72rem' }} title="CMS Packaged Service (N1): Bundled reimbursement ($0.00)">
+                              N1 Packaged
+                            </span>
+                          ) : (
+                            <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', fontWeight: '600', fontSize: '0.72rem' }} title={`CMS Payment Indicator: ${pi}`}>
+                              {pi}
+                            </span>
+                          )}
+                        </td>
+                        <td>{cpt.body_part || 'N/A'}</td>
+                        <td>{cpt.average_duration ? `${cpt.average_duration} mins` : 'N/A'}</td>
+                        <td>{cpt.turnover_time ? `${cpt.turnover_time} mins` : 'N/A'}</td>
                       <td style={{ textAlign: 'right', fontWeight: '600' }}>
                         {cpt.gross_charge ? `$${cpt.gross_charge.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '$0.00'}
                       </td>
@@ -563,7 +593,8 @@ export default function CPTManagement({
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               );
             };
@@ -830,12 +861,12 @@ export default function CPTManagement({
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)' }}>Indicator</label>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)' }}>Payment Indicator (PI)</label>
                   <select
                     className="date-range-selector"
                     style={{ width: '100%', height: '38px', background: 'var(--bg-card)', padding: '0 10px' }}
                     value={form.procedure_indicator}
-                    onChange={(e) => setForm({ ...form, procedure_indicator: e.target.value })}
+                    onChange={(e) => setForm({ ...form, procedure_indicator: e.target.value, payment_indicator: e.target.value })}
                   >
                     <option value="">Select...</option>
                     {INDICATORS.map(ind => (

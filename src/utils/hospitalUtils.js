@@ -124,6 +124,7 @@ export const calculateMedicareRevenue = (cptCodesArray, cptDatabase, applyMPPR =
             return { code: item.trim(), units: 1, modifiers: [], laterality: 'NOT_APPLICABLE' };
         }
         return {
+            ...item,
             code: String(item.code || item.cpt_code || '').trim(),
             units: Math.max(1, parseInt(item.units) || 1),
             modifiers: Array.isArray(item.modifiers) ? item.modifiers : (item.modifier_code ? [item.modifier_code] : []),
@@ -135,21 +136,23 @@ export const calculateMedicareRevenue = (cptCodesArray, cptDatabase, applyMPPR =
 
     // Get matching CPT catalog objects
     const resolvedLines = normalizedLines.map(line => {
-        const catalogItem = cptDatabase.find(c => String(c.code) === String(line.code));
-        if (!catalogItem) return null;
+        const catalogItem = (Array.isArray(cptDatabase) && cptDatabase.length > 0)
+            ? cptDatabase.find(c => String(c.code) === String(line.code))
+            : null;
+        const source = catalogItem ? { ...line, ...catalogItem } : line;
         return {
-            ...catalogItem,
-            units: line.units,
-            modifiers: line.modifiers,
-            laterality: line.laterality
+            ...source,
+            units: line.units || source.units || 1,
+            modifiers: line.modifiers || source.modifiers || [],
+            laterality: line.laterality || source.laterality || 'NOT_APPLICABLE'
         };
-    }).filter(Boolean);
+    }).filter(l => Boolean(l && (l.gross_charge !== undefined || l.reimbursement !== undefined || l.contracted_reimbursement !== undefined)));
 
     if (resolvedLines.length === 0) return 0;
 
     // Helper to get base allowable price (Gross Charge if available, else Reimbursement)
     const getBasePrice = (cpt) => {
-        const rawRate = parseFloat(cpt.gross_charge || cpt.reimbursement || 0);
+        const rawRate = parseFloat(cpt.gross_charge !== undefined ? cpt.gross_charge : (cpt.contracted_reimbursement !== undefined ? cpt.contracted_reimbursement : (cpt.reimbursement || 0)));
         const isBilateral = (cpt.modifiers && cpt.modifiers.includes('50')) || cpt.laterality === 'BILATERAL';
         return isBilateral ? rawRate * 1.50 : rawRate;
     };
@@ -177,10 +180,15 @@ export const calculateMedicareRevenue = (cptCodesArray, cptDatabase, applyMPPR =
 
     sortedCpts.forEach((cpt) => {
         const price = getBasePrice(cpt);
-        const units = cpt.units;
-        const isAddOn = String(cpt.code || '').startsWith('+') || Boolean(cpt.is_add_on) || Boolean(cpt.is_mppr_exempt);
-        const isDeviceIntensive = cpt.payment_indicator === 'J8' || (cpt.device_offset_amount && parseFloat(cpt.device_offset_amount) > 0);
-        const deviceOffset = parseFloat(cpt.device_offset_amount || 0);
+        const units = Math.max(1, parseInt(cpt.units) || 1);
+        const isAncillaryExempt = cpt.payment_indicator === 'Z2' || cpt.payment_indicator === 'K2';
+        const isAddOn = String(cpt.code || '').startsWith('+') || Boolean(cpt.is_add_on) || Boolean(cpt.is_mppr_exempt) || isAncillaryExempt;
+        const isDeviceIntensive = cpt.payment_indicator === 'J8' || cpt.procedure_indicator === 'J8' || Boolean(cpt.is_device_intensive) || (cpt.device_offset_amount && parseFloat(cpt.device_offset_amount) > 0);
+        let deviceOffset = parseFloat(cpt.device_offset_amount || 0);
+        if (isDeviceIntensive && (!deviceOffset || deviceOffset <= 0) && price > 0) {
+            const pct = parseFloat(cpt.device_offset_percentage || 0.35);
+            deviceOffset = Math.round(price * pct * 100) / 100;
+        }
 
         if (isAddOn) {
             // Add-on codes are exempt from reduction across all units
