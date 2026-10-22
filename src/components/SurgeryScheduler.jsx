@@ -3444,7 +3444,7 @@ const SurgeryScheduler = ({
             <CodingAssistantModal
                 isOpen={codingAssistantOpen}
                 onClose={() => setCodingAssistantOpen(false)}
-                caseId={editingId || 'draft-case'}
+                caseId={editingSurgery?.id || 'draft-case'}
                 clinicalNotes={formData.clinicalNotes || ''}
                 preOpDiagnosis={formData.preOpDiagnosis || ''}
                 procedureName={formData.procedureName || ''}
