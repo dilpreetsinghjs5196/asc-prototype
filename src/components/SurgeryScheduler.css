@@ -120,6 +120,33 @@
     color: var(--text-primary); /* Theme text */
 }
 
+.filter-select {
+    background-color: var(--bg-card, #0f172a);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    outline: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.filter-select:focus {
+    border-color: var(--color-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.filter-select:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.filter-select option {
+    background-color: var(--bg-card, #0f172a);
+    color: var(--text-primary, #ffffff);
+}
+
 /* Tables */
 .table-container {
     overflow-x: auto;

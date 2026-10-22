@@ -2041,6 +2041,13 @@ const SurgeryScheduler = ({
                                     {availableBodyParts.length > 0 && (
                                         <select
                                             className="filter-select"
+                                            style={{
+                                                minWidth: '160px',
+                                                cursor: 'pointer',
+                                                backgroundColor: 'var(--bg-card, #0f172a)',
+                                                color: 'var(--text-primary, #ffffff)',
+                                                border: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))'
+                                            }}
                                             value={selectedBodyPart}
                                             onChange={(e) => setSelectedBodyPart(e.target.value)}
                                         >
