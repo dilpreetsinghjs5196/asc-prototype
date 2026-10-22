@@ -10,6 +10,7 @@ import {
 import { calculateMedicareRevenue } from '../utils/hospitalUtils';
 import ORBlockSchedule from './ORBlockSchedule';
 import CaseTimelineModal from './CaseTimelineModal';
+import CodingAssistantModal from './CodingAssistantModal';
 import './SurgeryScheduler.css';
 
 // Format currency helper
@@ -94,6 +95,7 @@ const SurgeryScheduler = ({
     const [staffList, setStaffList] = useState([]);
     const [facilitiesList, setFacilitiesList] = useState(facilities || []);
     const [timelineSurgery, setTimelineSurgery] = useState(null);
+    const [codingAssistantOpen, setCodingAssistantOpen] = useState(false);
 
     const session = db.getSession();
     const isSuperAdmin = propIsSuperAdmin !== undefined ? propIsSuperAdmin : (session?.role === 'super_admin');
@@ -1341,6 +1343,30 @@ const SurgeryScheduler = ({
         });
     };
 
+    // ----- Phase 43: AI Coding Assistant Candidate Handler -----
+    const handleApplyCandidate = (candidate) => {
+        if (!candidate || !candidate.code) return;
+        handleCptChange(candidate.code, 'add');
+        if ((candidate.modifiers && candidate.modifiers.length > 0) || (candidate.laterality && candidate.laterality !== 'NOT_APPLICABLE')) {
+            setFormData(prev => {
+                const updatedLines = (prev.procedureLines || []).map(line => {
+                    if (String(line.code) === String(candidate.code)) {
+                        return {
+                            ...line,
+                            modifiers: candidate.modifiers?.length ? candidate.modifiers : line.modifiers,
+                            laterality: candidate.laterality && candidate.laterality !== 'NOT_APPLICABLE' ? candidate.laterality : line.laterality
+                        };
+                    }
+                    return line;
+                });
+                return {
+                    ...prev,
+                    procedureLines: updatedLines
+                };
+            });
+        }
+    };
+
     // ----- Procedure Line Handlers (Phase 32 Canonical 1NF) -----
     const handleProcedureLineChange = (index, field, value) => {
         setFormData(prev => {
@@ -1946,7 +1972,30 @@ const SurgeryScheduler = ({
                                     </div>
 
                                     <div className="form-group">
-                                        <label htmlFor="clinicalNotes">Clinical / Operative Notes</label>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                            <label htmlFor="clinicalNotes" style={{ margin: 0 }}>Clinical / Operative Notes</label>
+                                            <button
+                                                type="button"
+                                                onClick={() => setCodingAssistantOpen(true)}
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    padding: '3px 10px',
+                                                    fontSize: '0.74rem',
+                                                    fontWeight: '600',
+                                                    borderRadius: '6px',
+                                                    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2))',
+                                                    border: '1px solid rgba(139, 92, 246, 0.4)',
+                                                    color: '#93c5fd',
+                                                    cursor: 'pointer'
+                                                }}
+                                                title="Launch AI CPT Coding Assistant to extract recommended codes from notes"
+                                            >
+                                                <Wand2 size={13} style={{ color: '#a78bfa' }} />
+                                                <span>AI Coding Assistant</span>
+                                            </button>
+                                        </div>
                                         <input
                                             id="clinicalNotes"
                                             type="text"
@@ -2019,11 +2068,34 @@ const SurgeryScheduler = ({
                             <div className="form-group">
                                 <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span>Select CPT Codes</span>
-                                    {uniqueSelectedCodes.length > 0 && (
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--color-blue)', fontWeight: '700' }}>
-                                            {uniqueSelectedCodes.length} Selected
-                                        </span>
-                                    )}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setCodingAssistantOpen(true)}
+                                            style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '5px',
+                                                padding: '3px 9px',
+                                                fontSize: '0.72rem',
+                                                fontWeight: '600',
+                                                borderRadius: '6px',
+                                                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2))',
+                                                border: '1px solid rgba(139, 92, 246, 0.4)',
+                                                color: '#93c5fd',
+                                                cursor: 'pointer'
+                                            }}
+                                            title="Analyze clinical notes with AI Coding Assistant"
+                                        >
+                                            <Wand2 size={12} style={{ color: '#a78bfa' }} />
+                                            <span>AI Assist</span>
+                                        </button>
+                                        {uniqueSelectedCodes.length > 0 && (
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--color-blue)', fontWeight: '700' }}>
+                                                {uniqueSelectedCodes.length} Selected
+                                            </span>
+                                        )}
+                                    </div>
                                 </label>
 
                                 <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
@@ -3366,6 +3438,17 @@ const SurgeryScheduler = ({
                 surgery={timelineSurgery}
                 isOpen={!!timelineSurgery}
                 onClose={() => setTimelineSurgery(null)}
+            />
+
+            {/* Phase 43: AI CPT Coding Assistant Modal */}
+            <CodingAssistantModal
+                isOpen={codingAssistantOpen}
+                onClose={() => setCodingAssistantOpen(false)}
+                caseId={editingId || 'draft-case'}
+                clinicalNotes={formData.clinicalNotes || ''}
+                preOpDiagnosis={formData.preOpDiagnosis || ''}
+                procedureName={formData.procedureName || ''}
+                onApplyCandidate={handleApplyCandidate}
             />
         </div>
     );

@@ -52,6 +52,10 @@ export const PERMISSIONS_CATALOG = [
   { code: 'cpt.create', category: 'cpt_codes', name: 'Import / Add CPT Codes', risk_level: 'standard' },
   { code: 'cpt.edit', category: 'cpt_codes', name: 'Edit CPT Rates', risk_level: 'sensitive' },
   { code: 'cpt.delete', category: 'cpt_codes', name: 'Delete CPT Mapping', risk_level: 'sensitive' },
+  { code: 'coding.assist', category: 'cpt_codes', name: 'Generate AI Coding Candidates', risk_level: 'standard' },
+  { code: 'coding.review', category: 'cpt_codes', name: 'Review & Reject Coding Candidates', risk_level: 'standard' },
+  { code: 'coding.approve', category: 'cpt_codes', name: 'Commit Approved CPT Codes to Case', risk_level: 'sensitive' },
+  { code: 'coding.export', category: 'reports', name: 'Export Coding Provenance Audit Logs', risk_level: 'sensitive' },
 
   // Finance
   { code: 'finance.view_margins', category: 'finance', name: 'View Profit Margins', risk_level: 'sensitive' },
@@ -203,6 +207,7 @@ export const rbacService = {
         'patients.view', 'patients.view_phi',
         'surgeons.view', 'surgeries.view', 'surgeries.edit',
         'cpt.view', 'cpt.create',
+        'coding.assist', 'coding.review', 'coding.approve', 'coding.export',
         'reports.export_volume', 'ai.run_insights'
       ];
     }
