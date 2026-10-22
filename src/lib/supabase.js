@@ -1644,7 +1644,223 @@ export const db = {
     return { success: false, total_reimbursement: 0, total_gross_charge: 0, line_item_count: 0 };
   },
 
-  // ==================== SETTINGS ====================
+  // ==================== CPT SPECIALTY & ANATOMICAL TAXONOMY (PHASE 42) ====================
+  async getClinicalTaxonomy() {
+    await this.ensureAuthSession();
+    try {
+      const [specRes, bsRes, bpRes, orgRes, pfRes] = await Promise.all([
+        supabase.from('clinical_specialties').select('*').eq('is_active', true).order('display_order', { ascending: true }),
+        supabase.from('body_systems').select('*').eq('is_active', true).order('display_order', { ascending: true }),
+        supabase.from('body_parts').select('*').eq('is_active', true).order('display_order', { ascending: true }),
+        supabase.from('anatomical_organs').select('*').eq('is_active', true).order('name', { ascending: true }),
+        supabase.from('procedure_families').select('*').eq('is_active', true).order('name', { ascending: true })
+      ]);
+
+      if (!specRes.error && specRes.data && specRes.data.length > 0) {
+        return {
+          specialties: specRes.data || [],
+          bodySystems: bsRes.data || [],
+          bodyParts: bpRes.data || [],
+          anatomicalOrgans: orgRes.data || [],
+          procedureFamilies: pfRes.data || []
+        };
+      }
+    } catch (e) {
+      console.warn('getClinicalTaxonomy fallback to default catalog:', e);
+    }
+
+    // Default taxonomy fallback when tables are not yet queried
+    return {
+      specialties: [
+        { id: '10000000-0000-0000-0000-000000000001', code: 'ORTHO', name: 'Orthopedics' },
+        { id: '10000000-0000-0000-0000-000000000002', code: 'OPHTH', name: 'Ophthalmology' },
+        { id: '10000000-0000-0000-0000-000000000003', code: 'GI', name: 'Gastroenterology' },
+        { id: '10000000-0000-0000-0000-000000000004', code: 'ENT', name: 'Otolaryngology (ENT)' },
+        { id: '10000000-0000-0000-0000-000000000005', code: 'PLASTIC', name: 'Plastic / Cosmetic' },
+        { id: '10000000-0000-0000-0000-000000000006', code: 'PODIATRY', name: 'Podiatry' },
+        { id: '10000000-0000-0000-0000-000000000007', code: 'UROLOGY', name: 'Urology' },
+        { id: '10000000-0000-0000-0000-000000000008', code: 'PAIN', name: 'Pain Management' },
+        { id: '10000000-0000-0000-0000-000000000009', code: 'CARDIO', name: 'Cardiology' },
+        { id: '10000000-0000-0000-0000-000000000010', code: 'GENERAL', name: 'General Surgery' },
+        { id: '10000000-0000-0000-0000-000000000011', code: 'NEURO', name: 'Neurology / Neurosurgery' },
+        { id: '10000000-0000-0000-0000-000000000012', code: 'GYN', name: 'Gynecology' }
+      ],
+      bodySystems: [
+        { id: '20000000-0000-0000-0000-000000000001', code: 'SYS_MUSC', name: 'Musculoskeletal System' },
+        { id: '20000000-0000-0000-0000-000000000002', code: 'SYS_EYE', name: 'Eye and Ocular Adnexa' },
+        { id: '20000000-0000-0000-0000-000000000003', code: 'SYS_DIGEST', name: 'Digestive System' },
+        { id: '20000000-0000-0000-0000-000000000004', code: 'SYS_RESP_ENT', name: 'Respiratory & Auditory (ENT)' },
+        { id: '20000000-0000-0000-0000-000000000005', code: 'SYS_INTEG', name: 'Integumentary System' },
+        { id: '20000000-0000-0000-0000-000000000006', code: 'SYS_CARDIO', name: 'Cardiovascular System' },
+        { id: '20000000-0000-0000-0000-000000000007', code: 'SYS_NERV', name: 'Nervous System' },
+        { id: '20000000-0000-0000-0000-000000000008', code: 'SYS_URINARY', name: 'Urinary System' },
+        { id: '20000000-0000-0000-0000-000000000009', code: 'SYS_GENERAL', name: 'General / Multiple Systems' }
+      ],
+      bodyParts: [
+        { id: '30000000-0000-0000-0000-000000000001', code: 'BP_SHOULDER', name: 'Shoulder', laterality_applicable: true },
+        { id: '30000000-0000-0000-0000-000000000002', code: 'BP_ELBOW', name: 'Elbow', laterality_applicable: true },
+        { id: '30000000-0000-0000-0000-000000000003', code: 'BP_WRIST', name: 'Wrist', laterality_applicable: true },
+        { id: '30000000-0000-0000-0000-000000000004', code: 'BP_HAND', name: 'Hand / Fingers', laterality_applicable: true },
+        { id: '30000000-0000-0000-0000-000000000005', code: 'BP_HIP', name: 'Hip', laterality_applicable: true },
+        { id: '30000000-0000-0000-0000-000000000006', code: 'BP_KNEE', name: 'Knee', laterality_applicable: true },
+        { id: '30000000-0000-0000-0000-000000000007', code: 'BP_ANKLE', name: 'Ankle', laterality_applicable: true },
+        { id: '30000000-0000-0000-0000-000000000008', code: 'BP_FOOT', name: 'Foot / Toes', laterality_applicable: true },
+        { id: '30000000-0000-0000-0000-000000000009', code: 'BP_SPINE', name: 'Spine / Back', laterality_applicable: false },
+        { id: '30000000-0000-0000-0000-000000000010', code: 'BP_EYE', name: 'Eye / Ocular Adnexa', laterality_applicable: true },
+        { id: '30000000-0000-0000-0000-000000000011', code: 'BP_UPPER_GI', name: 'Upper GI (Esophagus / Stomach)', laterality_applicable: false },
+        { id: '30000000-0000-0000-0000-000000000012', code: 'BP_LOWER_GI', name: 'Lower GI (Colon / Rectum / Anus)', laterality_applicable: false },
+        { id: '30000000-0000-0000-0000-000000000013', code: 'BP_BILIARY', name: 'Gallbladder / Biliary', laterality_applicable: false },
+        { id: '30000000-0000-0000-0000-000000000014', code: 'BP_NOSE', name: 'Nose / Sinuses', laterality_applicable: false },
+        { id: '30000000-0000-0000-0000-000000000015', code: 'BP_THROAT', name: 'Throat / Pharynx / Larynx', laterality_applicable: false },
+        { id: '30000000-0000-0000-0000-000000000016', code: 'BP_EAR', name: 'Ear', laterality_applicable: true },
+        { id: '30000000-0000-0000-0000-000000000017', code: 'BP_SKIN_SOFT', name: 'Skin / Soft Tissue', laterality_applicable: false },
+        { id: '30000000-0000-0000-0000-000000000018', code: 'BP_BREAST', name: 'Breast', laterality_applicable: true },
+        { id: '30000000-0000-0000-0000-000000000019', code: 'BP_GENERAL', name: 'General Body', laterality_applicable: false }
+      ],
+      anatomicalOrgans: [
+        { id: '40000000-0000-0000-0000-000000000001', code: 'ORG_MENISCUS', name: 'Meniscus (Knee)', snomed_ct_id: '72696002' },
+        { id: '40000000-0000-0000-0000-000000000002', code: 'ORG_ACL_PCL', name: 'Cruciate Ligaments (ACL/PCL)', snomed_ct_id: '54752002' },
+        { id: '40000000-0000-0000-0000-000000000003', code: 'ORG_ROTATOR_CUFF', name: 'Rotator Cuff', snomed_ct_id: '71616004' },
+        { id: '40000000-0000-0000-0000-000000000004', code: 'ORG_LENS', name: 'Crystalline Lens (Eye)', snomed_ct_id: '65171008' },
+        { id: '40000000-0000-0000-0000-000000000005', code: 'ORG_CORNEA', name: 'Cornea', snomed_ct_id: '28726007' },
+        { id: '40000000-0000-0000-0000-000000000006', code: 'ORG_RETINA', name: 'Retina', snomed_ct_id: '5665002' },
+        { id: '40000000-0000-0000-0000-000000000007', code: 'ORG_COLON', name: 'Colon / Large Intestine', snomed_ct_id: '71854001' },
+        { id: '40000000-0000-0000-0000-000000000008', code: 'ORG_GALLBLADDER', name: 'Gallbladder', snomed_ct_id: '28231008' },
+        { id: '40000000-0000-0000-0000-000000000009', code: 'ORG_TONSILS', name: 'Tonsils / Adenoids', snomed_ct_id: '75570004' },
+        { id: '40000000-0000-0000-0000-000000000010', code: 'ORG_CARPAL_TUNNEL', name: 'Median Nerve / Carpal Tunnel', snomed_ct_id: '414736005' }
+      ],
+      procedureFamilies: [
+        { id: '50000000-0000-0000-0000-000000000001', code: 'FAM_ARTHROSCOPY', name: 'Arthroscopy' },
+        { id: '50000000-0000-0000-0000-000000000002', code: 'FAM_ENDOSCOPY', name: 'Endoscopy' },
+        { id: '50000000-0000-0000-0000-000000000003', code: 'FAM_EXCISION', name: 'Excision / Resection' },
+        { id: '50000000-0000-0000-0000-000000000004', code: 'FAM_REPAIR', name: 'Repair / Reconstruction' },
+        { id: '50000000-0000-0000-0000-000000000005', code: 'FAM_ARTHROPLASTY', name: 'Arthroplasty / Joint Replacement' },
+        { id: '50000000-0000-0000-0000-000000000006', code: 'FAM_INJECTION', name: 'Injection / Nerve Block' },
+        { id: '50000000-0000-0000-0000-000000000007', code: 'FAM_BIOPSY', name: 'Biopsy' }
+      ]
+    };
+  },
+
+  async resolveCPTClinicalTaxonomy(cptCode, facilityId = null) {
+    await this.ensureAuthSession();
+    const cleanCode = String(cptCode || '').trim().toUpperCase();
+    const targetFac = facilityId || this.getActiveFacility()?.id || null;
+
+    try {
+      const { data, error } = await supabase.rpc('fn_resolve_cpt_clinical_taxonomy', {
+        p_code: cleanCode,
+        p_facility_id: targetFac
+      });
+      if (!error && data && data.length > 0) {
+        return { success: true, ...data[0] };
+      }
+    } catch (rpcErr) {
+      console.warn('fn_resolve_cpt_clinical_taxonomy RPC fallback:', rpcErr);
+    }
+
+    // Client fallback: query cpt_codes
+    try {
+      const { data } = await supabase
+        .from('cpt_codes')
+        .select('*')
+        .eq('code', cleanCode)
+        .order('effective_date', { ascending: false })
+        .limit(1);
+
+      if (data && data.length > 0) {
+        const item = data[0];
+        const bodyPart = item.body_part || 'General';
+        const specialty = item.category || 'General Surgery';
+        return {
+          success: true,
+          cpt_code: cleanCode,
+          description: item.description,
+          specialty_code: 'SPECIALTY_GEN',
+          specialty_name: specialty,
+          body_system_code: 'SYS_GEN',
+          body_system_name: 'General System',
+          body_part_code: 'BP_' + bodyPart.toUpperCase().replace(/[^A-Z0-9]/g, '_'),
+          body_part_name: bodyPart,
+          organ_code: null,
+          organ_name: null,
+          laterality_applicable: ['Shoulder', 'Knee', 'Eye', 'Elbow', 'Wrist', 'Hip', 'Ankle', 'Foot', 'Hand'].some(p => bodyPart.toLowerCase().includes(p.toLowerCase())),
+          procedure_family_name: item.procedure_group || null,
+          review_status: 'verified',
+          confidence_score: 1.00,
+          mapping_source: 'legacy_import',
+          is_facility_override: false
+        };
+      }
+    } catch (fbErr) {
+      console.warn('resolveCPTClinicalTaxonomy fallback error:', fbErr);
+    }
+
+    return {
+      success: false,
+      cpt_code: cleanCode,
+      specialty_name: 'General',
+      body_part_name: 'General Body',
+      laterality_applicable: false
+    };
+  },
+
+  async getCPTClinicalMappings(cptMasterId) {
+    await this.ensureAuthSession();
+    try {
+      const { data, error } = await supabase
+        .from('cpt_clinical_mappings')
+        .select(`
+          *,
+          clinical_specialties(code, name),
+          body_systems(code, name),
+          body_parts(code, name, laterality_applicable),
+          anatomical_organs(code, name, snomed_ct_id),
+          procedure_families(code, name, surgical_approach)
+        `)
+        .eq('cpt_master_id', cptMasterId)
+        .order('is_primary', { ascending: false });
+
+      if (!error && data) return data;
+    } catch (e) {
+      console.warn('getCPTClinicalMappings fallback:', e);
+    }
+    return [];
+  },
+
+  async reviewCPTMapping({ mappingId, decision, rationale, reviewerId = null }) {
+    await this.ensureAuthSession();
+    const session = this.getSession();
+    const uid = reviewerId || session?.user?.id || session?.id || null;
+
+    try {
+      // 1. Log review provenance
+      const { error: reviewErr } = await supabase
+        .from('cpt_mapping_reviews')
+        .insert([{
+          mapping_id: mappingId,
+          reviewer_id: uid,
+          decision,
+          rationale
+        }]);
+
+      if (reviewErr) throw reviewErr;
+
+      // 2. Update mapping status
+      const newStatus = decision === 'verified' ? 'verified' : (decision === 'rejected' ? 'rejected' : 'needs_review');
+      const { data: updated, error: updateErr } = await supabase
+        .from('cpt_clinical_mappings')
+        .update({ review_status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', mappingId)
+        .select()
+        .single();
+
+      if (updateErr) throw updateErr;
+      return { success: true, mapping: updated };
+    } catch (e) {
+      console.error('reviewCPTMapping error:', e);
+      throw e;
+    }
+  },
   async getSettings() {
     const { data, error } = await supabase
       .from('settings')

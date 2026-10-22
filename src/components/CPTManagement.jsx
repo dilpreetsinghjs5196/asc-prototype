@@ -60,6 +60,28 @@ const PROCEDURE_GROUPS = [
 
 const INDICATORS = ['A2', 'G2', 'J8', 'N1', 'P2', 'P3', 'R2', 'Z2', 'K2', 'S'];
 
+const STANDARD_BODY_PARTS = [
+  'Shoulder',
+  'Elbow',
+  'Wrist',
+  'Hand / Fingers',
+  'Hip',
+  'Knee',
+  'Ankle',
+  'Foot / Toes',
+  'Spine / Back',
+  'Eye / Ocular Adnexa',
+  'Upper GI (Esophagus / Stomach)',
+  'Lower GI (Colon / Rectum / Anus)',
+  'Gallbladder / Biliary',
+  'Nose / Sinuses',
+  'Throat / Pharynx / Larynx',
+  'Ear',
+  'Skin / Soft Tissue',
+  'Breast',
+  'General Body'
+];
+
 export default function CPTManagement({
   cptCodes,
   surgeries,
@@ -879,12 +901,18 @@ export default function CPTManagement({
                   <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)' }}>Body Part</label>
                   <input
                     type="text"
-                    placeholder="e.g. Hand, Knee"
+                    list="standard-body-parts"
+                    placeholder="e.g. Knee, Shoulder, Eye"
                     className="date-range-selector"
                     style={{ width: '100%', height: '38px' }}
                     value={form.body_part}
                     onChange={(e) => setForm({ ...form, body_part: e.target.value })}
                   />
+                  <datalist id="standard-body-parts">
+                    {STANDARD_BODY_PARTS.map(part => (
+                      <option key={part} value={part} />
+                    ))}
+                  </datalist>
                 </div>
               </div>
 

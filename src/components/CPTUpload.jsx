@@ -147,8 +147,9 @@ const CPTUpload = () => {
           facility_id: activeFacility, // NULL for global standard catalog or tenant facility
           is_active: true,
           turnover_time: 30,
-          procedure_group: 'General Procedures',
-          category: existing.category || 'General',
+          procedure_group: item.procedure_group || existing.procedure_group || (item.category ? `${item.category} Procedures` : 'General Procedures'),
+          category: item.category || existing.category || 'General',
+          body_part: item.body_part || existing.body_part || null,
           code: item.code,
           description: item.description || existing.description || '',
           reimbursement: item.reimbursement !== null ? item.reimbursement : (existing.reimbursement ?? 0),

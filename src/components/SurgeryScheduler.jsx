@@ -1593,8 +1593,9 @@ const SurgeryScheduler = ({
 
             // Specialty filter
             const matchesSpecialty = !specialty || cpt.category === specialty || cpt.category === 'General' || cpt.category === 'General Surgery';
-            // Body part filter
-            const matchesBodyPart = !selectedBodyPart || (cpt.details?.body_part === selectedBodyPart);
+            // Body part filter (Phase 42 fix: check cpt.body_part with fallback to cpt.details?.body_part)
+            const cptPart = cpt.body_part || cpt.details?.body_part;
+            const matchesBodyPart = !selectedBodyPart || (cptPart === selectedBodyPart);
 
             return matchesSpecialty && matchesQuery && matchesBodyPart;
         }).sort((a, b) => {
@@ -1612,13 +1613,16 @@ const SurgeryScheduler = ({
         });
     }, [formData.selectedCptCodes, cptCodes]);
 
-    // Available body parts mapping from CPTs
+    // Available body parts mapping from CPTs (Phase 42 fix: check cpt.body_part)
     const availableBodyParts = useMemo(() => {
         const parts = new Set();
-        cptCodes.forEach(c => {
-            if (c.details?.body_part) parts.add(c.details.body_part);
+        (cptCodes || []).forEach(c => {
+            const part = c.body_part || c.details?.body_part;
+            if (part && typeof part === 'string' && part.trim()) {
+                parts.add(part.trim());
+            }
         });
-        return Array.from(parts);
+        return Array.from(parts).sort();
     }, [cptCodes]);
 
     return (
