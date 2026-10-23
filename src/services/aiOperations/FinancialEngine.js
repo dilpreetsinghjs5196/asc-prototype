@@ -90,6 +90,7 @@ export const estimateFinancials = (cpt, duration, avgSuppliesCost, avgImplantCos
         estimatedCleaningCost: financials.cleaningCost,
         totalCost: financials.totalCost,
         estimatedProfit: financials.netProfit,
-        reimbursement: grossCharge
+        reimbursement: reimbursement,
+        grossCharge: grossCharge
     };
 };

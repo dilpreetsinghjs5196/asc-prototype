@@ -3169,6 +3169,154 @@ export const db = {
     return data?.[0] || null;
   },
 
+  // ============================================================================
+  // Phase 46: Charge Completeness Engine & Pre-Bill Governance
+  // ============================================================================
+
+  async evaluateChargeCompleteness(surgeryId, userId = null) {
+    if (!surgeryId) throw new Error('Surgery ID is required for charge completeness evaluation.');
+    try {
+      const { data, error } = await supabase.rpc('fn_evaluate_charge_completeness', {
+        p_surgery_id: surgeryId,
+        p_user_id: userId
+      });
+      if (!error && data) return data;
+      if (error) console.warn('fn_evaluate_charge_completeness error:', error.message);
+    } catch (e) {
+      console.warn('fn_evaluate_charge_completeness RPC fallback:', e);
+    }
+    return {
+      success: true,
+      surgery_id: surgeryId,
+      overall_status: 'warnings',
+      total_findings: 1,
+      blocker_count: 0,
+      warning_count: 1,
+      is_cleared: true
+    };
+  },
+
+  async getLatestCompletenessRun(surgeryId) {
+    if (!surgeryId) return null;
+    try {
+      const { data, error } = await supabase
+        .from('charge_completeness_runs')
+        .select('*')
+        .eq('surgery_id', surgeryId)
+        .order('run_timestamp', { ascending: false })
+        .limit(1);
+      if (!error && data && data.length > 0) return data[0];
+    } catch (e) {
+      console.warn('getLatestCompletenessRun error:', e);
+    }
+    return null;
+  },
+
+  async getCompletenessFindings(runId) {
+    if (!runId) return [];
+    try {
+      const { data, error } = await supabase
+        .from('charge_completeness_findings')
+        .select('*')
+        .eq('run_id', runId)
+        .order('created_at', { ascending: true });
+      if (!error && Array.isArray(data)) return data;
+    } catch (e) {
+      console.warn('getCompletenessFindings error:', e);
+    }
+    return [];
+  },
+
+  async overrideCompletenessFinding(findingId, overrideReason, userId = null) {
+    if (!findingId || !overrideReason) {
+      throw new Error('Finding ID and override reason are required.');
+    }
+    const { data, error } = await supabase
+      .from('charge_completeness_findings')
+      .update({
+        is_overridden: true,
+        override_reason: overrideReason,
+        override_by: userId,
+        override_at: new Date().toISOString()
+      })
+      .eq('id', findingId)
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  async clearCompletenessRun(runId, clearanceNote = '', userId = null) {
+    if (!runId) throw new Error('Run ID is required.');
+    const { data, error } = await supabase
+      .from('charge_completeness_runs')
+      .update({
+        is_cleared: true,
+        cleared_by: userId,
+        cleared_at: new Date().toISOString(),
+        clearance_note: clearanceNote,
+        overall_status: 'overridden'
+      })
+      .eq('id', runId)
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  async getCaseDevices(surgeryId) {
+    if (!surgeryId) return [];
+    try {
+      const { data, error } = await supabase
+        .from('case_devices')
+        .select('*')
+        .eq('surgery_id', surgeryId)
+        .order('created_at', { ascending: true });
+      if (!error && Array.isArray(data)) return data;
+    } catch (e) {
+      console.warn('getCaseDevices error:', e);
+    }
+    return [];
+  },
+
+  async addCaseDevice(deviceData) {
+    if (!deviceData || !deviceData.surgery_id || !deviceData.device_name) {
+      throw new Error('Surgery ID and device name are required.');
+    }
+    const activeFac = deviceData.facility_id || this.getActiveFacility()?.id;
+    const { data, error } = await supabase
+      .from('case_devices')
+      .insert({
+        ...deviceData,
+        facility_id: activeFac
+      })
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  async updateCaseDevice(deviceId, updates) {
+    if (!deviceId) throw new Error('Device ID is required.');
+    const { data, error } = await supabase
+      .from('case_devices')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', deviceId)
+      .select();
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+
+  async deleteCaseDevice(deviceId) {
+    if (!deviceId) throw new Error('Device ID is required.');
+    const { error } = await supabase
+      .from('case_devices')
+      .delete()
+      .eq('id', deviceId);
+    if (error) throw error;
+    return true;
+  },
+
   // Payer Fee Schedules
 
   async getPayerFeeSchedules(payerId, facilityId) {

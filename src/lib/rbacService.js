@@ -67,6 +67,9 @@ export const PERMISSIONS_CATALOG = [
   { code: 'billing.view_yield', category: 'billing', name: 'View Payer Yields', risk_level: 'standard' },
   { code: 'billing.apply_mppr', category: 'billing', name: 'Apply Medicare MPPR', risk_level: 'sensitive' },
   { code: 'billing.freeze_monthly', category: 'billing', name: 'Freeze Monthly Billing', risk_level: 'critical' },
+  { code: 'billing.view_completeness', category: 'billing', name: 'View Charge Completeness Findings', risk_level: 'standard' },
+  { code: 'billing.override_blocker', category: 'billing', name: 'Override Charge Completeness Blocker', risk_level: 'critical' },
+  { code: 'billing.signoff_prebill', category: 'billing', name: 'Sign-off Pre-Bill Completeness', risk_level: 'sensitive' },
 
   // Reports
   { code: 'reports.export_volume', category: 'reports', name: 'Export Case Volume', risk_level: 'standard' },
@@ -103,6 +106,13 @@ export const PERMISSIONS_CATALOG = [
 ];
 
 export const rbacService = {
+  /**
+   * Returns canonical permissions catalog
+   */
+  getPermissionsCatalog() {
+    return PERMISSIONS_CATALOG;
+  },
+
   /**
    * Evaluates if active permissions include required permission code
    */
@@ -166,6 +176,7 @@ export const rbacService = {
         'surgeries.view', 'or.view', 'cpt.view', 'cpt.create', 'cpt.edit',
         'finance.view_margins', 'finance.manage_overtime', 'finance.approve_budgets',
         'billing.view_yield', 'billing.apply_mppr', 'billing.freeze_monthly',
+        'billing.view_completeness', 'billing.override_blocker', 'billing.signoff_prebill',
         'reports.export_volume', 'reports.export_margins',
         'ai.run_insights', 'roles.view', 'tenancy.toggle_mppr',
         'audit.view_clinical', 'audit.view_financial'
@@ -200,6 +211,7 @@ export const rbacService = {
         'coding.override_validation',
         'finance.view_margins', 'finance.manage_overtime',
         'billing.view_yield', 'billing.apply_mppr', 'billing.freeze_monthly',
+        'billing.view_completeness', 'billing.override_blocker', 'billing.signoff_prebill',
         'reports.export_volume', 'reports.export_margins',
         'ai.run_insights', 'audit.view_financial'
       ];
@@ -210,6 +222,7 @@ export const rbacService = {
         'surgeons.view', 'surgeries.view', 'surgeries.edit',
         'cpt.view', 'cpt.create',
         'coding.assist', 'coding.review', 'coding.approve', 'coding.override_validation', 'coding.export',
+        'billing.view_completeness',
         'reports.export_volume', 'ai.run_insights'
       ];
     }

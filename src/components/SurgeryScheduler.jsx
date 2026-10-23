@@ -5,12 +5,13 @@ import jsPDF from 'jspdf';
 import {
     Search, Edit, Trash2, Clock,
     DollarSign, AlertCircle, Check, ChevronDown, ChevronUp, Wand2, MessageSquare,
-    ArrowUp, ArrowDown, Tag, Star, Users
+    ArrowUp, ArrowDown, Tag, Star, Users, ShieldCheck
 } from 'lucide-react';
 import { calculateMedicareRevenue, validateProcedureLineClient } from '../utils/hospitalUtils';
 import ORBlockSchedule from './ORBlockSchedule';
 import CaseTimelineModal from './CaseTimelineModal';
 import CodingAssistantModal from './CodingAssistantModal';
+import PrebillCompletenessModal from './PrebillCompletenessModal';
 import './SurgeryScheduler.css';
 
 // Format currency helper
@@ -95,6 +96,7 @@ const SurgeryScheduler = ({
     const [staffList, setStaffList] = useState([]);
     const [facilitiesList, setFacilitiesList] = useState(facilities || []);
     const [timelineSurgery, setTimelineSurgery] = useState(null);
+    const [prebillSurgery, setPrebillSurgery] = useState(null);
     const [codingAssistantOpen, setCodingAssistantOpen] = useState(false);
 
     const session = db.getSession();
@@ -3473,6 +3475,9 @@ const SurgeryScheduler = ({
                                                                             <button className="btn-icon btn-timeline" title="View Case Timeline" onClick={() => setTimelineSurgery(s)}>
                                                                                 <Clock size={16} />
                                                                             </button>
+                                                                            <button className="btn-icon btn-prebill" title="Pre-Bill Completeness Review" onClick={() => setPrebillSurgery(s)}>
+                                                                                <ShieldCheck size={16} />
+                                                                            </button>
                                                                             {String(s.status || '').toLowerCase() !== 'completed' && String(s.status || '').toLowerCase() !== 'cancelled' && String(s.status || '').toLowerCase() !== 'billed' && String(s.status || '').toLowerCase() !== 'void' && (
                                                                                 <>
                                                                                     <button className="btn-icon btn-reschedule" title="Complete" onClick={() => handleCompleteSurgery(s.id)}>
@@ -3552,6 +3557,16 @@ const SurgeryScheduler = ({
                 preOpDiagnosis={formData.preOpDiagnosis || ''}
                 procedureName={formData.procedureName || ''}
                 onApplyCandidate={handleApplyCandidate}
+            />
+
+            {/* Phase 46: Charge Completeness & Pre-Bill Review Modal */}
+            <PrebillCompletenessModal
+                isOpen={!!prebillSurgery}
+                onClose={() => setPrebillSurgery(null)}
+                surgery={prebillSurgery}
+                onSignoffComplete={() => {
+                    onUpdate?.(prebillSurgery);
+                }}
             />
         </div>
     );
