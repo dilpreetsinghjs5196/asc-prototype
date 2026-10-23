@@ -3475,7 +3475,14 @@ const SurgeryScheduler = ({
                                                                             <button className="btn-icon btn-timeline" title="View Case Timeline" onClick={() => setTimelineSurgery(s)}>
                                                                                 <Clock size={16} />
                                                                             </button>
-                                                                            <button className="btn-icon btn-prebill" title="Pre-Bill Completeness Review" onClick={() => setPrebillSurgery(s)}>
+                                                                            <button
+                                                                                className="btn-icon btn-prebill"
+                                                                                title="Pre-Bill Completeness Review"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setPrebillSurgery(s);
+                                                                                }}
+                                                                            >
                                                                                 <ShieldCheck size={16} />
                                                                             </button>
                                                                             {String(s.status || '').toLowerCase() !== 'completed' && String(s.status || '').toLowerCase() !== 'cancelled' && String(s.status || '').toLowerCase() !== 'billed' && String(s.status || '').toLowerCase() !== 'void' && (
