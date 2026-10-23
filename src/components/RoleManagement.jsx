@@ -2,15 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { rbacService, CANONICAL_ROLES, PERMISSIONS_CATALOG } from '../lib/rbacService.js';
 import { db } from '../lib/supabase.js';
 import {
-  Shield, Lock, Plus, Search, Filter, CheckCircle2,
-  AlertTriangle, Key, Layers, Grid, List, Check, X,
+  Shield, Lock, Plus, Search, Grid, List, Check, X,
   Building2, Info
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-export default function RoleManagement({ activeFacility, facilities = [], isSuperAdmin: propIsSuperAdmin, theme = 'light' }) {
+export default function RoleManagement({ activeFacility, facilities = [], isSuperAdmin: propIsSuperAdmin, theme: _theme = 'light' }) {
   const [roles, setRoles] = useState(CANONICAL_ROLES);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('cards'); // 'cards' | 'matrix'
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRoleForDetail, setSelectedRoleForDetail] = useState(null);

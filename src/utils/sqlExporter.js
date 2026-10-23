@@ -238,6 +238,13 @@ export async function exportDatabaseSql(options = {}) {
       totalRecords += rows.length;
 
       sqlContent += `-- ---------------------------------------------------------\n`;
+      if (tableName === 'cpt_codes' || tableName === 'surgery_procedures') {
+        sqlContent += `-- CPT® COPYRIGHT & COMMERCIAL LICENSING RESTRICTION NOTICE:\n`;
+        sqlContent += `-- Current Procedural Terminology (CPT®) is copyright 2024-2026 American Medical Association.\n`;
+        sqlContent += `-- CPT is a registered trademark of the American Medical Association (AMA).\n`;
+        sqlContent += `-- All rights reserved. Commercial redistribution without an executed AMA license is prohibited.\n`;
+        sqlContent += `-- Applicable FARS/DFARS apply for US Government procurement.\n`;
+      }
       sqlContent += `-- Table: public.${tableName} (Exported Rows: ${rows.length})\n`;
       sqlContent += `-- ---------------------------------------------------------\n`;
 

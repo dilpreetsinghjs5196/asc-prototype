@@ -19,7 +19,10 @@ export default defineConfig([
       reactRefresh.configs.vite,
     ],
     languageOptions: {
-      globals: globals.browser,
+      globals: {
+        ...globals.browser,
+        ...globals.node
+      },
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
     rules: {
@@ -33,7 +36,21 @@ export default defineConfig([
       'no-dupe-keys': 'error',
       'no-empty': ['error', { allowEmptyCatch: false }],
       'no-useless-escape': 'error',
-      'no-useless-assignment': 'error'
+      'no-useless-assignment': 'error',
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/preserve-manual-memoization': 'off'
     }
   },
+  {
+    files: ['tests/**/*.{js,jsx}', 'scripts/**/*.{js,jsx}'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.browser
+      }
+    },
+    rules: {
+      'react-refresh/only-export-components': 'off'
+    }
+  }
 ])

@@ -86,27 +86,55 @@ export const db = {
     return data || [];
   },
 
-  // Fetch CPT codes list (Includes global codes and facility-specific overrides)
-  async getCPTCodes(facilityId = null) {
+  // Fetch CPT codes list (Includes global codes and facility-specific overrides, scoped to Date of Service)
+  async getCPTCodes(facilityId = null, options = {}) {
     const targetFac = facilityId || this.getActiveFacility()?.id;
+    const { dos = null, includeTerminated = false } = (typeof options === 'object' && options !== null ? options : {});
     let allCodes = [];
     let page = 0;
     const pageSize = 1000;
     let hasMore = true;
 
     while (hasMore) {
+        // Query v_cpt_codes_compat or cpt_codes
         let query = supabase
-            .from('cpt_codes')
-            .select('*')
-            .is('termination_date', null);
+            .from('v_cpt_codes_compat')
+            .select('*');
+
+        if (dos) {
+            query = query.lte('effective_date', dos).or(`termination_date.is.null,termination_date.gte.${dos}`);
+        } else if (!includeTerminated) {
+            const today = new Date().toISOString().split('T')[0];
+            query = query.or(`termination_date.is.null,termination_date.gte.${today}`);
+        }
 
         if (targetFac) {
             query = query.or(`facility_id.is.null,facility_id.eq.${targetFac}`);
         }
 
-        const { data, error } = await query
+        let { data, error } = await query
             .order('code', { ascending: true })
             .range(page * pageSize, (page + 1) * pageSize - 1);
+
+        // Fallback to legacy cpt_codes if view not accessible
+        if (error) {
+            let fallbackQuery = supabase
+                .from('cpt_codes')
+                .select('*');
+            if (dos) {
+                fallbackQuery = fallbackQuery.lte('effective_date', dos).or(`termination_date.is.null,termination_date.gte.${dos}`);
+            } else if (!includeTerminated) {
+                fallbackQuery = fallbackQuery.is('termination_date', null);
+            }
+            if (targetFac) {
+                fallbackQuery = fallbackQuery.or(`facility_id.is.null,facility_id.eq.${targetFac}`);
+            }
+            const res = await fallbackQuery
+                .order('code', { ascending: true })
+                .range(page * pageSize, (page + 1) * pageSize - 1);
+            data = res.data;
+            error = res.error;
+        }
 
         if (error) throw error;
 
@@ -233,7 +261,7 @@ export const db = {
   async deletePatient(id, soft = true) {
     if (soft) {
       try {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('patients')
           .update({
             is_active: false,
@@ -1322,21 +1350,39 @@ export const db = {
         p_payer_id: payerId
       });
 
-      if (!error && data && data.success) {
+      if (!error && data) {
+        if (data.success === false) {
+          return data;
+        }
         return data;
       }
     } catch (rpcErr) {
       console.warn('fn_resolve_cpt_pricing RPC fallback:', rpcErr);
     }
 
-    // Client fallback: Query latest active version from cpt_codes
+    // Client fallback: Query version matching Date of Service strictly
     try {
-      const { data } = await supabase
-        .from('cpt_codes')
+      let { data } = await supabase
+        .from('v_cpt_codes_compat')
         .select('*')
         .eq('code', String(cptCode).trim())
+        .lte('effective_date', dos)
+        .or(`termination_date.is.null,termination_date.gte.${dos}`)
         .order('effective_date', { ascending: false })
         .limit(1);
+
+      if (!data || data.length === 0) {
+        // Legacy table fallback with DOS bounds
+        const res = await supabase
+          .from('cpt_codes')
+          .select('*')
+          .eq('code', String(cptCode).trim())
+          .lte('effective_date', dos)
+          .or(`termination_date.is.null,termination_date.gte.${dos}`)
+          .order('effective_date', { ascending: false })
+          .limit(1);
+        data = res.data;
+      }
 
       if (data && data.length > 0) {
         const item = data[0];
@@ -1345,12 +1391,13 @@ export const db = {
         return {
           success: true,
           code: item.code,
-          master_id: null,
-          version_id: item.id,
-          rate_source: 'CLIENT_FALLBACK',
+          master_id: item.master_id || null,
+          version_id: item.version_id || item.id,
+          rate_source: 'CLIENT_FALLBACK_DOS_MATCH',
           contracted_reimbursement: reimbursement,
           baseline_gross_charge: grossCharge,
-          date_of_service: dos
+          date_of_service: dos,
+          copyright_notice: 'CPT copyright American Medical Association'
         };
       }
     } catch (fallbackErr) {
@@ -1362,7 +1409,9 @@ export const db = {
       code: cptCode,
       contracted_reimbursement: 0,
       baseline_gross_charge: 0,
-      error: 'CPT code pricing could not be resolved'
+      date_of_service: dos,
+      error: 'NO_ACTIVE_VERSION_FOR_DOS',
+      message: `No active CPT version found for Date of Service ${dos}`
     };
   },
 
@@ -1848,7 +1897,7 @@ export const db = {
 
       // 2. Update mapping status
       const newStatus = decision === 'verified' ? 'verified' : (decision === 'rejected' ? 'rejected' : 'needs_review');
-      const { data: updated, error: updateErr } = await supabase
+      const { error: updateErr } = await supabase
         .from('cpt_clinical_mappings')
         .update({ review_status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', mappingId)
@@ -2045,7 +2094,7 @@ export const db = {
 
       const matches = keywords.filter(k => lower.includes(k.term));
       if (matches.length > 0) {
-        rawCandidates = matches.map((m, idx) => ({
+        rawCandidates = matches.map((m) => ({
           code: m.code,
           description: m.desc,
           confidence: m.score,
@@ -2898,10 +2947,32 @@ export const db = {
     return true;
   },
 
-  // Synchronize entire procedure line list for a surgery
-  async syncSurgeryProcedures(surgeryId, procedures = [], facilityId = null) {
+  // Synchronize entire procedure line list for a surgery (Preserves frozen historical snapshots & scopes to DOS)
+  async syncSurgeryProcedures(surgeryId, procedures = [], facilityId = null, options = {}) {
     const targetFac = facilityId || this.getActiveFacility()?.id || '00000000-0000-0000-0000-000000000002';
     
+    // Resolve Date of Service for historical rate precision
+    let surgeryDOS = options.dateOfService || options.dos || null;
+    let surgeryPayerId = options.payerId || null;
+    if (!surgeryDOS) {
+      try {
+        const { data: surg } = await supabase
+          .from('surgeries')
+          .select('date, payer_id')
+          .eq('id', surgeryId)
+          .single();
+        if (surg) {
+          surgeryDOS = surg.date;
+          if (!surgeryPayerId) surgeryPayerId = surg.payer_id;
+        }
+      } catch {
+        // Fallback to today if surgery record not yet persisted
+      }
+    }
+    if (!surgeryDOS) {
+      surgeryDOS = new Date().toISOString().split('T')[0];
+    }
+
     // 1. Delete existing procedure rows for this case
     try {
       await supabase
@@ -2914,7 +2985,8 @@ export const db = {
 
     if (!procedures || procedures.length === 0) return [];
 
-    // Resolve missing cpt_code_ids if any with deterministic latest-active resolution
+    // 2. Resolve missing rates strictly by encounter Date of Service (DOS)
+    // Deterministically query CPT versions ordered by effective_date DESC
     const missingCodes = procedures
       .filter(p => !p.cpt_code_id && (p.code || p.cpt_code))
       .map(p => String(p.code || p.cpt_code));
@@ -2923,12 +2995,11 @@ export const db = {
       try {
         const { data: matchedCpts } = await supabase
           .from('cpt_codes')
-          .select('id, code, gross_charge, reimbursement, description, effective_date, termination_date')
+          .select('id, code, gross_charge, reimbursement, description, effective_date')
           .in('code', missingCodes)
           .order('effective_date', { ascending: false });
         if (matchedCpts) {
           matchedCpts.forEach(c => {
-            // Because ordered descending by effective date, keep the first (latest) occurrence
             if (!codeMap[String(c.code)]) {
               codeMap[String(c.code)] = c;
             }
@@ -2939,14 +3010,35 @@ export const db = {
       }
     }
 
-    // 2. Prepare normalized line items
+    for (const proc of procedures) {
+      const codeStr = String(proc.code || proc.cpt_code || '').trim();
+      const needsRateLookup = (!proc.contracted_reimbursement && !proc.baseline_charge && !proc.gross_charge);
+      if (codeStr && needsRateLookup) {
+        try {
+          const pricing = await this.resolveCPTPricing(codeStr, {
+            facilityId: targetFac,
+            dos: surgeryDOS,
+            payerId: surgeryPayerId
+          });
+          if (pricing && pricing.success) {
+            codeMap[codeStr] = { ...(codeMap[codeStr] || {}), ...pricing };
+          }
+        } catch (lookupErr) {
+          console.warn('syncSurgeryProcedures CPT lookup warning:', lookupErr);
+        }
+      }
+    }
+
+    // 3. Prepare normalized line items, preserving frozen historical snapshots
     const rowsToInsert = procedures.map((proc, index) => {
-      const codeStr = String(proc.code || proc.cpt_code || '');
-      const cptObj = codeMap[codeStr];
-      const cptCodeId = proc.cpt_code_id || proc.cpt_codes?.id || cptObj?.id || null;
+      const codeStr = String(proc.code || proc.cpt_code || '').trim();
+      const pricingObj = codeMap[codeStr];
+      const cptCodeId = proc.cpt_code_id || proc.cpt_codes?.id || pricingObj?.id || null;
       const units = Math.max(1, parseInt(proc.units) || 1);
-      const baseline = parseFloat(proc.baseline_charge || proc.gross_charge || cptObj?.gross_charge || 0);
-      const contracted = parseFloat(proc.contracted_reimbursement || proc.reimbursement || cptObj?.reimbursement || 0);
+
+      // Preserve existing frozen rates if present; otherwise use DOS-resolved rate
+      const baseline = parseFloat(proc.baseline_charge || proc.gross_charge || pricingObj?.baseline_gross_charge || 0);
+      const contracted = parseFloat(proc.contracted_reimbursement || proc.reimbursement || pricingObj?.contracted_reimbursement || 0);
       const isPrimary = proc.is_primary !== undefined ? proc.is_primary : (index === 0);
       const rank = proc.sequence_rank || (index + 1);
 
@@ -2954,22 +3046,26 @@ export const db = {
         facility_id: targetFac,
         surgery_id: surgeryId,
         cpt_code_id: cptCodeId,
+        cpt_version_id: proc.cpt_version_id || pricingObj?.version_id || null,
         sequence_rank: rank,
         is_primary: isPrimary,
         units: units,
         modifiers: Array.isArray(proc.modifiers) ? proc.modifiers : (proc.modifier_code ? [proc.modifier_code] : []),
         laterality: proc.laterality || 'NOT_APPLICABLE',
-        procedure_description: proc.procedure_description || proc.description || cptObj?.description || null,
+        procedure_description: proc.procedure_description || proc.description || null,
         coding_status: proc.coding_status || 'Coded',
         baseline_charge: baseline,
         contracted_reimbursement: contracted,
         line_gross_charge: baseline * units,
         line_expected_reimbursement: contracted * units,
-        source_system: proc.source_system || 'MANUAL'
+        source_system: proc.source_system || 'MANUAL',
+        pricing_dos: surgeryDOS,
+        pricing_source: proc.pricing_source || pricingObj?.rate_source || 'CMS_BASELINE',
+        ama_copyright_acknowledged: true
       };
     });
 
-    // 3. Batch insert
+    // 4. Batch insert
     const { data, error } = await supabase
       .from('surgery_procedures')
       .insert(rowsToInsert)
@@ -2979,7 +3075,6 @@ export const db = {
       console.error('syncSurgeryProcedures error:', error);
       throw error;
     }
-
     return data || [];
   },
 

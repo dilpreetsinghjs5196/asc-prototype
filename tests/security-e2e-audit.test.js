@@ -6,12 +6,6 @@ import { fileURLToPath } from 'node:url';
 
 import { rbacService, CANONICAL_ROLES, PERMISSIONS_CATALOG } from '../src/lib/rbacService.js';
 import {
-  maskMRN,
-  maskPhone,
-  maskDOB,
-  maskPatientName,
-  sanitizePatientRecord,
-  sanitizeSurgeryRecord,
   deidentifyTextForAI
 } from '../src/utils/phiMasking.js';
 

@@ -4,8 +4,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  CANONICAL_ASC_MODIFIERS,
-  INCOMPATIBLE_MODIFIER_PAIRS,
   validateProcedureLineClient,
   calculateAuthoritativeAscRevenue
 } from '../src/utils/hospitalUtils.js';
@@ -343,7 +341,7 @@ describe('Phase 44 — CPT Modifiers, Units of Service & Laterality Rules Verifi
     });
 
     it('Coder and biller roles possess coding.override_validation permission', async () => {
-      const coderPerms = await rbacService.getPermissionsForUser();
+      const _coderPerms = await rbacService.getPermissionsForUser();
       // Test normalizeRole fallback for coder
       const coderCodes = [
         'cpt.view', 'cpt.create', 'coding.assist', 'coding.review', 'coding.approve', 'coding.override_validation', 'coding.export'

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { supabase, db } from '../lib/supabase';
+import { db } from '../lib/supabase';
 import {
   Users,
   Search,
@@ -10,10 +10,7 @@ import {
   X,
   ShieldCheck,
   Calendar,
-  Clock,
-  Award,
   AlertTriangle,
-  FileText,
   Activity,
   CheckCircle2,
   AlertCircle
@@ -65,7 +62,7 @@ const EMPLOYMENT_TYPES = [
   { value: 'Temporary', label: 'Temporary' }
 ];
 
-export const formatCredentials = (creds, fallback = 'RN') => {
+const formatCredentials = (creds, fallback = 'RN') => {
   if (!creds) return fallback;
   if (typeof creds === 'string') return creds;
   if (Array.isArray(creds)) {

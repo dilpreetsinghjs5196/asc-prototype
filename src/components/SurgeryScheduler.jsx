@@ -5,7 +5,7 @@ import jsPDF from 'jspdf';
 import {
     Search, Edit, Trash2, Clock,
     DollarSign, AlertCircle, Check, ChevronDown, ChevronUp, Wand2, MessageSquare,
-    ArrowUp, ArrowDown, Plus, Tag, Star, Users
+    ArrowUp, ArrowDown, Tag, Star, Users
 } from 'lucide-react';
 import { calculateMedicareRevenue, validateProcedureLineClient } from '../utils/hospitalUtils';
 import ORBlockSchedule from './ORBlockSchedule';
@@ -2278,7 +2278,7 @@ const SurgeryScheduler = ({
                                             const isBilateral = line.modifiers?.includes('50') || line.laterality === 'BILATERAL';
                                             const effectiveUnits = isBilateral ? 1 : (line.units || 1);
                                             const effectiveCharge = (line.gross_charge || 0) * (isBilateral ? 1.5 : 1) * effectiveUnits;
-                                            const lineVal = validateProcedureLineClient(line, formData.procedureLines, cptDatabase);
+                                            const lineVal = validateProcedureLineClient(line, formData.procedureLines, cptCodes);
 
                                             return (
                                                 <div

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { db } from '../lib/supabase';
-import { Wand2, CheckCircle2, XCircle, AlertTriangle, Loader, RefreshCw, FileText, Tag, ShieldCheck } from 'lucide-react';
+import { Wand2, CheckCircle2, XCircle, AlertTriangle, Loader, RefreshCw, FileText, ShieldCheck } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 export default function CodingAssistantModal({

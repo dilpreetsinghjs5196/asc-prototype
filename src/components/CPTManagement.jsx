@@ -1109,6 +1109,25 @@ export default function CPTManagement({
         </div>
       )}
 
+      {/* AMA Statutory Copyright & Licensing Attribution */}
+      <div style={{
+        marginTop: '28px',
+        padding: '16px 20px',
+        borderRadius: '8px',
+        background: 'rgba(255, 255, 255, 0.02)',
+        border: '1px solid var(--border-light, rgba(255, 255, 255, 0.08))',
+        fontSize: '0.78rem',
+        color: 'var(--text-secondary, #94a3b8)',
+        lineHeight: 1.5
+      }}>
+        <div style={{ fontWeight: 600, color: 'var(--text-primary, #e2e8f0)', marginBottom: '4px' }}>
+          CPT® Statutory Licensing & Intellectual Property Notice
+        </div>
+        Current Procedural Terminology (CPT®) is copyright 2024–2026 American Medical Association. All rights reserved.
+        CPT is a registered trademark of the American Medical Association (AMA). Applicable FARS/DFARS restrictions apply for government procurement.
+        Fee schedules, relative value units, conversion factors and related components are not assigned by the AMA and are not part of CPT.
+      </div>
+
     </div>
   );
 }

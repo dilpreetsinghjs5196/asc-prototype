@@ -6,7 +6,6 @@ import {
   AVAILABLE_TABLES, 
   DEFAULT_FACILITY_TABLES, 
   FACILITY_OPERATIONS_TABLES, 
-  ALL_EXPORT_TABLES, 
   formatSqlLiteral 
 } from '../src/utils/sqlExporter.js';
 

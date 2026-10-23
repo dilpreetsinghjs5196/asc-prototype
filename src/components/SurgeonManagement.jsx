@@ -8,12 +8,8 @@ import {
   Edit,
   Trash2,
   X,
-  ShieldCheck,
   Building2,
-  Calendar,
-  AlertTriangle,
-  Award,
-  Clock
+  Award
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
@@ -33,16 +29,7 @@ const SURGICAL_SPECIALTIES = [
   'Oral & Maxillofacial'
 ];
 
-const APPOINTMENT_TYPES = [
-  'Active',
-  'Provisional',
-  'Courtesy',
-  'Consulting',
-  'Locum Tenens',
-  'Temporary'
-];
-
-export default function SurgeonManagement({ activeFacility, facilities = [], isSuperAdmin: propIsSuperAdmin }) {
+export default function SurgeonManagement({ activeFacility, facilities: _facilities = [], isSuperAdmin: propIsSuperAdmin }) {
   const [surgeonsList, setSurgeonsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,7 +66,7 @@ export default function SurgeonManagement({ activeFacility, facilities = [], isS
   const [privileges, setPrivileges] = useState([]);
 
   const session = db.getSession();
-  const isSuperAdmin = propIsSuperAdmin !== undefined ? propIsSuperAdmin : (session?.role === 'super_admin');
+  const _isSuperAdmin = propIsSuperAdmin !== undefined ? propIsSuperAdmin : (session?.role === 'super_admin');
 
   // Load surgeons
   const loadSurgeons = async () => {

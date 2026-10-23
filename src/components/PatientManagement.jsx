@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Swal from 'sweetalert2';
 import {
-  Users, Search, Plus, Edit, Trash2, Download, Eye, EyeOff,
-  ShieldAlert, Link2, ExternalLink, RefreshCw, X, Check, AlertCircle, FileText
+  Users, Search, Plus, Edit, Trash2, Download, EyeOff,
+  Link2, RefreshCw, X
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { db } from '../lib/supabase';
@@ -12,7 +12,7 @@ export default function PatientManagement({
   activeFacility,
   userRole = 'staff',
   canViewPHI: propCanViewPHI,
-  onPatientSelect = null
+  onPatientSelect: _onPatientSelect = null
 }) {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,8 +20,8 @@ export default function PatientManagement({
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [includeInactive, setIncludeInactive] = useState(false);
+  const [pageSize, _setPageSize] = useState(10);
+  const [includeInactive, _setIncludeInactive] = useState(false);
 
   // Modals state
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -38,8 +38,8 @@ export default function PatientManagement({
   // Payers for relational dropdown
   const [payers, setPayers] = useState([]);
 
-  const isSuperAdmin = userRole === 'super_admin';
-  const isAdminOrManager = ['super_admin', 'org_admin', 'facility_admin', 'clinical_manager'].includes(userRole);
+  const _isSuperAdmin = userRole === 'super_admin';
+  const _isAdminOrManager = ['super_admin', 'org_admin', 'facility_admin', 'clinical_manager'].includes(userRole);
   const canViewPHI = propCanViewPHI !== undefined 
     ? propCanViewPHI 
     : ['super_admin', 'org_admin', 'facility_admin', 'clinical_manager', 'scheduler', 'surgeon', 'biller', 'coder'].includes(userRole);
@@ -264,7 +264,7 @@ export default function PatientManagement({
 
     try {
       if (editingPatient) {
-        const updated = await db.updatePatient(editingPatient.id, payload);
+        await db.updatePatient(editingPatient.id, payload);
         Swal.fire({
           title: 'Patient Updated',
           text: `Patient ${formData.name} was successfully updated.`,
@@ -273,7 +273,7 @@ export default function PatientManagement({
           showConfirmButton: false
         });
       } else {
-        const created = await db.addPatient(payload);
+        await db.addPatient(payload);
         Swal.fire({
           title: 'Patient Created',
           text: `Patient ${formData.name} was registered successfully.`,
