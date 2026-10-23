@@ -71,6 +71,14 @@ export const PERMISSIONS_CATALOG = [
   { code: 'billing.override_blocker', category: 'billing', name: 'Override Charge Completeness Blocker', risk_level: 'critical' },
   { code: 'billing.signoff_prebill', category: 'billing', name: 'Sign-off Pre-Bill Completeness', risk_level: 'sensitive' },
 
+  // Claims & Scrubbing (Domain: billing)
+  { code: 'claims.view_scrub', category: 'billing', name: 'View Claim Scrub Findings', risk_level: 'standard' },
+  { code: 'claims.run_scrubber', category: 'billing', name: 'Execute Claim Scrubbing Engine', risk_level: 'standard' },
+  { code: 'claims.apply_edits', category: 'billing', name: 'Apply Proposed Claim Edits', risk_level: 'sensitive' },
+  { code: 'claims.override_error', category: 'billing', name: 'Override Claim Scrubbing Blocker', risk_level: 'critical' },
+  { code: 'claims.approve_claim', category: 'billing', name: 'Approve & Release Clean Claim', risk_level: 'critical' },
+  { code: 'claims.export_edi', category: 'billing', name: 'Generate & Export EDI 837P / 1500', risk_level: 'sensitive' },
+
   // Reports
   { code: 'reports.export_volume', category: 'reports', name: 'Export Case Volume', risk_level: 'standard' },
   { code: 'reports.export_margins', category: 'reports', name: 'Export Financial Data', risk_level: 'sensitive' },
@@ -177,6 +185,7 @@ export const rbacService = {
         'finance.view_margins', 'finance.manage_overtime', 'finance.approve_budgets',
         'billing.view_yield', 'billing.apply_mppr', 'billing.freeze_monthly',
         'billing.view_completeness', 'billing.override_blocker', 'billing.signoff_prebill',
+        'claims.view_scrub', 'claims.run_scrubber', 'claims.apply_edits', 'claims.override_error', 'claims.approve_claim', 'claims.export_edi',
         'reports.export_volume', 'reports.export_margins',
         'ai.run_insights', 'roles.view', 'tenancy.toggle_mppr',
         'audit.view_clinical', 'audit.view_financial'
@@ -212,6 +221,7 @@ export const rbacService = {
         'finance.view_margins', 'finance.manage_overtime',
         'billing.view_yield', 'billing.apply_mppr', 'billing.freeze_monthly',
         'billing.view_completeness', 'billing.override_blocker', 'billing.signoff_prebill',
+        'claims.view_scrub', 'claims.run_scrubber', 'claims.apply_edits', 'claims.approve_claim', 'claims.export_edi',
         'reports.export_volume', 'reports.export_margins',
         'ai.run_insights', 'audit.view_financial'
       ];
@@ -223,6 +233,7 @@ export const rbacService = {
         'cpt.view', 'cpt.create',
         'coding.assist', 'coding.review', 'coding.approve', 'coding.override_validation', 'coding.export',
         'billing.view_completeness',
+        'claims.view_scrub', 'claims.run_scrubber', 'claims.apply_edits',
         'reports.export_volume', 'ai.run_insights'
       ];
     }
@@ -232,6 +243,7 @@ export const rbacService = {
         'surgeons.view', 'surgeons.edit',
         'surgeries.view', 'surgeries.schedule', 'surgeries.edit',
         'or.view', 'cpt.view',
+        'claims.view_scrub',
         'finance.view_margins',
         'reports.export_volume',
         'ai.run_insights', 'ai.run_simulation', 'ai.auto_schedule'

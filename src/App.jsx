@@ -26,6 +26,7 @@ import RoleManagement from './components/RoleManagement';
 import AuditLogViewer from './components/AuditLogViewer';
 import RoleGate from './components/RoleGate';
 import PatientManagement from './components/PatientManagement';
+import ClaimScrubberWorkbench from './components/ClaimScrubberWorkbench';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
 import { useInactivityTimeout } from './hooks/useInactivityTimeout';
@@ -2406,6 +2407,13 @@ export default function App() {
             CPT Codes Management
           </div>
           <div
+            className={`menu-item ${activeTab === 'claim_scrubber' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('claim_scrubber'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Shield size={16} /></div>
+            Claim Scrubbing & Edits
+          </div>
+          <div
             className={`menu-item ${activeTab === 'upload_code_files' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('upload_code_files'); setSelectedSurgeon(null); }}
           >
@@ -2589,6 +2597,7 @@ export default function App() {
                   {activeTab === 'financial' && 'Financial Performance'}
                   {activeTab === 'cpt' && 'Case Profitability'}
                   {activeTab === 'cpt_manage' && 'CPT Codes Management'}
+                  {activeTab === 'claim_scrubber' && 'Pre-Bill Claim Scrubbing Rules & Edits'}
                   {activeTab === 'upload_code_files' && 'Upload new Code Files'}
                   {activeTab === 'payer' && 'Payer Intelligence'}
                   {activeTab === 'supply' && 'Supply Chain'}
@@ -4405,6 +4414,16 @@ export default function App() {
               ========================================== */}
               {activeTab === 'upload_code_files' && (
                 <CPTUpload />
+              )}
+
+              {/* ==========================================
+              TAB: CLAIM SCRUBBING RULES & EDITS
+              ========================================== */}
+              {activeTab === 'claim_scrubber' && (
+                <ClaimScrubberWorkbench
+                  activeFacility={activeFacility}
+                  onSelectSurgery={() => setActiveTab('scheduler')}
+                />
               )}
 
               {/* ==========================================
