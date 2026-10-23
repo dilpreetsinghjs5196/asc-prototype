@@ -226,6 +226,7 @@ ALTER TABLE public.claim_scrub_findings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.claim_scrub_edits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ncci_ptp_edits ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "claims_facility_isolation" ON public.claims;
 CREATE POLICY "claims_facility_isolation" ON public.claims
     FOR ALL USING (
         facility_id IS NULL OR
@@ -233,6 +234,7 @@ CREATE POLICY "claims_facility_isolation" ON public.claims
         auth.uid() IS NULL
     );
 
+DROP POLICY IF EXISTS "claim_lines_facility_isolation" ON public.claim_lines;
 CREATE POLICY "claim_lines_facility_isolation" ON public.claim_lines
     FOR ALL USING (
         facility_id IS NULL OR
@@ -240,6 +242,7 @@ CREATE POLICY "claim_lines_facility_isolation" ON public.claim_lines
         auth.uid() IS NULL
     );
 
+DROP POLICY IF EXISTS "claim_scrub_runs_facility_isolation" ON public.claim_scrub_runs;
 CREATE POLICY "claim_scrub_runs_facility_isolation" ON public.claim_scrub_runs
     FOR ALL USING (
         facility_id IS NULL OR
@@ -247,6 +250,7 @@ CREATE POLICY "claim_scrub_runs_facility_isolation" ON public.claim_scrub_runs
         auth.uid() IS NULL
     );
 
+DROP POLICY IF EXISTS "claim_scrub_findings_facility_isolation" ON public.claim_scrub_findings;
 CREATE POLICY "claim_scrub_findings_facility_isolation" ON public.claim_scrub_findings
     FOR ALL USING (
         claim_id IN (
@@ -255,6 +259,7 @@ CREATE POLICY "claim_scrub_findings_facility_isolation" ON public.claim_scrub_fi
         ) OR auth.uid() IS NULL
     );
 
+DROP POLICY IF EXISTS "claim_scrub_edits_facility_isolation" ON public.claim_scrub_edits;
 CREATE POLICY "claim_scrub_edits_facility_isolation" ON public.claim_scrub_edits
     FOR ALL USING (
         claim_id IN (
@@ -263,6 +268,7 @@ CREATE POLICY "claim_scrub_edits_facility_isolation" ON public.claim_scrub_edits
         ) OR auth.uid() IS NULL
     );
 
+DROP POLICY IF EXISTS "ncci_ptp_public_read" ON public.ncci_ptp_edits;
 CREATE POLICY "ncci_ptp_public_read" ON public.ncci_ptp_edits
     FOR SELECT USING (true);
 
