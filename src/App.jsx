@@ -2606,6 +2606,7 @@ export default function App() {
                   {activeTab === 'financial' && 'Financial Performance'}
                   {activeTab === 'cpt' && 'Case Profitability'}
                   {activeTab === 'cpt_manage' && 'CPT Codes Management'}
+                  {activeTab === 'implant_taxonomy' && 'Implant Category & Component Taxonomy'}
                   {activeTab === 'claim_scrubber' && 'Pre-Bill Claim Scrubbing Rules & Edits'}
                   {activeTab === 'upload_code_files' && 'Upload new Code Files'}
                   {activeTab === 'payer' && 'Payer Intelligence'}
@@ -2641,6 +2642,7 @@ export default function App() {
                   {activeTab === 'patients' && 'Search, filter, and view patient demographics, health insurances, and medical records'}
                   {activeTab === 'financial' && 'Analysis of revenues, expenses, EBITDA margins, and bottom lines'}
                   {activeTab === 'cpt' && 'Contribution margins, procedure times, and volumes by CPT code'}
+                  {activeTab === 'implant_taxonomy' && 'Deterministic medical device hierarchy, clinical component roles, and FDA/ISO duration governance'}
                   {activeTab === 'payer' && 'Payer mix contribution margins and reimbursement analytics'}
                   {activeTab === 'supply' && 'Supply variance tracking and preference card standardization tools'}
                   {activeTab === 'cancellations' && 'Cancellations tracking, revenue leak analysis, and predictive risk analysis'}
@@ -4440,8 +4442,7 @@ export default function App() {
               ========================================== */}
               {activeTab === 'implant_taxonomy' && (
                 <ImplantTaxonomyExplorer
-                  isOpen={true}
-                  onClose={() => setActiveTab('scheduler')}
+                  isModal={false}
                 />
               )}
 
