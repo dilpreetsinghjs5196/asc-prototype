@@ -4,6 +4,7 @@
 [data-theme="light"] {
   /* Colors - Modern Light Theme (like Image 1) */
   --bg-main: #f8fafc;
+  --bg-app: #f8fafc;
   --bg-sidebar: #112238;
   --bg-card: #ffffff;
   --bg-card-hover: #f1f5f9;
@@ -46,6 +47,7 @@
 [data-theme="dark"] {
   /* Colors - Rich Navy Blue Dark Theme (#1E3A5F) */
   --bg-main: #142842;
+  --bg-app: #142842;
   --bg-sidebar: #0F2036;
   --bg-card: #1E3A5F;
   --bg-card-hover: #264975;

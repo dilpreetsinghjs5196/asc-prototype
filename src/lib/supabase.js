@@ -3282,10 +3282,15 @@ export const db = {
       throw new Error('Surgery ID and device name are required.');
     }
     const activeFac = deviceData.facility_id || this.getActiveFacility()?.id;
+    const hcpcs = deviceData.hcpcs_c_code || deviceData.hcpcs_code || null;
+    const charge = deviceData.charge_amount !== undefined ? deviceData.charge_amount : (deviceData.unit_charge !== undefined ? deviceData.unit_charge : 0.00);
     const { data, error } = await supabase
       .from('case_devices')
       .insert({
         ...deviceData,
+        hcpcs_code: hcpcs,
+        hcpcs_c_code: hcpcs,
+        charge_amount: charge,
         facility_id: activeFac
       })
       .select();
@@ -3295,12 +3300,13 @@ export const db = {
 
   async updateCaseDevice(deviceId, updates) {
     if (!deviceId) throw new Error('Device ID is required.');
+    const patch = { ...updates, updated_at: new Date().toISOString() };
+    if (updates.hcpcs_c_code && !updates.hcpcs_code) patch.hcpcs_code = updates.hcpcs_c_code;
+    if (updates.hcpcs_code && !updates.hcpcs_c_code) patch.hcpcs_c_code = updates.hcpcs_code;
+    if (updates.unit_charge !== undefined && updates.charge_amount === undefined) patch.charge_amount = updates.unit_charge;
     const { data, error } = await supabase
       .from('case_devices')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString()
-      })
+      .update(patch)
       .eq('id', deviceId)
       .select();
     if (error) throw error;
@@ -3315,6 +3321,40 @@ export const db = {
       .eq('id', deviceId);
     if (error) throw error;
     return true;
+  },
+
+  async reconcileCaseDeviceTotals(surgeryId) {
+    if (!surgeryId) throw new Error('Surgery ID is required.');
+    try {
+      const { data, error } = await supabase.rpc('fn_reconcile_case_device_totals', {
+        p_surgery_id: surgeryId
+      });
+      if (!error && data) return data;
+    } catch (e) {
+      console.warn('fn_reconcile_case_device_totals RPC fallback:', e);
+    }
+
+    // Client-side deterministic fallback
+    const devices = await this.getCaseDevices(surgeryId);
+    const totalCost = devices.reduce((sum, d) => sum + (parseFloat(d.unit_cost || 0) * (parseInt(d.quantity, 10) || 1)), 0);
+    const totalCharge = devices.reduce((sum, d) => sum + (parseFloat(d.charge_amount || d.unit_charge || 0) * (parseInt(d.quantity, 10) || 1)), 0);
+
+    await supabase
+      .from('surgeries')
+      .update({
+        implants_cost: totalCost,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', surgeryId);
+
+    return {
+      success: true,
+      surgery_id: surgeryId,
+      device_count: devices.length,
+      total_implants_cost: totalCost,
+      total_device_charges: totalCharge,
+      fallback: true
+    };
   },
 
   // ============================================================================

@@ -1064,7 +1064,7 @@ export default function App() {
         change_reason: reason === 'INACTIVITY_TIMEOUT'
           ? 'Automatic session termination due to 15-minute inactivity (HIPAA § 164.312(a)(2)(iii))'
           : 'User initiated secure session sign-out'
-      }).catch(() => {});
+      }).catch(() => { });
     }
     db.clearSession();
     try {
@@ -1188,7 +1188,7 @@ export default function App() {
 
     const handleThemeUpdated = () => applyThemeColors();
     window.addEventListener('theme-updated', handleThemeUpdated);
-    
+
     return () => window.removeEventListener('theme-updated', handleThemeUpdated);
   }, [theme]);
 
@@ -2276,7 +2276,7 @@ export default function App() {
         <div className="sidebar-logo">
           <div className="logo-icon">➕</div>
           <div className="logo-text">
-            <span className="logo-title">ASC Profitability</span>
+            <span className="logo-title">ASC Analyst</span>
             <span className="logo-subtitle">Platform</span>
           </div>
         </div>
@@ -2896,7 +2896,7 @@ export default function App() {
                   onSchedule={() => setActiveTab('scheduler')}
                 />
               )}
-              
+
               {activeTab === 'caselog_scheduling' && (
                 <CaseLogScheduler surgeonsList={surgeonsList} />
               )}
@@ -4330,16 +4330,16 @@ export default function App() {
               TAB: AI AGENT
               ========================================== */}
               {activeTab === 'ai_agent' && (
-                <AIOperationsAnalyst 
-                  surgeries={filteredSurgeries} 
-                  cptCodes={cptCodesList} 
+                <AIOperationsAnalyst
+                  surgeries={filteredSurgeries}
+                  cptCodes={cptCodesList}
                   patients={patients}
-                  settings={{}} 
+                  settings={{}}
                   onSchedule={async (surgData) => {
-                      const newSurg = await db.addSurgery(surgData);
-                      if (newSurg) {
-                        setSurgeries(prev => [{ ...surgData, id: newSurg.id, status: newSurg.status || 'scheduled' }, ...prev]);
-                      }
+                    const newSurg = await db.addSurgery(surgData);
+                    if (newSurg) {
+                      setSurgeries(prev => [{ ...surgData, id: newSurg.id, status: newSurg.status || 'scheduled' }, ...prev]);
+                    }
                   }}
                 />
               )}
@@ -4442,10 +4442,10 @@ export default function App() {
                   cptCodes={cptCodesList}
                   patients={patients}
                   onSchedule={async (surgData) => {
-                      const newSurg = await db.addSurgery(surgData);
-                      if (newSurg) {
-                        setSurgeries(prev => [{ ...surgData, id: newSurg.id, status: newSurg.status || 'scheduled' }, ...prev]);
-                      }
+                    const newSurg = await db.addSurgery(surgData);
+                    if (newSurg) {
+                      setSurgeries(prev => [{ ...surgData, id: newSurg.id, status: newSurg.status || 'scheduled' }, ...prev]);
+                    }
                   }}
                 />
               )}

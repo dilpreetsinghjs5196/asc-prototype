@@ -382,8 +382,8 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
             disabled={loading}
             style={{
               display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px',
-              backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-color, #334155)',
-              color: '#f8fafc', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600'
+              backgroundColor: 'var(--bg-card, #ffffff)', border: '1px solid var(--border-color, #cbd5e1)',
+              color: 'var(--text-primary, #0f172a)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600'
             }}
           >
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
@@ -417,12 +417,12 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
         
         {/* Left Column: Claims Worklist */}
         <div style={{
-          backgroundColor: 'var(--bg-card, #1e293b)', border: '1px solid var(--border-color, #334155)',
+          backgroundColor: 'var(--bg-card, #1e293b)', border: '1px solid var(--border-color, #cbd5e1)',
           borderRadius: '12px', display: 'flex', flexDirection: 'column', overflow: 'hidden'
         }}>
-          <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-color, #334155)', backgroundColor: 'var(--bg-app, #0f172a)' }}>
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-color, #cbd5e1)', backgroundColor: 'var(--bg-subtab, #f1f5f9)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#f8fafc' }}>Claims Queue ({claims.length})</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-primary, #0f172a)' }}>Claims Queue ({claims.length})</span>
               <Filter size={14} style={{ color: 'var(--text-muted, #94a3b8)' }} />
             </div>
 
@@ -536,8 +536,8 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
                     onClick={handleExportEDI}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-color, #334155)',
-                      color: '#f8fafc', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600'
+                      backgroundColor: 'var(--bg-card, #ffffff)', border: '1px solid var(--border-color, #cbd5e1)',
+                      color: 'var(--text-primary, #0f172a)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600'
                     }}
                   >
                     <Download size={14} />
@@ -549,8 +549,8 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
                       disabled={fatalFindings.length > 0}
                       style={{
                         display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px',
-                        backgroundColor: fatalFindings.length === 0 ? '#10b981' : 'rgba(255, 255, 255, 0.05)',
-                        border: fatalFindings.length === 0 ? '1px solid #10b981' : '1px solid var(--border-color, #334155)',
+                        backgroundColor: fatalFindings.length === 0 ? '#10b981' : 'var(--bg-toggle, #e2e8f0)',
+                        border: fatalFindings.length === 0 ? '1px solid #10b981' : '1px solid var(--border-color, #cbd5e1)',
                         color: fatalFindings.length === 0 ? '#ffffff' : 'var(--text-muted, #64748b)',
                         cursor: fatalFindings.length === 0 ? 'pointer' : 'not-allowed',
                         fontSize: '0.8rem', fontWeight: '700'
@@ -859,7 +859,7 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
               >
                 Copy EDI Content
               </button>
-              <button onClick={() => setEdiModalOpen(false)} style={{ padding: '8px 16px', borderRadius: '6px', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-color, #334155)', color: '#f8fafc', cursor: 'pointer' }}>
+              <button onClick={() => setEdiModalOpen(false)} style={{ padding: '8px 16px', borderRadius: '6px', backgroundColor: 'var(--bg-card, #ffffff)', border: '1px solid var(--border-color, #cbd5e1)', color: 'var(--text-primary, #0f172a)', cursor: 'pointer' }}>
                 Close
               </button>
             </div>

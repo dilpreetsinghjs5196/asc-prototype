@@ -79,6 +79,19 @@ export const PERMISSIONS_CATALOG = [
   { code: 'claims.approve_claim', category: 'billing', name: 'Approve & Release Clean Claim', risk_level: 'critical' },
   { code: 'claims.export_edi', category: 'billing', name: 'Generate & Export EDI 837P / 1500', risk_level: 'sensitive' },
 
+  // Implants & Devices (Domains: finance / surgeries / reports)
+  { code: 'implants.view_catalog', category: 'finance', name: 'View Implant Catalog', risk_level: 'standard' },
+  { code: 'implants.manage_catalog', category: 'finance', name: 'Manage Global Implant Catalog', risk_level: 'sensitive' },
+  { code: 'implants.view_contracts', category: 'finance', name: 'View Facility Vendor Contracts', risk_level: 'sensitive' },
+  { code: 'implants.manage_contracts', category: 'finance', name: 'Manage Facility Vendor Contracts', risk_level: 'critical' },
+  { code: 'implants.view_costs', category: 'finance', name: 'View Implant Acquisition Costs', risk_level: 'sensitive' },
+  { code: 'implants.override_pricing', category: 'finance', name: 'Override Implant Pricing Tier', risk_level: 'critical' },
+  { code: 'implants.manage_preference_cards', category: 'surgeries', name: 'Manage Surgeon Preference Cards', risk_level: 'standard' },
+  { code: 'implants.log_usage', category: 'surgeries', name: 'Log Case Implant Usage', risk_level: 'standard' },
+  { code: 'implants.approve_invoice', category: 'finance', name: 'Approve Implant Invoice Reconciliation', risk_level: 'sensitive' },
+  { code: 'implants.view_variance', category: 'finance', name: 'View Implant Cost Variance Analytics', risk_level: 'standard' },
+  { code: 'implants.export_reports', category: 'reports', name: 'Export Implant Intelligence Reports', risk_level: 'sensitive' },
+
   // Reports
   { code: 'reports.export_volume', category: 'reports', name: 'Export Case Volume', risk_level: 'standard' },
   { code: 'reports.export_margins', category: 'reports', name: 'Export Financial Data', risk_level: 'sensitive' },
@@ -186,6 +199,9 @@ export const rbacService = {
         'billing.view_yield', 'billing.apply_mppr', 'billing.freeze_monthly',
         'billing.view_completeness', 'billing.override_blocker', 'billing.signoff_prebill',
         'claims.view_scrub', 'claims.run_scrubber', 'claims.apply_edits', 'claims.override_error', 'claims.approve_claim', 'claims.export_edi',
+        'implants.view_catalog', 'implants.view_contracts', 'implants.manage_contracts',
+        'implants.view_costs', 'implants.override_pricing', 'implants.approve_invoice',
+        'implants.view_variance', 'implants.export_reports',
         'reports.export_volume', 'reports.export_margins',
         'ai.run_insights', 'roles.view', 'tenancy.toggle_mppr',
         'audit.view_clinical', 'audit.view_financial'
@@ -198,6 +214,8 @@ export const rbacService = {
         'surgeries.view', 'surgeries.schedule', 'surgeries.edit', 'surgeries.delete', 'surgeries.approve',
         'or.view', 'or.reserve_blocks', 'or.edit_allocations', 'or.release_blocks', 'or.approve_schedule',
         'cpt.view', 'coding.override_validation', 'finance.view_margins', 'reports.export_volume',
+        'implants.view_catalog', 'implants.view_costs', 'implants.manage_preference_cards',
+        'implants.log_usage', 'implants.view_variance',
         'ai.run_insights', 'ai.run_simulation', 'ai.auto_schedule',
         'users.view', 'roles.view', 'audit.view_clinical'
       ];
@@ -209,6 +227,7 @@ export const rbacService = {
         'surgeries.view', 'surgeries.schedule', 'surgeries.edit', 'surgeries.delete',
         'or.view', 'or.reserve_blocks', 'or.edit_allocations', 'or.release_blocks',
         'cpt.view', 'reports.export_volume',
+        'implants.view_catalog', 'implants.manage_preference_cards',
         'ai.run_insights', 'ai.run_simulation', 'ai.auto_schedule'
       ];
     }
@@ -222,6 +241,8 @@ export const rbacService = {
         'billing.view_yield', 'billing.apply_mppr', 'billing.freeze_monthly',
         'billing.view_completeness', 'billing.override_blocker', 'billing.signoff_prebill',
         'claims.view_scrub', 'claims.run_scrubber', 'claims.apply_edits', 'claims.approve_claim', 'claims.export_edi',
+        'implants.view_catalog', 'implants.view_costs', 'implants.log_usage',
+        'implants.approve_invoice', 'implants.view_variance',
         'reports.export_volume', 'reports.export_margins',
         'ai.run_insights', 'audit.view_financial'
       ];
@@ -234,6 +255,7 @@ export const rbacService = {
         'coding.assist', 'coding.review', 'coding.approve', 'coding.override_validation', 'coding.export',
         'billing.view_completeness',
         'claims.view_scrub', 'claims.run_scrubber', 'claims.apply_edits',
+        'implants.view_catalog', 'implants.log_usage',
         'reports.export_volume', 'ai.run_insights'
       ];
     }
@@ -245,12 +267,13 @@ export const rbacService = {
         'or.view', 'cpt.view',
         'claims.view_scrub',
         'finance.view_margins',
+        'implants.view_catalog', 'implants.manage_preference_cards', 'implants.view_variance',
         'reports.export_volume',
         'ai.run_insights', 'ai.run_simulation', 'ai.auto_schedule'
       ];
     }
     // Default viewer
-    return ['surgeries.view', 'or.view', 'cpt.view', 'ai.run_insights'];
+    return ['surgeries.view', 'or.view', 'cpt.view', 'implants.view_catalog', 'ai.run_insights'];
   },
 
   /**

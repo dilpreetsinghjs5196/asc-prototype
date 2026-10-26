@@ -189,7 +189,7 @@ export default function PrebillCompletenessModal({ isOpen, onClose, surgery, onS
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', color: '#f8fafc' }}>
+                <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', color: 'var(--text-primary, #f8fafc)' }}>
                   Pre-Bill Charge Completeness Review
                 </h2>
                 <span style={{
@@ -229,9 +229,9 @@ export default function PrebillCompletenessModal({ isOpen, onClose, surgery, onS
                 gap: '6px',
                 padding: '8px 14px',
                 borderRadius: '8px',
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-color, #334155)',
-                color: 'var(--text-primary, #f8fafc)',
+                backgroundColor: 'var(--bg-card, #ffffff)',
+                border: '1px solid var(--border-color, #cbd5e1)',
+                color: 'var(--text-primary, #0f172a)',
                 cursor: evaluating ? 'not-allowed' : 'pointer',
                 fontSize: '0.8rem',
                 fontWeight: '600'
@@ -246,7 +246,7 @@ export default function PrebillCompletenessModal({ isOpen, onClose, surgery, onS
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: 'var(--text-muted, #94a3b8)',
+                color: 'var(--text-secondary, #64748b)',
                 cursor: 'pointer',
                 padding: '6px',
                 borderRadius: '8px',
@@ -287,15 +287,15 @@ export default function PrebillCompletenessModal({ isOpen, onClose, surgery, onS
           padding: '20px 24px 10px'
         }}>
           <div style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid var(--border-color, #334155)',
+            backgroundColor: 'var(--bg-subtab, rgba(0, 0, 0, 0.02))',
+            border: '1px solid var(--border-color, #cbd5e1)',
             padding: '14px 16px',
             borderRadius: '10px'
           }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', fontWeight: '600', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #64748b)', fontWeight: '600', textTransform: 'uppercase' }}>
               Total Rules
             </div>
-            <div style={{ fontSize: '1.5rem', fontWeight: '800', marginTop: '4px', color: '#f8fafc' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: '800', marginTop: '4px', color: 'var(--text-primary, #0f172a)' }}>
               {runData?.total_rules_evaluated || runData?.total_findings || 12}
             </div>
           </div>
@@ -458,8 +458,8 @@ export default function PrebillCompletenessModal({ isOpen, onClose, surgery, onS
                                 fontWeight: '700',
                                 padding: '2px 6px',
                                 borderRadius: '4px',
-                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                                color: '#f8fafc'
+                                backgroundColor: isBlocker ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                color: isBlocker ? 'var(--danger-color, #ef4444)' : 'var(--warning-color, #f59e0b)'
                               }}>
                                 {f.rule_code || f.rule_id}
                               </span>
@@ -470,7 +470,7 @@ export default function PrebillCompletenessModal({ isOpen, onClose, surgery, onS
                                 borderRadius: '4px',
                                 textTransform: 'uppercase',
                                 backgroundColor: isBlocker ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)',
-                                color: isBlocker ? '#f87171' : '#fbbf24'
+                                color: isBlocker ? '#ef4444' : '#f59e0b'
                               }}>
                                 {f.severity}
                               </span>
@@ -481,18 +481,18 @@ export default function PrebillCompletenessModal({ isOpen, onClose, surgery, onS
                                   padding: '2px 6px',
                                   borderRadius: '4px',
                                   backgroundColor: 'rgba(168, 85, 247, 0.2)',
-                                  color: '#c084fc'
+                                  color: 'var(--color-purple, #8b5cf6)'
                                 }}>
                                   OVERRIDDEN
                                 </span>
                               )}
                             </div>
-                            <div style={{ fontSize: '0.85rem', fontWeight: '600', color: '#f8fafc', marginTop: '6px' }}>
+                            <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-primary, #0f172a)', marginTop: '6px' }}>
                               {f.description || f.finding_message}
                             </div>
                             {f.affected_entity && (
-                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', marginTop: '3px' }}>
-                                Affected: <span style={{ color: '#60a5fa' }}>{f.affected_entity}</span>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #64748b)', marginTop: '3px' }}>
+                                Affected: <span style={{ color: 'var(--color-blue, #2563eb)' }}>{f.affected_entity}</span>
                               </div>
                             )}
                             {f.is_overridden && f.override_reason && (
@@ -504,7 +504,7 @@ export default function PrebillCompletenessModal({ isOpen, onClose, surgery, onS
                                 borderRadius: '6px',
                                 backgroundColor: 'rgba(168, 85, 247, 0.12)',
                                 border: '1px solid rgba(168, 85, 247, 0.3)',
-                                color: '#c084fc'
+                                color: 'var(--color-purple, #8b5cf6)'
                               }}>
                                 Override Justification: "{f.override_reason}"
                               </div>
@@ -521,9 +521,9 @@ export default function PrebillCompletenessModal({ isOpen, onClose, surgery, onS
                               gap: '5px',
                               padding: '6px 12px',
                               borderRadius: '6px',
-                              backgroundColor: 'rgba(168, 85, 247, 0.2)',
-                              border: '1px solid rgba(168, 85, 247, 0.4)',
-                              color: '#c084fc',
+                              backgroundColor: 'rgba(168, 85, 247, 0.15)',
+                              border: '1px solid rgba(168, 85, 247, 0.35)',
+                              color: 'var(--color-purple, #8b5cf6)',
                               fontSize: '0.75rem',
                               fontWeight: '700',
                               cursor: 'pointer',
@@ -569,14 +569,14 @@ export default function PrebillCompletenessModal({ isOpen, onClose, surgery, onS
                     </thead>
                     <tbody>
                       {devices.map((d) => (
-                        <tr key={d.id} style={{ borderBottom: '1px solid var(--border-color, #334155)' }}>
-                          <td style={{ padding: '10px 14px', fontWeight: '600', color: '#f8fafc' }}>{d.device_name}</td>
-                          <td style={{ padding: '10px 14px', fontFamily: 'monospace', color: '#60a5fa' }}>{d.hcpcs_c_code || d.hcpcs_code || '—'}</td>
-                          <td style={{ padding: '10px 14px', color: 'var(--text-muted, #94a3b8)' }}>{d.manufacturer || '—'}</td>
-                          <td style={{ padding: '10px 14px', color: 'var(--text-muted, #94a3b8)' }}>{d.serial_number || d.lot_number || '—'}</td>
+                        <tr key={d.id} style={{ borderBottom: '1px solid var(--border-color, #cbd5e1)' }}>
+                          <td style={{ padding: '10px 14px', fontWeight: '600', color: 'var(--text-primary, #0f172a)' }}>{d.device_name}</td>
+                          <td style={{ padding: '10px 14px', fontFamily: 'monospace', color: 'var(--color-blue, #2563eb)' }}>{d.hcpcs_c_code || d.hcpcs_code || '—'}</td>
+                          <td style={{ padding: '10px 14px', color: 'var(--text-secondary, #475569)' }}>{d.manufacturer || '—'}</td>
+                          <td style={{ padding: '10px 14px', color: 'var(--text-secondary, #475569)' }}>{d.serial_number || d.lot_number || '—'}</td>
                           <td style={{ padding: '10px 14px', textAlign: 'right' }}>{d.quantity}</td>
                           <td style={{ padding: '10px 14px', textAlign: 'right', fontFamily: 'monospace' }}>${parseFloat(d.unit_cost || 0).toFixed(2)}</td>
-                          <td style={{ padding: '10px 14px', textAlign: 'right', fontFamily: 'monospace', fontWeight: '700', color: '#34d399' }}>
+                          <td style={{ padding: '10px 14px', textAlign: 'right', fontFamily: 'monospace', fontWeight: '700', color: '#10b981' }}>
                             ${parseFloat(d.unit_charge || d.charge_amount || 0).toFixed(2)}
                           </td>
                         </tr>
@@ -592,13 +592,13 @@ export default function PrebillCompletenessModal({ isOpen, onClose, surgery, onS
         {/* Footer */}
         <div style={{
           padding: '16px 24px',
-          borderTop: '1px solid var(--border-color, #334155)',
-          backgroundColor: 'var(--bg-app, #0f172a)',
+          borderTop: '1px solid var(--border-color, #cbd5e1)',
+          backgroundColor: 'var(--bg-app, #f8fafc)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted, #64748b)' }}>
             <DollarSign size={14} />
             Statutory AMA CPT® & CMS ASC Addenda Compliant Pre-Bill Engine
           </div>
@@ -609,9 +609,9 @@ export default function PrebillCompletenessModal({ isOpen, onClose, surgery, onS
               style={{
                 padding: '8px 18px',
                 borderRadius: '8px',
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-color, #334155)',
-                color: 'var(--text-primary, #f8fafc)',
+                backgroundColor: 'var(--bg-card, #ffffff)',
+                border: '1px solid var(--border-color, #cbd5e1)',
+                color: 'var(--text-primary, #0f172a)',
                 fontSize: '0.85rem',
                 fontWeight: '600',
                 cursor: 'pointer'
@@ -628,8 +628,8 @@ export default function PrebillCompletenessModal({ isOpen, onClose, surgery, onS
                 gap: '8px',
                 padding: '8px 20px',
                 borderRadius: '8px',
-                backgroundColor: canSignoff ? '#10b981' : 'rgba(255, 255, 255, 0.05)',
-                border: canSignoff ? '1px solid #10b981' : '1px solid var(--border-color, #334155)',
+                backgroundColor: canSignoff ? '#10b981' : 'var(--bg-toggle, #e2e8f0)',
+                border: canSignoff ? '1px solid #10b981' : '1px solid var(--border-color, #cbd5e1)',
                 color: canSignoff ? '#ffffff' : 'var(--text-muted, #64748b)',
                 fontSize: '0.85rem',
                 fontWeight: '700',
@@ -667,23 +667,23 @@ export default function PrebillCompletenessModal({ isOpen, onClose, surgery, onS
             style={{
               width: '520px',
               maxWidth: '92vw',
-              backgroundColor: 'var(--bg-card, #1e293b)',
+              backgroundColor: 'var(--bg-card, #ffffff)',
               border: '1px solid rgba(168, 85, 247, 0.4)',
               borderRadius: '14px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
               padding: '24px',
-              color: 'var(--text-primary, #f8fafc)'
+              color: 'var(--text-primary, #0f172a)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem', fontWeight: '700', color: '#c084fc' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem', fontWeight: '700', color: 'var(--color-purple, #8b5cf6)' }}>
                 <Key size={18} />
                 Override Completeness Blocker
               </div>
               <button
                 onClick={() => setOverrideModalOpen(false)}
-                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary, #64748b)', cursor: 'pointer' }}
               >
                 <X size={18} />
               </button>
@@ -695,14 +695,14 @@ export default function PrebillCompletenessModal({ isOpen, onClose, surgery, onS
               border: '1px solid rgba(168, 85, 247, 0.25)',
               borderRadius: '8px',
               fontSize: '0.8rem',
-              color: '#c084fc',
+              color: 'var(--color-purple, #8b5cf6)',
               marginBottom: '16px'
             }}>
               <strong>{selectedFinding?.rule_code || selectedFinding?.rule_id}:</strong> {selectedFinding?.description || selectedFinding?.finding_message}
             </div>
 
             <form onSubmit={handleSubmitOverride}>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', marginBottom: '6px', color: '#f8fafc' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', marginBottom: '6px', color: 'var(--text-primary, #0f172a)' }}>
                 Mandatory Clinical / Billing Override Justification:
               </label>
               <textarea
@@ -714,9 +714,9 @@ export default function PrebillCompletenessModal({ isOpen, onClose, surgery, onS
                   width: '100%',
                   padding: '10px',
                   borderRadius: '8px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                  border: '1px solid var(--border-color, #334155)',
-                  color: '#f8fafc',
+                  backgroundColor: 'var(--bg-subtab, #f8fafc)',
+                  border: '1px solid var(--border-color, #cbd5e1)',
+                  color: 'var(--text-primary, #0f172a)',
                   fontSize: '0.85rem',
                   outline: 'none',
                   boxSizing: 'border-box'
@@ -731,9 +731,9 @@ export default function PrebillCompletenessModal({ isOpen, onClose, surgery, onS
                   style={{
                     padding: '8px 16px',
                     borderRadius: '6px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid var(--border-color, #334155)',
-                    color: 'var(--text-muted, #94a3b8)',
+                    backgroundColor: 'var(--bg-card, #ffffff)',
+                    border: '1px solid var(--border-color, #cbd5e1)',
+                    color: 'var(--text-secondary, #334155)',
                     fontSize: '0.8rem',
                     fontWeight: '600',
                     cursor: 'pointer'
