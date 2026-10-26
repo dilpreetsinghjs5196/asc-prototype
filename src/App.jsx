@@ -27,6 +27,7 @@ import AuditLogViewer from './components/AuditLogViewer';
 import RoleGate from './components/RoleGate';
 import PatientManagement from './components/PatientManagement';
 import ClaimScrubberWorkbench from './components/ClaimScrubberWorkbench';
+import ImplantTaxonomyExplorer from './components/ImplantTaxonomyExplorer';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
 import { useInactivityTimeout } from './hooks/useInactivityTimeout';
@@ -73,7 +74,8 @@ import {
   User,
   Building2,
   ChevronDown,
-  CheckCircle2
+  CheckCircle2,
+  Layers
 } from 'lucide-react';
 
 // ==========================================
@@ -2407,6 +2409,13 @@ export default function App() {
             CPT Codes Management
           </div>
           <div
+            className={`menu-item ${activeTab === 'implant_taxonomy' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('implant_taxonomy'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Layers size={16} /></div>
+            Implant Taxonomy
+          </div>
+          <div
             className={`menu-item ${activeTab === 'claim_scrubber' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('claim_scrubber'); setSelectedSurgeon(null); }}
           >
@@ -4423,6 +4432,16 @@ export default function App() {
                 <ClaimScrubberWorkbench
                   activeFacility={activeFacility}
                   onSelectSurgery={() => setActiveTab('scheduler')}
+                />
+              )}
+
+              {/* ==========================================
+              TAB: IMPLANT CATEGORY & COMPONENT TAXONOMY
+              ========================================== */}
+              {activeTab === 'implant_taxonomy' && (
+                <ImplantTaxonomyExplorer
+                  isOpen={true}
+                  onClose={() => setActiveTab('scheduler')}
                 />
               )}
 
