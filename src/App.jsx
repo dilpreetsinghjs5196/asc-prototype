@@ -28,6 +28,7 @@ import RoleGate from './components/RoleGate';
 import PatientManagement from './components/PatientManagement';
 import ClaimScrubberWorkbench from './components/ClaimScrubberWorkbench';
 import ImplantTaxonomyExplorer from './components/ImplantTaxonomyExplorer';
+import CptImplantMappingMatrix from './components/CptImplantMappingMatrix';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
 import { useInactivityTimeout } from './hooks/useInactivityTimeout';
@@ -75,7 +76,8 @@ import {
   Building2,
   ChevronDown,
   CheckCircle2,
-  Layers
+  Layers,
+  GitFork
 } from 'lucide-react';
 
 // ==========================================
@@ -2416,6 +2418,13 @@ export default function App() {
             Implant Taxonomy
           </div>
           <div
+            className={`menu-item ${activeTab === 'cpt_implant_matrix' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('cpt_implant_matrix'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><GitFork size={16} /></div>
+            CPT-to-Implant Matrix
+          </div>
+          <div
             className={`menu-item ${activeTab === 'claim_scrubber' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('claim_scrubber'); setSelectedSurgeon(null); }}
           >
@@ -2607,6 +2616,7 @@ export default function App() {
                   {activeTab === 'cpt' && 'Case Profitability'}
                   {activeTab === 'cpt_manage' && 'CPT Codes Management'}
                   {activeTab === 'implant_taxonomy' && 'Implant Category & Component Taxonomy'}
+                  {activeTab === 'cpt_implant_matrix' && 'CPT-to-Implant Construct Matrix'}
                   {activeTab === 'claim_scrubber' && 'Pre-Bill Claim Scrubbing Rules & Edits'}
                   {activeTab === 'upload_code_files' && 'Upload new Code Files'}
                   {activeTab === 'payer' && 'Payer Intelligence'}
@@ -2643,6 +2653,7 @@ export default function App() {
                   {activeTab === 'financial' && 'Analysis of revenues, expenses, EBITDA margins, and bottom lines'}
                   {activeTab === 'cpt' && 'Contribution margins, procedure times, and volumes by CPT code'}
                   {activeTab === 'implant_taxonomy' && 'Deterministic medical device hierarchy, clinical component roles, and FDA/ISO duration governance'}
+                  {activeTab === 'cpt_implant_matrix' && 'Deterministic procedural-to-hardware mapping, clinical requirement rules, and pre-bill completeness validation'}
                   {activeTab === 'payer' && 'Payer mix contribution margins and reimbursement analytics'}
                   {activeTab === 'supply' && 'Supply variance tracking and preference card standardization tools'}
                   {activeTab === 'cancellations' && 'Cancellations tracking, revenue leak analysis, and predictive risk analysis'}
@@ -4443,6 +4454,16 @@ export default function App() {
               {activeTab === 'implant_taxonomy' && (
                 <ImplantTaxonomyExplorer
                   isModal={false}
+                />
+              )}
+
+              {/* ==========================================
+              TAB: CPT TO IMPLANT MAPPING MATRIX
+              ========================================== */}
+              {activeTab === 'cpt_implant_matrix' && (
+                <CptImplantMappingMatrix
+                  activeFacility={activeFacility}
+                  userPermissions={userRole === 'admin' ? ['admin', 'implants.manage_catalog', 'implants.view_catalog'] : ['implants.view_catalog']}
                 />
               )}
 
