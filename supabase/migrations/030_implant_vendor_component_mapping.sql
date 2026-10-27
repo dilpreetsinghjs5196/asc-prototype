@@ -241,7 +241,7 @@ BEGIN
         TRIM(p_governance_rationale),
         'active', TRUE, 'approved', v_actor_id, v_actor_id
     )
-    ON CONFLICT (vendor_id, component_id, facility_id) NULLS NOT DISTINCT
+    ON CONFLICT (vendor_id, component_id, facility_id)
     DO UPDATE SET
         preference_tier = EXCLUDED.preference_tier,
         sourcing_model = EXCLUDED.sourcing_model,
@@ -502,7 +502,7 @@ SELECT
 FROM public.implant_vendors v, public.implant_components c
 WHERE v.vendor_code = 'STRYKER' AND v.facility_id IS NULL
   AND c.code = 'KNEE_FEMORAL' AND c.facility_id IS NULL
-ON CONFLICT (vendor_id, component_id, facility_id) NULLS NOT DISTINCT DO NOTHING;
+ON CONFLICT (vendor_id, component_id, facility_id) DO NOTHING;
 
 INSERT INTO public.implant_vendor_component_mappings (
     id, facility_id, vendor_id, component_id, preference_tier, sourcing_model,
@@ -516,7 +516,7 @@ SELECT
 FROM public.implant_vendors v, public.implant_components c
 WHERE v.vendor_code = 'STRYKER' AND v.facility_id IS NULL
   AND c.code = 'KNEE_TIBIAL_TRAY' AND c.facility_id IS NULL
-ON CONFLICT (vendor_id, component_id, facility_id) NULLS NOT DISTINCT DO NOTHING;
+ON CONFLICT (vendor_id, component_id, facility_id) DO NOTHING;
 
 INSERT INTO public.implant_vendor_component_mappings (
     id, facility_id, vendor_id, component_id, preference_tier, sourcing_model,
@@ -530,7 +530,7 @@ SELECT
 FROM public.implant_vendors v, public.implant_components c
 WHERE v.vendor_code = 'STRYKER' AND v.facility_id IS NULL
   AND c.code = 'HIP_STEM' AND c.facility_id IS NULL
-ON CONFLICT (vendor_id, component_id, facility_id) NULLS NOT DISTINCT DO NOTHING;
+ON CONFLICT (vendor_id, component_id, facility_id) DO NOTHING;
 
 INSERT INTO public.implant_vendor_component_mappings (
     id, facility_id, vendor_id, component_id, preference_tier, sourcing_model,
@@ -544,7 +544,7 @@ SELECT
 FROM public.implant_vendors v, public.implant_components c
 WHERE v.vendor_code = 'STRYKER' AND v.facility_id IS NULL
   AND c.code = 'HIP_CUP' AND c.facility_id IS NULL
-ON CONFLICT (vendor_id, component_id, facility_id) NULLS NOT DISTINCT DO NOTHING;
+ON CONFLICT (vendor_id, component_id, facility_id) DO NOTHING;
 
 -- 6.2 Zimmer Biomet (Knee & Hip Components)
 INSERT INTO public.implant_vendor_component_mappings (
@@ -559,7 +559,7 @@ SELECT
 FROM public.implant_vendors v, public.implant_components c
 WHERE v.vendor_code = 'ZIMMER_BIOMET' AND v.facility_id IS NULL
   AND c.code = 'KNEE_FEMORAL' AND c.facility_id IS NULL
-ON CONFLICT (vendor_id, component_id, facility_id) NULLS NOT DISTINCT DO NOTHING;
+ON CONFLICT (vendor_id, component_id, facility_id) DO NOTHING;
 
 INSERT INTO public.implant_vendor_component_mappings (
     id, facility_id, vendor_id, component_id, preference_tier, sourcing_model,
@@ -573,7 +573,7 @@ SELECT
 FROM public.implant_vendors v, public.implant_components c
 WHERE v.vendor_code = 'ZIMMER_BIOMET' AND v.facility_id IS NULL
   AND c.code = 'KNEE_TIBIAL_TRAY' AND c.facility_id IS NULL
-ON CONFLICT (vendor_id, component_id, facility_id) NULLS NOT DISTINCT DO NOTHING;
+ON CONFLICT (vendor_id, component_id, facility_id) DO NOTHING;
 
 -- 6.3 Medtronic Spine & Biologics
 INSERT INTO public.implant_vendor_component_mappings (
@@ -588,7 +588,7 @@ SELECT
 FROM public.implant_vendors v, public.implant_components c
 WHERE v.vendor_code = 'MEDTRONIC' AND v.facility_id IS NULL
   AND c.code = 'SPINE_ACDF_SCREW' AND c.facility_id IS NULL
-ON CONFLICT (vendor_id, component_id, facility_id) NULLS NOT DISTINCT DO NOTHING;
+ON CONFLICT (vendor_id, component_id, facility_id) DO NOTHING;
 
 INSERT INTO public.implant_vendor_component_mappings (
     id, facility_id, vendor_id, component_id, preference_tier, sourcing_model,
@@ -602,7 +602,7 @@ SELECT
 FROM public.implant_vendors v, public.implant_components c
 WHERE v.vendor_code = 'MEDTRONIC' AND v.facility_id IS NULL
   AND c.code = 'SPINE_INTERBODY_CAGE' AND c.facility_id IS NULL
-ON CONFLICT (vendor_id, component_id, facility_id) NULLS NOT DISTINCT DO NOTHING;
+ON CONFLICT (vendor_id, component_id, facility_id) DO NOTHING;
 
 -- 6.4 Alcon (Ophthalmic Intraocular Lenses)
 INSERT INTO public.implant_vendor_component_mappings (
@@ -617,7 +617,7 @@ SELECT
 FROM public.implant_vendors v, public.implant_components c
 WHERE v.vendor_code = 'ALCON' AND v.facility_id IS NULL
   AND c.code = 'IOL_MONOFOCAL' AND c.facility_id IS NULL
-ON CONFLICT (vendor_id, component_id, facility_id) NULLS NOT DISTINCT DO NOTHING;
+ON CONFLICT (vendor_id, component_id, facility_id) DO NOTHING;
 
 INSERT INTO public.implant_vendor_component_mappings (
     id, facility_id, vendor_id, component_id, preference_tier, sourcing_model,
@@ -631,7 +631,7 @@ SELECT
 FROM public.implant_vendors v, public.implant_components c
 WHERE v.vendor_code = 'ALCON' AND v.facility_id IS NULL
   AND c.code = 'IOL_TORIC' AND c.facility_id IS NULL
-ON CONFLICT (vendor_id, component_id, facility_id) NULLS NOT DISTINCT DO NOTHING;
+ON CONFLICT (vendor_id, component_id, facility_id) DO NOTHING;
 
 -- 6.5 Arthrex (Sports Medicine & Anchors)
 INSERT INTO public.implant_vendor_component_mappings (
@@ -646,6 +646,6 @@ SELECT
 FROM public.implant_vendors v, public.implant_components c
 WHERE v.vendor_code = 'ARTHREX' AND v.facility_id IS NULL
   AND c.code = 'SHOULDER_ROTATOR_ANCHOR' AND c.facility_id IS NULL
-ON CONFLICT (vendor_id, component_id, facility_id) NULLS NOT DISTINCT DO NOTHING;
+ON CONFLICT (vendor_id, component_id, facility_id) DO NOTHING;
 
 COMMIT;
