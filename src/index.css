@@ -2,10 +2,10 @@
 
 :root,
 [data-theme="light"] {
-  /* Colors - Modern Light Theme (like Image 1) */
+  /* Colors - Modern Light Theme (Medical Executive) */
   --bg-main: #f8fafc;
   --bg-app: #f8fafc;
-  --bg-sidebar: #112238;
+  --bg-sidebar: #0f172a;
   --bg-card: #ffffff;
   --bg-card-hover: #f1f5f9;
   --bg-subtab: #f1f5f9;
@@ -16,7 +16,7 @@
   --border-card: #e2e8f0;
 
   --text-primary: #0f172a;
-  --text-secondary: #334155;
+  --text-secondary: #475569;
   --text-muted: #64748b;
   --text-color: #0f172a;
 
@@ -45,33 +45,33 @@
 }
 
 [data-theme="dark"] {
-  /* Colors - Rich Navy Blue Dark Theme (#1E3A5F) */
-  --bg-main: #142842;
-  --bg-app: #142842;
-  --bg-sidebar: #0F2036;
-  --bg-card: #1E3A5F;
-  --bg-card-hover: #264975;
-  --bg-subtab: #1A3353;
-  --bg-toggle: #1A3353;
+  /* Colors - Modern Medical Executive Dark Theme (Slate & Deep Obsidian) */
+  --bg-main: #0f172a;
+  --bg-app: #0f172a;
+  --bg-sidebar: #090e17;
+  --bg-card: #1e293b;
+  --bg-card-hover: #273549;
+  --bg-subtab: #162235;
+  --bg-toggle: #162235;
   --bg-toggle-btn: #3b82f6;
-  --border-color: #2D5382;
-  --border-light: #24446B;
-  --border-card: #2D5382;
+  --border-color: #334155;
+  --border-light: #1e293b;
+  --border-card: #334155;
 
   --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-muted: #8e9bb2;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
   --text-color: #f8fafc;
 
   --color-blue: #3b82f6;
-  --color-green: #00ff88;
+  --color-green: #10b981;
   --color-orange: #fbbf24;
   --color-red: #f87171;
   --color-purple: #a78bfa;
   --color-grey: #94a3b8;
   --color-pink: #f472b6;
 
-  --success-color: #00ff88;
+  --success-color: #10b981;
   --danger-color: #f87171;
   --warning-color: #fbbf24;
   --info-color: #3b82f6;

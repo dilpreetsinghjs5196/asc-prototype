@@ -1158,6 +1158,14 @@ export default function App() {
 
   useEffect(() => {
     const applyThemeColors = () => {
+      // Migrate legacy oversaturated blue defaults to modern medical executive defaults
+      if (localStorage.getItem('dark_bg_color') === '#142842') localStorage.setItem('dark_bg_color', '#0f172a');
+      if (localStorage.getItem('dark_sidebar_color') === '#0F2036') localStorage.setItem('dark_sidebar_color', '#090e17');
+      if (localStorage.getItem('dark_portal_color') === '#1E3A5F') localStorage.setItem('dark_portal_color', '#1e293b');
+      if (localStorage.getItem('dark_label_color') === '#cbd5e1') localStorage.setItem('dark_label_color', '#94a3b8');
+      if (localStorage.getItem('light_sidebar_color') === '#112238') localStorage.setItem('light_sidebar_color', '#0f172a');
+      if (localStorage.getItem('light_label_color') === '#334155') localStorage.setItem('light_label_color', '#475569');
+
       const isDark = theme === 'dark';
       const sidebarColor = localStorage.getItem(isDark ? 'dark_sidebar_color' : 'light_sidebar_color');
       const bgColor = localStorage.getItem(isDark ? 'dark_bg_color' : 'light_bg_color');
@@ -1168,8 +1176,13 @@ export default function App() {
       if (sidebarColor) document.documentElement.style.setProperty('--bg-sidebar', sidebarColor);
       else document.documentElement.style.removeProperty('--bg-sidebar');
 
-      if (bgColor) document.documentElement.style.setProperty('--bg-main', bgColor);
-      else document.documentElement.style.removeProperty('--bg-main');
+      if (bgColor) {
+        document.documentElement.style.setProperty('--bg-main', bgColor);
+        document.documentElement.style.setProperty('--bg-app', bgColor);
+      } else {
+        document.documentElement.style.removeProperty('--bg-main');
+        document.documentElement.style.removeProperty('--bg-app');
+      }
 
       if (textColor) {
         document.documentElement.style.setProperty('--text-primary', textColor);
@@ -2685,7 +2698,7 @@ export default function App() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  background: theme === 'dark' ? '#1E3A5F' : 'var(--bg-toggle, #f1f5f9)',
+                  background: theme === 'dark' ? 'var(--bg-card)' : 'var(--bg-toggle, #f1f5f9)',
                   border: '1px solid var(--border-color)',
                   color: 'var(--text-primary)',
                   padding: '7px 15px',

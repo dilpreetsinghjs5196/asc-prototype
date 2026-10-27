@@ -26,16 +26,16 @@ const Settings = ({ onUpdate, activeFacility, currentRole, session, onFacilityUp
         npi: '1234567890',
         apply_medicare_mppr: false,
         ai_allowed_email: '', // Restrict usage to this email
-        light_sidebar_color: '#112238',
+        light_sidebar_color: '#0f172a',
         light_bg_color: '#f8fafc',
         light_text_color: '#0f172a',
-        light_label_color: '#334155',
+        light_label_color: '#475569',
         light_portal_color: '#ffffff',
-        dark_sidebar_color: '#0F2036',
-        dark_bg_color: '#142842',
+        dark_sidebar_color: '#090e17',
+        dark_bg_color: '#0f172a',
         dark_text_color: '#f8fafc',
-        dark_label_color: '#cbd5e1',
-        dark_portal_color: '#1E3A5F'
+        dark_label_color: '#94a3b8',
+        dark_portal_color: '#1e293b'
     });
     const [initialFacilityMppr, setInitialFacilityMppr] = useState(false);
     const [facilityDetails, setFacilityDetails] = useState(null);
@@ -70,16 +70,16 @@ const Settings = ({ onUpdate, activeFacility, currentRole, session, onFacilityUp
             // Load local AI config for email just in case it's not in DB
             const localAI = {
                 ai_allowed_email: localStorage.getItem('ai_allowed_email') || '',
-                light_sidebar_color: localStorage.getItem('light_sidebar_color') || '#112238',
+                light_sidebar_color: localStorage.getItem('light_sidebar_color') || '#0f172a',
                 light_bg_color: localStorage.getItem('light_bg_color') || '#f8fafc',
                 light_text_color: localStorage.getItem('light_text_color') || '#0f172a',
-                light_label_color: localStorage.getItem('light_label_color') || '#334155',
+                light_label_color: localStorage.getItem('light_label_color') || '#475569',
                 light_portal_color: localStorage.getItem('light_portal_color') || '#ffffff',
-                dark_sidebar_color: localStorage.getItem('dark_sidebar_color') || '#0F2036',
-                dark_bg_color: localStorage.getItem('dark_bg_color') || '#142842',
+                dark_sidebar_color: localStorage.getItem('dark_sidebar_color') || '#090e17',
+                dark_bg_color: localStorage.getItem('dark_bg_color') || '#0f172a',
                 dark_text_color: localStorage.getItem('dark_text_color') || '#f8fafc',
-                dark_label_color: localStorage.getItem('dark_label_color') || '#cbd5e1',
-                dark_portal_color: localStorage.getItem('dark_portal_color') || '#1E3A5F'
+                dark_label_color: localStorage.getItem('dark_label_color') || '#94a3b8',
+                dark_portal_color: localStorage.getItem('dark_portal_color') || '#1e293b'
             };
 
             const baseData = data || {};
@@ -127,20 +127,76 @@ const Settings = ({ onUpdate, activeFacility, currentRole, session, onFacilityUp
         }));
     };
 
-    const resetThemeDefaults = () => {
+    const isValidHex = (val) => /^#[0-9A-Fa-f]{6}$/.test(val || '');
+
+    const COLOR_PRESETS = {
+        modernMedical: {
+            name: 'Modern Medical Executive (Recommended)',
+            light_sidebar_color: '#0f172a',
+            light_bg_color: '#f8fafc',
+            light_portal_color: '#ffffff',
+            light_text_color: '#0f172a',
+            light_label_color: '#475569',
+            dark_sidebar_color: '#090e17',
+            dark_bg_color: '#0f172a',
+            dark_portal_color: '#1e293b',
+            dark_text_color: '#f8fafc',
+            dark_label_color: '#94a3b8'
+        },
+        surgicalMinimalist: {
+            name: 'Surgical Minimalist',
+            light_sidebar_color: '#ffffff',
+            light_bg_color: '#f1f5f9',
+            light_portal_color: '#ffffff',
+            light_text_color: '#020617',
+            light_label_color: '#64748b',
+            dark_sidebar_color: '#0b0f19',
+            dark_bg_color: '#111827',
+            dark_portal_color: '#1f2937',
+            dark_text_color: '#f9fafb',
+            dark_label_color: '#9ca3af'
+        },
+        emeraldClinical: {
+            name: 'White & Emerald Clinical',
+            light_sidebar_color: '#064e3b',
+            light_bg_color: '#f0fdf4',
+            light_portal_color: '#ffffff',
+            light_text_color: '#0f172a',
+            light_label_color: '#33534b',
+            dark_sidebar_color: '#022c22',
+            dark_bg_color: '#06231c',
+            dark_portal_color: '#0f382e',
+            dark_text_color: '#f0fdf4',
+            dark_label_color: '#a7f3d0'
+        }
+    };
+
+    const applyColorPreset = (presetKey) => {
+        const preset = COLOR_PRESETS[presetKey];
+        if (!preset) return;
+
+        const { name: _name, ...colors } = preset;
         setSettings(prev => ({
             ...prev,
-            light_sidebar_color: '#112238',
-            light_bg_color: '#f8fafc',
-            light_text_color: '#0f172a',
-            light_label_color: '#334155',
-            light_portal_color: '#ffffff',
-            dark_sidebar_color: '#0F2036',
-            dark_bg_color: '#142842',
-            dark_text_color: '#f8fafc',
-            dark_label_color: '#cbd5e1',
-            dark_portal_color: '#1E3A5F'
+            ...colors
         }));
+
+        Object.entries(colors).forEach(([key, val]) => {
+            localStorage.setItem(key, val);
+        });
+        window.dispatchEvent(new Event('theme-updated'));
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Preset Applied',
+            text: `Applied "${preset.name}" palette across both light and dark themes.`,
+            timer: 2000,
+            showConfirmButton: false
+        });
+    };
+
+    const resetThemeDefaults = () => {
+        applyColorPreset('modernMedical');
     };
 
     const handleSave = async (e) => {
@@ -742,14 +798,40 @@ const Settings = ({ onUpdate, activeFacility, currentRole, session, onFacilityUp
                                 </div>
                                 <h3 style={{ fontSize: '1.125rem', color: 'var(--text-primary)', margin: 0 }}>Theme Configurations</h3>
                             </div>
-                            <button
-                                type="button"
-                                onClick={resetThemeDefaults}
-                                style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                            >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                                Restore Defaults
-                            </button>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => applyColorPreset('modernMedical')}
+                                    style={{ background: 'rgba(37, 99, 235, 0.12)', border: '1px solid rgba(37, 99, 235, 0.35)', color: '#3b82f6', padding: '0.45rem 0.85rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}
+                                    title="Deep slate and obsidian executive palette (Recommended)"
+                                >
+                                    ✨ Modern Medical (Recommended)
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => applyColorPreset('surgicalMinimalist')}
+                                    style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '0.45rem 0.85rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                                    title="High precision clinical surgical palette"
+                                >
+                                    🏥 Surgical Minimalist
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => applyColorPreset('emeraldClinical')}
+                                    style={{ background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.35)', color: '#059669', padding: '0.45rem 0.85rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}
+                                    title="White & Emerald high-contrast clinical scrub palette"
+                                >
+                                    🌿 White & Emerald
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={resetThemeDefaults}
+                                    style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '0.45rem 0.85rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                                >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                                    Reset
+                                </button>
+                            </div>
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
@@ -758,95 +840,105 @@ const Settings = ({ onUpdate, activeFacility, currentRole, session, onFacilityUp
                                 <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)' }}>Light Mode Settings</h4>
                                 <div className="setting-form-group">
                                     <label style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>Sidebar Background Color</label>
-                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                                         <input
                                             type="color"
                                             name="light_sidebar_color"
-                                            value={settings.light_sidebar_color || '#112238'}
+                                            value={isValidHex(settings.light_sidebar_color) ? settings.light_sidebar_color : '#0f172a'}
                                             onChange={handleChange}
-                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer', flexShrink: 0 }}
                                         />
                                         <input
                                             className="setting-form-input"
                                             type="text"
-                                            value={settings.light_sidebar_color || '#112238'}
-                                            disabled
+                                            name="light_sidebar_color"
+                                            value={settings.light_sidebar_color || '#0f172a'}
+                                            onChange={handleChange}
+                                            placeholder="#0f172a"
                                             style={{ height: '48px', fontFamily: 'monospace' }}
                                         />
                                     </div>
                                 </div>
                                 <div className="setting-form-group" style={{ marginTop: '1rem' }}>
                                     <label style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>Main Panel Background Color</label>
-                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                                         <input
                                             type="color"
                                             name="light_bg_color"
-                                            value={settings.light_bg_color || '#f8fafc'}
+                                            value={isValidHex(settings.light_bg_color) ? settings.light_bg_color : '#f8fafc'}
                                             onChange={handleChange}
-                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer', flexShrink: 0 }}
                                         />
                                         <input
                                             className="setting-form-input"
                                             type="text"
+                                            name="light_bg_color"
                                             value={settings.light_bg_color || '#f8fafc'}
-                                            disabled
+                                            onChange={handleChange}
+                                            placeholder="#f8fafc"
                                             style={{ height: '48px', fontFamily: 'monospace' }}
                                         />
                                     </div>
                                 </div>
                                 <div className="setting-form-group" style={{ marginTop: '1rem' }}>
                                     <label style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>Portal (Card) Background Color</label>
-                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                                         <input
                                             type="color"
                                             name="light_portal_color"
-                                            value={settings.light_portal_color || '#ffffff'}
+                                            value={isValidHex(settings.light_portal_color) ? settings.light_portal_color : '#ffffff'}
                                             onChange={handleChange}
-                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer', flexShrink: 0 }}
                                         />
                                         <input
                                             className="setting-form-input"
                                             type="text"
+                                            name="light_portal_color"
                                             value={settings.light_portal_color || '#ffffff'}
-                                            disabled
+                                            onChange={handleChange}
+                                            placeholder="#ffffff"
                                             style={{ height: '48px', fontFamily: 'monospace' }}
                                         />
                                     </div>
                                 </div>
                                 <div className="setting-form-group" style={{ marginTop: '1rem' }}>
                                     <label style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>Text Color</label>
-                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                                         <input
                                             type="color"
                                             name="light_text_color"
-                                            value={settings.light_text_color || '#0f172a'}
+                                            value={isValidHex(settings.light_text_color) ? settings.light_text_color : '#0f172a'}
                                             onChange={handleChange}
-                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer', flexShrink: 0 }}
                                         />
                                         <input
                                             className="setting-form-input"
                                             type="text"
+                                            name="light_text_color"
                                             value={settings.light_text_color || '#0f172a'}
-                                            disabled
+                                            onChange={handleChange}
+                                            placeholder="#0f172a"
                                             style={{ height: '48px', fontFamily: 'monospace' }}
                                         />
                                     </div>
                                 </div>
                                 <div className="setting-form-group" style={{ marginTop: '1rem' }}>
                                     <label style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>Label Color</label>
-                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                                         <input
                                             type="color"
                                             name="light_label_color"
-                                            value={settings.light_label_color || '#334155'}
+                                            value={isValidHex(settings.light_label_color) ? settings.light_label_color : '#475569'}
                                             onChange={handleChange}
-                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer', flexShrink: 0 }}
                                         />
                                         <input
                                             className="setting-form-input"
                                             type="text"
-                                            value={settings.light_label_color || '#334155'}
-                                            disabled
+                                            name="light_label_color"
+                                            value={settings.light_label_color || '#475569'}
+                                            onChange={handleChange}
+                                            placeholder="#475569"
                                             style={{ height: '48px', fontFamily: 'monospace' }}
                                         />
                                     </div>
@@ -858,95 +950,105 @@ const Settings = ({ onUpdate, activeFacility, currentRole, session, onFacilityUp
                                 <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)' }}>Dark Mode Settings</h4>
                                 <div className="setting-form-group">
                                     <label style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>Sidebar Background Color</label>
-                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                                         <input
                                             type="color"
                                             name="dark_sidebar_color"
-                                            value={settings.dark_sidebar_color || '#0F2036'}
+                                            value={isValidHex(settings.dark_sidebar_color) ? settings.dark_sidebar_color : '#090e17'}
                                             onChange={handleChange}
-                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer', flexShrink: 0 }}
                                         />
                                         <input
                                             className="setting-form-input"
                                             type="text"
-                                            value={settings.dark_sidebar_color || '#0F2036'}
-                                            disabled
+                                            name="dark_sidebar_color"
+                                            value={settings.dark_sidebar_color || '#090e17'}
+                                            onChange={handleChange}
+                                            placeholder="#090e17"
                                             style={{ height: '48px', fontFamily: 'monospace' }}
                                         />
                                     </div>
                                 </div>
                                 <div className="setting-form-group" style={{ marginTop: '1rem' }}>
                                     <label style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>Main Panel Background Color</label>
-                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                                         <input
                                             type="color"
                                             name="dark_bg_color"
-                                            value={settings.dark_bg_color || '#142842'}
+                                            value={isValidHex(settings.dark_bg_color) ? settings.dark_bg_color : '#0f172a'}
                                             onChange={handleChange}
-                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer', flexShrink: 0 }}
                                         />
                                         <input
                                             className="setting-form-input"
                                             type="text"
-                                            value={settings.dark_bg_color || '#142842'}
-                                            disabled
+                                            name="dark_bg_color"
+                                            value={settings.dark_bg_color || '#0f172a'}
+                                            onChange={handleChange}
+                                            placeholder="#0f172a"
                                             style={{ height: '48px', fontFamily: 'monospace' }}
                                         />
                                     </div>
                                 </div>
                                 <div className="setting-form-group" style={{ marginTop: '1rem' }}>
                                     <label style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>Portal (Card) Background Color</label>
-                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                                         <input
                                             type="color"
                                             name="dark_portal_color"
-                                            value={settings.dark_portal_color || '#1E3A5F'}
+                                            value={isValidHex(settings.dark_portal_color) ? settings.dark_portal_color : '#1e293b'}
                                             onChange={handleChange}
-                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer', flexShrink: 0 }}
                                         />
                                         <input
                                             className="setting-form-input"
                                             type="text"
-                                            value={settings.dark_portal_color || '#1E3A5F'}
-                                            disabled
+                                            name="dark_portal_color"
+                                            value={settings.dark_portal_color || '#1e293b'}
+                                            onChange={handleChange}
+                                            placeholder="#1e293b"
                                             style={{ height: '48px', fontFamily: 'monospace' }}
                                         />
                                     </div>
                                 </div>
                                 <div className="setting-form-group" style={{ marginTop: '1rem' }}>
                                     <label style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>Text Color</label>
-                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                                         <input
                                             type="color"
                                             name="dark_text_color"
-                                            value={settings.dark_text_color || '#f8fafc'}
+                                            value={isValidHex(settings.dark_text_color) ? settings.dark_text_color : '#f8fafc'}
                                             onChange={handleChange}
-                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer', flexShrink: 0 }}
                                         />
                                         <input
                                             className="setting-form-input"
                                             type="text"
+                                            name="dark_text_color"
                                             value={settings.dark_text_color || '#f8fafc'}
-                                            disabled
+                                            onChange={handleChange}
+                                            placeholder="#f8fafc"
                                             style={{ height: '48px', fontFamily: 'monospace' }}
                                         />
                                     </div>
                                 </div>
                                 <div className="setting-form-group" style={{ marginTop: '1rem' }}>
                                     <label style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>Label Color</label>
-                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                                         <input
                                             type="color"
                                             name="dark_label_color"
-                                            value={settings.dark_label_color || '#cbd5e1'}
+                                            value={isValidHex(settings.dark_label_color) ? settings.dark_label_color : '#94a3b8'}
                                             onChange={handleChange}
-                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                                            style={{ width: '48px', height: '48px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer', flexShrink: 0 }}
                                         />
                                         <input
                                             className="setting-form-input"
                                             type="text"
-                                            value={settings.dark_label_color || '#cbd5e1'}
-                                            disabled
+                                            name="dark_label_color"
+                                            value={settings.dark_label_color || '#94a3b8'}
+                                            onChange={handleChange}
+                                            placeholder="#94a3b8"
                                             style={{ height: '48px', fontFamily: 'monospace' }}
                                         />
                                     </div>
