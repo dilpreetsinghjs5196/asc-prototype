@@ -1,0 +1,524 @@
+/* ==========================================================================
+   MODULE: ImplantVendorMaster.css
+   PHASE: 53 — Implant Vendor Master
+   DESIGN STANDARD: Slate / Sky / Neutral Enterprise Healthcare OS
+   MANDATORY: Strict Neutral Palette Standard (Zero non-conforming accent styles)
+   ========================================================================== */
+
+.vendor-master-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  background-color: var(--bg-surface, #0f172a);
+  color: var(--text-primary, #f8fafc);
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Header & Title Bar */
+.vendor-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-bottom: 1px solid var(--border-color, #334155);
+  padding-bottom: 16px;
+}
+
+.vendor-title-section h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vendor-title-section p {
+  margin: 4px 0 0 0;
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+.vendor-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-primary-vendor {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #0284c7;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary-vendor:hover {
+  background-color: #0369a1;
+}
+
+.btn-secondary-vendor {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #1e293b;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary-vendor:hover {
+  background-color: #334155;
+  color: #ffffff;
+}
+
+/* Summary Metrics Cards */
+.vendor-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.vendor-metric-card {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vendor-metric-card .metric-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vendor-metric-card .metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+/* Filter Bar */
+.vendor-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 14px;
+  align-items: center;
+}
+
+.vendor-search-input-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+}
+
+.vendor-search-input-wrapper svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+}
+
+.vendor-search-input {
+  width: 100%;
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 8px 12px 8px 36px;
+  color: #f8fafc;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.vendor-search-input:focus {
+  border-color: #0284c7;
+}
+
+.vendor-select-filter {
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #f8fafc;
+  font-size: 0.875rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.vendor-select-filter:focus {
+  border-color: #0284c7;
+}
+
+/* Table Card */
+.vendor-table-card {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.vendor-table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.vendor-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.vendor-data-table th {
+  background-color: #0f172a;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 12px 16px;
+  border-bottom: 1px solid #334155;
+}
+
+.vendor-data-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #334155;
+  color: #e2e8f0;
+  vertical-align: middle;
+}
+
+.vendor-data-table tr:hover td {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.vendor-code-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  background-color: #0f172a;
+  color: #38bdf8;
+  border: 1px solid #0284c7;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.vendor-type-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.type-manufacturer {
+  background-color: #0f2e42;
+  color: #38bdf8;
+  border: 1px solid #0284c7;
+}
+
+.type-distributor {
+  background-color: #1e3a5f;
+  color: #60a5fa;
+  border: 1px solid #2563eb;
+}
+
+.type-tissue-bank {
+  background-color: #064e3b;
+  color: #34d399;
+  border: 1px solid #059669;
+}
+
+.type-gpo {
+  background-color: #451a03;
+  color: #fbbf24;
+  border: 1px solid #d97706;
+}
+
+.type-sales-agency {
+  background-color: #1e293b;
+  color: #cbd5e1;
+  border: 1px solid #475569;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.status-active {
+  background-color: #064e3b;
+  color: #34d399;
+  border: 1px solid #059669;
+}
+
+.status-inactive {
+  background-color: #450a0a;
+  color: #f87171;
+  border: 1px solid #dc2626;
+}
+
+.status-archived {
+  background-color: #1e293b;
+  color: #94a3b8;
+  border: 1px solid #475569;
+}
+
+.scope-badge-global {
+  background-color: #0c4a6e;
+  color: #7dd3fc;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #0284c7;
+}
+
+.scope-badge-facility {
+  background-color: #064e3b;
+  color: #6ee7b7;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #059669;
+}
+
+.vendor-specialties-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.specialty-pill {
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  color: #cbd5e1;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.vendor-action-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vendor-action-btn {
+  background: none;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 5px 8px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vendor-action-btn:hover {
+  background-color: #334155;
+  color: #f8fafc;
+}
+
+.vendor-action-btn.btn-danger:hover {
+  background-color: #450a0a;
+  color: #f87171;
+  border-color: #dc2626;
+}
+
+/* Pagination Footer */
+.vendor-pagination-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #0f172a;
+  border-top: 1px solid #334155;
+  font-size: 0.8125rem;
+  color: #94a3b8;
+}
+
+.vendor-page-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Modal Overlay & Card */
+.vendor-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 20px;
+}
+
+.vendor-modal-card {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.vendor-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #334155;
+}
+
+.vendor-modal-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.vendor-modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.vendor-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.form-group-full {
+  grid-column: span 2;
+}
+
+.vendor-form-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.vendor-form-input,
+.vendor-form-select,
+.vendor-form-textarea {
+  width: 100%;
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #f8fafc;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.vendor-form-input:focus,
+.vendor-form-select:focus,
+.vendor-form-textarea:focus {
+  border-color: #0284c7;
+}
+
+/* Duplicate Candidate Warning Banner */
+.duplicate-warning-banner {
+  background-color: #451a03;
+  border: 1px solid #d97706;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #fef3c7;
+  font-size: 0.8125rem;
+}
+
+.duplicate-warning-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+.duplicate-candidate-item {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.duplicate-confirm-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #f8fafc;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.vendor-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid #334155;
+  background-color: #0f172a;
+}

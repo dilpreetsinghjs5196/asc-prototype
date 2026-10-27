@@ -29,6 +29,7 @@ import PatientManagement from './components/PatientManagement';
 import ClaimScrubberWorkbench from './components/ClaimScrubberWorkbench';
 import ImplantTaxonomyExplorer from './components/ImplantTaxonomyExplorer';
 import CptImplantMappingMatrix from './components/CptImplantMappingMatrix';
+import ImplantVendorMaster from './components/ImplantVendorMaster';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
 import { useInactivityTimeout } from './hooks/useInactivityTimeout';
@@ -2438,6 +2439,13 @@ export default function App() {
             CPT-to-Implant Matrix
           </div>
           <div
+            className={`menu-item ${activeTab === 'implant_vendors' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('implant_vendors'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Building2 size={16} /></div>
+            Vendor Master
+          </div>
+          <div
             className={`menu-item ${activeTab === 'claim_scrubber' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('claim_scrubber'); setSelectedSurgeon(null); }}
           >
@@ -2684,6 +2692,7 @@ export default function App() {
                   {activeTab === 'user_management' && 'User provisioning, active facility memberships, and department assignments'}
                   {activeTab === 'role_management' && 'Role hierarchy, built-in system immutability, and 13-domain permission matrix'}
                   {activeTab === 'audit_logs' && 'HIPAA § 164.312(b) immutable transaction audit ledger, state diffs, and AI telemetry'}
+                  {activeTab === 'implant_vendors' && 'Master directory of medical device manufacturers, commercial distributors, and sourcing governance'}
                 </>
               )}
             </span>
@@ -4476,7 +4485,25 @@ export default function App() {
               {activeTab === 'cpt_implant_matrix' && (
                 <CptImplantMappingMatrix
                   activeFacility={activeFacility}
-                  userPermissions={userRole === 'admin' ? ['admin', 'implants.manage_catalog', 'implants.view_catalog'] : ['implants.view_catalog']}
+                  userPermissions={
+                    (['super_admin', 'org_admin', 'facility_admin', 'cfo', 'clinical_manager', 'admin'].includes(userRole) || !authUser)
+                      ? ['admin', 'implants.manage_catalog', 'implants.view_catalog']
+                      : ['implants.view_catalog']
+                  }
+                />
+              )}
+
+              {/* ==========================================
+              TAB: IMPLANT VENDOR MASTER
+              ========================================== */}
+              {activeTab === 'implant_vendors' && (
+                <ImplantVendorMaster
+                  activeFacility={activeFacility}
+                  userPermissions={
+                    (['super_admin', 'org_admin', 'facility_admin', 'cfo', 'clinical_manager', 'admin'].includes(userRole) || !authUser)
+                      ? ['admin', 'implants.manage_catalog', 'implants.view_catalog']
+                      : ['implants.view_catalog']
+                  }
                 />
               )}
 
