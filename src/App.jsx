@@ -31,6 +31,7 @@ import ImplantTaxonomyExplorer from './components/ImplantTaxonomyExplorer';
 import CptImplantMappingMatrix from './components/CptImplantMappingMatrix';
 import ImplantVendorMaster from './components/ImplantVendorMaster';
 import ImplantProductSkuMaster from './components/ImplantProductSkuMaster';
+import VendorComponentMappingMatrix from './components/VendorComponentMappingMatrix';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
 import { useInactivityTimeout } from './hooks/useInactivityTimeout';
@@ -2454,6 +2455,13 @@ export default function App() {
             Product SKU Master
           </div>
           <div
+            className={`menu-item ${activeTab === 'vendor_component_mappings' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('vendor_component_mappings'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Layers size={16} /></div>
+            Supplier Matrix
+          </div>
+          <div
             className={`menu-item ${activeTab === 'claim_scrubber' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('claim_scrubber'); setSelectedSurgeon(null); }}
           >
@@ -2702,6 +2710,7 @@ export default function App() {
                   {activeTab === 'audit_logs' && 'HIPAA § 164.312(b) immutable transaction audit ledger, state diffs, and AI telemetry'}
                   {activeTab === 'implant_vendors' && 'Master directory of medical device manufacturers, commercial distributors, and sourcing governance'}
                   {activeTab === 'implant_skus' && 'Master catalog items, FDA UDI-DI specifications, and distributor cross-references'}
+                  {activeTab === 'vendor_component_mappings' && 'Commercial-to-clinical capability mappings, facility preference tiers, and logistics consignment governance'}
                 </>
               )}
             </span>
@@ -4525,6 +4534,20 @@ export default function App() {
                   userPermissions={
                     (['super_admin', 'org_admin', 'facility_admin', 'cfo', 'clinical_manager', 'admin'].includes(userRole) || !authUser)
                       ? ['admin', 'implants.manage_catalog', 'implants.view_catalog']
+                      : ['implants.view_catalog']
+                  }
+                />
+              )}
+
+              {/* ==========================================
+              TAB: VENDOR TO IMPLANT COMPONENT MATRIX
+              ========================================== */}
+              {activeTab === 'vendor_component_mappings' && (
+                <VendorComponentMappingMatrix
+                  activeFacility={activeFacility}
+                  userPermissions={
+                    (['super_admin', 'org_admin', 'facility_admin', 'cfo', 'clinical_manager', 'admin'].includes(userRole) || !authUser)
+                      ? ['admin', 'implants.manage_catalog', 'implants.manage_contracts', 'implants.view_catalog']
                       : ['implants.view_catalog']
                   }
                 />
