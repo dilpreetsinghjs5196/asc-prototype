@@ -235,6 +235,74 @@ export const implantService = {
   },
 
   /**
+   * Fetches all implant components across categories with optional joins.
+   * @param {Object} [options] - { includeInactive: false, facilityId: null }
+   * @returns {Promise<{ components: Array<Object> }>}
+   */
+  async getComponents(options = {}) {
+    const { includeInactive = false, facilityId = null } = options;
+    const activeFac = facilityId || (db.getActiveFacility ? db.getActiveFacility()?.id : null);
+
+    try {
+      if (db.ensureAuthSession) {
+        await db.ensureAuthSession();
+      }
+
+      let query = supabase
+        .from('implant_components')
+        .select('*, implant_categories(id, code, name, specialty)')
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (!includeInactive) {
+        query = query.eq('is_active', true);
+      }
+
+      if (activeFac) {
+        query = query.or(`facility_id.is.null,facility_id.eq.${activeFac}`);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      const formatted = (data || []).map(c => ({
+        ...c,
+        specialty: c.specialty || c.implant_categories?.specialty || null,
+        category: c.implant_categories || null
+      }));
+      return { components: formatted };
+    } catch (err) {
+      console.warn('implantService.getComponents fallback to baseline taxonomy:', err.message || err);
+      const comps = [];
+      for (const cat of GLOBAL_BASELINE_TAXONOMY) {
+        for (const [idx, c] of cat.components.entries()) {
+          comps.push({
+            id: `global-comp-${c.code.toLowerCase()}`,
+            category_id: `global-cat-${cat.code.toLowerCase()}`,
+            facility_id: null,
+            code: c.code,
+            name: c.name,
+            specialty: cat.specialty,
+            component_type: c.component_type,
+            default_duration: c.default_duration,
+            requires_serial_tracking: !!c.requires_serial_tracking,
+            requires_lot_tracking: c.requires_lot_tracking !== false,
+            allows_biological_tissue: !!c.allows_biological_tissue,
+            sort_order: (idx + 1) * 10,
+            is_active: true,
+            category: {
+              id: `global-cat-${cat.code.toLowerCase()}`,
+              code: cat.code,
+              name: cat.name,
+              specialty: cat.specialty
+            }
+          });
+        }
+      }
+      return { components: comps };
+    }
+  },
+
+  /**
    * Fetches components belonging to a specific category.
    * @param {string} categoryId - UUID of the parent category
    * @param {Object} [options] - { includeInactive: false, facilityId: null }
@@ -443,6 +511,7 @@ if (db && typeof db === 'object') {
   db.getImplantCategories = (...args) => implantService.getCategories(...args);
   db.getImplantCategoryTree = (...args) => implantService.getCategoryTree(...args);
   db.getImplantComponentsByCategory = (...args) => implantService.getComponentsByCategory(...args);
+  db.getImplantComponents = (...args) => implantService.getComponents(...args);
   db.saveImplantCategory = (...args) => implantService.saveCategory(...args);
   db.saveImplantComponent = (...args) => implantService.saveComponent(...args);
   db.deactivateImplantCategory = (...args) => implantService.deactivateCategory(...args);
