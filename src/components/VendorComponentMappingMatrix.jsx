@@ -445,14 +445,14 @@ export default function VendorComponentMappingMatrix({
           <table className="matrix-table">
             <thead>
               <tr>
-                <th>Clinical Component</th>
-                <th>Manufacturer Vendor</th>
-                <th>Preference Tier</th>
-                <th>Sourcing Model</th>
-                <th>Contract / Lead Time</th>
-                <th>Effective Range</th>
-                <th>Scope</th>
-                <th>Actions</th>
+                <th style={{ minWidth: '180px' }}>Clinical Component</th>
+                <th style={{ minWidth: '150px' }}>Manufacturer Vendor</th>
+                <th style={{ minWidth: '120px' }}>Preference Tier</th>
+                <th style={{ minWidth: '115px' }}>Sourcing Model</th>
+                <th style={{ minWidth: '135px' }}>Contract / Lead</th>
+                <th style={{ minWidth: '130px', whiteSpace: 'nowrap' }}>Effective Range</th>
+                <th style={{ minWidth: '110px' }}>Scope</th>
+                <th style={{ minWidth: '100px', textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -481,26 +481,26 @@ export default function VendorComponentMappingMatrix({
                       </span>
                     </td>
                     <td>
-                      <span className="badge-sourcing">{m.sourcing_model.replace('_', ' ')}</span>
+                      <span className="badge-sourcing" style={{ whiteSpace: 'nowrap' }}>{m.sourcing_model.replace('_', ' ')}</span>
                       {m.authorized_distributor && (
                         <div className="mapping-subtext">via {m.authorized_distributor.display_name}</div>
                       )}
                     </td>
                     <td>
-                      <div>{m.contract_reference_number || 'Direct Order'}</div>
+                      <div style={{ whiteSpace: 'nowrap' }}>{m.contract_reference_number || 'Direct Order'}</div>
                       <div className="mapping-subtext">{m.lead_time_days} days lead</div>
                     </td>
-                    <td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
                       <div>From: {m.effective_date}</div>
                       <div className="mapping-subtext">{m.termination_date ? `To: ${m.termination_date}` : 'Ongoing'}</div>
                     </td>
                     <td>
-                      <span className="badge-scope">
+                      <span className="badge-scope" style={{ whiteSpace: 'nowrap' }}>
                         {m.facility_id ? 'Facility Custom' : 'Global Baseline'}
                       </span>
                     </td>
                     <td>
-                      <div className="matrix-actions-cell">
+                      <div className="matrix-actions-cell" style={{ justifyContent: 'center' }}>
                         {canManage && (
                           <>
                             <button
