@@ -1,29 +1,44 @@
 /**
  * MODULE: SurgeonPreferenceCards.css
  * Phase 58: Ambulatory Surgery Center Surgeon Preference Cards & Staging Suite
- * Strictly adheres to Maestro Guidelines and color system.
- * Palette: Slate, Emerald, Amber, Sky/Blue, Rose, Cyan.
+ * Maestro Clinical Dark System / Modern High-Density Surgical Intelligence.
  * Strict Purple Ban: Zero purple, violet, indigo, fuchsia, or magenta tokens.
+ * Colors: Slate (#090d16, #0b1120, #0f172a, #1e293b), Sky/Cyan (#0284c7, #38bdf8),
+ *         Emerald (#059669, #10b981), Amber (#d97706, #f59e0b), Rose (#e11d48, #f43f5e).
  */
 
+/* ==============================================================================
+   1. MAIN WORKSPACE CONTAINER
+   ============================================================================== */
 .pref-card-container {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
   padding: 1.5rem;
-  background-color: #0b1120;
+  background-color: #090d16;
   color: #f1f5f9;
   min-height: calc(100vh - 4rem);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
-/* Header & Action Bar */
+/* ==============================================================================
+   2. WORKSPACE HEADER
+   ============================================================================== */
 .pref-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 1rem;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(11, 17, 32, 0.9) 100%);
+  border: 1px solid #1e293b;
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  backdrop-filter: blur(10px);
 }
 
 .pref-title-group h2 {
@@ -34,12 +49,14 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  letter-spacing: -0.02em;
 }
 
 .pref-title-group p {
-  margin: 0.25rem 0 0 0;
+  margin: 0.35rem 0 0 0;
   font-size: 0.875rem;
   color: #94a3b8;
+  line-height: 1.4;
 }
 
 .pref-actions {
@@ -53,20 +70,24 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: #0284c7;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
   color: #ffffff;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: 0.5rem;
   font-size: 0.875rem;
   font-weight: 600;
   border: 1px solid #38bdf8;
   cursor: pointer;
-  transition: all 0.15s ease-in-out;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+  transition: all 0.2s ease-in-out;
+  white-space: nowrap;
 }
 
 .btn-primary-pref:hover {
-  background-color: #0369a1;
+  background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
   border-color: #7dd3fc;
+  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.35);
+  transform: translateY(-1px);
 }
 
 .btn-secondary-pref {
@@ -75,37 +96,48 @@
   gap: 0.5rem;
   background-color: #1e293b;
   color: #e2e8f0;
-  padding: 0.5rem 0.875rem;
-  border-radius: 0.375rem;
+  padding: 0.55rem 1rem;
+  border-radius: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
   border: 1px solid #334155;
   cursor: pointer;
-  transition: all 0.15s ease-in-out;
+  transition: all 0.2s ease-in-out;
+  white-space: nowrap;
 }
 
 .btn-secondary-pref:hover {
   background-color: #334155;
   color: #ffffff;
+  border-color: #475569;
 }
 
-/* KPI Metrics Grid */
+/* ==============================================================================
+   3. KPI SUMMARY CARDS
+   ============================================================================== */
 .pref-metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 1rem;
 }
 
 .pref-metric-card {
-  background-color: #111827;
-  border: 1px solid #1f2937;
-  border-radius: 0.5rem;
-  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #0e1726 0%, #0b1120 100%);
+  border: 1px solid #1e293b;
+  border-radius: 0.75rem;
+  padding: 1.15rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.35rem;
   position: relative;
   overflow: hidden;
+  transition: all 0.2s ease-in-out;
+}
+
+.pref-metric-card:hover {
+  border-color: #334155;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 .pref-metric-card::before {
@@ -117,39 +149,48 @@
   height: 100%;
 }
 
-.pref-metric-card.blue::before { background-color: #0284c7; }
-.pref-metric-card.emerald::before { background-color: #10b981; }
-.pref-metric-card.amber::before { background-color: #f59e0b; }
-.pref-metric-card.rose::before { background-color: #f43f5e; }
+.pref-metric-card.blue::before { background-color: #0284c7; box-shadow: 0 0 10px #0284c7; }
+.pref-metric-card.emerald::before { background-color: #10b981; box-shadow: 0 0 10px #10b981; }
+.pref-metric-card.amber::before { background-color: #f59e0b; box-shadow: 0 0 10px #f59e0b; }
+.pref-metric-card.rose::before { background-color: #f43f5e; box-shadow: 0 0 10px #f43f5e; }
 
 .pref-metric-title {
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: #94a3b8;
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.5rem;
 }
 
 .pref-metric-val {
-  font-size: 1.5rem;
+  font-size: 1.65rem;
   font-weight: 700;
   color: #f8fafc;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 .pref-metric-sub {
   font-size: 0.75rem;
   color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
-/* Tabs Navigation */
+/* ==============================================================================
+   4. NAVIGATION TABS
+   ============================================================================== */
 .pref-tabs-nav {
   display: flex;
   gap: 0.5rem;
-  border-bottom: 1px solid #1e293b;
-  padding-bottom: 0.5rem;
+  background-color: #0b1120;
+  padding: 0.35rem;
+  border-radius: 0.65rem;
+  border: 1px solid #1e293b;
   overflow-x: auto;
 }
 
@@ -157,10 +198,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  font-weight: 500;
+  padding: 0.6rem 1.15rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: #94a3b8;
   background: transparent;
   border: 1px solid transparent;
@@ -170,39 +211,54 @@
 }
 
 .pref-tab-btn:hover {
-  color: #e2e8f0;
+  color: #f1f5f9;
   background-color: #1e293b;
 }
 
 .pref-tab-btn.active {
   color: #38bdf8;
-  background-color: #0f2744;
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.25) 0%, rgba(14, 165, 233, 0.1) 100%);
   border-color: #0284c7;
-  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.2);
 }
 
-/* Search & Filter Bar */
+.pref-tab-badge {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 9999px;
+  background-color: #1e293b;
+  color: #e2e8f0;
+}
+
+.pref-tab-btn.active .pref-tab-badge {
+  background-color: #0284c7;
+  color: #ffffff;
+}
+
+/* ==============================================================================
+   5. FILTER & SEARCH BAR
+   ============================================================================== */
 .pref-filter-bar {
   display: flex;
   gap: 0.75rem;
   align-items: center;
   flex-wrap: wrap;
-  background-color: #0f172a;
-  padding: 0.875rem 1rem;
-  border-radius: 0.5rem;
+  background: #0f172a;
+  padding: 0.85rem 1.15rem;
+  border-radius: 0.65rem;
   border: 1px solid #1e293b;
 }
 
 .pref-search-box {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
   background-color: #1e293b;
   border: 1px solid #334155;
-  border-radius: 0.375rem;
-  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.85rem;
   flex: 1;
-  min-width: 220px;
+  min-width: 240px;
 }
 
 .pref-search-box input {
@@ -221,48 +277,58 @@
 .pref-select-filter {
   background-color: #1e293b;
   border: 1px solid #334155;
-  border-radius: 0.375rem;
+  border-radius: 0.5rem;
   color: #f8fafc;
-  padding: 0.375rem 0.75rem;
+  padding: 0.45rem 0.85rem;
   font-size: 0.875rem;
   outline: none;
+  cursor: pointer;
 }
 
-/* Master Directory Card Grid */
+.pref-select-filter:focus {
+  border-color: #0284c7;
+}
+
+/* ==============================================================================
+   6. TAB 1: MASTER CARD DIRECTORY (PREMIUM CARDS)
+   ============================================================================== */
 .pref-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.25rem;
 }
 
 .pref-card-item {
-  background-color: #111827;
-  border: 1px solid #1f2937;
-  border-radius: 0.5rem;
-  padding: 1.25rem;
+  background: linear-gradient(135deg, #0e1726 0%, #0b1120 100%);
+  border: 1px solid #1e293b;
+  border-radius: 0.75rem;
+  padding: 1.35rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 1rem;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
 
 .pref-card-item:hover {
   border-color: #0284c7;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.12);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45), 0 0 15px rgba(2, 132, 199, 0.15);
 }
 
 .pref-card-item.selected {
   border-color: #38bdf8;
-  background-color: #0c1a2d;
+  background: linear-gradient(135deg, #0c203b 0%, #091224 100%);
+  box-shadow: 0 0 0 1px #38bdf8, 0 8px 24px rgba(2, 132, 199, 0.2);
 }
 
 .pref-card-top {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.5rem;
 }
 
@@ -270,29 +336,32 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.75rem;
   font-weight: 700;
-  padding: 0.2rem 0.5rem;
-  border-radius: 0.25rem;
-  background-color: #0f2744;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.375rem;
+  background-color: rgba(2, 132, 199, 0.15);
   color: #38bdf8;
-  border: 1px solid #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.35);
+  letter-spacing: 0.04em;
 }
 
 .pref-badge-house {
   font-size: 0.7rem;
-  font-weight: 600;
-  padding: 0.15rem 0.4rem;
-  border-radius: 0.25rem;
-  background-color: #14532d;
-  color: #4ade80;
-  border: 1px solid #22c55e;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.375rem;
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .pref-card-name {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.05rem;
+  font-weight: 700;
   color: #f8fafc;
-  margin: 0.5rem 0 0.25rem 0;
-  line-height: 1.3;
+  margin: 0.65rem 0 0.35rem 0;
+  line-height: 1.35;
 }
 
 .pref-cpt-sub {
@@ -300,22 +369,37 @@
   color: #94a3b8;
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.5rem;
+}
+
+.cpt-pill {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-weight: 700;
+  color: #38bdf8;
+  background: #0f2744;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.25rem;
+  border: 1px solid #0284c7;
 }
 
 .pref-card-meta {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem;
-  background-color: #0f172a;
-  padding: 0.75rem;
-  border-radius: 0.375rem;
+  gap: 0.65rem;
+  background-color: #090d16;
+  padding: 0.85rem;
+  border-radius: 0.5rem;
+  border: 1px solid #1a2538;
   font-size: 0.75rem;
 }
 
 .pref-meta-item span:first-child {
   color: #64748b;
   display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.15rem;
 }
 
 .pref-meta-item span:last-child {
@@ -323,261 +407,495 @@
   font-weight: 600;
 }
 
+/* Staging split bar on card */
+.pref-split-bar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.pref-split-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 9999px;
+  overflow: hidden;
+  background-color: #1e293b;
+}
+
+.pref-split-bar-open {
+  background-color: #10b981;
+}
+
+.pref-split-bar-hold {
+  background-color: #f59e0b;
+}
+
 .pref-card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid #1e293b;
+  padding-top: 0.85rem;
+  border-top: 1px solid #1a2538;
 }
 
-/* Staging Badges: OPEN vs HOLD */
-.badge-open {
-  background-color: #064e3b;
-  color: #6ee7b7;
-  border: 1px solid #059669;
-  padding: 0.2rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-}
-
-.badge-hold {
-  background-color: #451a03;
-  color: #fcd34d;
-  border: 1px solid #d97706;
-  padding: 0.2rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-}
-
-.badge-ready {
-  background-color: #064e3b;
-  color: #6ee7b7;
-  border: 1px solid #10b981;
-  padding: 0.2rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-}
-
-.badge-breach {
-  background-color: #4c0519;
-  color: #fda4af;
-  border: 1px solid #e11d48;
-  padding: 0.2rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-}
-
-.badge-pulled {
-  background-color: #0c4a6e;
-  color: #7dd3fc;
-  border: 1px solid #0284c7;
-  padding: 0.2rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-}
-
-.badge-pending {
-  background-color: #1e293b;
-  color: #94a3b8;
-  border: 1px solid #334155;
-  padding: 0.2rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-}
-
-/* Split Panel Editor */
-.pref-split-editor {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 1.25rem;
-}
-
-@media (max-width: 960px) {
-  .pref-split-editor {
-    grid-template-columns: 1fr;
-  }
-}
-
-.pref-sidebar-panel {
-  background-color: #111827;
-  border: 1px solid #1f2937;
-  border-radius: 0.5rem;
-  padding: 1.25rem;
+/* ==============================================================================
+   7. TAB 2: REDESIGNED FULL-WIDTH INTERACTIVE BOM WORKSPACE
+   ============================================================================== */
+.bom-workspace-container {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  width: 100%;
 }
 
-.pref-main-panel {
-  background-color: #111827;
-  border: 1px solid #1f2937;
-  border-radius: 0.5rem;
-  padding: 1.25rem;
+/* Hero Header for Selected Card */
+.bom-card-hero {
+  background: linear-gradient(135deg, #0e1a2d 0%, #0b1322 100%);
+  border: 1px solid #1e3a5f;
+  border-radius: 0.75rem;
+  padding: 1.35rem 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
-.pref-panel-section-title {
-  font-size: 0.875rem;
+.bom-hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.bom-hero-title-area {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.bom-hero-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.bom-hero-title {
+  font-size: 1.35rem;
   font-weight: 700;
-  text-transform: uppercase;
-  color: #38bdf8;
-  letter-spacing: 0.05em;
-  margin: 0 0 0.5rem 0;
+  color: #f8fafc;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.bom-hero-desc {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0;
+  max-width: 800px;
+  line-height: 1.45;
+}
+
+.bom-hero-stats-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background-color: rgba(9, 13, 22, 0.7);
+  padding: 0.85rem 1.15rem;
+  border-radius: 0.5rem;
+  border: 1px solid #1a2d47;
 }
 
-/* BOM Table & Items */
+.bom-pills-cluster {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+}
+
+.bom-pill-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #94a3b8;
+}
+
+.bom-pill-item strong {
+  color: #f1f5f9;
+}
+
+.bom-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* Full Width BOM Table Container */
+.bom-table-container {
+  background-color: #0b1120;
+  border: 1px solid #1e293b;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.bom-table-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background-color: #0e1726;
+  border-bottom: 1px solid #1e293b;
+}
+
+.bom-table-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bom-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
 .pref-bom-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
+  text-align: left;
 }
 
 .pref-bom-table th {
-  background-color: #0f172a;
+  background-color: #090d16;
   color: #94a3b8;
-  text-align: left;
-  padding: 0.625rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: 0.75rem 1rem;
+  font-size: 0.725rem;
+  font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.06em;
   border-bottom: 1px solid #1e293b;
+  white-space: nowrap;
 }
 
 .pref-bom-table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid #1f2937;
+  padding: 1rem;
+  border-bottom: 1px solid #162032;
   color: #e2e8f0;
+  vertical-align: middle;
 }
 
 .pref-bom-table tr:hover td {
-  background-color: #1a2436;
+  background-color: rgba(2, 132, 199, 0.05);
 }
 
-.item-name-cell {
-  font-weight: 600;
+/* Item Clinical Description Column */
+.bom-item-name {
+  font-size: 0.95rem;
+  font-weight: 700;
   color: #f8fafc;
+  line-height: 1.35;
 }
 
-.item-cat-tag {
-  font-size: 0.65rem;
+.bom-item-submeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+}
+
+.cat-badge {
+  font-size: 0.675rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.25rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cat-badge.IMPLANT { background-color: rgba(2, 132, 199, 0.2); color: #38bdf8; border: 1px solid rgba(2, 132, 199, 0.4); }
+.cat-badge.STERILE_DISPOSABLE { background-color: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+.cat-badge.INSTRUMENT_TRAY { background-color: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+.cat-badge.CAPITAL_EQUIPMENT { background-color: rgba(100, 116, 139, 0.2); color: #cbd5e1; border: 1px solid rgba(100, 116, 139, 0.4); }
+.cat-badge.SUTURE { background-color: rgba(6, 182, 212, 0.2); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.4); }
+.cat-badge.MEDICATION_BIOLOGIC { background-color: rgba(244, 63, 94, 0.2); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.4); }
+
+.laterality-tag {
+  font-size: 0.7rem;
   font-weight: 700;
   color: #38bdf8;
   background-color: #0c2847;
-  padding: 0.15rem 0.35rem;
+  padding: 0.1rem 0.4rem;
   border-radius: 0.2rem;
-  margin-right: 0.5rem;
+  border: 1px solid #0284c7;
 }
 
-.item-sku-sub {
+.item-clinical-notes {
+  font-size: 0.775rem;
+  color: #94a3b8;
+  font-style: italic;
+  display: block;
+  margin-top: 0.25rem;
+}
+
+/* Staging Protocol Badges (High Contrast Segmented Pills) */
+.staging-pill {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.badge-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: linear-gradient(135deg, rgba(6, 78, 59, 0.9) 0%, rgba(5, 150, 105, 0.8) 100%);
+  color: #a7f3d0;
+  border: 1px solid #10b981;
+  padding: 0.3rem 0.65rem;
+  border-radius: 0.375rem;
   font-size: 0.75rem;
-  color: #64748b;
-  margin-top: 0.2rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+  white-space: nowrap;
 }
 
-/* Pre-Op Case Readiness Grid */
+.badge-hold {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: linear-gradient(135deg, rgba(69, 26, 3, 0.9) 0%, rgba(217, 119, 6, 0.8) 100%);
+  color: #fef3c7;
+  border: 1px solid #f59e0b;
+  padding: 0.3rem 0.65rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+  white-space: nowrap;
+}
+
+.staging-subtext {
+  font-size: 0.675rem;
+  color: #64748b;
+}
+
+/* Pre-Approved Substitution Cardlet */
+.substitution-cardlet {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.375rem;
+  background-color: rgba(2, 132, 199, 0.1);
+  border: 1px solid rgba(2, 132, 199, 0.35);
+  font-size: 0.775rem;
+  max-width: 280px;
+}
+
+.sub-tier-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.sub-item-name {
+  font-weight: 600;
+  color: #f1f5f9;
+  line-height: 1.25;
+}
+
+.sub-part-num {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+/* ==============================================================================
+   8. TAB 3: OR CONTROL ROOM CASE READINESS CONSOLE
+   ============================================================================== */
 .readiness-board-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1.25rem;
 }
 
 .case-readiness-card {
-  background-color: #111827;
-  border: 1px solid #1f2937;
-  border-radius: 0.5rem;
-  padding: 1.25rem;
+  background: linear-gradient(135deg, #0e1726 0%, #0b1120 100%);
+  border: 1px solid #1e293b;
+  border-radius: 0.75rem;
+  padding: 1.35rem;
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
+  gap: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease-in-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.case-readiness-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
 .case-readiness-card.ready {
-  border-left: 4px solid #10b981;
+  border-top: 4px solid #10b981;
 }
 
 .case-readiness-card.breach {
-  border-left: 4px solid #f43f5e;
+  border-top: 4px solid #f43f5e;
 }
 
 .case-readiness-card.pulled {
-  border-left: 4px solid #0284c7;
+  border-top: 4px solid #0284c7;
 }
 
-/* Post-Op Reconciliation Table */
+.badge-ready {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid #10b981;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.375rem;
+  font-size: 0.725rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.badge-breach {
+  background-color: rgba(244, 63, 94, 0.2);
+  color: #fda4af;
+  border: 1px solid #f43f5e;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.375rem;
+  font-size: 0.725rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  animation: pulseBreach 2s infinite;
+}
+
+@keyframes pulseBreach {
+  0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(244, 63, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+}
+
+.badge-pulled {
+  background-color: rgba(2, 132, 199, 0.2);
+  color: #7dd3fc;
+  border: 1px solid #0284c7;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.375rem;
+  font-size: 0.725rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.badge-pending {
+  background-color: rgba(100, 116, 139, 0.2);
+  color: #cbd5e1;
+  border: 1px solid #475569;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.375rem;
+  font-size: 0.725rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+/* ==============================================================================
+   9. TAB 4: POST-OP RECONCILIATION LEDGER
+   ============================================================================== */
 .reconciliation-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
+  text-align: left;
 }
 
 .reconciliation-table th {
-  background-color: #0f172a;
+  background-color: #090d16;
   color: #94a3b8;
-  text-align: left;
-  padding: 0.625rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: 0.75rem 1rem;
+  font-size: 0.725rem;
+  font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.06em;
   border-bottom: 1px solid #1e293b;
+  white-space: nowrap;
 }
 
 .reconciliation-table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid #1f2937;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid #162032;
+  color: #e2e8f0;
+}
+
+.reconciliation-table tr:hover td {
+  background-color: rgba(2, 132, 199, 0.05);
 }
 
 .disposition-chip {
   display: inline-block;
-  padding: 0.2rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.7rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.375rem;
+  font-size: 0.725rem;
   font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .disposition-chip.EXACT_MATCH {
-  background-color: #064e3b;
-  color: #6ee7b7;
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
 }
 
 .disposition-chip.OPENED_CONTAMINATED_WASTE {
-  background-color: #4c0519;
+  background-color: rgba(244, 63, 94, 0.2);
   color: #fda4af;
+  border: 1px solid rgba(244, 63, 94, 0.4);
 }
 
 .disposition-chip.UNPLANNED_ADDITION {
-  background-color: #451a03;
-  color: #fcd34d;
+  background-color: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
 }
 
 .disposition-chip.HOLD_RETURNED_CLEAN {
-  background-color: #0c4a6e;
+  background-color: rgba(2, 132, 199, 0.2);
   color: #7dd3fc;
+  border: 1px solid rgba(2, 132, 199, 0.4);
 }
 
-/* Modal Dialogs */
+/* ==============================================================================
+   10. MODAL DIALOGS
+   ============================================================================== */
 .pref-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(3, 7, 18, 0.75);
-  backdrop-filter: blur(4px);
+  background-color: rgba(3, 7, 18, 0.8);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -588,13 +906,13 @@
 .pref-modal-content {
   background-color: #0f172a;
   border: 1px solid #1e293b;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   width: 100%;
-  max-width: 580px;
+  max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  padding: 1.5rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  padding: 1.75rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -605,12 +923,12 @@
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #1e293b;
-  padding-bottom: 0.75rem;
+  padding-bottom: 0.85rem;
 }
 
 .pref-modal-header h3 {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: #f8fafc;
 }
@@ -620,8 +938,9 @@
   border: none;
   color: #94a3b8;
   cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 0.25rem;
+  padding: 0.35rem;
+  border-radius: 0.375rem;
+  transition: all 0.15s ease-in-out;
 }
 
 .pref-modal-close-btn:hover {
@@ -632,13 +951,14 @@
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.4rem;
 }
 
 .form-group label {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: #94a3b8;
 }
 
@@ -647,23 +967,24 @@
 .form-group textarea {
   background-color: #1e293b;
   border: 1px solid #334155;
-  border-radius: 0.375rem;
+  border-radius: 0.5rem;
   color: #f8fafc;
-  padding: 0.5rem 0.75rem;
+  padding: 0.55rem 0.85rem;
   font-size: 0.875rem;
   outline: none;
+  transition: border-color 0.15s ease-in-out;
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
   border-color: #0284c7;
-  box-shadow: 0 0 0 1px #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.25);
 }
 
 .form-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
 }
 
@@ -672,5 +993,5 @@
   justify-content: flex-end;
   gap: 0.75rem;
   border-top: 1px solid #1e293b;
-  padding-top: 1rem;
+  padding-top: 1.25rem;
 }

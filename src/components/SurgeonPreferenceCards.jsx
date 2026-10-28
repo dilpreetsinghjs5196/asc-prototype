@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   ClipboardList, Plus, Search, AlertTriangle, CheckCircle2,
-  Clock, Check, X, FileText,
-  RotateCcw, AlertCircle, ChevronRight
+  Clock, X, FileText,
+  RotateCcw, AlertCircle, ChevronRight, Lock,
+  Trash2, ShieldCheck
 } from 'lucide-react';
 import {
   preferenceCardService,
@@ -31,7 +32,7 @@ export default function SurgeonPreferenceCards({
     userPermissions.includes('super_admin');
 
   // Navigation Sub-tab State
-  const [activeSubTab, setActiveSubTab] = useState('directory'); // 'directory' | 'bom_editor' | 'readiness_board' | 'reconciliation'
+  const [activeSubTab, setActiveSubTab] = useState('bom_editor'); // Default to interactive BOM for immediate clinical access
 
   // Data States
   const [cards, setCards] = useState([]);
@@ -47,6 +48,7 @@ export default function SurgeonPreferenceCards({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
+  const [selectedBomCategory, setSelectedBomCategory] = useState('ALL');
 
   // Modals State
   const [isNewCardModalOpen, setIsNewCardModalOpen] = useState(false);
@@ -78,6 +80,7 @@ export default function SurgeonPreferenceCards({
     plannedQuantity: 1,
     unitOfMeasure: 'EA',
     isMandatory: true,
+    lateralityModifier: 'STANDARD',
     notes: ''
   });
 
@@ -106,6 +109,10 @@ export default function SurgeonPreferenceCards({
         if (!selectedCard && cardsRes.cards.length > 0) {
           setSelectedCard(cardsRes.cards[0]);
           setSelectedRevision(cardsRes.cards[0].revisions?.[0] || null);
+        } else if (selectedCard) {
+          const updated = cardsRes.cards.find(c => c.id === selectedCard.id) || cardsRes.cards[0];
+          setSelectedCard(updated);
+          setSelectedRevision(updated?.revisions?.find(r => r.status === 'active') || updated?.revisions?.[0] || null);
         }
       }
 
@@ -140,6 +147,43 @@ export default function SurgeonPreferenceCards({
     setSelectedRevision(activeRev);
   };
 
+  // Quick Toggle OPEN vs HOLD on Item (Immutable state update)
+  const handleToggleStaging = (item) => {
+    const nextStaging = item.stagingBehavior === 'OPEN' ? 'HOLD' : 'OPEN';
+    if (selectedRevision) {
+      const updatedItems = (selectedRevision.items || []).map(i =>
+        i.id === item.id ? { ...i, stagingBehavior: nextStaging } : i
+      );
+      const openCount = updatedItems.filter(i => i.stagingBehavior === 'OPEN').length;
+      const holdCount = updatedItems.filter(i => i.stagingBehavior === 'HOLD').length;
+
+      setSelectedRevision(prev => ({
+        ...prev,
+        items: updatedItems,
+        openItemCount: openCount,
+        holdItemCount: holdCount
+      }));
+
+      setActionMessage({
+        type: 'success',
+        text: `Switched ${item.customItemName} to ${nextStaging} staging protocol.`
+      });
+    }
+  };
+
+  // Remove Item
+  const handleRemoveItem = async (itemId, itemName) => {
+    try {
+      const res = await preferenceCardService.removeCardItem(itemId);
+      if (res.success) {
+        setActionMessage({ type: 'success', text: `Removed ${itemName} from BOM.` });
+        loadData();
+      }
+    } catch (err) {
+      setActionMessage({ type: 'error', text: err.message || 'Failed to remove item' });
+    }
+  };
+
   // Create New Card Draft
   const handleCreateCard = async (e) => {
     e.preventDefault();
@@ -151,6 +195,9 @@ export default function SurgeonPreferenceCards({
       if (res.success) {
         setActionMessage({ type: 'success', text: `Draft Preference Card ${res.card.cardCode} successfully created.` });
         setIsNewCardModalOpen(false);
+        setSelectedCard(res.card);
+        setSelectedRevision(res.card.revisions?.[0] || null);
+        setActiveSubTab('bom_editor');
         loadData();
       }
     } catch (err) {
@@ -176,6 +223,7 @@ export default function SurgeonPreferenceCards({
           plannedQuantity: 1,
           unitOfMeasure: 'EA',
           isMandatory: true,
+          lateralityModifier: 'STANDARD',
           notes: ''
         });
         loadData();
@@ -240,7 +288,13 @@ export default function SurgeonPreferenceCards({
     }
   };
 
-  // Calculate Metrics
+  // Filtered BOM Items
+  const filteredBomItems = selectedRevision?.items?.filter(item => {
+    if (selectedBomCategory === 'ALL') return true;
+    return item.itemCategory === selectedBomCategory;
+  }) || [];
+
+  // Metrics Calculations
   const activeCardsCount = cards.filter(c => c.isActive).length;
   const readyCasesCount = readinessCases.filter(c => c.readinessStatus === 'CASE_READY').length;
   const totalCasesCount = readinessCases.length || 1;
@@ -248,7 +302,7 @@ export default function SurgeonPreferenceCards({
 
   return (
     <div className="pref-card-container">
-      {/* Top Header */}
+      {/* 1. TOP HEADER & GLOBAL ACTIONS */}
       <div className="pref-card-header">
         <div className="pref-title-group">
           <h2>
@@ -281,70 +335,70 @@ export default function SurgeonPreferenceCards({
         </div>
       </div>
 
-      {/* Action Banner Notification */}
+      {/* 2. ACTION NOTIFICATION BANNER */}
       {actionMessage && (
         <div
           style={{
-            padding: '0.75rem 1rem',
-            borderRadius: '0.375rem',
+            padding: '0.75rem 1.15rem',
+            borderRadius: '0.5rem',
             fontSize: '0.875rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            backgroundColor: actionMessage.type === 'error' ? '#4c0519' : '#064e3b',
+            backgroundColor: actionMessage.type === 'error' ? 'rgba(244, 63, 94, 0.15)' : 'rgba(16, 185, 129, 0.15)',
             color: actionMessage.type === 'error' ? '#fda4af' : '#6ee7b7',
-            border: `1px solid ${actionMessage.type === 'error' ? '#e11d48' : '#10b981'}`
+            border: `1px solid ${actionMessage.type === 'error' ? '#f43f5e' : '#10b981'}`
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            {actionMessage.type === 'error' ? <AlertTriangle size={16} /> : <CheckCircle2 size={16} />}
-            <span>{actionMessage.text}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            {actionMessage.type === 'error' ? <AlertTriangle size={18} /> : <CheckCircle2 size={18} />}
+            <span style={{ fontWeight: 500 }}>{actionMessage.text}</span>
           </div>
           <button
             onClick={() => setActionMessage(null)}
-            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer' }}
+            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: '0.2rem' }}
           >
-            <X size={14} />
+            <X size={16} />
           </button>
         </div>
       )}
 
-      {/* KPI Metrics Summary */}
+      {/* 3. KPI SUMMARY CARDS */}
       <div className="pref-metrics-grid">
         <div className="pref-metric-card blue">
           <div className="pref-metric-title">
-            <ClipboardList size={14} />
+            <ClipboardList size={15} color="#38bdf8" />
             Active Preference Cards
           </div>
           <div className="pref-metric-val">{activeCardsCount}</div>
-          <div className="pref-metric-sub">Across 4 surgical specialties</div>
+          <div className="pref-metric-sub">Across 4 surgical specialties • 100% CPT mapped</div>
         </div>
 
         <div className="pref-metric-card emerald">
           <div className="pref-metric-title">
-            <CheckCircle2 size={14} />
-            Pre-Op Readiness Rate
+            <CheckCircle2 size={15} color="#34d399" />
+            Pre-Op Case Readiness Rate
           </div>
           <div className="pref-metric-val">{readinessRate}%</div>
-          <div className="pref-metric-sub">{readyCasesCount} of {readinessCases.length} scheduled cases verified</div>
+          <div className="pref-metric-sub">{readyCasesCount} of {readinessCases.length} scheduled cases verified & locked</div>
         </div>
 
         <div className="pref-metric-card amber">
           <div className="pref-metric-title">
-            <Clock size={14} />
-            Staging Governance
+            <Clock size={15} color="#fbbf24" />
+            Staging Governance Ratio
           </div>
           <div className="pref-metric-val">42% OPEN / 58% HOLD</div>
-          <div className="pref-metric-sub">Minimizes field contamination</div>
+          <div className="pref-metric-sub">58% staged in room core to eliminate opened waste</div>
         </div>
 
         <div className="pref-metric-card rose">
           <div className="pref-metric-title">
-            <AlertCircle size={14} />
+            <AlertCircle size={15} color="#fb7185" />
             Contaminated Waste Ledger
           </div>
           <div className="pref-metric-val">${wasteSummary.totalWasteCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-          <div className="pref-metric-sub">{wasteSummary.wasteLineCount} premature unbox incidents flagged</div>
+          <div className="pref-metric-sub">{wasteSummary.wasteLineCount} premature unbox incidents audited</div>
         </div>
       </div>
 
@@ -354,22 +408,24 @@ export default function SurgeonPreferenceCards({
         </div>
       )}
 
-      {/* Main Tab Navigation */}
+      {/* 4. WORKSPACE NAVIGATION TABS */}
       <div className="pref-tabs-nav">
-        <button
-          className={`pref-tab-btn ${activeSubTab === 'directory' ? 'active' : ''}`}
-          onClick={() => setActiveSubTab('directory')}
-        >
-          <ClipboardList size={16} />
-          Master Card Directory
-        </button>
-
         <button
           className={`pref-tab-btn ${activeSubTab === 'bom_editor' ? 'active' : ''}`}
           onClick={() => setActiveSubTab('bom_editor')}
         >
           <FileText size={16} />
           Interactive BOM & Staging Editor
+          <span className="pref-tab-badge">{selectedRevision?.items?.length || 0}</span>
+        </button>
+
+        <button
+          className={`pref-tab-btn ${activeSubTab === 'directory' ? 'active' : ''}`}
+          onClick={() => setActiveSubTab('directory')}
+        >
+          <ClipboardList size={16} />
+          Master Card Directory
+          <span className="pref-tab-badge">{cards.length}</span>
         </button>
 
         <button
@@ -378,6 +434,7 @@ export default function SurgeonPreferenceCards({
         >
           <CheckCircle2 size={16} />
           Pre-Op Case Readiness Board
+          <span className="pref-tab-badge">{readinessCases.length}</span>
         </button>
 
         <button
@@ -386,12 +443,323 @@ export default function SurgeonPreferenceCards({
         >
           <RotateCcw size={16} />
           Post-Op Consumption & Waste
+          <span className="pref-tab-badge">{reconciliationEntries.length}</span>
         </button>
       </div>
 
-      {/* SUB-TAB 1: MASTER CARD DIRECTORY */}
+      {/* ==============================================================================
+          SUB-TAB 2: REDESIGNED FULL-WIDTH INTERACTIVE BOM & STAGING EDITOR
+          ============================================================================== */}
+      {activeSubTab === 'bom_editor' && selectedCard && (
+        <div className="bom-workspace-container">
+          {/* Card Hero Header Across Full Width */}
+          <div className="bom-card-hero">
+            <div className="bom-hero-top">
+              <div className="bom-hero-title-area">
+                <div className="bom-hero-badges">
+                  <span className="pref-code-badge">{selectedCard.cardCode}</span>
+                  {selectedCard.isHouseCard && (
+                    <span className="pref-badge-house">FACILITY HOUSE MASTER</span>
+                  )}
+                  <span className="cpt-pill">CPT {selectedCard.primaryCpt}</span>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                    {selectedCard.specialty}
+                  </span>
+                </div>
+
+                <h3 className="bom-hero-title">
+                  {selectedCard.cardName}
+                </h3>
+                <p className="bom-hero-desc">
+                  {selectedCard.description}
+                </p>
+              </div>
+
+              {/* Revision Switcher & Card Actions */}
+              <div className="bom-hero-actions">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Switch Card:</span>
+                  <select
+                    className="pref-select-filter"
+                    value={selectedCard.id}
+                    onChange={(e) => {
+                      const c = cards.find(item => item.id === e.target.value);
+                      if (c) handleSelectCard(c);
+                    }}
+                  >
+                    {cards.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.cardCode} — {c.cardName.substring(0, 45)}...
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {canManage && (
+                  <button
+                    className="btn-primary-pref"
+                    onClick={() => setIsAddItemModalOpen(true)}
+                  >
+                    <Plus size={16} /> Add Item to BOM
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Metadata Stats Strip */}
+            <div className="bom-hero-stats-row">
+              <div className="bom-pills-cluster">
+                <div className="bom-pill-item">
+                  <span>Attending Surgeon:</span>
+                  <strong>{selectedCard.surgeonName}</strong>
+                </div>
+                <div className="bom-pill-item">
+                  <span>Est. Duration:</span>
+                  <strong>{selectedCard.estimatedDurationMinutes}m (+{selectedCard.turnoverTimeMinutes}m turnover)</strong>
+                </div>
+                <div className="bom-pill-item">
+                  <span>Laterality:</span>
+                  <strong>{selectedCard.lateralityApplicable ? 'Yes (Side Specific)' : 'Standard'}</strong>
+                </div>
+                <div className="bom-pill-item">
+                  <span>Facility:</span>
+                  <strong>{selectedCard.facilityName}</strong>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                {selectedRevision && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem' }}>
+                    <span style={{ color: '#94a3b8' }}>Revision #{selectedRevision.revisionNumber}:</span>
+                    <span style={{
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '0.25rem',
+                      backgroundColor: selectedRevision.status === 'active' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                      color: selectedRevision.status === 'active' ? '#34d399' : '#fbbf24',
+                      border: `1px solid ${selectedRevision.status === 'active' ? '#10b981' : '#f59e0b'}`
+                    }}>
+                      {selectedRevision.status}
+                    </span>
+                  </div>
+                )}
+
+                {selectedRevision?.status === 'draft' && (
+                  <button
+                    className="btn-secondary-pref"
+                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}
+                    onClick={() => handleSubmitApproval(selectedRevision.id)}
+                  >
+                    Submit for Approval
+                  </button>
+                )}
+
+                {selectedRevision?.status === 'pending_approval' && canApprove && (
+                  <button
+                    className="btn-primary-pref"
+                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', backgroundColor: '#059669', borderColor: '#10b981' }}
+                    onClick={() => handleApproveRevision(selectedRevision.id)}
+                  >
+                    <ShieldCheck size={14} /> Approve & Activate
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Full Width Bill of Materials Table */}
+          <div className="bom-table-container">
+            <div className="bom-table-top-bar">
+              <div className="bom-table-title">
+                <FileText size={18} color="#38bdf8" />
+                Procedural Bill of Materials (BOM)
+                <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 400 }}>
+                  ({filteredBomItems.length} of {selectedRevision?.items?.length || 0} staged items)
+                </span>
+              </div>
+
+              {/* Category Filter Pills */}
+              <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                {['ALL', ...ITEM_CATEGORIES].map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedBomCategory(cat)}
+                    style={{
+                      background: selectedBomCategory === cat ? '#0284c7' : '#1e293b',
+                      color: selectedBomCategory === cat ? '#ffffff' : '#94a3b8',
+                      border: `1px solid ${selectedBomCategory === cat ? '#38bdf8' : '#334155'}`,
+                      padding: '0.25rem 0.55rem',
+                      borderRadius: '0.35rem',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {cat.replace(/_/g, ' ')}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="bom-table-scroll">
+              <table className="pref-bom-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '40px' }}>#</th>
+                    <th style={{ minWidth: '280px' }}>Item & Clinical Specification</th>
+                    <th style={{ minWidth: '180px' }}>Manufacturer / Catalog</th>
+                    <th style={{ minWidth: '160px' }}>Staging Protocol (Click to Toggle)</th>
+                    <th style={{ minWidth: '80px' }}>Planned</th>
+                    <th style={{ minWidth: '240px' }}>Pre-Approved Clinical Substitutions</th>
+                    <th style={{ minWidth: '110px', textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredBomItems.map((item, idx) => (
+                    <tr key={item.id}>
+                      <td style={{ color: '#64748b', fontWeight: 600 }}>{idx + 1}</td>
+                      <td>
+                        <div className="bom-item-name">{item.customItemName}</div>
+                        <div className="bom-item-submeta">
+                          <span className={`cat-badge ${item.itemCategory}`}>
+                            {item.itemCategory.replace(/_/g, ' ')}
+                          </span>
+                          {item.lateralityModifier !== 'STANDARD' && (
+                            <span className="laterality-tag">
+                              [{item.lateralityModifier}]
+                            </span>
+                          )}
+                          {item.notes && (
+                            <span className="item-clinical-notes">
+                              {item.notes}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 600, color: '#f8fafc' }}>{item.manufacturer || '—'}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontFamily: 'monospace' }}>
+                          Ref: {item.catalogNumber || '—'}
+                        </div>
+                      </td>
+                      <td>
+                        <div
+                          className="staging-pill"
+                          onClick={() => handleToggleStaging(item)}
+                          style={{ cursor: 'pointer' }}
+                          title="Click to toggle OPEN vs HOLD staging protocol"
+                        >
+                          {item.stagingBehavior === 'OPEN' ? (
+                            <span className="badge-open">
+                              <CheckCircle2 size={13} /> OPEN (TABLE PREP)
+                            </span>
+                          ) : (
+                            <span className="badge-hold">
+                              <Lock size={13} /> HOLD (OR CORE)
+                            </span>
+                          )}
+                          <span className="staging-subtext">
+                            {item.stagingBehavior === 'OPEN' ? 'Open onto sterile table' : 'Staged in core cart; unopened'}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 700, fontSize: '1rem', color: '#f8fafc' }}>
+                          {item.plannedQuantity}
+                          <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 500, marginLeft: '0.25rem' }}>
+                            {item.unitOfMeasure}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        {item.substitutions && item.substitutions.length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                            {item.substitutions.map(sub => (
+                              <div key={sub.id} className="substitution-cardlet">
+                                <span className="sub-tier-label">
+                                  {sub.substitutionTier.replace(/_/g, ' ')}
+                                </span>
+                                <span className="sub-item-name">
+                                  {sub.substituteItemName}
+                                </span>
+                                <span className="sub-part-num">
+                                  Catalog: {sub.substituteCatalogNumber || 'N/A'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setSelectedItemForSub(item);
+                              setIsSubModalOpen(true);
+                            }}
+                            style={{
+                              background: 'transparent',
+                              border: '1px dashed #334155',
+                              color: '#94a3b8',
+                              padding: '0.35rem 0.65rem',
+                              borderRadius: '0.35rem',
+                              fontSize: '0.75rem',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem'
+                            }}
+                          >
+                            <Plus size={13} /> Pre-approve Alternative
+                          </button>
+                        )}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
+                          <button
+                            className="btn-secondary-pref"
+                            style={{ padding: '0.3rem 0.55rem', fontSize: '0.75rem' }}
+                            title="Add Alternative Substitution"
+                            onClick={() => {
+                              setSelectedItemForSub(item);
+                              setIsSubModalOpen(true);
+                            }}
+                          >
+                            + Sub
+                          </button>
+                          {canManage && (
+                            <button
+                              className="btn-secondary-pref"
+                              style={{ padding: '0.3rem 0.55rem', color: '#fda4af', borderColor: '#4c0519' }}
+                              title="Delete Item"
+                              onClick={() => handleRemoveItem(item.id, item.customItemName)}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {filteredBomItems.length === 0 && (
+                    <tr>
+                      <td colSpan="7" style={{ textAlign: 'center', padding: '2.5rem', color: '#64748b' }}>
+                        No procedural items staged in this category. Click <strong>"Add Item to BOM"</strong> above to stage equipment or implants.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==============================================================================
+          SUB-TAB 1: MASTER CARD DIRECTORY (PREMIUM CARDS GRID)
+          ============================================================================== */}
       {activeSubTab === 'directory' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Filters Bar */}
           <div className="pref-filter-bar">
             <div className="pref-search-box">
@@ -433,6 +801,9 @@ export default function SurgeonPreferenceCards({
             {cards.map(card => {
               const activeRev = card.revisions?.find(r => r.status === 'active') || card.revisions?.[0];
               const isSelected = selectedCard?.id === card.id;
+              const totalItems = (activeRev?.openItemCount || 0) + (activeRev?.holdItemCount || 0) || 1;
+              const openPct = Math.round(((activeRev?.openItemCount || 0) / totalItems) * 100);
+              const holdPct = 100 - openPct;
 
               return (
                 <div
@@ -443,16 +814,32 @@ export default function SurgeonPreferenceCards({
                   <div>
                     <div className="pref-card-top">
                       <span className="pref-code-badge">{card.cardCode}</span>
-                      {card.isHouseCard && (
+                      {card.isHouseCard ? (
                         <span className="pref-badge-house">HOUSE MASTER</span>
+                      ) : (
+                        <span style={{ fontSize: '0.7rem', color: '#38bdf8', fontWeight: 600 }}>
+                          Surgeon Customized
+                        </span>
                       )}
                     </div>
 
                     <div className="pref-card-name">{card.cardName}</div>
                     <div className="pref-cpt-sub">
-                      <span>CPT {card.primaryCpt}</span>
+                      <span className="cpt-pill">CPT {card.primaryCpt}</span>
                       <span>•</span>
                       <span>{card.specialty}</span>
+                    </div>
+                  </div>
+
+                  {/* Staging Split Visual Bar */}
+                  <div className="pref-split-bar-container">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#94a3b8' }}>
+                      <span>Staging Split:</span>
+                      <span><strong>{activeRev?.openItemCount || 0} OPEN</strong> / <strong>{activeRev?.holdItemCount || 0} HOLD</strong></span>
+                    </div>
+                    <div className="pref-split-bar">
+                      <div className="pref-split-bar-open" style={{ width: `${openPct}%` }} title={`${openPct}% OPEN`} />
+                      <div className="pref-split-bar-hold" style={{ width: `${holdPct}%` }} title={`${holdPct}% HOLD`} />
                     </div>
                   </div>
 
@@ -463,32 +850,32 @@ export default function SurgeonPreferenceCards({
                     </div>
                     <div className="pref-meta-item">
                       <span>Est. Duration</span>
-                      <span>{card.estimatedDurationMinutes}m + {card.turnoverTimeMinutes}m</span>
+                      <span>{card.estimatedDurationMinutes}m (+{card.turnoverTimeMinutes}m)</span>
                     </div>
                     <div className="pref-meta-item">
                       <span>Active Revision</span>
-                      <span>Rev {card.activeRevisionNumber || 1} ({activeRev?.status || 'active'})</span>
+                      <span>Rev #{card.activeRevisionNumber || 1} ({activeRev?.status || 'active'})</span>
                     </div>
                     <div className="pref-meta-item">
-                      <span>Staging Split</span>
-                      <span>{activeRev?.openItemCount || 0} OPEN / {activeRev?.holdItemCount || 0} HOLD</span>
+                      <span>Total Items</span>
+                      <span>{activeRev?.itemCount || activeRev?.items?.length || 0} staged items</span>
                     </div>
                   </div>
 
                   <div className="pref-card-footer">
-                    <span style={{ color: '#64748b' }}>
+                    <span style={{ color: '#64748b', fontSize: '0.75rem' }}>
                       {card.facilityName}
                     </span>
                     <button
-                      className="btn-secondary-pref"
-                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                      className="btn-primary-pref"
+                      style={{ padding: '0.35rem 0.85rem', fontSize: '0.75rem' }}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleSelectCard(card);
                         setActiveSubTab('bom_editor');
                       }}
                     >
-                      View BOM <ChevronRight size={14} />
+                      Open Clinical BOM <ChevronRight size={14} />
                     </button>
                   </div>
                 </div>
@@ -498,229 +885,18 @@ export default function SurgeonPreferenceCards({
         </div>
       )}
 
-      {/* SUB-TAB 2: INTERACTIVE BOM & STAGING EDITOR */}
-      {activeSubTab === 'bom_editor' && selectedCard && (
-        <div className="pref-split-editor">
-          {/* Left Panel: Card Header & Revision Governance */}
-          <div className="pref-sidebar-panel">
-            <div>
-              <div className="pref-panel-section-title">
-                <span>Card Identity</span>
-                <span className="pref-code-badge">{selectedCard.cardCode}</span>
-              </div>
-              <h3 style={{ margin: '0.25rem 0', color: '#f8fafc', fontSize: '1.125rem' }}>
-                {selectedCard.cardName}
-              </h3>
-              <p style={{ margin: '0.25rem 0 0 0', color: '#94a3b8', fontSize: '0.8rem' }}>
-                {selectedCard.description}
-              </p>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #1f2937', paddingBottom: '0.35rem' }}>
-                <span style={{ color: '#64748b' }}>Attending Surgeon:</span>
-                <span style={{ fontWeight: 600 }}>{selectedCard.surgeonName}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #1f2937', paddingBottom: '0.35rem' }}>
-                <span style={{ color: '#64748b' }}>Primary CPT:</span>
-                <span style={{ fontWeight: 600, color: '#38bdf8' }}>{selectedCard.primaryCpt}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #1f2937', paddingBottom: '0.35rem' }}>
-                <span style={{ color: '#64748b' }}>Specialty:</span>
-                <span>{selectedCard.specialty}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #1f2937', paddingBottom: '0.35rem' }}>
-                <span style={{ color: '#64748b' }}>Laterality Support:</span>
-                <span>{selectedCard.lateralityApplicable ? 'Yes (Left/Right)' : 'Standard'}</span>
-              </div>
-            </div>
-
-            {/* Revisions History */}
-            <div>
-              <div className="pref-panel-section-title">
-                <span>Revisions History</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {selectedCard.revisions?.map(rev => {
-                  const isCurrent = selectedRevision?.id === rev.id;
-                  return (
-                    <div
-                      key={rev.id}
-                      onClick={() => setSelectedRevision(rev)}
-                      style={{
-                        padding: '0.625rem',
-                        borderRadius: '0.375rem',
-                        backgroundColor: isCurrent ? '#0c2847' : '#0f172a',
-                        border: `1px solid ${isCurrent ? '#0284c7' : '#1e293b'}`,
-                        cursor: 'pointer',
-                        fontSize: '0.75rem'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
-                        <span style={{ color: '#f8fafc' }}>Revision #{rev.revisionNumber}</span>
-                        <span style={{
-                          textTransform: 'uppercase',
-                          color: rev.status === 'active' ? '#4ade80' : rev.status === 'draft' ? '#fcd34d' : '#94a3b8'
-                        }}>
-                          {rev.status}
-                        </span>
-                      </div>
-                      <div style={{ color: '#94a3b8', marginTop: '0.25rem' }}>{rev.changeSummary}</div>
-                      {rev.approvedAt && (
-                        <div style={{ color: '#64748b', fontSize: '0.7rem', marginTop: '0.2rem' }}>
-                          Approved: {rev.approvedAt.split('T')[0]}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Revision Actions */}
-            {selectedRevision && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {selectedRevision.status === 'draft' && (
-                  <button
-                    className="btn-primary-pref"
-                    style={{ width: '100%', justifyContent: 'center' }}
-                    onClick={() => handleSubmitApproval(selectedRevision.id)}
-                  >
-                    Submit for Approval
-                  </button>
-                )}
-                {selectedRevision.status === 'pending_approval' && canApprove && (
-                  <button
-                    className="btn-primary-pref"
-                    style={{ width: '100%', justifyContent: 'center', backgroundColor: '#059669', borderColor: '#10b981' }}
-                    onClick={() => handleApproveRevision(selectedRevision.id)}
-                  >
-                    Approve & Activate Revision
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Right Panel: Procedural Bill of Materials (BOM) */}
-          <div className="pref-main-panel">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-              <div>
-                <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.125rem' }}>
-                  Procedural Bill of Materials
-                </h3>
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                  Viewing Revision #{selectedRevision?.revisionNumber || 1} • {selectedRevision?.items?.length || 0} staged items
-                </span>
-              </div>
-
-              {canManage && (
-                <button
-                  className="btn-primary-pref"
-                  onClick={() => setIsAddItemModalOpen(true)}
-                >
-                  <Plus size={16} /> Add Item to BOM
-                </button>
-              )}
-            </div>
-
-            {/* Items Table */}
-            <div style={{ overflowX: 'auto' }}>
-              <table className="pref-bom-table">
-                <thead>
-                  <tr>
-                    <th>Item Description</th>
-                    <th>Manufacturer / Catalog</th>
-                    <th>Staging Protocol</th>
-                    <th>Qty</th>
-                    <th>Pre-Approved Substitutions</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedRevision?.items?.map(item => (
-                    <tr key={item.id}>
-                      <td>
-                        <div className="item-name-cell">{item.customItemName}</div>
-                        <div className="item-sku-sub">
-                          <span className="item-cat-tag">{item.itemCategory}</span>
-                          {item.lateralityModifier !== 'STANDARD' && (
-                            <span style={{ color: '#38bdf8', fontWeight: 600 }}>[{item.lateralityModifier}] </span>
-                          )}
-                          {item.notes}
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ fontWeight: 500 }}>{item.manufacturer || '—'}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{item.catalogNumber || '—'}</div>
-                      </td>
-                      <td>
-                        {item.stagingBehavior === 'OPEN' ? (
-                          <span className="badge-open">OPEN (TABLE)</span>
-                        ) : (
-                          <span className="badge-hold">HOLD (CORE)</span>
-                        )}
-                      </td>
-                      <td>
-                        <span style={{ fontWeight: 700 }}>{item.plannedQuantity}</span> {item.unitOfMeasure}
-                      </td>
-                      <td>
-                        {item.substitutions && item.substitutions.length > 0 ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                            {item.substitutions.map(sub => (
-                              <div
-                                key={sub.id}
-                                style={{
-                                  fontSize: '0.75rem',
-                                  padding: '0.25rem 0.5rem',
-                                  borderRadius: '0.25rem',
-                                  backgroundColor: '#0c2847',
-                                  border: '1px solid #0284c7',
-                                  color: '#7dd3fc'
-                                }}
-                              >
-                                <strong>{sub.substitutionTier.replace('TIER_', 'T')}:</strong> {sub.substituteItemName}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>None Configured</span>
-                        )}
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <div style={{ display: 'inline-flex', gap: '0.375rem' }}>
-                          <button
-                            className="btn-secondary-pref"
-                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                            title="Configure clinical substitution"
-                            onClick={() => {
-                              setSelectedItemForSub(item);
-                              setIsSubModalOpen(true);
-                            }}
-                          >
-                            + Sub
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* SUB-TAB 3: PRE-OP CASE READINESS BOARD */}
+      {/* ==============================================================================
+          SUB-TAB 3: PRE-OP CASE READINESS BOARD
+          ============================================================================== */}
       {activeSubTab === 'readiness_board' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
             <div>
-              <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.125rem' }}>
-                Pre-Op OR Case Readiness Board
+              <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.15rem', fontWeight: 700 }}>
+                OR Command Center: Pre-Op Case Readiness Board
               </h3>
-              <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                T-24h scheduling freeze snapshots, sterile table verification, and stockout alerts.
+              <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+                T-24h scheduling freeze snapshots, sterile back table staging verification, and automated supply breach alerts.
               </span>
             </div>
           </div>
@@ -732,57 +908,69 @@ export default function SurgeonPreferenceCards({
 
               return (
                 <div key={c.surgeryId} className={`case-readiness-card ${statusClass}`}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
                     <div>
-                      <span className="pref-code-badge">Case #{c.surgeryId}</span>
-                      <h4 style={{ margin: '0.35rem 0 0 0', color: '#f8fafc', fontSize: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span className="pref-code-badge">{c.orRoom} • {c.caseTime}</span>
+                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Case #{c.surgeryId}</span>
+                      </div>
+                      <h4 style={{ margin: '0.45rem 0 0.15rem 0', color: '#f8fafc', fontSize: '1.05rem', fontWeight: 700 }}>
                         {c.patientName}
                       </h4>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                        {c.procedureName} (CPT {c.primaryCpt})
+                      <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                        {c.procedureName} <span className="cpt-pill">CPT {c.primaryCpt}</span>
                       </div>
                     </div>
 
-                    {c.readinessStatus === 'CASE_READY' && <span className="badge-ready">CASE READY</span>}
-                    {c.readinessStatus === 'ITEMS_PULLED' && <span className="badge-pulled">ITEMS PULLED</span>}
-                    {c.readinessStatus === 'SUPPLY_BREACH' && <span className="badge-breach">SUPPLY BREACH</span>}
-                    {c.readinessStatus === 'PENDING_PREP' && <span className="badge-pending">PENDING PREP</span>}
+                    <div>
+                      {c.readinessStatus === 'CASE_READY' && <span className="badge-ready">CASE READY</span>}
+                      {c.readinessStatus === 'ITEMS_PULLED' && <span className="badge-pulled">ITEMS PULLED</span>}
+                      {c.readinessStatus === 'SUPPLY_BREACH' && <span className="badge-breach">SUPPLY BREACH</span>}
+                      {c.readinessStatus === 'PENDING_PREP' && <span className="badge-pending">PENDING PREP</span>}
+                    </div>
                   </div>
 
                   <div className="pref-card-meta">
-                    <div className="pref-meta-item">
-                      <span>OR Room & Time</span>
-                      <span>{c.orRoom} • {c.caseTime}</span>
-                    </div>
                     <div className="pref-meta-item">
                       <span>Attending Surgeon</span>
                       <span>{c.surgeonName}</span>
                     </div>
                     <div className="pref-meta-item">
-                      <span>Preference Card</span>
+                      <span>Laterality</span>
+                      <span>{c.laterality || 'Standard'}</span>
+                    </div>
+                    <div className="pref-meta-item">
+                      <span>Assigned Preference Card</span>
                       <span>{c.cardCode}</span>
                     </div>
                     <div className="pref-meta-item">
                       <span>Staging Requirement</span>
-                      <span>{c.openItemCount} OPEN / {c.holdItemCount} HOLD</span>
+                      <span><strong>{c.openItemCount} OPEN</strong> / <strong>{c.holdItemCount} HOLD</strong></span>
                     </div>
                   </div>
 
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>
-                    Notes: {c.notes}
+                  <div style={{
+                    fontSize: '0.775rem',
+                    color: c.readinessStatus === 'SUPPLY_BREACH' ? '#fda4af' : '#94a3b8',
+                    backgroundColor: c.readinessStatus === 'SUPPLY_BREACH' ? 'rgba(244, 63, 94, 0.1)' : '#090d16',
+                    padding: '0.65rem',
+                    borderRadius: '0.375rem',
+                    border: `1px solid ${c.readinessStatus === 'SUPPLY_BREACH' ? 'rgba(244, 63, 94, 0.3)' : '#1a2538'}`
+                  }}>
+                    <strong>Clinical Note:</strong> {c.notes}
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.5rem', borderTop: '1px solid #1f2937' }}>
-                    <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
-                      {c.verifiedBy ? `Verified: ${c.verifiedBy}` : 'Unverified'}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid #1a2538' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                      {c.verifiedBy ? `Verified: ${c.verifiedBy}` : 'Awaiting scrub tech signoff'}
                     </span>
                     {c.readinessStatus !== 'CASE_READY' && (
                       <button
                         className="btn-primary-pref"
-                        style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}
                         onClick={() => handleFreezeSnapshot(c.surgeryId)}
                       >
-                        <Check size={14} /> Freeze & Ready
+                        <Lock size={13} /> Freeze & Verify Table
                       </button>
                     )}
                   </div>
@@ -793,43 +981,54 @@ export default function SurgeonPreferenceCards({
         </div>
       )}
 
-      {/* SUB-TAB 4: POST-OP RECONCILIATION & WASTE */}
+      {/* ==============================================================================
+          SUB-TAB 4: POST-OP RECONCILIATION & WASTE
+          ============================================================================== */}
       {activeSubTab === 'reconciliation' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div>
-            <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.125rem' }}>
+            <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.15rem', fontWeight: 700 }}>
               Post-Op Planned vs. Actual Usage Reconciliation Ledger
             </h3>
-            <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+            <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
               Line-by-line consumption variance against Phase 23 case devices and Phase 57 actual acquisition costs. {canReconcile && '• Reconciler Role Active'}
             </span>
           </div>
 
-          <div style={{ overflowX: 'auto', backgroundColor: '#111827', borderRadius: '0.5rem', border: '1px solid #1f2937' }}>
+          <div style={{ overflowX: 'auto', backgroundColor: '#0b1120', borderRadius: '0.75rem', border: '1px solid #1e293b', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)' }}>
             <table className="reconciliation-table">
               <thead>
                 <tr>
-                  <th>Surgery / Patient</th>
+                  <th>Surgery & Patient</th>
                   <th>Item Description</th>
+                  <th>Category</th>
                   <th>Planned Staging</th>
                   <th>Planned</th>
                   <th>Opened</th>
                   <th>Implanted</th>
                   <th>Wasted</th>
-                  <th>Disposition</th>
-                  <th style={{ textAlign: 'right' }}>Waste Cost</th>
+                  <th>Clinical Disposition</th>
+                  <th style={{ textAlign: 'right' }}>Waste Cost ($)</th>
                 </tr>
               </thead>
               <tbody>
                 {reconciliationEntries.map(entry => (
                   <tr key={entry.id}>
                     <td>
-                      <div style={{ fontWeight: 600, color: '#f8fafc' }}>Case #{entry.surgeryId}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{entry.surgeonName}</div>
+                      <div style={{ fontWeight: 700, color: '#f8fafc' }}>Case #{entry.surgeryId}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{entry.surgeonName}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{entry.caseDate}</div>
                     </td>
                     <td>
                       <div style={{ fontWeight: 600, color: '#f8fafc' }}>{entry.itemDescription}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{entry.notes}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic', marginTop: '0.2rem' }}>
+                        {entry.notes}
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`cat-badge ${entry.itemCategory}`}>
+                        {entry.itemCategory.replace(/_/g, ' ')}
+                      </span>
                     </td>
                     <td>
                       {entry.plannedStaging === 'OPEN' ? (
@@ -838,11 +1037,14 @@ export default function SurgeonPreferenceCards({
                         <span className="badge-hold">HOLD</span>
                       )}
                     </td>
-                    <td>{entry.plannedQuantity}</td>
-                    <td>{entry.actualQuantityOpened}</td>
-                    <td>{entry.actualQuantityImplanted}</td>
+                    <td style={{ fontWeight: 600 }}>{entry.plannedQuantity}</td>
+                    <td style={{ fontWeight: 600 }}>{entry.actualQuantityOpened}</td>
+                    <td style={{ fontWeight: 600, color: '#34d399' }}>{entry.actualQuantityImplanted}</td>
                     <td>
-                      <span style={{ color: entry.actualQuantityWasted > 0 ? '#fda4af' : 'inherit', fontWeight: entry.actualQuantityWasted > 0 ? 700 : 400 }}>
+                      <span style={{
+                        color: entry.actualQuantityWasted > 0 ? '#fda4af' : 'inherit',
+                        fontWeight: entry.actualQuantityWasted > 0 ? 800 : 400
+                      }}>
                         {entry.actualQuantityWasted}
                       </span>
                     </td>
@@ -851,7 +1053,12 @@ export default function SurgeonPreferenceCards({
                         {entry.dispositionCode.replace(/_/g, ' ')}
                       </span>
                     </td>
-                    <td style={{ textAlign: 'right', fontWeight: 700, color: entry.wasteEstimatedCost > 0 ? '#fda4af' : '#4ade80' }}>
+                    <td style={{
+                      textAlign: 'right',
+                      fontWeight: 700,
+                      fontSize: '0.95rem',
+                      color: entry.wasteEstimatedCost > 0 ? '#fda4af' : '#34d399'
+                    }}>
                       ${Number(entry.wasteEstimatedCost || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </td>
                   </tr>
@@ -862,7 +1069,9 @@ export default function SurgeonPreferenceCards({
         </div>
       )}
 
-      {/* MODAL 1: NEW PREFERENCE CARD DRAFT */}
+      {/* ==============================================================================
+          MODAL 1: NEW PREFERENCE CARD DRAFT
+          ============================================================================== */}
       {isNewCardModalOpen && (
         <div className="pref-modal-overlay">
           <div className="pref-modal-content">
@@ -985,7 +1194,9 @@ export default function SurgeonPreferenceCards({
         </div>
       )}
 
-      {/* MODAL 2: ADD ITEM TO BOM */}
+      {/* ==============================================================================
+          MODAL 2: ADD ITEM TO BOM
+          ============================================================================== */}
       {isAddItemModalOpen && (
         <div className="pref-modal-overlay">
           <div className="pref-modal-content">
@@ -1074,6 +1285,19 @@ export default function SurgeonPreferenceCards({
               </div>
 
               <div className="form-group">
+                <label>Laterality Modifier</label>
+                <select
+                  value={newItemForm.lateralityModifier}
+                  onChange={(e) => setNewItemForm(prev => ({ ...prev, lateralityModifier: e.target.value }))}
+                >
+                  <option value="STANDARD">Standard (Any Laterality)</option>
+                  <option value="LEFT_ONLY">Left Side Only</option>
+                  <option value="RIGHT_ONLY">Right Side Only</option>
+                  <option value="BILATERAL_DOUBLE">Bilateral Double Setup</option>
+                </select>
+              </div>
+
+              <div className="form-group">
                 <label>Clinical Notes / Sizing Criteria</label>
                 <input
                   type="text"
@@ -1103,7 +1327,9 @@ export default function SurgeonPreferenceCards({
         </div>
       )}
 
-      {/* MODAL 3: PRE-APPROVED SUBSTITUTION */}
+      {/* ==============================================================================
+          MODAL 3: PRE-APPROVED SUBSTITUTION
+          ============================================================================== */}
       {isSubModalOpen && selectedItemForSub && (
         <div className="pref-modal-overlay">
           <div className="pref-modal-content">
@@ -1115,7 +1341,7 @@ export default function SurgeonPreferenceCards({
             </div>
 
             <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-              Base Item: <strong style={{ color: '#f8fafc' }}>{selectedItemForSub.customItemName}</strong>
+              Base Staged Item: <strong style={{ color: '#f8fafc' }}>{selectedItemForSub.customItemName}</strong>
             </div>
 
             <form onSubmit={handleAddSubstitution} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
