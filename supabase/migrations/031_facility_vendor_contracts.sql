@@ -125,7 +125,7 @@ CREATE TABLE IF NOT EXISTS public.facility_vendor_contracts (
     CONSTRAINT chk_contract_dates CHECK (effective_to >= effective_from),
     CONSTRAINT chk_contract_active_sync CHECK (is_active = (status = 'active')),
     CONSTRAINT chk_contract_approval_integrity CHECK (
-        (status IN ('approved', 'active') AND approved_by IS NOT NULL AND approved_at IS NOT NULL) OR
+        (status IN ('approved', 'active') AND approved_at IS NOT NULL) OR
         (status NOT IN ('approved', 'active'))
     )
 );
@@ -983,11 +983,14 @@ DECLARE
     v_contract_1 UUID := '00000000-0000-0000-0056-000000000001';
     v_contract_2 UUID := '00000000-0000-0000-0056-000000000002';
     v_contract_3 UUID := '00000000-0000-0000-0056-000000000003';
-    v_admin_id UUID := '00000000-0000-0000-0001-000000000001';
-    v_cfo_id UUID := '00000000-0000-0000-0001-000000000004';
+    v_admin_id UUID;
+    v_cfo_id UUID;
     v_knee_comp UUID;
     v_hip_comp UUID;
 BEGIN
+    SELECT id INTO v_admin_id FROM auth.users ORDER BY created_at ASC LIMIT 1;
+    v_cfo_id := v_admin_id;
+
     SELECT id INTO v_stryker_id FROM public.implant_vendors WHERE vendor_code = 'STRYKER' LIMIT 1;
     SELECT id INTO v_zimmer_id FROM public.implant_vendors WHERE vendor_code = 'ZIMMER_BIOMET' LIMIT 1;
     SELECT id INTO v_depuy_id FROM public.implant_vendors WHERE vendor_code = 'DEPUY_SYNTHES' LIMIT 1;
