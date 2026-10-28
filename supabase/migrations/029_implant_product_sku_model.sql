@@ -593,7 +593,7 @@ INSERT INTO public.implant_product_families (
 SELECT 
     '00000000-0000-0000-0054-000000000001'::UUID, NULL, v.id, 'TRIATHLON_KNEE', 'Triathlon Total Knee System', 'Orthopedics', 'Single-radius total knee arthroplasty platform', TRUE
 FROM public.implant_vendors v WHERE v.vendor_code = 'STRYKER' AND v.facility_id IS NULL
-ON CONFLICT (vendor_id, facility_id, (UPPER(TRIM(family_code)))) DO UPDATE SET name = EXCLUDED.name;
+ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
 
 INSERT INTO public.implant_product_families (
     id, facility_id, vendor_id, family_code, name, specialty, description, is_active
@@ -601,7 +601,7 @@ INSERT INTO public.implant_product_families (
 SELECT 
     '00000000-0000-0000-0054-000000000002'::UUID, NULL, v.id, 'PERSONA_KNEE', 'Persona The Personalized Knee', 'Orthopedics', 'Anatomically contoured total knee reconstruction system', TRUE
 FROM public.implant_vendors v WHERE v.vendor_code = 'ZIMMER_BIOMET' AND v.facility_id IS NULL
-ON CONFLICT (vendor_id, facility_id, (UPPER(TRIM(family_code)))) DO UPDATE SET name = EXCLUDED.name;
+ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
 
 INSERT INTO public.implant_product_families (
     id, facility_id, vendor_id, family_code, name, specialty, description, is_active
@@ -609,7 +609,7 @@ INSERT INTO public.implant_product_families (
 SELECT 
     '00000000-0000-0000-0054-000000000003'::UUID, NULL, v.id, 'POLARIS_SPINE', 'Polaris 5.5 Spinal System', 'Spine', 'Universal pedicle screw fixation for thoracolumbar spine', TRUE
 FROM public.implant_vendors v WHERE v.vendor_code = 'MEDTRONIC' AND v.facility_id IS NULL
-ON CONFLICT (vendor_id, facility_id, (UPPER(TRIM(family_code)))) DO UPDATE SET name = EXCLUDED.name;
+ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
 
 INSERT INTO public.implant_product_families (
     id, facility_id, vendor_id, family_code, name, specialty, description, is_active
@@ -617,7 +617,7 @@ INSERT INTO public.implant_product_families (
 SELECT 
     '00000000-0000-0000-0054-000000000004'::UUID, NULL, v.id, 'ACRYSOF_IQ', 'AcrySof IQ IOL Platform', 'Ophthalmology', 'Aspheric hydrophobic acrylic intraocular lens platform', TRUE
 FROM public.implant_vendors v WHERE v.vendor_code = 'ALCON' AND v.facility_id IS NULL
-ON CONFLICT (vendor_id, facility_id, (UPPER(TRIM(family_code)))) DO UPDATE SET name = EXCLUDED.name;
+ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
 
 -- 8.2 Seed Granular Product SKUs
 -- Item 1: Stryker Triathlon Femoral #4 Left
@@ -637,7 +637,7 @@ SELECT
 FROM public.implant_vendors v, public.implant_components c
 WHERE v.vendor_code = 'STRYKER' AND v.facility_id IS NULL
   AND c.code = 'KNEE_FEMORAL' AND c.facility_id IS NULL
-ON CONFLICT (vendor_id, facility_id, (UPPER(TRIM(catalog_number)))) DO UPDATE SET
+ON CONFLICT (id) DO UPDATE SET
     product_name = EXCLUDED.product_name, list_price = EXCLUDED.list_price;
 
 -- Item 2: Stryker Triathlon Femoral #4 Right
@@ -657,7 +657,7 @@ SELECT
 FROM public.implant_vendors v, public.implant_components c
 WHERE v.vendor_code = 'STRYKER' AND v.facility_id IS NULL
   AND c.code = 'KNEE_FEMORAL' AND c.facility_id IS NULL
-ON CONFLICT (vendor_id, facility_id, (UPPER(TRIM(catalog_number)))) DO UPDATE SET
+ON CONFLICT (id) DO UPDATE SET
     product_name = EXCLUDED.product_name, list_price = EXCLUDED.list_price;
 
 -- Item 3: Zimmer Biomet Persona Tibial Tray Size E
@@ -677,7 +677,7 @@ SELECT
 FROM public.implant_vendors v, public.implant_components c
 WHERE v.vendor_code = 'ZIMMER_BIOMET' AND v.facility_id IS NULL
   AND c.code = 'KNEE_TIBIAL_TRAY' AND c.facility_id IS NULL
-ON CONFLICT (vendor_id, facility_id, (UPPER(TRIM(catalog_number)))) DO UPDATE SET
+ON CONFLICT (id) DO UPDATE SET
     product_name = EXCLUDED.product_name, list_price = EXCLUDED.list_price;
 
 -- Item 4: Medtronic Polaris 5.5 Pedicle Screw 6.5x45mm
@@ -697,7 +697,7 @@ SELECT
 FROM public.implant_vendors v, public.implant_components c
 WHERE v.vendor_code = 'MEDTRONIC' AND v.facility_id IS NULL
   AND c.code = 'SPINE_ACDF_SCREW' AND c.facility_id IS NULL
-ON CONFLICT (vendor_id, facility_id, (UPPER(TRIM(catalog_number)))) DO UPDATE SET
+ON CONFLICT (id) DO UPDATE SET
     product_name = EXCLUDED.product_name, list_price = EXCLUDED.list_price;
 
 -- Item 5: Alcon AcrySof IQ Monofocal IOL +21.0D
@@ -717,7 +717,7 @@ SELECT
 FROM public.implant_vendors v, public.implant_components c
 WHERE v.vendor_code = 'ALCON' AND v.facility_id IS NULL
   AND c.code = 'IOL_MONOFOCAL' AND c.facility_id IS NULL
-ON CONFLICT (vendor_id, facility_id, (UPPER(TRIM(catalog_number)))) DO UPDATE SET
+ON CONFLICT (id) DO UPDATE SET
     product_name = EXCLUDED.product_name, list_price = EXCLUDED.list_price;
 
 -- 8.3 Seed Distributor Cross-Reference Mappings
@@ -729,7 +729,7 @@ SELECT
     NULL, s.id, d.id, 'CH-9411-401', 'EA', 1, TRUE, 'active'
 FROM public.implant_product_skus s, public.implant_vendors d
 WHERE s.catalog_number = '5520-F-401' AND d.vendor_code = 'CARDINAL_HEALTH' AND d.facility_id IS NULL
-ON CONFLICT (distributor_id, facility_id, (UPPER(TRIM(distributor_item_number)))) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 -- Map Stryker 5520-F-401 to Medline item #MDL-88310
 INSERT INTO public.implant_sku_distributor_mappings (
@@ -739,7 +739,7 @@ SELECT
     NULL, s.id, d.id, 'MDL-88310', 'EA', 1, FALSE, 'active'
 FROM public.implant_product_skus s, public.implant_vendors d
 WHERE s.catalog_number = '5520-F-401' AND d.vendor_code = 'MEDLINE' AND d.facility_id IS NULL
-ON CONFLICT (distributor_id, facility_id, (UPPER(TRIM(distributor_item_number)))) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 -- Map Zimmer Biomet 42-5200-005-01 to Owens & Minor item #OM-77201
 INSERT INTO public.implant_sku_distributor_mappings (
@@ -749,6 +749,6 @@ SELECT
     NULL, s.id, d.id, 'OM-77201', 'EA', 1, TRUE, 'active'
 FROM public.implant_product_skus s, public.implant_vendors d
 WHERE s.catalog_number = '42-5200-005-01' AND d.vendor_code = 'OWENS_MINOR' AND d.facility_id IS NULL
-ON CONFLICT (distributor_id, facility_id, (UPPER(TRIM(distributor_item_number)))) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 COMMIT;
