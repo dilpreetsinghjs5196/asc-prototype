@@ -35,6 +35,7 @@ import VendorComponentMappingMatrix from './components/VendorComponentMappingMat
 import FacilityVendorContracts from './components/FacilityVendorContracts';
 import FacilityImplantPricing from './components/FacilityImplantPricing';
 import SurgeonPreferenceCards from './components/SurgeonPreferenceCards';
+import CaseImplantUsage from './components/CaseImplantUsage';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
 import { useInactivityTimeout } from './hooks/useInactivityTimeout';
@@ -85,7 +86,8 @@ import {
   Layers,
   FileText,
   GitFork,
-  ClipboardList
+  ClipboardList,
+  Cpu
 } from 'lucide-react';
 
 // ==========================================
@@ -2488,6 +2490,13 @@ export default function App() {
             Preference Cards
           </div>
           <div
+            className={`menu-item ${activeTab === 'case_implant_usage' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('case_implant_usage'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Cpu size={16} /></div>
+            Case Implant Usage
+          </div>
+          <div
             className={`menu-item ${activeTab === 'claim_scrubber' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('claim_scrubber'); setSelectedSurgeon(null); }}
           >
@@ -2740,6 +2749,7 @@ export default function App() {
                   {activeTab === 'facility_vendor_contracts' && 'Facility-specific vendor contracts, commercial terms, effective dates, and sourcing authorization'}
                   {activeTab === 'facility_implant_pricing' && 'Contract fee schedules, supplier invoice 3-way reconciliation, and verified acquisition costs'}
                   {activeTab === 'surgeon_preference_cards' && 'Surgeon procedural preference cards, OPEN vs HOLD staging governance, and pre-op readiness'}
+                  {activeTab === 'case_implant_usage' && 'Authoritative actual implant consumption, 4-tier quantity balancing, UDI tracing, and waste attribution'}
                 </>
               )}
             </span>
@@ -4615,6 +4625,20 @@ export default function App() {
               ========================================== */}
               {activeTab === 'surgeon_preference_cards' && (
                 <SurgeonPreferenceCards
+                  activeFacility={activeFacility}
+                  userPermissions={
+                    (['super_admin', 'org_admin', 'facility_admin', 'cfo', 'clinical_manager', 'admin'].includes(userRole) || !authUser)
+                      ? ['admin', 'implants.manage_contracts', 'implants.view_costs', 'circulating_nurse', 'materials_manager']
+                      : ['circulating_nurse']
+                  }
+                />
+              )}
+
+              {/* ==========================================
+              TAB: CASE IMPLANT USAGE (PHASE 59)
+              ========================================== */}
+              {activeTab === 'case_implant_usage' && (
+                <CaseImplantUsage
                   activeFacility={activeFacility}
                   userPermissions={
                     (['super_admin', 'org_admin', 'facility_admin', 'cfo', 'clinical_manager', 'admin'].includes(userRole) || !authUser)

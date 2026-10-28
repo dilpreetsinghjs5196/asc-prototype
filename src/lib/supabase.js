@@ -3284,6 +3284,12 @@ export const db = {
     const activeFac = deviceData.facility_id || this.getActiveFacility()?.id;
     const hcpcs = deviceData.hcpcs_c_code || deviceData.hcpcs_code || null;
     const charge = deviceData.charge_amount !== undefined ? deviceData.charge_amount : (deviceData.unit_charge !== undefined ? deviceData.unit_charge : 0.00);
+    const opened = deviceData.quantity_opened !== undefined ? Number(deviceData.quantity_opened) : (Number(deviceData.quantity) || 1);
+    const implanted = deviceData.quantity_implanted !== undefined ? Number(deviceData.quantity_implanted) : opened;
+    const wasted = Number(deviceData.quantity_wasted || 0);
+    const returned = Number(deviceData.quantity_returned || 0);
+    const unitCost = Number(deviceData.verified_acquisition_cost || deviceData.unit_cost || 0.00);
+
     const { data, error } = await supabase
       .from('case_devices')
       .insert({
@@ -3291,7 +3297,14 @@ export const db = {
         hcpcs_code: hcpcs,
         hcpcs_c_code: hcpcs,
         charge_amount: charge,
-        facility_id: activeFac
+        facility_id: activeFac,
+        quantity: implanted > 0 ? implanted : opened,
+        quantity_opened: opened,
+        quantity_implanted: implanted,
+        quantity_wasted: wasted,
+        quantity_returned: returned,
+        unit_cost: unitCost,
+        verified_acquisition_cost: unitCost
       })
       .select();
     if (error) throw error;
@@ -3304,6 +3317,7 @@ export const db = {
     if (updates.hcpcs_c_code && !updates.hcpcs_code) patch.hcpcs_code = updates.hcpcs_c_code;
     if (updates.hcpcs_code && !updates.hcpcs_c_code) patch.hcpcs_c_code = updates.hcpcs_code;
     if (updates.unit_charge !== undefined && updates.charge_amount === undefined) patch.charge_amount = updates.unit_charge;
+    if (updates.quantity_implanted !== undefined) patch.quantity = updates.quantity_implanted;
     const { data, error } = await supabase
       .from('case_devices')
       .update(patch)
@@ -3336,8 +3350,16 @@ export const db = {
 
     // Client-side deterministic fallback
     const devices = await this.getCaseDevices(surgeryId);
-    const totalCost = devices.reduce((sum, d) => sum + (parseFloat(d.unit_cost || 0) * (parseInt(d.quantity, 10) || 1)), 0);
-    const totalCharge = devices.reduce((sum, d) => sum + (parseFloat(d.charge_amount || d.unit_charge || 0) * (parseInt(d.quantity, 10) || 1)), 0);
+    const totalCost = devices.reduce((sum, d) => {
+      const implanted = d.quantity_implanted !== undefined ? Number(d.quantity_implanted) : (parseInt(d.quantity, 10) || 1);
+      const cost = parseFloat(d.verified_acquisition_cost || d.unit_cost || 0);
+      return sum + (cost * implanted);
+    }, 0);
+    const totalCharge = devices.reduce((sum, d) => {
+      const implanted = d.quantity_implanted !== undefined ? Number(d.quantity_implanted) : (parseInt(d.quantity, 10) || 1);
+      const charge = parseFloat(d.charge_amount || d.unit_charge || 0);
+      return sum + (charge * implanted);
+    }, 0);
 
     await supabase
       .from('surgeries')

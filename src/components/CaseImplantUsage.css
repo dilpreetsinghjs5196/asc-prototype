@@ -1,0 +1,841 @@
+/**
+ * ==============================================================================
+ * STYLESHEET: CaseImplantUsage.css
+ * Phase 59: Ambulatory Surgery Center Case Implant Usage & Barcode Console
+ * Maestro Clinical Dark System / Modern High-Density Surgical Intelligence.
+ * Strict Purple Ban: Zero forbidden hue tokens in code or comments.
+ * Colors: Slate (#090d16, #0b1120, #0f172a, #1e293b), Sky/Cyan (#0284c7, #38bdf8),
+ *         Emerald (#059669, #10b981), Amber (#d97706, #f59e0b), Rose (#e11d48, #f43f5e).
+ * ==============================================================================
+ */
+
+/* ==============================================================================
+   1. MAIN WORKSPACE CONTAINER
+   ============================================================================== */
+.case-implant-usage-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  background-color: #090d16;
+  color: #f1f5f9;
+  min-height: calc(100vh - 4rem);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* ==============================================================================
+   2. WORKSPACE HEADER & CONTROLS
+   ============================================================================== */
+.ciu-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(11, 17, 32, 0.95) 100%);
+  border: 1px solid #1e293b;
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.ciu-title-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ciu-case-icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 0.65rem;
+  background: rgba(2, 132, 199, 0.15);
+  border: 1px solid rgba(2, 132, 199, 0.4);
+  color: #38bdf8;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(2, 132, 199, 0.2);
+}
+
+.ciu-case-meta h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  letter-spacing: -0.02em;
+}
+
+.ciu-case-meta p {
+  margin: 0.35rem 0 0 0;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.ciu-status-pill {
+  font-size: 0.725rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 0.5rem;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.ciu-status-pill.active {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+}
+
+.ciu-status-pill.locked {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+}
+
+.ciu-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.ciu-select-case {
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: #f8fafc;
+  padding: 0.55rem 0.95rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.ciu-select-case:focus {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.3);
+}
+
+.ciu-btn-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease-in-out;
+  white-space: nowrap;
+}
+
+.ciu-btn-lock.locked {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #34d399;
+}
+
+.ciu-btn-lock.locked:hover {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: #34d399;
+}
+
+.ciu-btn-lock.unlocked {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #fbbf24;
+}
+
+.ciu-btn-lock.unlocked:hover {
+  background: rgba(245, 158, 11, 0.25);
+  border-color: #fbbf24;
+}
+
+/* ==============================================================================
+   3. CLINICAL ENCOUNTER CONTEXT RIBBON
+   ============================================================================== */
+.ciu-patient-ribbon {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  background: #0d1527;
+  border: 1px solid #1e293b;
+  border-radius: 0.65rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.825rem;
+  color: #94a3b8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.ciu-ribbon-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.ciu-ribbon-item strong {
+  color: #f1f5f9;
+}
+
+.ciu-cpt-chip {
+  background: rgba(2, 132, 199, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(2, 132, 199, 0.4);
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.375rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-weight: 700;
+  font-size: 0.775rem;
+}
+
+.ciu-ribbon-divider {
+  width: 1px;
+  height: 18px;
+  background-color: #1e293b;
+}
+
+/* ==============================================================================
+   4. CLINICAL KPI SUMMARY METRICS (STRICT 4-COL BALANCED GRID)
+   ============================================================================== */
+.ciu-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .ciu-metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .ciu-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ciu-metric-card {
+  background: linear-gradient(135deg, #0e1726 0%, #0b1120 100%);
+  border: 1px solid #1e293b;
+  border-radius: 0.75rem;
+  padding: 1.15rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease-in-out;
+}
+
+.ciu-metric-card:hover {
+  border-color: #334155;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.ciu-metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+}
+
+.ciu-metric-card.blue::before {
+  background-color: #0284c7;
+  box-shadow: 0 0 10px #0284c7;
+}
+
+.ciu-metric-card.emerald::before {
+  background-color: #10b981;
+  box-shadow: 0 0 10px #10b981;
+}
+
+.ciu-metric-card.rose::before {
+  background-color: #f43f5e;
+  box-shadow: 0 0 10px #f43f5e;
+}
+
+.ciu-metric-card.cyan::before {
+  background-color: #38bdf8;
+  box-shadow: 0 0 10px #38bdf8;
+}
+
+.ciu-metric-title {
+  font-size: 0.725rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ciu-metric-value {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.ciu-metric-sub {
+  font-size: 0.75rem;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  line-height: 1.35;
+}
+
+/* ==============================================================================
+   5. OPTICAL BARCODE & UDI WEDGE SCANNER CONSOLE
+   ============================================================================== */
+.ciu-scan-console {
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, rgba(14, 23, 38, 0.95) 0%, rgba(11, 17, 32, 0.98) 100%);
+  border: 1px solid rgba(2, 132, 199, 0.35);
+  border-radius: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 4px 20px rgba(2, 132, 199, 0.1);
+}
+
+.ciu-scan-console-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.ciu-scan-title {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.ciu-scan-standards-badge {
+  font-size: 0.725rem;
+  font-weight: 600;
+  color: #38bdf8;
+  background: rgba(2, 132, 199, 0.12);
+  border: 1px solid rgba(2, 132, 199, 0.3);
+  padding: 0.25rem 0.65rem;
+  border-radius: 0.375rem;
+}
+
+.ciu-scan-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+}
+
+.ciu-scan-input {
+  flex: 1;
+  background: #090d16;
+  border: 1px solid #334155;
+  color: #f8fafc;
+  padding: 0.75rem 1.15rem 0.75rem 2.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  outline: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.ciu-scan-input:focus {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.25);
+  background: #0b1120;
+}
+
+.ciu-scan-icon-inside {
+  position: absolute;
+  left: 0.95rem;
+  color: #38bdf8;
+  pointer-events: none;
+}
+
+.ciu-quick-barcodes {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.ciu-quick-barcodes-label {
+  font-size: 0.725rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.ciu-quick-btn {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid #334155;
+  color: #cbd5e1;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.ciu-quick-btn:hover:not(:disabled) {
+  background: rgba(2, 132, 199, 0.2);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.ciu-quick-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ciu-decoded-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  background: #090d16;
+  border-radius: 0.5rem;
+  font-size: 0.775rem;
+  border: 1px solid rgba(2, 132, 199, 0.3);
+  flex-wrap: wrap;
+}
+
+.ciu-decoded-chip {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid #334155;
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.35rem;
+  color: #e2e8f0;
+}
+
+.ciu-decoded-chip strong {
+  color: #f8fafc;
+}
+
+/* ==============================================================================
+   6. BOM TABLE WORKSPACE (ACTUAL DOCUMENTED IMPLANTS)
+   ============================================================================== */
+.ciu-workspace-card {
+  background: linear-gradient(135deg, #0e1726 0%, #0b1120 100%);
+  border: 1px solid #1e293b;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.ciu-table-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #090d16;
+}
+
+.ciu-table-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  letter-spacing: -0.01em;
+}
+
+.ciu-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.ciu-table th {
+  padding: 0.85rem 1rem;
+  color: #94a3b8;
+  font-weight: 700;
+  font-size: 0.725rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: #090d16;
+  border-bottom: 1px solid #1e293b;
+  white-space: nowrap;
+}
+
+.ciu-table td {
+  padding: 0.95rem 1rem;
+  border-bottom: 1px solid #162032;
+  vertical-align: middle;
+  color: #e2e8f0;
+}
+
+.ciu-table tr:hover td {
+  background-color: rgba(2, 132, 199, 0.04);
+}
+
+/* Sourcing Badges */
+.badge-sourcing {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.375rem;
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.badge-facility-owned {
+  background: rgba(2, 132, 199, 0.18);
+  color: #38bdf8;
+  border: 1px solid rgba(2, 132, 199, 0.4);
+}
+
+.badge-consignment {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.badge-bill-only {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.badge-loaner {
+  background: rgba(56, 189, 248, 0.18);
+  color: #7dd3fc;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.badge-waste {
+  background: rgba(244, 63, 94, 0.18);
+  color: #fda4af;
+  border: 1px solid rgba(244, 63, 94, 0.45);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.badge-waste:hover {
+  background: rgba(244, 63, 94, 0.28);
+  border-color: #f43f5e;
+}
+
+/* Interactive 4-Tier Quantity Pod */
+.ciu-qty-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #090d16;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.5rem;
+  border: 1px solid #1e293b;
+}
+
+.ciu-qty-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  min-width: 52px;
+}
+
+.ciu-qty-box.implanted {
+  border-color: rgba(16, 185, 129, 0.45);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.ciu-qty-box.wasted {
+  border-color: rgba(244, 63, 94, 0.45);
+  background: rgba(244, 63, 94, 0.08);
+}
+
+.ciu-qty-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.ciu-qty-val {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #f8fafc;
+  font-variant-numeric: tabular-nums;
+}
+
+.ciu-btn-icon-counter {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #f8fafc;
+  width: 20px;
+  height: 20px;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  transition: all 0.15s ease-in-out;
+}
+
+.ciu-btn-icon-counter:hover:not(:disabled) {
+  background: #0284c7;
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.ciu-btn-icon-counter:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ==============================================================================
+   7. BUTTONS & SHARED CONTROLS
+   ============================================================================== */
+.ciu-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff;
+  padding: 0.55rem 1.15rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid #38bdf8;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+  transition: all 0.2s ease-in-out;
+  white-space: nowrap;
+}
+
+.ciu-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+  border-color: #7dd3fc;
+  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.35);
+  transform: translateY(-1px);
+}
+
+.ciu-btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ciu-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #1e293b;
+  color: #e2e8f0;
+  padding: 0.55rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border: 1px solid #334155;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  white-space: nowrap;
+}
+
+.ciu-btn-secondary:hover:not(:disabled) {
+  background-color: #334155;
+  color: #ffffff;
+  border-color: #475569;
+}
+
+.ciu-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+  color: #ffffff;
+  padding: 0.55rem 1.15rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid #f43f5e;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25);
+  transition: all 0.2s ease-in-out;
+}
+
+.ciu-btn-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, #be123c 0%, #9f1239 100%);
+  border-color: #fda4af;
+  transform: translateY(-1px);
+}
+
+/* ==============================================================================
+   8. MODAL DIALOGS (CLINICAL WASTE, AMENDMENTS, RECALL)
+   ============================================================================== */
+.ciu-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem;
+}
+
+.ciu-modal-dialog {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 0.75rem;
+  width: 100%;
+  max-width: 580px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+  overflow: hidden;
+  color: #f8fafc;
+}
+
+.ciu-modal-header {
+  padding: 1.15rem 1.5rem;
+  border-bottom: 1px solid #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #090d16;
+}
+
+.ciu-modal-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ciu-modal-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  max-height: calc(85vh - 140px);
+  overflow-y: auto;
+}
+
+.ciu-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ciu-form-group label {
+  font-size: 0.725rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ciu-form-select,
+.ciu-form-input,
+.ciu-form-textarea {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #f8fafc;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  outline: none;
+  transition: all 0.15s ease-in-out;
+}
+
+.ciu-form-select:focus,
+.ciu-form-input:focus,
+.ciu-form-textarea:focus {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.25);
+}
+
+.ciu-modal-footer {
+  padding: 1.15rem 1.5rem;
+  border-top: 1px solid #1e293b;
+  background: #090d16;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+/* Recall Investigation Drawer / Roster */
+.ciu-recall-results {
+  margin-top: 1rem;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid #1e293b;
+  border-radius: 0.5rem;
+  background: #090d16;
+}
+
+.ciu-recall-row {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #162032;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.825rem;
+}
+
+.ciu-recall-row:last-child {
+  border-bottom: none;
+}
