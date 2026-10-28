@@ -668,7 +668,7 @@ BEGIN
             'Authoritative contracted unit prices for Triathlon Knee & Accolade Hip items',
             'FIXED_FEE_SCHEDULE', 'USD', '2026-01-01', '2026-12-31',
             'active', TRUE, v_cfo_id, NOW(), v_admin_id
-        ) ON CONFLICT (facility_id, UPPER(TRIM(schedule_code))) DO NOTHING;
+        ) ON CONFLICT (id) DO NOTHING;
 
         -- 2. Itemized SKU Prices
         INSERT INTO public.facility_implant_sku_prices (
@@ -708,7 +708,7 @@ BEGIN
             v_fac_id, v_stryker_id, v_contract_id, 'INV-STR-2026-8901',
             '2026-02-15', '2026-03-17', 3300.00, 0.00, 0.00, 66.00, 3234.00,
             'fully_matched', v_cfo_id, NOW()
-        ) ON CONFLICT (facility_id, vendor_id, UPPER(TRIM(invoice_number))) DO NOTHING;
+        ) ON CONFLICT (id) DO NOTHING;
 
         -- 4. Supplier Invoice Lines
         INSERT INTO public.implant_supplier_invoice_lines (
