@@ -33,6 +33,7 @@ import ImplantVendorMaster from './components/ImplantVendorMaster';
 import ImplantProductSkuMaster from './components/ImplantProductSkuMaster';
 import VendorComponentMappingMatrix from './components/VendorComponentMappingMatrix';
 import FacilityVendorContracts from './components/FacilityVendorContracts';
+import FacilityImplantPricing from './components/FacilityImplantPricing';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
 import { useInactivityTimeout } from './hooks/useInactivityTimeout';
@@ -2471,6 +2472,13 @@ export default function App() {
             Vendor Contracts
           </div>
           <div
+            className={`menu-item ${activeTab === 'facility_implant_pricing' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('facility_implant_pricing'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><DollarSign size={16} /></div>
+            Implant Pricing & Costs
+          </div>
+          <div
             className={`menu-item ${activeTab === 'claim_scrubber' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('claim_scrubber'); setSelectedSurgeon(null); }}
           >
@@ -2721,6 +2729,7 @@ export default function App() {
                   {activeTab === 'implant_skus' && 'Master catalog items, FDA UDI-DI specifications, and distributor cross-references'}
                   {activeTab === 'vendor_component_mappings' && 'Commercial-to-clinical capability mappings, facility preference tiers, and logistics consignment governance'}
                   {activeTab === 'facility_vendor_contracts' && 'Facility-specific vendor contracts, commercial terms, effective dates, and sourcing authorization'}
+                  {activeTab === 'facility_implant_pricing' && 'Contract fee schedules, supplier invoice 3-way reconciliation, and verified acquisition costs'}
                 </>
               )}
             </span>
@@ -4573,6 +4582,20 @@ export default function App() {
                     (['super_admin', 'org_admin', 'facility_admin', 'cfo', 'clinical_manager', 'admin'].includes(userRole) || !authUser)
                       ? ['admin', 'implants.manage_contracts', 'implants.view_contracts', 'implants.view_costs']
                       : ['implants.view_contracts']
+                  }
+                />
+              )}
+
+              {/* ==========================================
+              TAB: FACILITY IMPLANT PRICING (PHASE 57)
+              ========================================== */}
+              {activeTab === 'facility_implant_pricing' && (
+                <FacilityImplantPricing
+                  activeFacility={activeFacility}
+                  userPermissions={
+                    (['super_admin', 'org_admin', 'facility_admin', 'cfo', 'clinical_manager', 'admin'].includes(userRole) || !authUser)
+                      ? ['admin', 'implants.manage_pricing', 'implants.manage_contracts', 'implants.view_costs', 'implants.override_pricing', 'implants.approve_invoice', 'implants.view_variance']
+                      : ['implants.view_variance']
                   }
                 />
               )}
