@@ -13,8 +13,7 @@ import {
   SKU_STATUSES,
   RECALL_CLASSES,
   GLOBAL_BASELINE_FAMILIES,
-  GLOBAL_BASELINE_SKUS,
-  GLOBAL_BASELINE_DISTRIBUTOR_MAPPINGS
+  GLOBAL_BASELINE_SKUS
 } from '../src/lib/skuService.js';
 import { db } from '../src/lib/supabase.js';
 

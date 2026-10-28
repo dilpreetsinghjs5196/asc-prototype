@@ -8,7 +8,6 @@ import {
   PREFERENCE_TIERS,
   SOURCING_MODELS,
   MAPPING_STATUSES,
-  APPROVAL_STATUSES,
   GLOBAL_BASELINE_MAPPINGS
 } from '../src/lib/vendorComponentService.js';
 import { db } from '../src/lib/supabase.js';

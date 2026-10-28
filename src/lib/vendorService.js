@@ -564,7 +564,7 @@ export const vendorService = {
       includeInactive = false
     } = options;
 
-    let items = [];
+    let items;
 
     try {
       if (db.ensureAuthSession) {
@@ -592,7 +592,7 @@ export const vendorService = {
       } else {
         items = [...GLOBAL_BASELINE_VENDORS];
       }
-    } catch (err) {
+    } catch {
       // Graceful fallback to baseline
       items = [...GLOBAL_BASELINE_VENDORS];
     }
@@ -698,7 +698,7 @@ export const vendorService = {
       if (!error && data) {
         vendor = data;
       }
-    } catch (err) {
+    } catch {
       // Fallback to baseline
     }
 
@@ -744,7 +744,7 @@ export const vendorService = {
       if (!error && Array.isArray(data)) {
         rels = data;
       }
-    } catch (err) {
+    } catch {
       // Fallback
     }
 
@@ -790,7 +790,7 @@ export const vendorService = {
 
     // Validate Vendor Code Format
     const cleanCode = (vendor_code || '').toUpperCase().trim();
-    if (!cleanCode || !/^[A-Z0-9_\-]+$/.test(cleanCode)) {
+    if (!cleanCode || !/^[A-Z0-9_-]+$/.test(cleanCode)) {
       throw new Error('VALIDATION ERROR: Vendor code must contain only uppercase alphanumeric characters, dashes, and underscores.');
     }
 
@@ -839,14 +839,14 @@ export const vendorService = {
       if (!error && data?.success) {
         return { success: true, vendor_id: data.vendor_id };
       }
-    } catch (err) {
+    } catch {
       // Fallback for offline / local test environment
     }
 
     if (id && status === 'active') {
       try {
         await this.reactivateVendor(id, cleanCode);
-      } catch (_) {
+      } catch {
         // Non-blocking fallback
       }
     }
@@ -913,7 +913,7 @@ export const vendorService = {
       if (!error && data?.success) {
         return data;
       }
-    } catch (err) {
+    } catch {
       // Fallback
     }
 
@@ -975,7 +975,7 @@ export const vendorService = {
       if (!error && Array.isArray(data) && data.length > 0) {
         return { success: true, vendor_id: vendorId, vendor: data[0], status: 'active' };
       }
-    } catch (err) {
+    } catch {
       // Fallback to baseline check
     }
 
@@ -1050,7 +1050,7 @@ export const vendorService = {
       if (!error && data) {
         return { success: true, relationship: data };
       }
-    } catch (err) {
+    } catch {
       // Fallback
     }
 
@@ -1089,7 +1089,7 @@ export const vendorService = {
         .eq('id', relId);
 
       if (!error) return true;
-    } catch (err) {
+    } catch {
       // Fallback
     }
 
@@ -1108,7 +1108,7 @@ export const vendorService = {
    * @param {Object} [options]
    * @returns {Promise<Object>}
    */
-  async importVendorBatch(rows, options = {}) {
+  async importVendorBatch(rows, _options = {}) {
     if (!Array.isArray(rows)) throw new Error('rows must be an array');
 
     const results = {

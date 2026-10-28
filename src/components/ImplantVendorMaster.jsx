@@ -6,7 +6,6 @@ import {
   X,
   AlertTriangle,
   CheckCircle2,
-  Filter,
   Shield,
   Truck,
   ExternalLink,
@@ -20,8 +19,6 @@ import {
 import {
   vendorService,
   VENDOR_TYPES,
-  VENDOR_STATUSES,
-  RELATIONSHIP_TYPES,
   GLOBAL_BASELINE_VENDORS
 } from '../lib/vendorService.js';
 import './ImplantVendorMaster.css';
@@ -295,7 +292,7 @@ export default function ImplantVendorMaster({
     try {
       const rels = await vendorService.getVendorRelationships(vendor.id);
       setVendorRelationships(rels);
-    } catch (err) {
+    } catch {
       setVendorRelationships([]);
     }
     setNewRelData({

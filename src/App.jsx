@@ -32,6 +32,7 @@ import CptImplantMappingMatrix from './components/CptImplantMappingMatrix';
 import ImplantVendorMaster from './components/ImplantVendorMaster';
 import ImplantProductSkuMaster from './components/ImplantProductSkuMaster';
 import VendorComponentMappingMatrix from './components/VendorComponentMappingMatrix';
+import FacilityVendorContracts from './components/FacilityVendorContracts';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
 import { useInactivityTimeout } from './hooks/useInactivityTimeout';
@@ -80,6 +81,7 @@ import {
   ChevronDown,
   CheckCircle2,
   Layers,
+  FileText,
   GitFork
 } from 'lucide-react';
 
@@ -2462,6 +2464,13 @@ export default function App() {
             Supplier Matrix
           </div>
           <div
+            className={`menu-item ${activeTab === 'facility_vendor_contracts' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('facility_vendor_contracts'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><FileText size={16} /></div>
+            Vendor Contracts
+          </div>
+          <div
             className={`menu-item ${activeTab === 'claim_scrubber' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('claim_scrubber'); setSelectedSurgeon(null); }}
           >
@@ -2711,6 +2720,7 @@ export default function App() {
                   {activeTab === 'implant_vendors' && 'Master directory of medical device manufacturers, commercial distributors, and sourcing governance'}
                   {activeTab === 'implant_skus' && 'Master catalog items, FDA UDI-DI specifications, and distributor cross-references'}
                   {activeTab === 'vendor_component_mappings' && 'Commercial-to-clinical capability mappings, facility preference tiers, and logistics consignment governance'}
+                  {activeTab === 'facility_vendor_contracts' && 'Facility-specific vendor contracts, commercial terms, effective dates, and sourcing authorization'}
                 </>
               )}
             </span>
@@ -4549,6 +4559,20 @@ export default function App() {
                     (['super_admin', 'org_admin', 'facility_admin', 'cfo', 'clinical_manager', 'admin'].includes(userRole) || !authUser)
                       ? ['admin', 'implants.manage_catalog', 'implants.manage_contracts', 'implants.view_catalog']
                       : ['implants.view_catalog']
+                  }
+                />
+              )}
+
+              {/* ==========================================
+              TAB: FACILITY VENDOR CONTRACTS (PHASE 56)
+              ========================================== */}
+              {activeTab === 'facility_vendor_contracts' && (
+                <FacilityVendorContracts
+                  activeFacility={activeFacility}
+                  userPermissions={
+                    (['super_admin', 'org_admin', 'facility_admin', 'cfo', 'clinical_manager', 'admin'].includes(userRole) || !authUser)
+                      ? ['admin', 'implants.manage_contracts', 'implants.view_contracts', 'implants.view_costs']
+                      : ['implants.view_contracts']
                   }
                 />
               )}

@@ -1,18 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Package, Search, Plus, Filter, AlertTriangle, CheckCircle,
-  Truck, Edit, Ban, RotateCcw, X, Layers, Tag, ExternalLink, ShieldAlert
+  Package, Search, Plus, AlertTriangle, CheckCircle,
+  Truck, Edit, Ban, RotateCcw, X, Layers, ShieldAlert
 } from 'lucide-react';
 import {
   skuService,
   STERILE_PACKAGING_TYPES,
   LATERALITY_TYPES,
-  MATERIAL_TYPES,
-  DURATION_CLASSIFICATIONS,
-  MRI_SAFETY_STATUSES,
-  SKU_STATUSES,
-  RECALL_CLASSES,
-  GLOBAL_BASELINE_FAMILIES
+  MATERIAL_TYPES
 } from '../lib/skuService';
 import { vendorService } from '../lib/vendorService';
 import { implantService } from '../lib/implantService';
@@ -101,36 +96,20 @@ export default function ImplantProductSkuMaster({
     is_preferred_distributor: false
   });
 
-  // Initial Data Load
-  useEffect(() => {
-    loadFilterOptions();
-  }, [activeFacility]);
-
-  useEffect(() => {
-    loadSkus();
-  }, [
-    activeFacility,
-    searchQuery,
-    selectedVendorId,
-    selectedComponentId,
-    selectedLaterality,
-    selectedStatus,
-    pagination.page
-  ]);
-
-  const loadFilterOptions = async () => {
+  // Filter Options & SKU Loaders
+  const loadFilterOptions = useCallback(async () => {
     try {
       const vRes = await vendorService.getVendors({ limit: 100 });
       setVendorsList(vRes.vendors || []);
 
       const cRes = await implantService.getComponents();
       setComponentsList(cRes || []);
-    } catch (err) {
+    } catch {
       // Non-blocking fallback
     }
-  };
+  }, []);
 
-  const loadSkus = async () => {
+  const loadSkus = useCallback(async () => {
     setLoading(true);
     try {
       const res = await skuService.getSkus({
@@ -153,7 +132,25 @@ export default function ImplantProductSkuMaster({
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    activeFacility,
+    searchQuery,
+    selectedVendorId,
+    selectedComponentId,
+    selectedLaterality,
+    selectedStatus,
+    pagination.page,
+    pagination.limit
+  ]);
+
+  // Initial Data Load
+  useEffect(() => {
+    loadFilterOptions();
+  }, [loadFilterOptions]);
+
+  useEffect(() => {
+    loadSkus();
+  }, [loadSkus]);
 
   // Open Add SKU Modal
   const handleOpenAddModal = () => {
@@ -241,7 +238,7 @@ export default function ImplantProductSkuMaster({
         is_preferred_distributor: false
       });
       setIsDistributorModalOpen(true);
-    } catch (err) {
+    } catch {
       alert('Failed to load distributor mappings');
     }
   };

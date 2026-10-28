@@ -8,8 +8,7 @@ import {
   VENDOR_TYPES,
   VENDOR_STATUSES,
   RELATIONSHIP_TYPES,
-  GLOBAL_BASELINE_VENDORS,
-  GLOBAL_BASELINE_RELATIONSHIPS
+  GLOBAL_BASELINE_VENDORS
 } from '../src/lib/vendorService.js';
 import { db } from '../src/lib/supabase.js';
 

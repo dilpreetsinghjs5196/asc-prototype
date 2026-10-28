@@ -1,15 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Layers, Search, Plus, Filter, AlertTriangle, CheckCircle,
-  Truck, Edit, Ban, RotateCcw, X, Star, Grid, List, ShieldAlert,
-  Building2, ArrowUpDown
+  Layers, Search, Plus,
+  Edit, Ban, RotateCcw, X, Star, Grid, List,
+  ArrowUpDown
 } from 'lucide-react';
-import {
-  vendorComponentService,
-  PREFERENCE_TIERS,
-  SOURCING_MODELS,
-  MAPPING_STATUSES
-} from '../lib/vendorComponentService';
+import { vendorComponentService } from '../lib/vendorComponentService';
 import { vendorService } from '../lib/vendorService';
 import { implantService } from '../lib/implantService';
 import './VendorComponentMappingMatrix.css';
@@ -85,7 +80,7 @@ export default function VendorComponentMappingMatrix({
   const [terminateRationale, setTerminateRationale] = useState('');
 
   // 1. Initial Data Fetch
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const facilityId = activeFacility?.id || null;
@@ -114,11 +109,11 @@ export default function VendorComponentMappingMatrix({
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeFacility, selectedScope, selectedSpecialty, selectedVendorId, selectedTier, searchQuery]);
 
   useEffect(() => {
     loadData();
-  }, [activeFacility, selectedSpecialty, selectedVendorId, selectedTier, selectedScope, searchQuery]);
+  }, [loadData]);
 
   // Handle Edit / Create Modal Open
   const handleOpenEditModal = (mapping = null, defaultVendorId = null, defaultComponentId = null) => {
@@ -264,6 +259,7 @@ export default function VendorComponentMappingMatrix({
           </p>
         </div>
         <div className="matrix-actions-group">
+          {loading && <span style={{ color: '#94a3b8', fontSize: '0.8rem', marginRight: '0.5rem' }}>Loading...</span>}
           {canManage && (
             <button
               className="btn-primary-matrix"
@@ -352,6 +348,16 @@ export default function VendorComponentMappingMatrix({
             <option value="SECONDARY">Secondary</option>
             <option value="NON_PREFERRED">Non-Preferred</option>
             <option value="RESTRICTED">Restricted 🚫</option>
+          </select>
+
+          <select
+            className="matrix-select"
+            value={selectedScope}
+            onChange={(e) => setSelectedScope(e.target.value)}
+          >
+            <option value="all">All Scopes</option>
+            <option value="facility">Facility Specific</option>
+            <option value="global">Global Only</option>
           </select>
 
           <div className="matrix-view-toggle">

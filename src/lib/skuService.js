@@ -474,7 +474,7 @@ export const skuService = {
       includeInactive = false
     } = options;
 
-    let items = [];
+    let items;
 
     try {
       if (db.ensureAuthSession) {
@@ -508,7 +508,7 @@ export const skuService = {
       } else {
         items = [...GLOBAL_BASELINE_SKUS];
       }
-    } catch (err) {
+    } catch {
       items = [...GLOBAL_BASELINE_SKUS];
     }
 
@@ -613,7 +613,7 @@ export const skuService = {
       if (!error && data) {
         sku = data;
       }
-    } catch (err) {
+    } catch {
       // Fallback
     }
 
@@ -658,7 +658,7 @@ export const skuService = {
       if (!error && Array.isArray(data)) {
         mappings = data;
       }
-    } catch (err) {
+    } catch {
       // Fallback
     }
 
@@ -752,7 +752,7 @@ export const skuService = {
       if (!error && data?.success) {
         return { success: true, sku_id: data.sku_id };
       }
-    } catch (err) {
+    } catch {
       // Fallback
     }
 
@@ -832,7 +832,7 @@ export const skuService = {
       if (!error && data?.success) {
         return data;
       }
-    } catch (err) {
+    } catch {
       // Fallback
     }
 
@@ -874,7 +874,7 @@ export const skuService = {
       if (!error && data?.success) {
         return data;
       }
-    } catch (err) {
+    } catch {
       // Fallback
     }
 
@@ -979,7 +979,7 @@ export const skuService = {
       if (!error && data) {
         return { success: true, mapping: data };
       }
-    } catch (err) {
+    } catch {
       // Fallback
     }
 

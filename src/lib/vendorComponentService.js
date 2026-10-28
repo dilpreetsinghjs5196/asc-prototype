@@ -428,7 +428,7 @@ export const vendorComponentService = {
       includeInactive = false
     } = options;
 
-    let items = [];
+    let items;
 
     try {
       if (db.ensureAuthSession) {
@@ -462,7 +462,7 @@ export const vendorComponentService = {
       } else {
         items = [...GLOBAL_BASELINE_MAPPINGS];
       }
-    } catch (err) {
+    } catch {
       items = [...GLOBAL_BASELINE_MAPPINGS];
     }
 
@@ -594,7 +594,7 @@ export const vendorComponentService = {
       if (!error && data) {
         mapping = data;
       }
-    } catch (err) {
+    } catch {
       // Fallback
     }
 
@@ -677,7 +677,7 @@ export const vendorComponentService = {
       if (!error && data?.success) {
         return { success: true, mapping_id: data.mapping_id };
       }
-    } catch (err) {
+    } catch {
       // Fallback
     }
 
@@ -743,7 +743,7 @@ export const vendorComponentService = {
       if (!error && data?.success) {
         return data;
       }
-    } catch (err) {
+    } catch {
       // Fallback
     }
 
@@ -782,7 +782,7 @@ export const vendorComponentService = {
       if (!error && data?.success) {
         return data;
       }
-    } catch (err) {
+    } catch {
       // Fallback
     }
 
@@ -818,7 +818,7 @@ export const vendorComponentService = {
       if (!error && data?.success) {
         return data;
       }
-    } catch (err) {
+    } catch {
       // Fallback
     }
 
