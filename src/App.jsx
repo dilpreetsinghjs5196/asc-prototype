@@ -34,6 +34,7 @@ import ImplantProductSkuMaster from './components/ImplantProductSkuMaster';
 import VendorComponentMappingMatrix from './components/VendorComponentMappingMatrix';
 import FacilityVendorContracts from './components/FacilityVendorContracts';
 import FacilityImplantPricing from './components/FacilityImplantPricing';
+import SurgeonPreferenceCards from './components/SurgeonPreferenceCards';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
 import { useInactivityTimeout } from './hooks/useInactivityTimeout';
@@ -83,7 +84,8 @@ import {
   CheckCircle2,
   Layers,
   FileText,
-  GitFork
+  GitFork,
+  ClipboardList
 } from 'lucide-react';
 
 // ==========================================
@@ -2479,6 +2481,13 @@ export default function App() {
             Implant Pricing & Costs
           </div>
           <div
+            className={`menu-item ${activeTab === 'surgeon_preference_cards' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('surgeon_preference_cards'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><ClipboardList size={16} /></div>
+            Preference Cards
+          </div>
+          <div
             className={`menu-item ${activeTab === 'claim_scrubber' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('claim_scrubber'); setSelectedSurgeon(null); }}
           >
@@ -2730,6 +2739,7 @@ export default function App() {
                   {activeTab === 'vendor_component_mappings' && 'Commercial-to-clinical capability mappings, facility preference tiers, and logistics consignment governance'}
                   {activeTab === 'facility_vendor_contracts' && 'Facility-specific vendor contracts, commercial terms, effective dates, and sourcing authorization'}
                   {activeTab === 'facility_implant_pricing' && 'Contract fee schedules, supplier invoice 3-way reconciliation, and verified acquisition costs'}
+                  {activeTab === 'surgeon_preference_cards' && 'Surgeon procedural preference cards, OPEN vs HOLD staging governance, and pre-op readiness'}
                 </>
               )}
             </span>
@@ -4596,6 +4606,20 @@ export default function App() {
                     (['super_admin', 'org_admin', 'facility_admin', 'cfo', 'clinical_manager', 'admin'].includes(userRole) || !authUser)
                       ? ['admin', 'implants.manage_pricing', 'implants.manage_contracts', 'implants.view_costs', 'implants.override_pricing', 'implants.approve_invoice', 'implants.view_variance']
                       : ['implants.view_variance']
+                  }
+                />
+              )}
+
+              {/* ==========================================
+              TAB: SURGEON PREFERENCE CARDS (PHASE 58)
+              ========================================== */}
+              {activeTab === 'surgeon_preference_cards' && (
+                <SurgeonPreferenceCards
+                  activeFacility={activeFacility}
+                  userPermissions={
+                    (['super_admin', 'org_admin', 'facility_admin', 'cfo', 'clinical_manager', 'admin'].includes(userRole) || !authUser)
+                      ? ['admin', 'implants.manage_contracts', 'implants.view_costs', 'circulating_nurse', 'materials_manager']
+                      : ['circulating_nurse']
                   }
                 />
               )}
