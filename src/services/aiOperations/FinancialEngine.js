@@ -37,12 +37,12 @@ export const calculateNetProfit = ({
     
     // Authoritative Revenue Resolution:
     // If expectedRevenue or reimbursement is explicitly provided, use it.
-    // If only gross charge is provided, derive allowable baseline (Gross Charge / 3.50).
+    // Fail-closed to 0.00: Gross Charge is NEVER treated as allowable reimbursement
     const resolvedRevenue = expectedRevenue !== null 
         ? Number(expectedRevenue) 
-        : (reimbursement !== null && Number(reimbursement) > 0 
+        : (reimbursement !== null && Number(reimbursement) >= 0 
             ? Number(reimbursement) 
-            : (grossCharge > 0 ? Number(grossCharge) / 3.50 : 0));
+            : 0);
     
     // Net Margin / Operating Profit based on actual expected reimbursement
     const netProfit = resolvedRevenue - totalCost;

@@ -36,6 +36,7 @@ import FacilityVendorContracts from './components/FacilityVendorContracts';
 import FacilityImplantPricing from './components/FacilityImplantPricing';
 import SurgeonPreferenceCards from './components/SurgeonPreferenceCards';
 import CaseImplantUsage from './components/CaseImplantUsage';
+import MedicareRateExplorer from './components/MedicareRateExplorer';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
 import { useInactivityTimeout } from './hooks/useInactivityTimeout';
@@ -87,7 +88,8 @@ import {
   FileText,
   GitFork,
   ClipboardList,
-  Cpu
+  Cpu,
+  Scale
 } from 'lucide-react';
 
 // ==========================================
@@ -2434,6 +2436,13 @@ export default function App() {
             CPT Codes Management
           </div>
           <div
+            className={`menu-item ${activeTab === 'medicare_rates' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('medicare_rates'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Scale size={16} /></div>
+            Medicare ASC Rates
+          </div>
+          <div
             className={`menu-item ${activeTab === 'implant_taxonomy' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('implant_taxonomy'); setSelectedSurgeon(null); }}
           >
@@ -2687,6 +2696,7 @@ export default function App() {
                   {activeTab === 'financial' && 'Financial Performance'}
                   {activeTab === 'cpt' && 'Case Profitability'}
                   {activeTab === 'cpt_manage' && 'CPT Codes Management'}
+                  {activeTab === 'medicare_rates' && 'Medicare ASC Base Rate Engine & Addenda'}
                   {activeTab === 'implant_taxonomy' && 'Implant Category & Component Taxonomy'}
                   {activeTab === 'cpt_implant_matrix' && 'CPT-to-Implant Construct Matrix'}
                   {activeTab === 'claim_scrubber' && 'Pre-Bill Claim Scrubbing Rules & Edits'}
@@ -2842,7 +2852,7 @@ export default function App() {
             </div>
 
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'ot_cost_manage', 'cpt_manage', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -4492,6 +4502,17 @@ export default function App() {
                     setSurgeries(prev => prev.filter(s => s.id !== id));
                   }}
                 />
+              )}
+
+              {/* ==========================================
+              TAB: MEDICARE ASC BASE RATE ENGINE (PHASE 60)
+              ========================================== */}
+              {activeTab === 'medicare_rates' && (
+                <RoleGate requiredRole={['super_admin', 'org_admin', 'facility_admin', 'cfo', 'biller', 'coder', 'viewer']}>
+                  <MedicareRateExplorer
+                    activeFacility={activeFacility}
+                  />
+                </RoleGate>
               )}
 
               {/* ==========================================

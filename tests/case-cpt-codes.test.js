@@ -80,9 +80,9 @@ describe('Phase 32 — Case CPT Codes, Modifiers & Coding Lifecycle Verification
   // Domain 2: Calculation Engine (hospitalUtils.js)
   describe('2. Financial Calculation Engine: Units & Modifiers Normalization', () => {
     const mockCptCatalog = [
-      { code: '29881', description: 'Knee arthroscopy/meniscectomy', gross_charge: 3200, reimbursement: 1600 },
-      { code: '29877', description: 'Knee debridement/chondroplasty', gross_charge: 1800, reimbursement: 900 },
-      { code: '64415', description: 'Brachial plexus block', gross_charge: 600, reimbursement: 300 }
+      { code: '29881', description: 'Knee arthroscopy/meniscectomy', gross_charge: 11200, reimbursement: 3200 },
+      { code: '29877', description: 'Knee debridement/chondroplasty', gross_charge: 6300, reimbursement: 1800 },
+      { code: '64415', description: 'Brachial plexus block', gross_charge: 2100, reimbursement: 600 }
     ];
 
     it('Calculates single procedure revenue correctly with default units = 1', () => {

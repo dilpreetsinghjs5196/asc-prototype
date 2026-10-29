@@ -71,6 +71,16 @@ export const PERMISSIONS_CATALOG = [
   { code: 'billing.override_blocker', category: 'billing', name: 'Override Charge Completeness Blocker', risk_level: 'critical' },
   { code: 'billing.signoff_prebill', category: 'billing', name: 'Sign-off Pre-Bill Completeness', risk_level: 'sensitive' },
 
+  // Medicare Base Rate Engine (Domain: billing / finance)
+  { code: 'medicare_rates.view', category: 'billing', name: 'View Published Medicare Base Rates', risk_level: 'standard' },
+  { code: 'medicare_rates.import', category: 'billing', name: 'Upload & Stage Medicare Rate Addenda', risk_level: 'sensitive' },
+  { code: 'medicare_rates.validate', category: 'billing', name: 'Validate Staged Rate Batches & Diff Analysis', risk_level: 'standard' },
+  { code: 'medicare_rates.approve', category: 'finance', name: 'Approve Medicare Rate Release for Publication', risk_level: 'critical' },
+  { code: 'medicare_rates.publish', category: 'billing', name: 'Publish Approved Medicare Rate Release', risk_level: 'critical' },
+  { code: 'medicare_rates.calculate', category: 'billing', name: 'Execute Authoritative Baseline Rate Resolution', risk_level: 'standard' },
+  { code: 'medicare_rates.export', category: 'reports', name: 'Export Medicare Rate Schedules', risk_level: 'sensitive' },
+  { code: 'medicare_rates.audit', category: 'reports', name: 'View Rate Calculation & Provenance Audit Logs', risk_level: 'standard' },
+
   // Claims & Scrubbing (Domain: billing)
   { code: 'claims.view_scrub', category: 'billing', name: 'View Claim Scrub Findings', risk_level: 'standard' },
   { code: 'claims.run_scrubber', category: 'billing', name: 'Execute Claim Scrubbing Engine', risk_level: 'standard' },

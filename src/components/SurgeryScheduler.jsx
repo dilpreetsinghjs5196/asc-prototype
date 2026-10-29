@@ -857,7 +857,7 @@ const SurgeryScheduler = ({
             formData.selectedCptCodes.forEach(code => {
                 const cpt = cptCodes.find(c => String(c.code) === String(code));
                 if (cpt) {
-                    reimbursementSum += parseFloat(cpt.gross_charge || 0);
+                    reimbursementSum += parseFloat(cpt.wage_adjusted_rate ?? cpt.contracted_reimbursement ?? cpt.reimbursement ?? 0);
                 }
             });
         }

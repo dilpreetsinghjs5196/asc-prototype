@@ -175,7 +175,7 @@ describe('Phase 31 — Case Master Specification & Lifecycle Verification Suite'
 
       const metrics = getSurgeryMetrics(selfPayAnesSurgery, mockCptCodes);
       assert.strictEqual(metrics.anesthesiaRevenue, 650);
-      assert.strictEqual(metrics.totalRevenue, 2200 + 650 + 300); // 2200 (CPT gross_charge) + 650 + 300 = 3150
+      assert.strictEqual(metrics.totalRevenue, 1450 + 650 + 300); // 1450 (CPT allowable reimbursement) + 650 + 300 = 2400
     });
 
     it('Zeroes out all values when payment_model is Pro_Bono', () => {

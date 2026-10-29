@@ -150,9 +150,18 @@ export const calculateMedicareRevenue = (cptCodesArray, cptDatabase, applyMPPR =
 
     if (resolvedLines.length === 0) return 0;
 
-    // Helper to get base allowable price (Gross Charge if available, else Reimbursement)
+    // Helper to get base allowable price (Authoritative Reimbursement/Wage-Adjusted Rate prioritized over Gross Charge)
     const getBasePrice = (cpt) => {
-        const rawRate = parseFloat(cpt.gross_charge !== undefined ? cpt.gross_charge : (cpt.contracted_reimbursement !== undefined ? cpt.contracted_reimbursement : (cpt.reimbursement || 0)));
+        let rawRate = 0;
+        if (cpt.wage_adjusted_rate !== undefined && cpt.wage_adjusted_rate !== null) {
+            rawRate = parseFloat(cpt.wage_adjusted_rate);
+        } else if (cpt.contracted_reimbursement !== undefined && cpt.contracted_reimbursement !== null) {
+            rawRate = parseFloat(cpt.contracted_reimbursement);
+        } else if (cpt.reimbursement !== undefined && cpt.reimbursement !== null) {
+            rawRate = parseFloat(cpt.reimbursement);
+        } else if (cpt.gross_charge !== undefined && cpt.gross_charge !== null) {
+            rawRate = parseFloat(cpt.gross_charge);
+        }
         const isBilateral = (cpt.modifiers && cpt.modifiers.includes('50')) || cpt.laterality === 'BILATERAL';
         return isBilateral ? rawRate * 1.50 : rawRate;
     };
