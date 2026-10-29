@@ -12,6 +12,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { medicareRateService, DEFAULT_CBSA } from '../lib/medicareRateService';
+import { geographicWageService, CBSA_VERIFICATION_SOURCES, DEFAULT_FACILITY_CBSA } from '../lib/geographicWageService';
 import './MedicareRateExplorer.css';
 
 export default function MedicareRateExplorer({ activeFacility }) {
@@ -42,6 +43,39 @@ export default function MedicareRateExplorer({ activeFacility }) {
   const [testPiCode, setTestPiCode] = useState('29881');
   const [testPiResult, setTestPiResult] = useState(null);
   const [testPiLoading, setTestPiLoading] = useState(false);
+
+  // Phase 62: Geographic Wage Adjustment State
+  const [geoHistory, setGeoHistory] = useState([]);
+  const [cbsaSearch, setCbsaSearch] = useState('');
+  const [cbsaStateFilter, setCbsaStateFilter] = useState('All');
+  const [cbsaPage, setCbsaPage] = useState(1);
+  const [cbsaPageSize] = useState(10);
+  const [selectedCbsa, setSelectedCbsa] = useState(null);
+  const [selectedCounties, setSelectedCounties] = useState([]);
+  const [countySearch, setCountySearch] = useState('');
+  const [countySearchResults, setCountySearchResults] = useState([]);
+  const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
+  const [assignmentSaving, setAssignmentSaving] = useState(false);
+  const [assignmentFeedback, setAssignmentFeedback] = useState(null);
+  const [assignmentForm, setAssignmentForm] = useState({
+    cbsa_code: '34940',
+    cbsa_name: 'Naples-Immokalee-Marco Island, FL',
+    state_code: 'FL',
+    medicare_provider_number: '10-ASC02',
+    effective_start_date: new Date().toISOString().split('T')[0],
+    verification_source: 'CMS_PROVIDER_ENROLLMENT_855A',
+    verification_document_url: 'https://medicare.gov/provider/tie-in.pdf',
+    ascqr_compliant: true
+  });
+
+  // Geographic Wage Simulator State
+  const [simCpt, setSimCpt] = useState('29881');
+  const [simCbsa, setSimCbsa] = useState('34940');
+  const [simNatRate, setSimNatRate] = useState(1650.00);
+  const [simIsDev, setSimIsDev] = useState(false);
+  const [simDevPct, setSimDevPct] = useState(0.35);
+  const [simAscqr, setSimAscqr] = useState(true);
+  const [simResult, setSimResult] = useState(null);
 
   // Load facility settings, CBSA indices, and CMS releases
   const loadMetadata = useCallback(async () => {
@@ -571,39 +605,694 @@ export default function MedicareRateExplorer({ activeFacility }) {
         </div>
       )}
 
-      {/* Tab 3: CBSA Wage Indices */}
+      {/* Tab 3: CBSA Wage Indices & Geographic Model (Phase 62) */}
       {activeTab === 'cbsa' && (
-        <div className="medicare-table-container">
-          <table className="medicare-table">
-            <thead>
-              <tr>
-                <th>CBSA Code</th>
-                <th>Core Based Statistical Area Name</th>
-                <th>State</th>
-                <th style={{ textAlign: 'right' }}>Wage Index</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {wageIndices.map((w) => (
-                <tr key={w.cbsa_code}>
-                  <td style={{ fontFamily: 'monospace', fontWeight: 700 }}>{w.cbsa_code}</td>
-                  <td>{w.cbsa_name}</td>
-                  <td>{w.state_code}</td>
-                  <td className="currency-cell" style={{ fontWeight: 700, color: '#2563eb' }}>
-                    {parseFloat(w.wage_index).toFixed(4)}
-                  </td>
-                  <td>
-                    {w.cbsa_code === DEFAULT_CBSA.code ? (
-                      <span className="pi-badge pi-badge-device">Active Facility CBSA</span>
-                    ) : (
-                      <span className="pi-badge pi-badge-standard">Reference</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Active Facility Assignment Card */}
+          <div className="geo-facility-card">
+            <div className="geo-facility-header">
+              <div>
+                <h3 className="geo-title">
+                  <MapPin size={20} color="#2563eb" />
+                  Facility Medicare Geographic Assignment
+                </h3>
+                <p className="geo-desc">
+                  Authoritative effective-dated CBSA configuration for {activeFacility?.name || 'Naples Surgery Center'} under 42 CFR § 416.171(b).
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="geo-btn-primary"
+                  onClick={() => {
+                    setAssignmentForm({
+                      cbsa_code: activeGeo.cbsa_code || '34940',
+                      cbsa_name: activeGeo.cbsa_name || 'Naples-Immokalee-Marco Island, FL',
+                      state_code: activeGeo.state_code || 'FL',
+                      medicare_provider_number: activeGeo.medicare_provider_number || '10-ASC02',
+                      effective_start_date: new Date().toISOString().split('T')[0],
+                      verification_source: 'CMS_PROVIDER_ENROLLMENT_855A',
+                      verification_document_url: activeGeo.verification_document_url || '',
+                      ascqr_compliant: activeGeo.ascqr_compliant !== false
+                    });
+                    setIsAssignmentModalOpen(true);
+                  }}
+                >
+                  <PlusCircle size={15} />
+                  Update Assignment
+                </button>
+              </div>
+            </div>
+
+            {assignmentFeedback && (
+              <div style={{
+                padding: '0.75rem 1rem',
+                borderRadius: '6px',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                background: assignmentFeedback.type === 'success' ? '#ecfdf5' : '#fff1f2',
+                color: assignmentFeedback.type === 'success' ? '#059669' : '#dc2626',
+                border: `1px solid ${assignmentFeedback.type === 'success' ? '#a7f3d0' : '#fecdd3'}`
+              }}>
+                {assignmentFeedback.message}
+              </div>
+            )}
+
+            <div className="geo-grid-2">
+              <div className="geo-card">
+                <h4 className="geo-card-title">
+                  <Building size={16} color="#2563eb" />
+                  Active CBSA & Provider Profile
+                </h4>
+                <div className="geo-key-value-list">
+                  <div className="geo-kv-row">
+                    <span className="geo-kv-label">Assigned CBSA:</span>
+                    <span className="geo-kv-val" style={{ fontFamily: 'monospace' }}>
+                      {activeGeo.cbsa_code} — {activeGeo.cbsa_name}
+                    </span>
+                  </div>
+                  <div className="geo-kv-row">
+                    <span className="geo-kv-label">Medicare Provider Number (CCN):</span>
+                    <span className="geo-kv-val" style={{ fontFamily: 'monospace' }}>{activeGeo.medicare_provider_number}</span>
+                  </div>
+                  <div className="geo-kv-row">
+                    <span className="geo-kv-label">Effective Date:</span>
+                    <span className="geo-kv-val">{activeGeo.effective_start_date} to {activeGeo.effective_end_date || 'Present (Active)'}</span>
+                  </div>
+                  <div className="geo-kv-row">
+                    <span className="geo-kv-label">ASC Quality Reporting (ASCQR):</span>
+                    <span>
+                      {activeGeo.ascqr_compliant !== false ? (
+                        <span className="geo-badge-verified"><ShieldCheck size={12} /> Compliant (100% Rate)</span>
+                      ) : (
+                        <span className="geo-badge-unverified"><AlertOctagon size={12} /> Non-Compliant (-2% Penalty)</span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="geo-card">
+                <h4 className="geo-card-title">
+                  <ShieldCheck size={16} color="#059669" />
+                  Verification & Audit Provenance
+                </h4>
+                <div className="geo-key-value-list">
+                  <div className="geo-kv-row">
+                    <span className="geo-kv-label">Verification Status:</span>
+                    <span>
+                      {activeGeo.is_verified ? (
+                        <span className="geo-badge-verified"><CheckCircle2 size={12} /> Verified Authoritative</span>
+                      ) : (
+                        <span className="geo-badge-unverified"><AlertTriangle size={12} /> Pending Document Review</span>
+                      )}
+                    </span>
+                  </div>
+                  <div className="geo-kv-row">
+                    <span className="geo-kv-label">Verification Source:</span>
+                    <span className="geo-kv-val">{activeGeo.verification_source || 'CMS_PROVIDER_ENROLLMENT_855A'}</span>
+                  </div>
+                  <div className="geo-kv-row">
+                    <span className="geo-kv-label">Applied Wage Index:</span>
+                    <span className="geo-kv-val" style={{ color: '#2563eb', fontWeight: 700 }}>
+                      {parseFloat(activeGeo.wage_index || 0.9412).toFixed(4)}
+                    </span>
+                  </div>
+                  <div className="geo-kv-row">
+                    <span className="geo-kv-label">Document Reference:</span>
+                    <span>
+                      {activeGeo.verification_document_url ? (
+                        <a href={activeGeo.verification_document_url} target="_blank" rel="noreferrer" style={{ color: '#2563eb', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem', fontWeight: 600 }}>
+                          Tie-In Notice <ExternalLink size={12} />
+                        </a>
+                      ) : (
+                        <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>None attached</span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Historical Assignments Timeline */}
+            {geoHistory.length > 1 && (
+              <div style={{ marginTop: '0.5rem' }}>
+                <h5 style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Effective-Dated Assignment History
+                </h5>
+                <div className="medicare-table-container">
+                  <table className="medicare-table">
+                    <thead>
+                      <tr>
+                        <th>Effective Start</th>
+                        <th>Effective End</th>
+                        <th>CBSA Code & Title</th>
+                        <th>Provider CCN</th>
+                        <th>Verification</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {geoHistory.map(h => (
+                        <tr key={h.id || h.effective_start_date}>
+                          <td style={{ fontWeight: 600 }}>{h.effective_start_date}</td>
+                          <td>{h.effective_end_date || 'Current'}</td>
+                          <td>{h.cbsa_code} — {h.cbsa_name}</td>
+                          <td style={{ fontFamily: 'monospace' }}>{h.medicare_provider_number}</td>
+                          <td>
+                            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{h.verification_source}</span>
+                          </td>
+                          <td>
+                            {h.is_active ? (
+                              <span className="pi-badge pi-badge-device">Active</span>
+                            ) : (
+                              <span className="pi-badge pi-badge-packaged">Superseded</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Interactive 50/50 Geographic Calculation Simulator */}
+          <div className="medicare-calc-card" style={{ background: '#ffffff', borderColor: '#cbd5e1' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+              <div>
+                <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.15rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Calculator size={18} color="#2563eb" />
+                  Statutory 50/50 ASC Wage Adjustment Simulator (42 CFR § 416.171)
+                </h3>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                  Simulates statutory Medicare ASC wage adjustment with device offset carve-out and quality penalty factors.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div className="geo-form-group">
+                <label className="geo-form-label">Procedure Code (CPT/HCPCS):</label>
+                <select
+                  className="geo-form-select"
+                  value={simCpt}
+                  onChange={(e) => {
+                    const code = e.target.value;
+                    setSimCpt(code);
+                    if (code === '29881') {
+                      setSimNatRate(1650.00);
+                      setSimIsDev(false);
+                      setSimDevPct(0);
+                    } else if (code === '28465') {
+                      setSimNatRate(4671.46);
+                      setSimIsDev(true);
+                      setSimDevPct(0.35);
+                    } else if (code === '45378') {
+                      setSimNatRate(435.50);
+                      setSimIsDev(false);
+                      setSimDevPct(0);
+                    } else if (code === 'K2_ASP') {
+                      setSimNatRate(500.00);
+                      setSimIsDev(false);
+                      setSimDevPct(0);
+                    } else if (code === 'N1_PKG') {
+                      setSimNatRate(0.00);
+                      setSimIsDev(false);
+                      setSimDevPct(0);
+                    }
+                  }}
+                >
+                  <option value="29881">29881 — Knee Arthroscopy ($1,650.00)</option>
+                  <option value="28465">28465 — Tarsal Fracture Repair ($4,671.46 - J8 Device)</option>
+                  <option value="45378">45378 — Diagnostic Colonoscopy ($435.50)</option>
+                  <option value="K2_ASP">J0135 — Adalimumab Injection (K2 Drug - $500.00)</option>
+                  <option value="N1_PKG">11042 — Packaged Sub-procedure (N1 - $0.00)</option>
+                </select>
+              </div>
+
+              <div className="geo-form-group">
+                <label className="geo-form-label">Target CBSA Wage Index:</label>
+                <select
+                  className="geo-form-select"
+                  value={simCbsa}
+                  onChange={(e) => setSimCbsa(e.target.value)}
+                >
+                  {wageIndices.slice(0, 30).map(w => (
+                    <option key={w.cbsa_code} value={w.cbsa_code}>
+                      {w.cbsa_code} — {w.cbsa_name.split(',')[0]} ({parseFloat(w.wage_index).toFixed(4)})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="geo-form-group">
+                <label className="geo-form-label">National Unadjusted Rate ($):</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="geo-form-input"
+                  value={simNatRate}
+                  onChange={(e) => setSimNatRate(parseFloat(e.target.value) || 0)}
+                />
+              </div>
+
+              <div className="geo-form-group">
+                <label className="geo-form-label">ASCQR Compliance:</label>
+                <select
+                  className="geo-form-select"
+                  value={simAscqr ? 'compliant' : 'non_compliant'}
+                  onChange={(e) => setSimAscqr(e.target.value === 'compliant')}
+                >
+                  <option value="compliant">Compliant (Full Statutory Rate)</option>
+                  <option value="non_compliant">Non-Compliant (-2.0% Reduction Factor)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Live Calculation Step-by-Step Display */}
+            {simResult && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
+                <div className="geo-step-box">
+                  <span className="geo-step-title">1. National Base</span>
+                  <span className="geo-step-value">${simResult.nationalUnadjustedRate.toFixed(2)}</span>
+                  <span className="geo-step-note">Unadjusted Baseline</span>
+                </div>
+                <div className="geo-step-box">
+                  <span className="geo-step-title">2. Device Offset</span>
+                  <span className="geo-step-value" style={{ color: simResult.deviceOffsetAmount > 0 ? '#d97706' : '#64748b' }}>
+                    ${simResult.deviceOffsetAmount.toFixed(2)}
+                  </span>
+                  <span className="geo-step-note">{simResult.isDeviceIntensive ? '100% Wage Protected' : 'No implant offset'}</span>
+                </div>
+                <div className="geo-step-box">
+                  <span className="geo-step-title">3. Net Service Share</span>
+                  <span className="geo-step-value">${simResult.servicePortionUnadjusted.toFixed(2)}</span>
+                  <span className="geo-step-note">Subject to 50/50 Math</span>
+                </div>
+                <div className="geo-step-box">
+                  <span className="geo-step-title">4. Adjusted Service</span>
+                  <span className="geo-step-value" style={{ color: '#2563eb' }}>${simResult.servicePortionAdjusted.toFixed(2)}</span>
+                  <span className="geo-step-note">Labor + Non-Labor</span>
+                </div>
+                <div className="geo-step-box" style={{ background: '#f8fafc', borderColor: '#2563eb' }}>
+                  <span className="geo-step-title" style={{ color: '#2563eb' }}>Final Facility Rate</span>
+                  <span className="geo-step-value" style={{ color: '#059669', fontSize: '1.35rem' }}>
+                    ${simResult.allowableRate.toFixed(2)}
+                  </span>
+                  <span className="geo-step-note" style={{ color: simResult.dollarVariance >= 0 ? '#059669' : '#dc2626', fontWeight: 600 }}>
+                    {simResult.dollarVariance >= 0 ? `+$${simResult.dollarVariance.toFixed(2)}` : `-$${Math.abs(simResult.dollarVariance).toFixed(2)}`} ({simResult.percentageVariance}%)
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {simResult && (
+              <div style={{ fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic', background: '#f8fafc', padding: '0.5rem 0.75rem', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                <strong>Statutory Trace:</strong> {simResult.formulaDescription}
+              </div>
+            )}
+          </div>
+
+          {/* National CBSA Wage Index Table */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div>
+                <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.1rem', color: '#0f172a' }}>
+                  National CBSA Wage Index Catalog (CY 2026)
+                </h3>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                  Official CMS-1823-FC wage indices across all Core Based Statistical Areas.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <div style={{ position: 'relative', minWidth: '220px' }}>
+                  <Search size={14} style={{ position: 'absolute', left: '10px', top: '10px', color: '#94a3b8' }} />
+                  <input
+                    type="text"
+                    className="geo-form-input"
+                    style={{ paddingLeft: '32px' }}
+                    placeholder="Search code, city, state..."
+                    value={cbsaSearch}
+                    onChange={(e) => {
+                      setCbsaSearch(e.target.value);
+                      setCbsaPage(1);
+                    }}
+                  />
+                </div>
+
+                <select
+                  className="geo-form-select"
+                  value={cbsaStateFilter}
+                  onChange={(e) => {
+                    setCbsaStateFilter(e.target.value);
+                    setCbsaPage(1);
+                  }}
+                >
+                  <option value="All">All States</option>
+                  <option value="FL">Florida (FL)</option>
+                  <option value="CA">California (CA)</option>
+                  <option value="NY">New York (NY)</option>
+                  <option value="TX">Texas (TX)</option>
+                  <option value="IL">Illinois (IL)</option>
+                  <option value="GA">Georgia (GA)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="medicare-table-container">
+              <table className="medicare-table">
+                <thead>
+                  <tr>
+                    <th>CBSA Code</th>
+                    <th>Core Based Statistical Area Name</th>
+                    <th>State</th>
+                    <th style={{ textAlign: 'right' }}>Wage Index</th>
+                    <th>Pre-Floor</th>
+                    <th>Rural Floor</th>
+                    <th>Reclassified</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedCBSAs.map((w) => (
+                    <tr key={w.cbsa_code}>
+                      <td style={{ fontFamily: 'monospace', fontWeight: 700 }}>{w.cbsa_code}</td>
+                      <td>{w.cbsa_name}</td>
+                      <td>{w.state_code}</td>
+                      <td className="currency-cell" style={{ fontWeight: 700, color: '#2563eb' }}>
+                        {parseFloat(w.wage_index).toFixed(4)}
+                      </td>
+                      <td style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                        {parseFloat(w.pre_floor_wage_index || w.wage_index).toFixed(4)}
+                      </td>
+                      <td>
+                        {w.is_rural_floor ? (
+                          <span className="pi-badge pi-badge-device">Rural Floor</span>
+                        ) : (
+                          <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>No</span>
+                        )}
+                      </td>
+                      <td>
+                        {w.is_reclassified ? (
+                          <span className="pi-badge pi-badge-ancillary">Reclassified</span>
+                        ) : (
+                          <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Standard</span>
+                        )}
+                      </td>
+                      <td>
+                        {w.cbsa_code === activeGeo.cbsa_code ? (
+                          <span className="pi-badge pi-badge-device">Active Facility CBSA</span>
+                        ) : (
+                          <span className="pi-badge pi-badge-standard">Reference</span>
+                        )}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.35rem' }}>
+                          <button
+                            type="button"
+                            className="geo-btn-secondary"
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                            onClick={() => handleSelectCbsa(w)}
+                          >
+                            <Eye size={12} /> Counties
+                          </button>
+                          <button
+                            type="button"
+                            className="geo-btn-secondary"
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', color: '#2563eb', borderColor: '#bfdbfe' }}
+                            onClick={() => {
+                              setSimCbsa(w.cbsa_code);
+                              window.scrollTo({ top: 400, behavior: 'smooth' });
+                            }}
+                          >
+                            Simulate
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* CBSA Pagination Bar */}
+            <div className="medicare-pagination">
+              <span className="medicare-pagination-info">
+                Showing <strong>{(cbsaPage - 1) * cbsaPageSize + 1}</strong> to <strong>{Math.min(cbsaPage * cbsaPageSize, filteredCBSAs.length)}</strong> of <strong>{filteredCBSAs.length}</strong> CBSAs
+              </span>
+              <div className="medicare-pagination-btns">
+                <button
+                  type="button"
+                  className="medicare-page-btn"
+                  disabled={cbsaPage <= 1}
+                  onClick={() => setCbsaPage(prev => Math.max(1, prev - 1))}
+                >
+                  Previous
+                </button>
+                <span className="medicare-page-current">Page {cbsaPage} of {totalCbsaPages}</span>
+                <button
+                  type="button"
+                  className="medicare-page-btn"
+                  disabled={cbsaPage >= totalCbsaPages}
+                  onClick={() => setCbsaPage(prev => Math.min(totalCbsaPages, prev + 1))}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* OMB Bulletin 23-01 County Crosswalk Quick Lookup */}
+          <div className="geo-card" style={{ background: '#ffffff', borderColor: '#cbd5e1' }}>
+            <h4 className="geo-card-title">
+              <Search size={16} color="#2563eb" />
+              OMB County-to-CBSA Crosswalk Lookup (OMB Bulletin No. 23-01)
+            </h4>
+            <p className="geo-desc">
+              Search any US county or 5-digit FIPS code to verify official Medicare Core Based Statistical Area assignment.
+            </p>
+            <div style={{ maxWidth: '400px' }}>
+              <input
+                type="text"
+                className="geo-form-input"
+                style={{ width: '100%' }}
+                placeholder="Type county name or FIPS (e.g. Collier, 12021, Miami-Dade)..."
+                value={countySearch}
+                onChange={(e) => handleCountySearch(e.target.value)}
+              />
+            </div>
+
+            {countySearchResults.length > 0 && (
+              <div className="medicare-table-container">
+                <table className="medicare-table">
+                  <thead>
+                    <tr>
+                      <th>County FIPS</th>
+                      <th>County Name</th>
+                      <th>State</th>
+                      <th>Resolved CBSA Code</th>
+                      <th>CBSA Metropolitan Title</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {countySearchResults.map((c) => (
+                      <tr key={c.fips_county_code}>
+                        <td style={{ fontFamily: 'monospace', fontWeight: 700 }}>{c.fips_county_code}</td>
+                        <td style={{ fontWeight: 600 }}>{c.county_name}</td>
+                        <td>{c.state_code}</td>
+                        <td style={{ fontFamily: 'monospace', fontWeight: 700, color: '#2563eb' }}>{c.cbsa_code}</td>
+                        <td>{c.cbsa_title}</td>
+                        <td>
+                          <button
+                            type="button"
+                            className="geo-btn-secondary"
+                            style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
+                            onClick={() => {
+                              setSimCbsa(c.cbsa_code);
+                              window.scrollTo({ top: 400, behavior: 'smooth' });
+                            }}
+                          >
+                            Use in Simulator
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Selected CBSA Counties Drill-Down Drawer */}
+            {selectedCbsa && (
+              <div style={{ marginTop: '1rem', padding: '1rem', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <h5 style={{ margin: 0, fontSize: '0.9rem', color: '#0f172a' }}>
+                    Counties delineated in CBSA {selectedCbsa.cbsa_code} ({selectedCbsa.cbsa_name})
+                  </h5>
+                  <button
+                    type="button"
+                    className="geo-modal-close"
+                    onClick={() => setSelectedCbsa(null)}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+                {selectedCounties.length > 0 ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    {selectedCounties.map(cty => (
+                      <span
+                        key={cty.fips_county_code}
+                        style={{
+                          background: '#ffffff',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '4px',
+                          padding: '0.35rem 0.65rem',
+                          fontSize: '0.8rem',
+                          color: '#334155'
+                        }}
+                      >
+                        <strong>{cty.county_name}</strong> ({cty.fips_county_code}) — {cty.metropolitan_flag}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                    Standard OMB single-county delineation for {selectedCbsa.cbsa_name}.
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Update Assignment Modal */}
+          {isAssignmentModalOpen && (
+            <div className="geo-modal-backdrop">
+              <div className="geo-modal-container">
+                <div className="geo-modal-header">
+                  <h3>
+                    <MapPin size={20} color="#2563eb" />
+                    Update Facility Medicare Geographic Assignment
+                  </h3>
+                  <button
+                    type="button"
+                    className="geo-modal-close"
+                    onClick={() => setIsAssignmentModalOpen(false)}
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveAssignment} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div className="geo-form-group">
+                    <label className="geo-form-label">Core Based Statistical Area (CBSA):</label>
+                    <select
+                      className="geo-form-select"
+                      value={assignmentForm.cbsa_code}
+                      onChange={(e) => {
+                        const code = e.target.value;
+                        const match = wageIndices.find(w => w.cbsa_code === code);
+                        setAssignmentForm(prev => ({
+                          ...prev,
+                          cbsa_code: code,
+                          cbsa_name: match ? match.cbsa_name : prev.cbsa_name,
+                          state_code: match ? match.state_code : prev.state_code
+                        }));
+                      }}
+                      required
+                    >
+                      {wageIndices.map(w => (
+                        <option key={w.cbsa_code} value={w.cbsa_code}>
+                          {w.cbsa_code} — {w.cbsa_name} ({parseFloat(w.wage_index).toFixed(4)})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="geo-form-group">
+                    <label className="geo-form-label">CMS Certification Number (CCN / Provider Number):</label>
+                    <input
+                      type="text"
+                      className="geo-form-input"
+                      value={assignmentForm.medicare_provider_number}
+                      onChange={(e) => setAssignmentForm(prev => ({ ...prev, medicare_provider_number: e.target.value }))}
+                      required
+                      placeholder="e.g. 10-ASC02"
+                    />
+                  </div>
+
+                  <div className="geo-form-group">
+                    <label className="geo-form-label">Effective Start Date:</label>
+                    <input
+                      type="date"
+                      className="geo-form-input"
+                      value={assignmentForm.effective_start_date}
+                      onChange={(e) => setAssignmentForm(prev => ({ ...prev, effective_start_date: e.target.value }))}
+                      required
+                    />
+                  </div>
+
+                  <div className="geo-form-group">
+                    <label className="geo-form-label">Verification Documentation Source:</label>
+                    <select
+                      className="geo-form-select"
+                      value={assignmentForm.verification_source}
+                      onChange={(e) => setAssignmentForm(prev => ({ ...prev, verification_source: e.target.value }))}
+                    >
+                      {CBSA_VERIFICATION_SOURCES.map(src => (
+                        <option key={src.id} value={src.id}>{src.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="geo-form-group">
+                    <label className="geo-form-label">Verification Document URL / Link:</label>
+                    <input
+                      type="url"
+                      className="geo-form-input"
+                      value={assignmentForm.verification_document_url}
+                      onChange={(e) => setAssignmentForm(prev => ({ ...prev, verification_document_url: e.target.value }))}
+                      placeholder="https://medicare.gov/provider/10-ASC02-tie-in.pdf"
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
+                    <input
+                      type="checkbox"
+                      id="geo_ascqr"
+                      checked={assignmentForm.ascqr_compliant}
+                      onChange={(e) => setAssignmentForm(prev => ({ ...prev, ascqr_compliant: e.target.checked }))}
+                    />
+                    <label htmlFor="geo_ascqr" style={{ fontSize: '0.85rem', color: '#0f172a', fontWeight: 600 }}>
+                      Facility is ASCQR Quality Compliant (No 2.0% statutory rate penalty)
+                    </label>
+                  </div>
+
+                  <div className="geo-form-actions">
+                    <button
+                      type="button"
+                      className="geo-btn-secondary"
+                      onClick={() => setIsAssignmentModalOpen(false)}
+                      disabled={assignmentSaving}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="geo-btn-primary"
+                      disabled={assignmentSaving}
+                    >
+                      {assignmentSaving ? 'Auditing & Saving...' : 'Save & Enforce CBSA Assignment'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

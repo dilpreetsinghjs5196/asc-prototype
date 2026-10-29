@@ -81,6 +81,26 @@ export const PERMISSIONS_CATALOG = [
   { code: 'medicare_rates.export', category: 'reports', name: 'Export Medicare Rate Schedules', risk_level: 'sensitive' },
   { code: 'medicare_rates.audit', category: 'reports', name: 'View Rate Calculation & Provenance Audit Logs', risk_level: 'standard' },
 
+  // Geographic Wage Adjustment (Domain: billing / finance / tenancy / reports)
+  { code: 'geographic.view_rates', category: 'billing', name: 'View Published CBSA Wage Index Schedules', risk_level: 'standard' },
+  { code: 'geographic.view_facility_settings', category: 'tenancy', name: 'View Facility Geographic CBSA Settings', risk_level: 'standard' },
+  { code: 'geographic.edit_facility_assignment', category: 'tenancy', name: 'Create/Update Facility CBSA Geographic Assignment', risk_level: 'sensitive' },
+  { code: 'geographic.verify_assignment', category: 'tenancy', name: 'Approve & Verify Facility CBSA Assignment with CMS Documentation', risk_level: 'critical' },
+  { code: 'geographic.import_wage_index_table', category: 'billing', name: 'Upload & Stage CMS National Wage Index Tables', risk_level: 'sensitive' },
+  { code: 'geographic.publish_wage_release', category: 'billing', name: 'Publish Approved Annual Wage Index Release', risk_level: 'critical' },
+  { code: 'geographic.override_calculation', category: 'finance', name: 'Override Wage Index Calculation in Test Workbench', risk_level: 'sensitive' },
+  { code: 'geographic.audit_export', category: 'reports', name: 'Export Facility Geographic Compliance & Wage Index Audit Logs', risk_level: 'standard' },
+
+  // Medicare Base Rate Engine (Domain: billing / finance)
+  { code: 'medicare_rates.view', category: 'billing', name: 'View Published Medicare Base Rates', risk_level: 'standard' },
+  { code: 'medicare_rates.import', category: 'billing', name: 'Upload & Stage Medicare Rate Addenda', risk_level: 'sensitive' },
+  { code: 'medicare_rates.validate', category: 'billing', name: 'Validate Staged Rate Batches & Diff Analysis', risk_level: 'standard' },
+  { code: 'medicare_rates.approve', category: 'finance', name: 'Approve Medicare Rate Release for Publication', risk_level: 'critical' },
+  { code: 'medicare_rates.publish', category: 'billing', name: 'Publish Approved Medicare Rate Release', risk_level: 'critical' },
+  { code: 'medicare_rates.calculate', category: 'billing', name: 'Execute Authoritative Baseline Rate Resolution', risk_level: 'standard' },
+  { code: 'medicare_rates.export', category: 'reports', name: 'Export Medicare Rate Schedules', risk_level: 'sensitive' },
+  { code: 'medicare_rates.audit', category: 'reports', name: 'View Rate Calculation & Provenance Audit Logs', risk_level: 'standard' },
+
   // Claims & Scrubbing (Domain: billing)
   { code: 'claims.view_scrub', category: 'billing', name: 'View Claim Scrub Findings', risk_level: 'standard' },
   { code: 'claims.run_scrubber', category: 'billing', name: 'Execute Claim Scrubbing Engine', risk_level: 'standard' },
@@ -254,7 +274,8 @@ export const rbacService = {
         'implants.view_catalog', 'implants.view_costs', 'implants.log_usage',
         'implants.approve_invoice', 'implants.view_variance',
         'reports.export_volume', 'reports.export_margins',
-        'ai.run_insights', 'audit.view_financial'
+        'ai.run_insights', 'audit.view_financial',
+        'geographic.view_rates', 'geographic.view_facility_settings', 'geographic.edit_facility_assignment', 'geographic.audit_export'
       ];
     }
     if (roleSlug === 'coder') {
@@ -266,7 +287,8 @@ export const rbacService = {
         'billing.view_completeness',
         'claims.view_scrub', 'claims.run_scrubber', 'claims.apply_edits',
         'implants.view_catalog', 'implants.log_usage',
-        'reports.export_volume', 'ai.run_insights'
+        'reports.export_volume', 'ai.run_insights',
+        'geographic.view_rates', 'geographic.view_facility_settings'
       ];
     }
     if (roleSlug === 'surgeon') {
