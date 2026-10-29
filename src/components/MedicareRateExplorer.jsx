@@ -5,7 +5,11 @@ import {
   FileText,
   Building,
   RefreshCw,
-  Calculator
+  Calculator,
+  ShieldCheck,
+  AlertOctagon,
+  CheckCircle2,
+  ArrowRight
 } from 'lucide-react';
 import { medicareRateService, DEFAULT_CBSA } from '../lib/medicareRateService';
 import './MedicareRateExplorer.css';
@@ -32,19 +36,30 @@ export default function MedicareRateExplorer({ activeFacility }) {
   const [calcResult, setCalcResult] = useState(null);
   const [calcLoading, setCalcLoading] = useState(false);
 
+  // Phase 61: Payment Indicators & Claim Rules State
+  const [indicatorDefs, setIndicatorDefs] = useState([]);
+  const [claimRules, setClaimRules] = useState([]);
+  const [testPiCode, setTestPiCode] = useState('29881');
+  const [testPiResult, setTestPiResult] = useState(null);
+  const [testPiLoading, setTestPiLoading] = useState(false);
+
   // Load facility settings, CBSA indices, and CMS releases
   const loadMetadata = useCallback(async () => {
     try {
       const facId = activeFacility?.id || '00000000-0000-0000-0000-000000000002';
-      const [facSettings, indices, rels] = await Promise.all([
+      const [facSettings, indices, rels, defs, rules] = await Promise.all([
         medicareRateService.getFacilityMedicareSettings(facId),
         medicareRateService.getWageIndices(2026),
-        medicareRateService.getReleases()
+        medicareRateService.getReleases(),
+        medicareRateService.getIndicatorDefinitions(2026),
+        medicareRateService.getIndicatorClaimRules()
       ]);
 
       setCbsaSettings(facSettings || DEFAULT_CBSA);
       setWageIndices(indices || []);
       setReleases(rels || []);
+      setIndicatorDefs(defs || []);
+      setClaimRules(rules || []);
     } catch (err) {
       console.error('Error loading Medicare metadata:', err);
     }
@@ -82,6 +97,20 @@ export default function MedicareRateExplorer({ activeFacility }) {
     }, 250);
     return () => clearTimeout(timer);
   }, [searchTerm, page, pageSize, piFilter, versionFilter, fetchRates]);
+
+  const handleTestIndicator = async (e) => {
+    e?.preventDefault();
+    if (!testPiCode.trim()) return;
+    setTestPiLoading(true);
+    try {
+      const res = await medicareRateService.interpretIndicator(testPiCode.trim());
+      setTestPiResult(res);
+    } catch (err) {
+      console.error('Error interpreting payment indicator:', err);
+    } finally {
+      setTestPiLoading(false);
+    }
+  };
 
   const handleRunCalculation = async (e) => {
     e?.preventDefault();
@@ -197,6 +226,13 @@ export default function MedicareRateExplorer({ activeFacility }) {
         >
           <RefreshCw size={16} />
           CMS Releases & Transmittals
+        </button>
+        <button
+          className={`medicare-tab-btn ${activeTab === 'indicators' ? 'active' : ''}`}
+          onClick={() => setActiveTab('indicators')}
+        >
+          <ShieldCheck size={16} />
+          Payment Indicators & Rules
         </button>
       </div>
 
@@ -604,6 +640,264 @@ export default function MedicareRateExplorer({ activeFacility }) {
           </table>
         </div>
       )}
+
+      {/* Tab 5: Payment Indicators & Claim Rules (Phase 61) */}
+      {activeTab === 'indicators' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Hero Indicator KPI Summary */}
+          <div className="medicare-stats-grid">
+            <div className="medicare-stat-card">
+              <span className="medicare-stat-label">Statutory Indicators</span>
+              <strong className="medicare-stat-value" style={{ color: '#2563eb' }}>
+                {indicatorDefs.length || 12} Indicators
+              </strong>
+              <span className="medicare-stat-sub">Addenda AA, BB & EE (CY 2026)</span>
+            </div>
+            <div className="medicare-stat-card">
+              <span className="medicare-stat-label">Pre-Bill Claim Rules</span>
+              <strong className="medicare-stat-value" style={{ color: '#059669' }}>
+                {claimRules.length || 5} Active Rules
+              </strong>
+              <span className="medicare-stat-sub">SCRUB-20 to SCRUB-24 Active</span>
+            </div>
+            <div className="medicare-stat-card">
+              <span className="medicare-stat-label">Inpatient-Only (IPO) Rule</span>
+              <strong className="medicare-stat-value" style={{ color: '#dc2626' }}>
+                Indicator C Hard Block
+              </strong>
+              <span className="medicare-stat-sub">42 CFR § 416.166 Fail-Closed</span>
+            </div>
+            <div className="medicare-stat-card">
+              <span className="medicare-stat-label">Device Offset Protection</span>
+              <strong className="medicare-stat-value" style={{ color: '#d97706' }}>
+                Indicator J8 Protected
+              </strong>
+              <span className="medicare-stat-sub">Implant portion exempt from wage index</span>
+            </div>
+          </div>
+
+          {/* Interactive Live Indicator Interpreter Workbench */}
+          <div className="medicare-calc-card" style={{ background: '#ffffff', borderColor: '#cbd5e1' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div>
+                <h3 style={{ margin: '0 0 0.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.15rem' }}>
+                  <ShieldCheck size={20} color="#2563eb" />
+                  Live Payment Indicator & Scrub Rule Interpreter
+                </h3>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                  Queries authoritative RPC <code>fn_interpret_cms_indicator</code> in real time with fail-closed safety.
+                </p>
+              </div>
+              {/* Quick Code Test Chips */}
+              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="medicare-tab-btn"
+                  style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem', background: '#f1f5f9', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                  onClick={() => { setTestPiCode('29881'); }}
+                >
+                  29881 (A2)
+                </button>
+                <button
+                  type="button"
+                  className="medicare-tab-btn"
+                  style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem', background: '#f1f5f9', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                  onClick={() => { setTestPiCode('28465'); }}
+                >
+                  28465 (J8)
+                </button>
+                <button
+                  type="button"
+                  className="medicare-tab-btn"
+                  style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem', background: '#f1f5f9', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                  onClick={() => { setTestPiCode('12001'); }}
+                >
+                  12001 (N1)
+                </button>
+                <button
+                  type="button"
+                  className="medicare-tab-btn"
+                  style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem', background: '#fee2e2', color: '#991b1b', borderRadius: '4px', border: '1px solid #fecaca' }}
+                  onClick={() => { setTestPiCode('99999'); }}
+                >
+                  99999 (Unlisted)
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleTestIndicator} style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                placeholder="Enter CPT/HCPCS code (e.g. 29881, 28465, 0101T, 99999)..."
+                value={testPiCode}
+                onChange={(e) => setTestPiCode(e.target.value.toUpperCase())}
+                className="medicare-calc-input"
+                style={{ flex: 1, minWidth: '220px' }}
+              />
+              <button type="submit" disabled={testPiLoading} className="medicare-calc-btn">
+                {testPiLoading ? 'Interpreting...' : 'Interpret Indicator (Live RPC)'}
+              </button>
+            </form>
+
+            {testPiResult && (
+              <div style={{ marginTop: '1rem', borderTop: '1px solid #e2e8f0', paddingTop: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                  <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>CPT / HCPCS Code</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', fontFamily: 'monospace' }}>{testPiResult.code}</div>
+                    <div style={{ fontSize: '0.8rem', color: '#475569' }}>{testPiResult.short_name}</div>
+                  </div>
+
+                  <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Payment Indicator</div>
+                    <div style={{ marginTop: '0.25rem' }}>{renderBadge(testPiResult.indicator_code)}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>Addendum: {testPiResult.addendum_source || 'AA'}</div>
+                  </div>
+
+                  <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Coverage & Methodology</div>
+                    <div style={{ fontWeight: 600, fontSize: '0.85rem', color: testPiResult.is_covered ? '#059669' : '#dc2626' }}>
+                      {testPiResult.coverage_category}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{testPiResult.payment_methodology}</div>
+                  </div>
+
+                  <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Pre-Bill Claim Action</div>
+                    <div style={{ marginTop: '0.25rem' }}>
+                      {testPiResult.claim_scrub_action === 'BLOCK_FATAL' ? (
+                        <span className="pi-badge pi-badge-unresolved" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <AlertOctagon size={12} /> FATAL CLAIM BLOCK
+                        </span>
+                      ) : testPiResult.claim_scrub_action === 'CHECK_DEVICE' ? (
+                        <span className="pi-badge pi-badge-device" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <CheckCircle2 size={12} /> CHECK DEVICE C-CODE
+                        </span>
+                      ) : testPiResult.claim_scrub_action === 'BUNDLE_APC' ? (
+                        <span className="pi-badge pi-badge-packaged" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          PACKAGED APC
+                        </span>
+                      ) : (
+                        <span className="pi-badge pi-badge-standard" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <CheckCircle2 size={12} /> ALLOW CLAIM LINE
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>Rule: {testPiResult.scrub_rule_code}</div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: '#f1f5f9', borderRadius: '4px', fontSize: '0.78rem', color: '#475569', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span><strong>Statutory Citation:</strong> {testPiResult.statutory_citation || '42 CFR 416.166'} • <strong>Release:</strong> {testPiResult.release_label}</span>
+                  {testPiResult.is_covered && (
+                    <button
+                      type="button"
+                      style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                      onClick={() => {
+                        setCalcCode(testPiResult.code);
+                        setActiveTab('calculator');
+                      }}
+                    >
+                      Open in Rate Resolver <ArrowRight size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Statutory Indicator Directory Table */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>CMS Payment Indicator Reference Catalog</h3>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+              Statutory ASC payment methodology rules established under 42 CFR § 416.166 and Addenda AA, BB & EE.
+            </p>
+            <div className="medicare-table-container">
+              <table className="medicare-table">
+                <thead>
+                  <tr>
+                    <th>Indicator</th>
+                    <th>Short Description</th>
+                    <th>Addendum</th>
+                    <th>Coverage Category</th>
+                    <th>Payment Methodology</th>
+                    <th>MPPR</th>
+                    <th>Device Intensive</th>
+                    <th>Catalog Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {indicatorDefs.map((d) => (
+                    <tr key={d.indicator_code}>
+                      <td>{renderBadge(d.indicator_code)}</td>
+                      <td style={{ fontWeight: 600 }}>{d.short_name}</td>
+                      <td>Addendum {d.addendum_source}</td>
+                      <td>
+                        <span style={{ color: d.coverage_category === 'Covered_Surgical' ? '#059669' : d.coverage_category === 'Inpatient_Only' ? '#dc2626' : '#475569', fontWeight: 600 }}>
+                          {d.coverage_category}
+                        </span>
+                      </td>
+                      <td style={{ fontSize: '0.85rem' }}>{d.payment_methodology}</td>
+                      <td>{d.is_mppr_eligible ? 'Yes (50%)' : 'Exempt'}</td>
+                      <td>{d.is_device_intensive ? 'Yes (Offset Protected)' : 'No'}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className="medicare-tab-btn"
+                          style={{ padding: '0.25rem 0.6rem', fontSize: '0.78rem', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: '4px' }}
+                          onClick={() => {
+                            setPiFilter(d.indicator_code);
+                            setActiveTab('addenda');
+                          }}
+                        >
+                          Filter Catalog
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Pre-Bill Claim Scrubbing Rules Engine Table */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>Pre-Bill Claim Scrubbing Rules Engine</h3>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+              Automated compliance validators deployed in Migration 037 enforcing statutory CMS billing constraints.
+            </p>
+            <div className="medicare-table-container">
+              <table className="medicare-table">
+                <thead>
+                  <tr>
+                    <th>Rule ID</th>
+                    <th>Indicator</th>
+                    <th>Severity</th>
+                    <th>Rule Description</th>
+                    <th>Remediation Guidance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {claimRules.map((cr) => (
+                    <tr key={cr.rule_identifier}>
+                      <td style={{ fontFamily: 'monospace', fontWeight: 700, color: '#2563eb' }}>{cr.rule_identifier}</td>
+                      <td>{renderBadge(cr.indicator_code)}</td>
+                      <td>
+                        <span className={cr.severity === 'FATAL' ? 'pi-badge pi-badge-unresolved' : 'pi-badge pi-badge-ancillary'}>
+                          {cr.severity}
+                        </span>
+                      </td>
+                      <td style={{ fontSize: '0.85rem', fontWeight: 600 }}>{cr.rule_description}</td>
+                      <td style={{ fontSize: '0.82rem', color: '#475569' }}>{cr.remediation_guidance}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

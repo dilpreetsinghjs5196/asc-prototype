@@ -483,10 +483,10 @@ const SurgeryScheduler = ({
                         code: p.cpt_codes?.code || p.cpt_code || '',
                         cpt_code_id: p.cpt_code_id,
                         procedure_description: p.procedure_description || p.cpt_codes?.description || '',
-                        payment_indicator: p.cpt_codes?.payment_indicator || (['A2', 'G2', 'J8', 'N1', 'P3', 'P2', 'R2'].includes(p.cpt_codes?.procedure_indicator) ? p.cpt_codes?.procedure_indicator : 'A2'),
+                        payment_indicator: p.cpt_codes?.payment_indicator || (['A2', 'G2', 'J8', 'N1', 'P3', 'P2', 'R2', 'Z2', 'K2', 'C', 'E5'].includes(p.cpt_codes?.procedure_indicator) ? p.cpt_codes?.procedure_indicator : (p.cpt_codes ? 'A2' : 'N/A')),
                         is_device_intensive: Boolean(p.cpt_codes?.is_device_intensive || p.cpt_codes?.payment_indicator === 'J8' || p.cpt_codes?.procedure_indicator === 'J8'),
                         device_offset_amount: parseFloat(p.cpt_codes?.device_offset_amount || 0),
-                        coverage_status: p.cpt_codes?.coverage_status || (p.cpt_codes?.payment_indicator === 'N1' ? 'Packaged' : 'Covered_Surgical'),
+                        coverage_status: p.cpt_codes?.coverage_status || (p.cpt_codes?.payment_indicator === 'C' ? 'Inpatient_Only' : (p.cpt_codes?.payment_indicator === 'E5' ? 'Non_Covered' : (p.cpt_codes?.payment_indicator === 'N1' ? 'Packaged' : 'Covered_Surgical'))),
                         units: Math.max(1, parseInt(p.units) || 1),
                         modifiers: Array.isArray(p.modifiers) ? p.modifiers : [],
                         laterality: p.laterality || 'NOT_APPLICABLE',
@@ -1225,7 +1225,7 @@ const SurgeryScheduler = ({
             if (action === 'add') {
                 newCodes.push(code);
                 const cpt = cptCodes.find(c => String(c.code) === String(code));
-                const pi = cpt?.payment_indicator || (['A2', 'G2', 'J8', 'N1', 'P3', 'P2', 'R2'].includes(cpt?.procedure_indicator) ? cpt?.procedure_indicator : 'A2');
+                const pi = cpt?.payment_indicator || (['A2', 'G2', 'J8', 'N1', 'P3', 'P2', 'R2', 'Z2', 'K2', 'C', 'E5'].includes(cpt?.procedure_indicator) ? cpt?.procedure_indicator : (cpt ? 'A2' : 'N/A'));
                 const isDev = pi === 'J8' || Boolean(cpt?.is_device_intensive);
                 const devPct = Number(cpt?.device_offset_percentage || (isDev ? 0.35 : 0));
                 const devAmt = Number(cpt?.device_offset_amount || (isDev ? Math.round(parseFloat(cpt?.reimbursement || 0) * devPct * 100) / 100 : 0));
@@ -1237,7 +1237,7 @@ const SurgeryScheduler = ({
                     payment_indicator: pi,
                     is_device_intensive: isDev,
                     device_offset_amount: devAmt,
-                    coverage_status: pi === 'N1' ? 'Packaged' : (pi === 'R2' ? 'Contractor_Priced' : 'Covered_Surgical'),
+                    coverage_status: pi === 'C' ? 'Inpatient_Only' : (pi === 'E5' ? 'Non_Covered' : (pi === 'N1' ? 'Packaged' : (pi === 'R2' ? 'Contractor_Priced' : 'Covered_Surgical'))),
                     units: 1,
                     modifiers: [],
                     laterality: 'NOT_APPLICABLE',

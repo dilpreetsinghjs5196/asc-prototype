@@ -481,6 +481,118 @@ export class MedicareRateService {
     }
     return [];
   }
+
+  /**
+   * Phase 61: Retrieves CMS Payment Indicator Definitions from Supabase.
+   */
+  async getIndicatorDefinitions(releaseYear = 2026) {
+    try {
+      if (db?.ensureAuthSession) await db.ensureAuthSession();
+      if (supabase && typeof supabase.from === 'function') {
+        const { data, error } = await supabase
+          .from('cms_payment_indicator_definitions')
+          .select('*, cms_asc_releases!inner(release_year)')
+          .eq('cms_asc_releases.release_year', releaseYear)
+          .order('indicator_code', { ascending: true });
+
+        if (!error && data && data.length > 0) return data;
+      }
+    } catch (err) {
+      console.warn('getIndicatorDefinitions fallback:', err?.message);
+    }
+
+    // Default fallback indicators
+    return [
+      { indicator_code: 'A2', short_name: 'Standard Covered Surgical', addendum_source: 'AA', coverage_category: 'Covered_Surgical', payment_methodology: 'OPPS_Relative_Weight', is_mppr_eligible: true, is_device_intensive: false, is_packaged: false, is_inpatient_only: false, statutory_citation: '42 CFR 416.166' },
+      { indicator_code: 'G2', short_name: 'Newer Covered Surgical', addendum_source: 'AA', coverage_category: 'Covered_Surgical', payment_methodology: 'OPPS_Relative_Weight', is_mppr_eligible: true, is_device_intensive: false, is_packaged: false, is_inpatient_only: false, statutory_citation: '42 CFR 416.166' },
+      { indicator_code: 'P2', short_name: 'Office-Based (OPPS Weight)', addendum_source: 'AA', coverage_category: 'Covered_Surgical', payment_methodology: 'OPPS_Relative_Weight', is_mppr_eligible: true, is_device_intensive: false, is_packaged: false, is_inpatient_only: false, statutory_citation: '42 CFR 416.171' },
+      { indicator_code: 'P3', short_name: 'Office-Based (MPFS PE RVU)', addendum_source: 'AA', coverage_category: 'Covered_Surgical', payment_methodology: 'MPFS_PE_RVU', is_mppr_eligible: true, is_device_intensive: false, is_packaged: false, is_inpatient_only: false, statutory_citation: '42 CFR 416.171' },
+      { indicator_code: 'J8', short_name: 'Device-Intensive Surgical', addendum_source: 'AA', coverage_category: 'Covered_Surgical', payment_methodology: 'Device_Intensive', is_mppr_eligible: true, is_device_intensive: true, is_packaged: false, requires_device_code: true, is_inpatient_only: false, default_device_offset: 0.35, statutory_citation: '42 CFR 416.171(b)(2)' },
+      { indicator_code: 'R2', short_name: 'Contractor-Priced Procedure', addendum_source: 'AA', coverage_category: 'Contractor_Priced', payment_methodology: 'Contractor_MAC', is_mppr_eligible: false, is_device_intensive: false, is_packaged: false, is_inpatient_only: false, statutory_citation: '42 CFR 416.166' },
+      { indicator_code: 'Z2', short_name: 'Radiology Service (Covered Ancillary)', addendum_source: 'BB', coverage_category: 'Covered_Ancillary', payment_methodology: 'OPPS_Relative_Weight', is_mppr_eligible: false, is_device_intensive: false, is_packaged: false, is_inpatient_only: false, statutory_citation: '42 CFR 416.166' },
+      { indicator_code: 'K2', short_name: 'Drugs & Biologicals (Covered Ancillary)', addendum_source: 'BB', coverage_category: 'Covered_Ancillary', payment_methodology: 'OPPS_Relative_Weight', is_mppr_eligible: false, is_device_intensive: false, is_packaged: false, is_inpatient_only: false, statutory_citation: '42 CFR 416.166' },
+      { indicator_code: 'N1', short_name: 'Packaged Item / Service', addendum_source: 'BB', coverage_category: 'Packaged', payment_methodology: 'Packaged_APC', is_mppr_eligible: false, is_device_intensive: false, is_packaged: true, is_inpatient_only: false, statutory_citation: '42 CFR 416.166' },
+      { indicator_code: 'C', short_name: 'Inpatient-Only Procedure (Fatal Block)', addendum_source: 'EE', coverage_category: 'Inpatient_Only', payment_methodology: 'Non_Payable', is_mppr_eligible: false, is_device_intensive: false, is_packaged: false, is_inpatient_only: true, statutory_citation: '42 CFR 416.166' },
+      { indicator_code: 'E5', short_name: 'Statutorily Excluded Surgical', addendum_source: 'EE', coverage_category: 'Non_Covered', payment_methodology: 'Non_Payable', is_mppr_eligible: false, is_device_intensive: false, is_packaged: false, is_inpatient_only: false, statutory_citation: '42 CFR 416.166' },
+      { indicator_code: 'M1', short_name: 'Packaged Service (Conditional)', addendum_source: 'BB', coverage_category: 'Packaged', payment_methodology: 'Packaged_APC', is_mppr_eligible: false, is_device_intensive: false, is_packaged: true, is_inpatient_only: false, statutory_citation: '42 CFR 416.166' }
+    ];
+  }
+
+  /**
+   * Phase 61: Retrieves CMS Indicator Claim Scrubbing Rules from Supabase.
+   */
+  async getIndicatorClaimRules() {
+    try {
+      if (db?.ensureAuthSession) await db.ensureAuthSession();
+      if (supabase && typeof supabase.from === 'function') {
+        const { data, error } = await supabase
+          .from('cms_indicator_claim_rules')
+          .select('*')
+          .order('rule_identifier', { ascending: true });
+
+        if (!error && data && data.length > 0) return data;
+      }
+    } catch (err) {
+      console.warn('getIndicatorClaimRules fallback:', err?.message);
+    }
+
+    return [
+      { rule_identifier: 'SCRUB-20', indicator_code: 'C', severity: 'FATAL', rule_description: 'CMS Inpatient-Only (IPO) Procedure Hard Block under 42 CFR 416.166', remediation_guidance: 'Transfer procedure to hospital inpatient setting or verify whether CPT was incorrectly coded.' },
+      { rule_identifier: 'SCRUB-21', indicator_code: 'J8', severity: 'FATAL', rule_description: 'Device-Intensive Procedure Missing Paired Implant Hardware (Indicator J8)', remediation_guidance: 'Add corresponding device implant HCPCS code (e.g. C1776, L8699) or associate case device usage.' },
+      { rule_identifier: 'SCRUB-22', indicator_code: 'N1', severity: 'FATAL', rule_description: 'Standalone Packaged Service Line Violation (Indicator N1)', remediation_guidance: 'Report primary surgical procedure (Indicator A2, G2, P2, J8) or remove the standalone packaged line.' },
+      { rule_identifier: 'SCRUB-23', indicator_code: 'R2', severity: 'WARNING', rule_description: 'Contractor-Priced Procedure Requires Operative Documentation (Indicator R2)', remediation_guidance: 'Attach operative report and vendor invoice documentation before claim submission.' },
+      { rule_identifier: 'SCRUB-24', indicator_code: 'E5', severity: 'FATAL', rule_description: 'Statutorily Excluded / Non-Covered Procedure Hard Block (Indicator E5)', remediation_guidance: 'Issue Advance Beneficiary Notice of Noncoverage (ABN) or remove procedure from claim.' }
+    ];
+  }
+
+  /**
+   * Phase 61: Authoritative live interpretation of a code via fn_interpret_cms_indicator RPC.
+   */
+  async interpretIndicator(code, dos = new Date().toISOString().split('T')[0]) {
+    const cleanCode = String(code || '').trim().toUpperCase();
+    try {
+      if (db?.ensureAuthSession) await db.ensureAuthSession();
+      if (supabase && typeof supabase.rpc === 'function') {
+        const { data, error } = await supabase.rpc('fn_interpret_cms_indicator', {
+          p_code: cleanCode,
+          p_dos: dos,
+          p_payment_system: 'ASC'
+        });
+        if (!error && data && data.length > 0) {
+          return { success: true, ...data[0] };
+        }
+      }
+    } catch (err) {
+      console.warn('interpretIndicator RPC fallback:', err?.message);
+    }
+
+    // Client fallback
+    const defs = await this.getIndicatorDefinitions(2026);
+    const item = IN_MEMORY_ADDENDA_CATALOG[cleanCode];
+    const pi = item?.payment_indicator || (cleanCode === '99999' ? 'N/A' : 'A2');
+    const matchedDef = defs.find(d => d.indicator_code === pi);
+
+    return {
+      success: true,
+      code: cleanCode,
+      payment_system: 'ASC',
+      indicator_code: pi,
+      short_name: matchedDef?.short_name || 'Standard Procedure',
+      addendum_source: matchedDef?.addendum_source || 'AA',
+      coverage_category: matchedDef?.coverage_category || (pi === 'N1' ? 'Packaged' : 'Covered_Surgical'),
+      payment_methodology: matchedDef?.payment_methodology || 'OPPS_Relative_Weight',
+      is_covered: pi !== 'C' && pi !== 'E5' && pi !== 'N/A',
+      is_mppr_eligible: matchedDef?.is_mppr_eligible ?? true,
+      is_device_intensive: matchedDef?.is_device_intensive ?? false,
+      is_packaged: matchedDef?.is_packaged ?? false,
+      requires_device_code: matchedDef?.requires_device_code ?? false,
+      is_inpatient_only: pi === 'C',
+      claim_scrub_action: pi === 'C' || pi === 'E5' ? 'BLOCK_FATAL' : (pi === 'J8' ? 'CHECK_DEVICE' : 'ALLOW'),
+      scrub_rule_code: pi === 'C' ? 'SCRUB-20' : (pi === 'J8' ? 'SCRUB-21' : (pi === 'N1' ? 'SCRUB-22' : 'SCRUB-OK')),
+      statutory_citation: '42 CFR 416.166',
+      release_label: 'CY 2026 Q1 Final'
+    };
+  }
 }
 
 export const medicareRateService = new MedicareRateService();
@@ -495,4 +607,7 @@ if (typeof db !== 'undefined' && db) {
   db.getMedicareWageIndices = medicareRateService.getWageIndices.bind(medicareRateService);
   db.getMedicareReleases = medicareRateService.getReleases.bind(medicareRateService);
   db.getMedicareImportBatches = medicareRateService.getImportBatches.bind(medicareRateService);
+  db.getPaymentIndicatorDefinitions = medicareRateService.getIndicatorDefinitions.bind(medicareRateService);
+  db.getIndicatorClaimRules = medicareRateService.getIndicatorClaimRules.bind(medicareRateService);
+  db.interpretCMSIndicator = medicareRateService.interpretIndicator.bind(medicareRateService);
 }
