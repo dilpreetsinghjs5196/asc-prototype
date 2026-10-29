@@ -585,3 +585,4 @@ if (typeof db !== 'undefined') {
   db.getCBSACountyDelineations = geographicWageService.getCBSACountyDelineations.bind(geographicWageService);
   db.lookupCBSAByCountyOrFIPS = geographicWageService.lookupCBSAByCountyOrFIPS.bind(geographicWageService);
 }
+

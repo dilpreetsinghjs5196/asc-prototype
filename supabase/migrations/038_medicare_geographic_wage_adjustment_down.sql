@@ -25,3 +25,4 @@ ALTER TABLE public.medicare_wage_indices
     DROP COLUMN IF EXISTS fips_county_code;
 
 COMMIT;
+
