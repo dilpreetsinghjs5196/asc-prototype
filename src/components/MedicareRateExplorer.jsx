@@ -191,6 +191,85 @@ export default function MedicareRateExplorer({ activeFacility }) {
     return (unadjusted * 0.50 * wage) + (unadjusted * 0.50);
   };
 
+  // Simulator calculation effect
+  useEffect(() => {
+    const selIndex = wageIndices.find(w => w.cbsa_code === simCbsa);
+    const wageValue = selIndex ? parseFloat(selIndex.wage_index) : 0.9412;
+    const res = geographicWageService.calculateStatutoryWageAdjustment({
+      nationalUnadjustedRate: simNatRate,
+      wageIndex: wageValue,
+      isDeviceIntensive: simIsDev,
+      deviceOffsetPercentage: simDevPct,
+      ascqrCompliant: simAscqr
+    });
+    setSimResult(res);
+  }, [simCpt, simCbsa, simNatRate, simIsDev, simDevPct, simAscqr, wageIndices]);
+
+  // Handle drill-down for CBSA counties
+  const handleSelectCbsa = async (cbsa) => {
+    setSelectedCbsa(cbsa);
+    const counties = await geographicWageService.getCBSACountyDelineations(cbsa.cbsa_code);
+    setSelectedCounties(counties);
+  };
+
+  // Handle County quick lookup
+  const handleCountySearch = async (term) => {
+    setCountySearch(term);
+    if (!term || term.trim().length < 2) {
+      setCountySearchResults([]);
+      return;
+    }
+    const results = await geographicWageService.lookupCBSAByCountyOrFIPS(term);
+    setCountySearchResults(results);
+  };
+
+  // Handle assignment modal submit
+  const handleSaveAssignment = async (e) => {
+    e.preventDefault();
+    setAssignmentSaving(true);
+    setAssignmentFeedback(null);
+    try {
+      const facId = activeFacility?.id || '00000000-0000-0000-0000-000000000002';
+      await geographicWageService.saveFacilityGeographicAssignment(facId, assignmentForm);
+      setAssignmentFeedback({ type: 'success', message: 'Geographic assignment successfully updated and audited.' });
+      setIsAssignmentModalOpen(false);
+      // Reload history & settings
+      const history = await geographicWageService.getFacilityGeographicHistory(facId);
+      setGeoHistory(history || []);
+      setCbsaSettings(prev => ({ ...prev, cbsa_code: assignmentForm.cbsa_code, cbsa_name: assignmentForm.cbsa_name, ascqr_compliant: assignmentForm.ascqr_compliant }));
+    } catch (err) {
+      setAssignmentFeedback({ type: 'error', message: err.message || 'Failed to save geographic assignment.' });
+    } finally {
+      setAssignmentSaving(false);
+    }
+  };
+
+  // Filter national CBSAs
+  const filteredCBSAs = wageIndices.filter(w => {
+    const matchSearch = !cbsaSearch || 
+      w.cbsa_code.includes(cbsaSearch) || 
+      w.cbsa_name.toLowerCase().includes(cbsaSearch.toLowerCase());
+    const matchState = cbsaStateFilter === 'All' || w.state_code === cbsaStateFilter;
+    return matchSearch && matchState;
+  });
+
+  const totalCbsaPages = Math.ceil(filteredCBSAs.length / cbsaPageSize) || 1;
+  const paginatedCBSAs = filteredCBSAs.slice((cbsaPage - 1) * cbsaPageSize, cbsaPage * cbsaPageSize);
+
+  // Active facility geographic assignment
+  const activeGeo = geoHistory.find(h => h.is_active) || {
+    cbsa_code: cbsaSettings?.cbsa_code || DEFAULT_CBSA.code,
+    cbsa_name: cbsaSettings?.cbsa_name || DEFAULT_CBSA.name,
+    medicare_provider_number: cbsaSettings?.medicare_provider_number || '10-ASC02',
+    state_code: 'FL',
+    wage_index: cbsaSettings?.wage_index || DEFAULT_CBSA.wageIndex,
+    is_verified: true,
+    verification_source: 'CMS_PROVIDER_ENROLLMENT_855A',
+    verification_document_url: 'https://medicare.gov/provider/10-ASC02-tie-in.pdf',
+    ascqr_compliant: cbsaSettings?.ascqr_compliant !== false,
+    effective_start_date: '2024-01-01'
+  };
+
   return (
     <div className="medicare-explorer-container">
       {/* Header */}
