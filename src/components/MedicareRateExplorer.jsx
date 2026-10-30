@@ -15,10 +15,12 @@ import {
   PlusCircle,
   ExternalLink,
   Eye,
+  Cpu,
   X
 } from 'lucide-react';
 import { medicareRateService, DEFAULT_CBSA } from '../lib/medicareRateService';
 import { geographicWageService, CBSA_VERIFICATION_SOURCES } from '../lib/geographicWageService';
+import { medicareDeviceService, CMS_DEVICE_CATEGORIES } from '../lib/medicareDeviceService';
 import './MedicareRateExplorer.css';
 
 export default function MedicareRateExplorer({ activeFacility }) {
@@ -83,16 +85,42 @@ export default function MedicareRateExplorer({ activeFacility }) {
   const [simAscqr, setSimAscqr] = useState(true);
   const [simResult, setSimResult] = useState(null);
 
+  // Phase 63: Device-Intensive Payment Rules State
+  const [deviceProcedures, setDeviceProcedures] = useState([]);
+  const [deviceCategories, setDeviceCategories] = useState([]);
+  const [deviceCrosswalk, setDeviceCrosswalk] = useState([]);
+  const [deviceSearch, setDeviceSearch] = useState('');
+  const [devicePage, setDevicePage] = useState(1);
+  const [devicePageSize] = useState(10);
+  const [deviceTotalCount, setDeviceTotalCount] = useState(0);
+  const [deviceTotalPages, setDeviceTotalPages] = useState(1);
+  const [deviceLoading, setDeviceLoading] = useState(false);
+
+  // Phase 63 Interactive Device Simulator State
+  const [devSimCode, setDevSimCode] = useState('27447');
+  const [devSimRate, setDevSimRate] = useState(10500.00);
+  const [devSimOffset, setDevSimOffset] = useState(0.3315);
+  const [devSimWage, setDevSimWage] = useState(0.9412);
+  const [devSimAscqr, setDevSimAscqr] = useState(true);
+  const [devSimMpprSecondary, setDevSimMpprSecondary] = useState(false);
+  const [devSimResult, setDevSimResult] = useState(null);
+
+  // Phase 63 Margin Reconciliation State
+  const [marginResult, setMarginResult] = useState(null);
+  const [marginLoading, setMarginLoading] = useState(false);
+
   // Load facility settings, CBSA indices, and CMS releases
   const loadMetadata = useCallback(async () => {
     try {
       const facId = activeFacility?.id || '00000000-0000-0000-0000-000000000002';
-      const [facSettings, indices, rels, defs, rules] = await Promise.all([
+      const [facSettings, indices, rels, defs, rules, devCats, devXwalk] = await Promise.all([
         medicareRateService.getFacilityMedicareSettings(facId),
         medicareRateService.getWageIndices(2026),
         medicareRateService.getReleases(),
         medicareRateService.getIndicatorDefinitions(2026),
-        medicareRateService.getIndicatorClaimRules()
+        medicareRateService.getIndicatorClaimRules(),
+        medicareDeviceService.getDeviceCategories(),
+        medicareDeviceService.getDeviceCrosswalk()
       ]);
 
       setCbsaSettings(facSettings || DEFAULT_CBSA);
@@ -100,6 +128,8 @@ export default function MedicareRateExplorer({ activeFacility }) {
       setReleases(rels || []);
       setIndicatorDefs(defs || []);
       setClaimRules(rules || []);
+      setDeviceCategories(devCats || []);
+      setDeviceCrosswalk(devXwalk || []);
     } catch (err) {
       console.error('Error loading Medicare metadata:', err);
     }
@@ -189,6 +219,66 @@ export default function MedicareRateExplorer({ activeFacility }) {
       return dev + (srv * 0.50 * wage) + (srv * 0.50);
     }
     return (unadjusted * 0.50 * wage) + (unadjusted * 0.50);
+  };
+
+  // Phase 63: Fetch Device-Intensive Procedures
+  const fetchDeviceProcedures = useCallback(async (query, targetPage) => {
+    setDeviceLoading(true);
+    try {
+      const res = await medicareDeviceService.getDeviceIntensiveProcedures({
+        search: query,
+        page: targetPage,
+        limit: devicePageSize
+      });
+      setDeviceProcedures(res.items || []);
+      setDeviceTotalCount(res.totalCount || 0);
+      setDeviceTotalPages(res.totalPages || 1);
+    } catch (err) {
+      console.error('Error fetching device-intensive procedures:', err);
+    } finally {
+      setDeviceLoading(false);
+    }
+  }, [devicePageSize]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchDeviceProcedures(deviceSearch, devicePage);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [deviceSearch, devicePage, fetchDeviceProcedures]);
+
+  // Phase 63: Interactive Device Offset & MPPR Calculation Effect
+  useEffect(() => {
+    if (devSimMpprSecondary) {
+      const res = medicareDeviceService.calculateMpprSecondaryJ8Payment({
+        nationalRate: devSimRate,
+        offsetPercentage: devSimOffset,
+        wageIndex: devSimWage,
+        ascqrCompliant: devSimAscqr
+      });
+      setDevSimResult(res);
+    } else {
+      const res = medicareDeviceService.calculateStatutoryDeviceAdjustment({
+        nationalRate: devSimRate,
+        offsetPercentage: devSimOffset,
+        wageIndex: devSimWage,
+        ascqrCompliant: devSimAscqr
+      });
+      setDevSimResult(res);
+    }
+  }, [devSimRate, devSimOffset, devSimWage, devSimAscqr, devSimMpprSecondary]);
+
+  // Phase 63: Reconcile Case Device Margin
+  const handleReconcileDeviceMargin = async (surgId) => {
+    setMarginLoading(true);
+    try {
+      const res = await medicareDeviceService.reconcileCaseDeviceMargin(surgId);
+      setMarginResult(res);
+    } catch (err) {
+      console.error('Error reconciling case margin:', err);
+    } finally {
+      setMarginLoading(false);
+    }
   };
 
   // Simulator calculation effect
@@ -353,6 +443,13 @@ export default function MedicareRateExplorer({ activeFacility }) {
         >
           <ShieldCheck size={16} />
           Payment Indicators & Rules
+        </button>
+        <button
+          className={`medicare-tab-btn ${activeTab === 'device_intensive' ? 'active' : ''}`}
+          onClick={() => setActiveTab('device_intensive')}
+        >
+          <Cpu size={16} />
+          Device-Intensive Rules (J8)
         </button>
       </div>
 
@@ -1669,6 +1766,453 @@ export default function MedicareRateExplorer({ activeFacility }) {
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 6: Device-Intensive Payment Rules & C-Code Crosswalk (Phase 63) */}
+      {activeTab === 'device_intensive' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Hero KPI Grid */}
+          <div className="medicare-stats-grid">
+            <div className="medicare-stat-card">
+              <span className="medicare-stat-label">Device Threshold</span>
+              <strong className="medicare-stat-value" style={{ color: '#2563eb' }}>
+                &gt; 30.00% Offset
+              </strong>
+              <span className="medicare-stat-sub">42 CFR § 416.171(b)(2) Statutory Invariant</span>
+            </div>
+            <div className="medicare-stat-card">
+              <span className="medicare-stat-label">Wage Index Protection</span>
+              <strong className="medicare-stat-value" style={{ color: '#059669' }}>
+                100% Wage Exempt
+              </strong>
+              <span className="medicare-stat-sub">Implant offset exempt from geographic index</span>
+            </div>
+            <div className="medicare-stat-card">
+              <span className="medicare-stat-label">Secondary MPPR Protection</span>
+              <strong className="medicare-stat-value" style={{ color: '#d97706' }}>
+                Service Share Only
+              </strong>
+              <span className="medicare-stat-sub">Device offset paid at 100% on secondary lines</span>
+            </div>
+            <div className="medicare-stat-card">
+              <span className="medicare-stat-label">C-Code Packaging</span>
+              <strong className="medicare-stat-value" style={{ color: '#475569' }}>
+                $0.00 Allowable
+              </strong>
+              <span className="medicare-stat-sub">100% packaged into primary procedure APC</span>
+            </div>
+          </div>
+
+          {/* Interactive Statutory Device Offset & MPPR Simulator */}
+          <div className="medicare-calc-card" style={{ background: '#ffffff', borderColor: '#cbd5e1' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+              <div>
+                <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.15rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Cpu size={18} color="#2563eb" />
+                  Statutory 42 CFR § 416.171(b)(2) Device Offset &amp; MPPR Simulator
+                </h3>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                  Simulates statutory device offset carve-out, geographic wage index exemption, and MPPR secondary procedure protection.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div className="geo-form-group">
+                <label className="geo-form-label">Procedure Preset (J8 Device-Intensive):</label>
+                <select
+                  className="geo-form-select"
+                  value={devSimCode}
+                  onChange={(e) => {
+                    const code = e.target.value;
+                    setDevSimCode(code);
+                    if (code === '27447') {
+                      setDevSimRate(10500.00);
+                      setDevSimOffset(0.3315);
+                    } else if (code === '27130') {
+                      setDevSimRate(11200.00);
+                      setDevSimOffset(0.3420);
+                    } else if (code === '63685') {
+                      setDevSimRate(28000.00);
+                      setDevSimOffset(0.8245);
+                    } else if (code === '33249') {
+                      setDevSimRate(32500.00);
+                      setDevSimOffset(0.7420);
+                    } else if (code === '28465') {
+                      setDevSimRate(4671.46);
+                      setDevSimOffset(0.3500);
+                    }
+                  }}
+                >
+                  <option value="27447">27447 — Total Knee Arthroplasty ($10,500.00 • 33.15%)</option>
+                  <option value="27130">27130 — Total Hip Arthroplasty ($11,200.00 • 34.20%)</option>
+                  <option value="63685">63685 — Neurostimulator Generator ($28,000.00 • 82.45%)</option>
+                  <option value="33249">33249 — Transvenous ICD Generator ($32,500.00 • 74.20%)</option>
+                  <option value="28465">28465 — Tarsal Bone Fracture Repair ($4,671.46 • 35.00%)</option>
+                </select>
+              </div>
+
+              <div className="geo-form-group">
+                <label className="geo-form-label">National Unadjusted Rate ($):</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="geo-form-input"
+                  value={devSimRate}
+                  onChange={(e) => setDevSimRate(parseFloat(e.target.value) || 0)}
+                />
+              </div>
+
+              <div className="geo-form-group">
+                <label className="geo-form-label">CMS Device Offset Fraction (0.30 - 0.99):</label>
+                <input
+                  type="number"
+                  step="0.0001"
+                  min="0.3000"
+                  max="0.9999"
+                  className="geo-form-input"
+                  value={devSimOffset}
+                  onChange={(e) => setDevSimOffset(parseFloat(e.target.value) || 0)}
+                />
+              </div>
+
+              <div className="geo-form-group">
+                <label className="geo-form-label">Facility Wage Index:</label>
+                <input
+                  type="number"
+                  step="0.0001"
+                  className="geo-form-input"
+                  value={devSimWage}
+                  onChange={(e) => setDevSimWage(parseFloat(e.target.value) || 1.0)}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '1.25rem', padding: '0.75rem', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#0f172a', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={devSimAscqr}
+                  onChange={(e) => setDevSimAscqr(e.target.checked)}
+                />
+                ASCQR Quality Compliant (No 2% Penalty)
+              </label>
+
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#2563eb', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={devSimMpprSecondary}
+                  onChange={(e) => setDevSimMpprSecondary(e.target.checked)}
+                />
+                Simulate as Secondary Procedure under MPPR (50% cut strictly on service share)
+              </label>
+            </div>
+
+            {/* Step-by-Step Mathematical Trace */}
+            {devSimResult && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
+                <div className="geo-step-box">
+                  <span className="geo-step-title">1. National Base</span>
+                  <span className="geo-step-value">${(devSimResult.nationalRate || 0).toFixed(2)}</span>
+                  <span className="geo-step-note">Unadjusted Baseline</span>
+                </div>
+                <div className="geo-step-box">
+                  <span className="geo-step-title">2. Device Offset</span>
+                  <span className="geo-step-value" style={{ color: '#d97706' }}>
+                    ${(devSimResult.deviceOffsetAmount || 0).toFixed(2)}
+                  </span>
+                  <span className="geo-step-note">{((devSimResult.offsetPercentage || 0) * 100).toFixed(2)}% (100% Wage Exempt)</span>
+                </div>
+                <div className="geo-step-box">
+                  <span className="geo-step-title">3. Net Service Portion</span>
+                  <span className="geo-step-value">${(devSimResult.servicePortionUnadjusted || 0).toFixed(2)}</span>
+                  <span className="geo-step-note">Subject to 50/50 Math</span>
+                </div>
+                <div className="geo-step-box">
+                  <span className="geo-step-title">4. Adjusted Service</span>
+                  <span className="geo-step-value" style={{ color: '#2563eb' }}>
+                    ${(devSimMpprSecondary ? devSimResult.secondaryServiceShare : devSimResult.servicePortionAdjusted || 0).toFixed(2)}
+                  </span>
+                  <span className="geo-step-note">{devSimMpprSecondary ? 'Halved under MPPR (50%)' : 'Labor + Non-Labor'}</span>
+                </div>
+                <div className="geo-step-box" style={{ background: '#f8fafc', borderColor: '#2563eb' }}>
+                  <span className="geo-step-title" style={{ color: '#2563eb' }}>Final Facility Rate</span>
+                  <span className="geo-step-value" style={{ color: '#059669', fontSize: '1.35rem' }}>
+                    ${(devSimMpprSecondary ? devSimResult.secondaryAllowableRate : devSimResult.allowableRate || 0).toFixed(2)}
+                  </span>
+                  <span className="geo-step-note" style={{ color: '#059669', fontWeight: 600 }}>
+                    {devSimMpprSecondary ? `MPPR Savings: ${(devSimResult.mpprSavings || 0).toFixed(2)}` : 'Authoritative Rate'}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {devSimResult && (
+              <div style={{ fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic', background: '#f8fafc', padding: '0.5rem 0.75rem', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                <strong>Statutory Trace:</strong> {devSimResult.formulaDescription}
+              </div>
+            )}
+          </div>
+
+          {/* Official CMS Device-Intensive Procedures Directory Table */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div>
+                <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.1rem', color: '#0f172a' }}>
+                  Official CMS Device-Intensive Procedures Catalog (CY 2026)
+                </h3>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                  Statutory empirical device offset percentages from CMS-1823-FC Addendum AA.
+                </p>
+              </div>
+
+              <div style={{ position: 'relative', minWidth: '240px' }}>
+                <Search size={14} style={{ position: 'absolute', left: '10px', top: '10px', color: '#94a3b8' }} />
+                <input
+                  type="text"
+                  className="geo-form-input"
+                  style={{ paddingLeft: '32px' }}
+                  placeholder="Search CPT or APC code..."
+                  value={deviceSearch}
+                  onChange={(e) => {
+                    setDeviceSearch(e.target.value);
+                    setDevicePage(1);
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="medicare-table-container">
+              <table className="medicare-table">
+                <thead>
+                  <tr>
+                    <th>CPT Code</th>
+                    <th>Procedure Descriptor</th>
+                    <th>Indicator</th>
+                    <th style={{ textAlign: 'right' }}>National Rate</th>
+                    <th style={{ textAlign: 'right' }}>Empirical Offset %</th>
+                    <th style={{ textAlign: 'right' }}>Protected Device Portion</th>
+                    <th style={{ textAlign: 'right' }}>Service Portion</th>
+                    <th>APC Group</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deviceLoading ? (
+                    <tr>
+                      <td colSpan="9" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                        Loading device-intensive catalog...
+                      </td>
+                    </tr>
+                  ) : deviceProcedures.length === 0 ? (
+                    <tr>
+                      <td colSpan="9" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                        No device-intensive procedures matching filter.
+                      </td>
+                    </tr>
+                  ) : (
+                    deviceProcedures.map((p) => {
+                      const offsetPct = parseFloat(p.device_offset_percentage || 0);
+                      const natRate = parseFloat(p.national_unadjusted_rate || 0);
+                      const devAmt = parseFloat(p.device_offset_amount || (natRate * offsetPct));
+                      const srvPortion = parseFloat(p.service_portion_unadjusted || (natRate - devAmt));
+                      return (
+                        <tr key={p.cpt_code}>
+                          <td style={{ fontFamily: 'monospace', fontWeight: 700 }}>{p.cpt_code}</td>
+                          <td>{p.description || 'Device-Intensive Procedure'}</td>
+                          <td><span className="pi-badge pi-badge-device">J8 Device</span></td>
+                          <td className="currency-cell">${natRate.toFixed(2)}</td>
+                          <td className="currency-cell" style={{ fontWeight: 700, color: '#d97706' }}>
+                            {(offsetPct * 100).toFixed(2)}%
+                          </td>
+                          <td className="currency-cell" style={{ color: '#059669', fontWeight: 600 }}>
+                            ${devAmt.toFixed(2)}
+                          </td>
+                          <td className="currency-cell">${srvPortion.toFixed(2)}</td>
+                          <td style={{ fontFamily: 'monospace' }}>{p.apc_code || '5115'}</td>
+                          <td>
+                            <button
+                              type="button"
+                              className="geo-btn-secondary"
+                              style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', color: '#2563eb', borderColor: '#bfdbfe' }}
+                              onClick={() => {
+                                setDevSimCode(p.cpt_code);
+                                setDevSimRate(natRate);
+                                setDevSimOffset(offsetPct);
+                                window.scrollTo({ top: 350, behavior: 'smooth' });
+                              }}
+                            >
+                              Use in Simulator
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="medicare-pagination">
+              <span className="medicare-pagination-info">
+                Showing <strong>{(devicePage - 1) * devicePageSize + 1}</strong> to <strong>{Math.min(devicePage * devicePageSize, deviceTotalCount)}</strong> of <strong>{deviceTotalCount}</strong> device procedures
+              </span>
+              <div className="medicare-pagination-btns">
+                <button
+                  type="button"
+                  className="medicare-page-btn"
+                  disabled={devicePage <= 1}
+                  onClick={() => setDevicePage(prev => Math.max(1, prev - 1))}
+                >
+                  Previous
+                </button>
+                <span className="medicare-page-current">Page {devicePage} of {deviceTotalPages}</span>
+                <button
+                  type="button"
+                  className="medicare-page-btn"
+                  disabled={devicePage >= deviceTotalPages}
+                  onClick={() => setDevicePage(prev => Math.min(deviceTotalPages, prev + 1))}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* CMS Device Categories (HCPCS Level II C-Codes) Master Table */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#0f172a' }}>
+                CMS HCPCS Level II Device Categories (C-Codes)
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b' }}>
+                All implant hardware C-codes receive $0.00 separate allowable (packaged into primary APC).
+              </p>
+              <div className="medicare-table-container">
+                <table className="medicare-table">
+                  <thead>
+                    <tr>
+                      <th>HCPCS Code</th>
+                      <th>Category Descriptor</th>
+                      <th>Clinical Construct</th>
+                      <th>Packaging Rule</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(deviceCategories.length > 0 ? deviceCategories : CMS_DEVICE_CATEGORIES).map((c) => (
+                      <tr key={c.category_code}>
+                        <td style={{ fontFamily: 'monospace', fontWeight: 700, color: '#2563eb' }}>{c.category_code}</td>
+                        <td style={{ fontWeight: 600 }}>{c.category_title}</td>
+                        <td style={{ fontSize: '0.8rem', color: '#475569' }}>{c.clinical_construct}</td>
+                        <td>
+                          <span className="pi-badge pi-badge-packaged">
+                            $0.00 Packaged
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* CPT-to-Device Category Crosswalk */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#0f172a' }}>
+                CPT-to-Device Category Mandatory Crosswalk
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b' }}>
+                CMS Device-to-Procedure Edits enforced by pre-bill claim rule SCRUB-21.
+              </p>
+              <div className="medicare-table-container">
+                <table className="medicare-table">
+                  <thead>
+                    <tr>
+                      <th>Primary CPT</th>
+                      <th>Mandatory C-Code</th>
+                      <th>Minimum Units</th>
+                      <th>Claim Scrub Edit</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deviceCrosswalk.map((x, idx) => (
+                      <tr key={`${x.cpt_code}_${x.device_category_code}_${idx}`}>
+                        <td style={{ fontFamily: 'monospace', fontWeight: 700 }}>{x.cpt_code}</td>
+                        <td style={{ fontFamily: 'monospace', color: '#2563eb', fontWeight: 600 }}>
+                          {x.device_category_code}
+                        </td>
+                        <td>{x.minimum_quantity || 1} unit(s)</td>
+                        <td>
+                          <span className="pi-badge pi-badge-device" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                            <CheckCircle2 size={12} /> SCRUB-21 Active
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* Case Device Margin Reconciliation Workbench */}
+          <div className="geo-card" style={{ background: '#ffffff', borderColor: '#cbd5e1' }}>
+            <h4 className="geo-card-title">
+              <Scale size={16} color="#2563eb" />
+              Case Device Reimbursement vs Vendor Invoice Cost Margin Reconciliation
+            </h4>
+            <p className="geo-desc">
+              Compares the CMS statutory device offset allowance against actual acquisition costs allocated on vendor invoices.
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1rem' }}>
+              <button
+                type="button"
+                className="geo-btn-primary"
+                disabled={marginLoading}
+                onClick={() => handleReconcileDeviceMargin('00000000-0000-0000-0000-000000000001')}
+              >
+                {marginLoading ? 'Reconciling...' : 'Run Case Margin Audit (Sample Case 27447)'}
+              </button>
+            </div>
+
+            {marginResult && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', background: '#f8fafc', padding: '1rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase' }}>CPT Code &amp; Indicator</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a' }}>{marginResult.cpt_code} ({marginResult.payment_indicator})</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase' }}>CMS Device Allowance</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#059669' }}>
+                    ${parseFloat(marginResult.device_offset_allowance || 0).toFixed(2)}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase' }}>Actual Invoice Acquisition Cost</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#dc2626' }}>
+                    ${parseFloat(marginResult.actual_acquisition_cost || 0).toFixed(2)}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase' }}>Device Net Margin Variance</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: marginResult.net_margin >= 0 ? '#059669' : '#dc2626' }}>
+                    {marginResult.net_margin >= 0 ? '+' : ''}${parseFloat(marginResult.net_margin || 0).toFixed(2)} ({marginResult.margin_percentage}%)
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase' }}>Financial Health Status</div>
+                  <div style={{ marginTop: '0.25rem' }}>
+                    <span className={marginResult.reconciliation_status === 'SURPLUS' ? 'pi-badge pi-badge-device' : 'pi-badge pi-badge-unresolved'}>
+                      {marginResult.reconciliation_status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

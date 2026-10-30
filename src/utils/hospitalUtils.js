@@ -146,12 +146,16 @@ export const calculateMedicareRevenue = (cptCodesArray, cptDatabase, applyMPPR =
             modifiers: line.modifiers || source.modifiers || [],
             laterality: line.laterality || source.laterality || 'NOT_APPLICABLE'
         };
-    }).filter(l => Boolean(l && (l.gross_charge !== undefined || l.reimbursement !== undefined || l.contracted_reimbursement !== undefined)));
+    }).filter(l => Boolean(l && (l.gross_charge !== undefined || l.reimbursement !== undefined || l.contracted_reimbursement !== undefined || l.wage_adjusted_rate !== undefined)));
 
     if (resolvedLines.length === 0) return 0;
 
     // Helper to get base allowable price (Authoritative Reimbursement/Wage-Adjusted Rate prioritized over Gross Charge)
     const getBasePrice = (cpt) => {
+        // Phase 63 Statutory Packaging Invariant (42 CFR § 416.171(b)(2))
+        const pi = cpt.payment_indicator || cpt.procedure_indicator;
+        const code = String(cpt.code || "");
+        if (pi === "N1" || cpt.is_packaged || (code.startsWith("C") && code.length === 5)) return 0;
         let rawRate = 0;
         if (cpt.wage_adjusted_rate !== undefined && cpt.wage_adjusted_rate !== null) {
             rawRate = parseFloat(cpt.wage_adjusted_rate);

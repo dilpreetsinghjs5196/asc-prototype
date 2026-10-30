@@ -91,6 +91,17 @@ export const PERMISSIONS_CATALOG = [
   { code: 'geographic.override_calculation', category: 'finance', name: 'Override Wage Index Calculation in Test Workbench', risk_level: 'sensitive' },
   { code: 'geographic.audit_export', category: 'reports', name: 'Export Facility Geographic Compliance & Wage Index Audit Logs', risk_level: 'standard' },
 
+  // Device-Intensive Payment Rules (Phase 63)
+  { code: 'device.view_offsets', category: 'billing', name: 'View CMS Device Offset Percentages & Schedules', risk_level: 'standard' },
+  { code: 'device.view_categories', category: 'billing', name: 'View Statutory HCPCS Level II Device Categories', risk_level: 'standard' },
+  { code: 'device.view_crosswalk', category: 'billing', name: 'View CPT-to-Device Edit Crosswalk', risk_level: 'standard' },
+  { code: 'device.edit_crosswalk', category: 'billing', name: 'Manage Facility CPT-to-Device Category Mappings', risk_level: 'sensitive' },
+  { code: 'device.view_margin_ledger', category: 'finance', name: 'View Case Device Reimbursement vs Invoice Margin', risk_level: 'sensitive' },
+  { code: 'device.override_offset', category: 'finance', name: 'Administrative Override of Empirical Offset', risk_level: 'critical' },
+  { code: 'device.audit_reconciliation', category: 'reports', name: 'Reconcile Case Device Ledger Against Vendor Invoices', risk_level: 'standard' },
+  { code: 'device.export_data', category: 'reports', name: 'Export Device-Intensive Financial & Margin Reports', risk_level: 'sensitive' },
+
+
   // Medicare Base Rate Engine (Domain: billing / finance)
   { code: 'medicare_rates.view', category: 'billing', name: 'View Published Medicare Base Rates', risk_level: 'standard' },
   { code: 'medicare_rates.import', category: 'billing', name: 'Upload & Stage Medicare Rate Addenda', risk_level: 'sensitive' },
@@ -275,7 +286,8 @@ export const rbacService = {
         'implants.approve_invoice', 'implants.view_variance',
         'reports.export_volume', 'reports.export_margins',
         'ai.run_insights', 'audit.view_financial',
-        'geographic.view_rates', 'geographic.view_facility_settings', 'geographic.edit_facility_assignment', 'geographic.audit_export'
+        'geographic.view_rates', 'geographic.view_facility_settings', 'geographic.edit_facility_assignment', 'geographic.audit_export',
+        'device.view_offsets', 'device.view_categories', 'device.view_crosswalk', 'device.view_margin_ledger', 'device.export_data'
       ];
     }
     if (roleSlug === 'coder') {
@@ -288,7 +300,8 @@ export const rbacService = {
         'claims.view_scrub', 'claims.run_scrubber', 'claims.apply_edits',
         'implants.view_catalog', 'implants.log_usage',
         'reports.export_volume', 'ai.run_insights',
-        'geographic.view_rates', 'geographic.view_facility_settings'
+        'geographic.view_rates', 'geographic.view_facility_settings',
+        'device.view_offsets', 'device.view_categories', 'device.view_crosswalk'
       ];
     }
     if (roleSlug === 'surgeon') {
