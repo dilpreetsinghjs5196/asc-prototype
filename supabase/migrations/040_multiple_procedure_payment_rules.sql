@@ -610,3 +610,4 @@ ON CONFLICT (member_cpt_code, effective_year) DO UPDATE SET
     base_cpt_code = EXCLUDED.base_cpt_code;
 
 COMMIT;
+

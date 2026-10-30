@@ -22,3 +22,4 @@ DROP TABLE IF EXISTS public.multiple_procedure_rules CASCADE;
 DROP TABLE IF EXISTS public.multiple_procedure_rule_sets CASCADE;
 
 COMMIT;
+
