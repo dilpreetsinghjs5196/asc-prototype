@@ -40,6 +40,7 @@ test('Phase 63 — Device-Intensive Payment Rules, Packaging Logic & C-Code Cros
     assert.ok(forwardSql.includes('public.cms_device_intensive_procedures'), 'Creates cms_device_intensive_procedures table');
     assert.ok(forwardSql.includes('public.cpt_device_category_crosswalk'), 'Creates cpt_device_category_crosswalk table');
     assert.ok(forwardSql.includes('public.medicare_device_calculation_ledgers'), 'Creates medicare_device_calculation_ledgers table');
+    assert.ok(forwardSql.includes('surgery_id BIGINT NOT NULL REFERENCES public.surgeries(id)'), 'surgery_id references surgeries(id) as BIGINT');
 
     // Immutability trigger
     assert.ok(forwardSql.includes('fn_block_device_ledger_modification'), 'Deploys ledger immutability function');
@@ -212,7 +213,7 @@ test('Phase 63 — Device-Intensive Payment Rules, Packaging Logic & C-Code Cros
   });
 
   await t.test('12. Case Device Offset Margin Reconciliation Calculates Surplus and Deficit Correctly', async () => {
-    const margin = await medicareDeviceService.reconcileCaseDeviceMargin('00000000-0000-0000-0000-000000000001');
+    const margin = await medicareDeviceService.reconcileCaseDeviceMargin(1);
     assert.ok(margin);
     assert.strictEqual(margin.payment_indicator, 'J8');
     assert.strictEqual(margin.device_offset_allowance, 3480.75);

@@ -82,7 +82,7 @@ CREATE INDEX IF NOT EXISTS idx_cpt_device_crosswalk_lookup
 
 CREATE TABLE IF NOT EXISTS public.medicare_device_calculation_ledgers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    surgery_id UUID NOT NULL REFERENCES public.surgeries(id) ON DELETE CASCADE,
+    surgery_id BIGINT NOT NULL REFERENCES public.surgeries(id) ON DELETE CASCADE,
     calc_line_id UUID NOT NULL REFERENCES public.medicare_base_rate_calc_lines(id) ON DELETE CASCADE,
     cpt_code VARCHAR(5) NOT NULL,
     payment_indicator VARCHAR(2) NOT NULL,
@@ -368,7 +368,7 @@ $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
 -- 6.3 Upgrade Pre-Bill Claim Scrubbing Rule SCRUB-21 with Category-Specific C-Code Validation
 CREATE OR REPLACE FUNCTION public.fn_scrub_claim_lines(
-    p_surgery_id UUID
+    p_surgery_id BIGINT
 )
 RETURNS TABLE (
     rule_code VARCHAR,
@@ -454,10 +454,10 @@ $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
 -- 6.4 Reconcile Case Device Offset Allowance vs Actual Invoice Cost
 CREATE OR REPLACE FUNCTION public.fn_reconcile_device_margin(
-    p_surgery_id UUID
+    p_surgery_id BIGINT
 )
 RETURNS TABLE (
-    surgery_id UUID,
+    surgery_id BIGINT,
     cpt_code VARCHAR,
     payment_indicator VARCHAR,
     device_offset_allowance NUMERIC,

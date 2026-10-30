@@ -2173,7 +2173,7 @@ export default function MedicareRateExplorer({ activeFacility }) {
                 type="button"
                 className="geo-btn-primary"
                 disabled={marginLoading}
-                onClick={() => handleReconcileDeviceMargin('00000000-0000-0000-0000-000000000001')}
+                onClick={() => handleReconcileDeviceMargin(1)}
               >
                 {marginLoading ? 'Reconciling...' : 'Run Case Margin Audit (Sample Case 27447)'}
               </button>
