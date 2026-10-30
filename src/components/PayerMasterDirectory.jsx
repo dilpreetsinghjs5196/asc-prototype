@@ -970,3 +970,4 @@ export function PayerMasterDirectory({ activeFacility }) {
 }
 
 export default PayerMasterDirectory;
+

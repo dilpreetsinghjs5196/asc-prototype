@@ -25,3 +25,4 @@ DROP TABLE IF EXISTS public.payer_plans CASCADE;
 DROP TABLE IF EXISTS public.payer_master CASCADE;
 
 COMMIT;
+

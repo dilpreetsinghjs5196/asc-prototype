@@ -586,3 +586,4 @@ ON CONFLICT (patient_id, coverage_order) DO UPDATE SET
     subscriber_name = EXCLUDED.subscriber_name;
 
 COMMIT;
+
