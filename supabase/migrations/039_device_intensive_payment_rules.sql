@@ -195,6 +195,10 @@ END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
 -- 6.2 Hardened Medicare Rate Resolver with Dynamic Device-Intensive Offset Lookup
+-- Drop previous versions to allow changes to RETURNS TABLE signature
+DROP FUNCTION IF EXISTS public.fn_resolve_medicare_base_rate(DATE, VARCHAR, UUID, NUMERIC);
+DROP FUNCTION IF EXISTS public.fn_resolve_medicare_base_rate(VARCHAR, UUID, NUMERIC, DATE);
+
 CREATE OR REPLACE FUNCTION public.fn_resolve_medicare_base_rate(
     p_dos DATE,
     p_cpt_code VARCHAR,
@@ -367,6 +371,9 @@ END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
 -- 6.3 Upgrade Pre-Bill Claim Scrubbing Rule SCRUB-21 with Category-Specific C-Code Validation
+DROP FUNCTION IF EXISTS public.fn_scrub_claim_lines(UUID);
+DROP FUNCTION IF EXISTS public.fn_scrub_claim_lines(BIGINT);
+
 CREATE OR REPLACE FUNCTION public.fn_scrub_claim_lines(
     p_surgery_id BIGINT
 )
@@ -453,6 +460,9 @@ END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
 -- 6.4 Reconcile Case Device Offset Allowance vs Actual Invoice Cost
+DROP FUNCTION IF EXISTS public.fn_reconcile_device_margin(UUID);
+DROP FUNCTION IF EXISTS public.fn_reconcile_device_margin(BIGINT);
+
 CREATE OR REPLACE FUNCTION public.fn_reconcile_device_margin(
     p_surgery_id BIGINT
 )
