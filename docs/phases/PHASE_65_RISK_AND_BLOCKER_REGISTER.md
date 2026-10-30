@@ -122,3 +122,4 @@ To transition from **AUDIT** to **IMPLEMENTATION**, the following conditions mus
 - [ ] **Medicare Fallback Removed**: PR drafted for `src/utils/hospitalUtils.js` ensuring uncontracted commercial encounters fail-closed.
 - [ ] **RLS Certified**: All RLS policies validated to use `is_facility_accessible` and `user_has_facility_role` without querying `user_roles`.
 - [ ] **Backward Compatibility Verified**: Existing `public.payers` references in `claims` and `surgeries` remain non-breaking.
+

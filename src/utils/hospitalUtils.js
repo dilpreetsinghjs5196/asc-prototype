@@ -380,12 +380,18 @@ export const getSurgeryMetrics = (surgery, cptCodes, settings = {}, procedureGro
         // Actual margin is Revenue minus all costs (including internal room/labor)
         netProfit = totalValue - (internalRoomCost + laborCost + supplyCosts + anesthesiaRevenue);
     } else {
-        const payerType = surgery.patients?.payer_type || surgery.patients?.insurance_type || surgery.payer_type || surgery.insurance_provider || 'Medicare';
+        const rawPayer = surgery.payers?.payer_category || surgery.payer_master?.payer_category || surgery.patients?.payer_type || surgery.patients?.insurance_type || surgery.payer_type || surgery.insurance_provider;
+        const payerCategory = rawPayer ? String(rawPayer).trim() : null;
+        const isCommercial = payerCategory && ['Commercial', 'Workers_Comp', 'Self_Pay', 'Other'].includes(payerCategory);
+
         cptTotal = calculateMedicareRevenue(
             surgery.cpt_codes || surgery.cptCodes || [], 
             cptCodes, 
             Boolean(settings?.apply_medicare_mppr),
-            { payerType }
+            { 
+              payerType: payerCategory || 'Medicare',
+              strictPayerCheck: Boolean(isCommercial)
+            }
         );
         internalRoomCost = calculateORCost(duration + turnover); // Full room usage cost
 

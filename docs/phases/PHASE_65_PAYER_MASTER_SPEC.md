@@ -191,3 +191,4 @@ To ensure **zero disruption** to existing production modules (Phase 24 Claim Scr
    - `insurance_provider`, `insurance_policy_number`, `insurance_group_number` remain populated and synchronized from the Primary record in `patient_insurance_coverages`.
 3. **Graceful Service Fallback**:
    - `db.getPayers()` in `src/lib/supabase.js` will query the normalized `facility_payers` join while returning the exact JSON shape currently expected by `PatientManagement.jsx` and `ClaimScrubberWorkbench.jsx`.
+

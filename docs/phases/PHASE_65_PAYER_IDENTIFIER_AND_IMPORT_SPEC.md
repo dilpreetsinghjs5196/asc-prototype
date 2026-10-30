@@ -188,3 +188,4 @@ When duplicate payer entries are identified (e.g., legacy manual entries *"BCBS 
      - `absorbed_payer_id` status is updated to `ARCHIVED` with `change_rationale = 'MERGED_INTO:' || survivor_payer_id`.
      - Hard delete of `absorbed_payer_id` is **strictly forbidden**.
    - Transaction stamps immutable audit event into `public.payer_audit_logs`.
+

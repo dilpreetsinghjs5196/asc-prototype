@@ -37,6 +37,7 @@ import FacilityImplantPricing from './components/FacilityImplantPricing';
 import SurgeonPreferenceCards from './components/SurgeonPreferenceCards';
 import CaseImplantUsage from './components/CaseImplantUsage';
 import MedicareRateExplorer from './components/MedicareRateExplorer';
+import PayerMasterDirectory from './components/PayerMasterDirectory';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -90,7 +91,8 @@ import {
   GitFork,
   ClipboardList,
   Cpu,
-  Scale
+  Scale,
+  CreditCard
 } from 'lucide-react';
 
 // ==========================================
@@ -2444,6 +2446,13 @@ export default function App() {
             Medicare ASC Rates
           </div>
           <div
+            className={`menu-item ${(activeTab === 'payer_master' || activeTab === 'payer') && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('payer_master'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><CreditCard size={16} /></div>
+            Payer & Plan Master
+          </div>
+          <div
             className={`menu-item ${activeTab === 'implant_taxonomy' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('implant_taxonomy'); setSelectedSurgeon(null); }}
           >
@@ -2702,7 +2711,7 @@ export default function App() {
                   {activeTab === 'cpt_implant_matrix' && 'CPT-to-Implant Construct Matrix'}
                   {activeTab === 'claim_scrubber' && 'Pre-Bill Claim Scrubbing Rules & Edits'}
                   {activeTab === 'upload_code_files' && 'Upload new Code Files'}
-                  {activeTab === 'payer' && 'Payer Intelligence'}
+                  {(activeTab === 'payer' || activeTab === 'payer_master') && 'Payer Master & Health Plan Directory'}
                   {activeTab === 'supply' && 'Supply Chain'}
                   {activeTab === 'cancellations' && 'Cancellations'}
                   {activeTab === 'reports' && 'Reports & Analytics'}
@@ -2737,7 +2746,7 @@ export default function App() {
                   {activeTab === 'cpt' && 'Contribution margins, procedure times, and volumes by CPT code'}
                   {activeTab === 'implant_taxonomy' && 'Deterministic medical device hierarchy, clinical component roles, and FDA/ISO duration governance'}
                   {activeTab === 'cpt_implant_matrix' && 'Deterministic procedural-to-hardware mapping, clinical requirement rules, and pre-bill completeness validation'}
-                  {activeTab === 'payer' && 'Payer mix contribution margins and reimbursement analytics'}
+                  {(activeTab === 'payer' || activeTab === 'payer_master') && 'Enterprise health plan hierarchies, statutory HIPAA 5010 EDI 837 Loop 2010BB routing, and facility enablement'}
                   {activeTab === 'supply' && 'Supply variance tracking and preference card standardization tools'}
                   {activeTab === 'cancellations' && 'Cancellations tracking, revenue leak analysis, and predictive risk analysis'}
                   {activeTab === 'reports' && 'Standard financial and operational reports export'}
@@ -2853,7 +2862,7 @@ export default function App() {
             </div>
 
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -3855,17 +3864,16 @@ export default function App() {
               )}
 
               {/* ==========================================
-              TAB: PAYER INTELLIGENCE
+              TAB: PAYER INTELLIGENCE / PAYER MASTER
               ========================================== */}
-              {activeTab === 'payer' && (
-                <div className="dashboard-card">
-                  <div className="card-header">
-                    <h3 className="card-title">Payer Intelligence</h3>
-                  </div>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                    Reimbursement cycles, collection logs, and margin details by insurance provider (Medicare, Commercial, etc.).
-                  </p>
-                </div>
+              {(activeTab === 'payer' || activeTab === 'payer_master') && (
+                <RoleGate requiredRole={['super_admin', 'org_admin', 'facility_admin', 'cfo', 'biller', 'coder', 'viewer']}>
+                  <ErrorBoundary>
+                    <PayerMasterDirectory
+                      activeFacility={activeFacility}
+                    />
+                  </ErrorBoundary>
+                </RoleGate>
               )}
 
               {/* ==========================================

@@ -152,3 +152,4 @@ In the current codebase (lines 382-388), if a commercial encounter lacks an exac
    }
    ```
 4. **Chargemaster Separation**: Ensure gross chargemaster charges (`gross_charge`) are strictly tracked as billed amounts, never conflated with expected reimbursement.
+

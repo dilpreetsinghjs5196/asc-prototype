@@ -110,6 +110,20 @@ export const PERMISSIONS_CATALOG = [
   { code: 'mppr.approve_override', category: 'finance', name: 'Approve Multiple Procedure Billing Override', risk_level: 'critical' },
   { code: 'mppr.audit_export', category: 'reports', name: 'Export MPPR Financial Audit Snapshots & Impact Reports', risk_level: 'sensitive' },
 
+  // Payer Master & Payer Plan Master (Phase 65)
+  { code: 'payer.view', category: 'billing', name: 'View Payer Master, Plans & Routing Identifiers', risk_level: 'standard' },
+  { code: 'payer.create', category: 'finance', name: 'Create Payer Master & Benefit Plan Records', risk_level: 'sensitive' },
+  { code: 'payer.edit', category: 'finance', name: 'Edit Payer Details & Metadata', risk_level: 'sensitive' },
+  { code: 'payer.activate', category: 'finance', name: 'Activate or Suspend Payer Entity', risk_level: 'critical' },
+  { code: 'payer.archive', category: 'finance', name: 'Archive Payer Master Record', risk_level: 'critical' },
+  { code: 'payer.manage_plans', category: 'finance', name: 'Manage Payer Benefit Plans & Timely Filing', risk_level: 'sensitive' },
+  { code: 'payer.manage_identifiers', category: 'billing', name: 'Manage Electronic EDI Payer Routing IDs', risk_level: 'sensitive' },
+  { code: 'payer.configure_facility', category: 'finance', name: 'Configure Facility Participation & In-Network Settings', risk_level: 'sensitive' },
+  { code: 'payer.manage_contracts', category: 'finance', name: 'Manage Commercial Payer Reimbursement Contracts', risk_level: 'critical' },
+  { code: 'payer.manage_coverages', category: 'billing', name: 'Manage Patient Insurance Coverages & COB', risk_level: 'sensitive' },
+  { code: 'payer.import', category: 'finance', name: 'Upload & Stage External Payer Directories', risk_level: 'sensitive' },
+  { code: 'payer.export', category: 'reports', name: 'Export Master Payer Directory & Contract Matrices', risk_level: 'sensitive' },
+
 
   // Medicare Base Rate Engine (Domain: billing / finance)
   { code: 'medicare_rates.view', category: 'billing', name: 'View Published Medicare Base Rates', risk_level: 'standard' },
@@ -254,6 +268,7 @@ export const rbacService = {
         'implants.view_variance', 'implants.export_reports',
         'reports.export_volume', 'reports.export_margins',
         'ai.run_insights', 'roles.view', 'tenancy.toggle_mppr',
+        'payer.view', 'payer.create', 'payer.edit', 'payer.activate', 'payer.manage_plans', 'payer.configure_facility', 'payer.manage_contracts', 'payer.import', 'payer.export',
         'audit.view_clinical', 'audit.view_financial'
       ];
     }
@@ -277,6 +292,7 @@ export const rbacService = {
         'surgeries.view', 'surgeries.schedule', 'surgeries.edit', 'surgeries.delete',
         'or.view', 'or.reserve_blocks', 'or.edit_allocations', 'or.release_blocks',
         'cpt.view', 'reports.export_volume',
+        'payer.view', 'payer.manage_coverages',
         'implants.view_catalog', 'implants.manage_preference_cards',
         'ai.run_insights', 'ai.run_simulation', 'ai.auto_schedule'
       ];
@@ -296,7 +312,8 @@ export const rbacService = {
         'reports.export_volume', 'reports.export_margins',
         'ai.run_insights', 'audit.view_financial',
         'geographic.view_rates', 'geographic.view_facility_settings', 'geographic.edit_facility_assignment', 'geographic.audit_export',
-        'device.view_offsets', 'device.view_categories', 'device.view_crosswalk', 'mppr.view_rules', 'mppr.view_calculations', 'device.view_margin_ledger', 'device.export_data', 'mppr.view_rules', 'mppr.view_calculations', 'mppr.audit_export'
+        'device.view_offsets', 'device.view_categories', 'device.view_crosswalk', 'mppr.view_rules', 'mppr.view_calculations', 'device.view_margin_ledger', 'device.export_data', 'mppr.view_rules', 'mppr.view_calculations', 'mppr.audit_export',
+        'payer.view', 'payer.manage_coverages', 'payer.manage_identifiers'
       ];
     }
     if (roleSlug === 'coder') {
@@ -310,7 +327,8 @@ export const rbacService = {
         'implants.view_catalog', 'implants.log_usage',
         'reports.export_volume', 'ai.run_insights',
         'geographic.view_rates', 'geographic.view_facility_settings',
-        'device.view_offsets', 'device.view_categories', 'device.view_crosswalk'
+        'device.view_offsets', 'device.view_categories', 'device.view_crosswalk',
+        'payer.view'
       ];
     }
     if (roleSlug === 'surgeon') {

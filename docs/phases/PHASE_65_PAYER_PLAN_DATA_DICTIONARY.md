@@ -239,3 +239,4 @@ Immutable provenance tracking every payer modification, lifecycle status change,
 - `created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`
 
 - **Trigger**: Statement-level immutability trigger `trg_block_payer_audit_modification` blocking `UPDATE` or `DELETE`.
+

@@ -163,3 +163,4 @@ If an administrative user deletes an inactive payer record, all historical contr
 | `src/components/SurgeryScheduler.jsx` | Ignores `primary_payer_id` | **REFACTOR** | Add payer and plan selector to case booking drawer |
 | `src/App.jsx` (L3860) | Static empty card | **REPLACE** | Replace with comprehensive Payer Master Management Workspace |
 | `src/lib/rbacService.js` | No payer permissions | **MISSING** | Register 12 canonical `payer.*` permissions |
+
