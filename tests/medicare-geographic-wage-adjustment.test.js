@@ -286,5 +286,14 @@ test('Phase 62 — Geographic Wage Adjustment & Effective-Dated CBSA Resolution'
     assert.strictEqual(lookup[0].cbsa_code, '34940');
   });
 
+  await t.test('13. Geographic Wage Service Canonical Constants Validation', () => {
+    assert.ok(Array.isArray(CBSA_VERIFICATION_SOURCES));
+    assert.strictEqual(CBSA_VERIFICATION_SOURCES.length >= 4, true);
+    assert.strictEqual(NATIONAL_BASELINE_CBSA.code, '00000');
+    assert.strictEqual(NATIONAL_BASELINE_CBSA.wageIndex, 1.0000);
+    assert.strictEqual(DEFAULT_FACILITY_CBSA.code, '34940');
+    assert.strictEqual(DEFAULT_FACILITY_CBSA.wageIndex, 0.9412);
+  });
+
 });
 

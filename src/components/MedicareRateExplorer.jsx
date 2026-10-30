@@ -18,7 +18,7 @@ import {
   X
 } from 'lucide-react';
 import { medicareRateService, DEFAULT_CBSA } from '../lib/medicareRateService';
-import { geographicWageService, CBSA_VERIFICATION_SOURCES, DEFAULT_FACILITY_CBSA } from '../lib/geographicWageService';
+import { geographicWageService, CBSA_VERIFICATION_SOURCES } from '../lib/geographicWageService';
 import './MedicareRateExplorer.css';
 
 export default function MedicareRateExplorer({ activeFacility }) {
@@ -246,10 +246,11 @@ export default function MedicareRateExplorer({ activeFacility }) {
 
   // Filter national CBSAs
   const filteredCBSAs = wageIndices.filter(w => {
-    const matchSearch = !cbsaSearch || 
-      w.cbsa_code.includes(cbsaSearch) || 
-      w.cbsa_name.toLowerCase().includes(cbsaSearch.toLowerCase());
-    const matchState = cbsaStateFilter === 'All' || w.state_code === cbsaStateFilter;
+    const code = String(w?.cbsa_code || '');
+    const name = String(w?.cbsa_name || '').toLowerCase();
+    const search = (cbsaSearch || '').toLowerCase();
+    const matchSearch = !cbsaSearch || code.includes(search) || name.includes(search);
+    const matchState = cbsaStateFilter === 'All' || w?.state_code === cbsaStateFilter;
     return matchSearch && matchState;
   });
 
@@ -498,16 +499,16 @@ export default function MedicareRateExplorer({ activeFacility }) {
                           )}
                         </td>
                         <td className="currency-cell unadjusted-rate">
-                          ${r.national_unadjusted_rate.toFixed(2)}
+                          ${(r.national_unadjusted_rate || 0).toFixed(2)}
                         </td>
                         <td className="currency-cell adjusted-rate">
-                          ${adjusted.toFixed(2)}
+                          ${(adjusted || 0).toFixed(2)}
                         </td>
                         <td style={{ fontSize: '0.8rem', color: '#64748b' }}>
                           {isTerminated ? (
                             <span style={{ color: '#94a3b8' }}>Terminated ({r.termination_date})</span>
                           ) : r.is_device_intensive ? (
-                            <span>{(r.device_offset_percentage * 100).toFixed(0)}% Device Protected from Wage Index</span>
+                            <span>{((r.device_offset_percentage || 0) * 100).toFixed(0)}% Device Protected from Wage Index</span>
                           ) : r.payment_indicator === 'N1' ? (
                             <span>Bundled into Primary Procedure APC</span>
                           ) : (
@@ -926,7 +927,7 @@ export default function MedicareRateExplorer({ activeFacility }) {
                 >
                   {wageIndices.slice(0, 30).map(w => (
                     <option key={w.cbsa_code} value={w.cbsa_code}>
-                      {w.cbsa_code} — {w.cbsa_name.split(',')[0]} ({parseFloat(w.wage_index).toFixed(4)})
+                      {w.cbsa_code} — {String(w.cbsa_name || '').split(',')[0]} ({parseFloat(w.wage_index || 1.0).toFixed(4)})
                     </option>
                   ))}
                 </select>
@@ -1069,10 +1070,10 @@ export default function MedicareRateExplorer({ activeFacility }) {
                       <td>{w.cbsa_name}</td>
                       <td>{w.state_code}</td>
                       <td className="currency-cell" style={{ fontWeight: 700, color: '#2563eb' }}>
-                        {parseFloat(w.wage_index).toFixed(4)}
+                        {parseFloat(w.wage_index || 1.0).toFixed(4)}
                       </td>
                       <td style={{ fontSize: '0.82rem', color: '#64748b' }}>
-                        {parseFloat(w.pre_floor_wage_index || w.wage_index).toFixed(4)}
+                        {parseFloat(w.pre_floor_wage_index || w.wage_index || 1.0).toFixed(4)}
                       </td>
                       <td>
                         {w.is_rural_floor ? (
@@ -1217,7 +1218,7 @@ export default function MedicareRateExplorer({ activeFacility }) {
               <div style={{ marginTop: '1rem', padding: '1rem', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                   <h5 style={{ margin: 0, fontSize: '0.9rem', color: '#0f172a' }}>
-                    Counties delineated in CBSA {selectedCbsa.cbsa_code} ({selectedCbsa.cbsa_name})
+                    Counties delineated in CBSA {selectedCbsa?.cbsa_code} ({selectedCbsa?.cbsa_name || 'Selected CBSA'})
                   </h5>
                   <button
                     type="button"
@@ -1292,7 +1293,7 @@ export default function MedicareRateExplorer({ activeFacility }) {
                     >
                       {wageIndices.map(w => (
                         <option key={w.cbsa_code} value={w.cbsa_code}>
-                          {w.cbsa_code} — {w.cbsa_name} ({parseFloat(w.wage_index).toFixed(4)})
+                          {w.cbsa_code} — {w.cbsa_name || ''} ({parseFloat(w.wage_index || 1.0).toFixed(4)})
                         </option>
                       ))}
                     </select>

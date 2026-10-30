@@ -4,6 +4,7 @@ import './index.css'
 import { ENV_ERROR } from './lib/env'
 import App from './App.jsx'
 import ConfigErrorScreen from './components/ConfigErrorScreen.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 
 const root = createRoot(document.getElementById('root'));
 
@@ -12,7 +13,9 @@ if (ENV_ERROR) {
 } else {
   root.render(
     <StrictMode>
-      <App />
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
     </StrictMode>,
   );
 }

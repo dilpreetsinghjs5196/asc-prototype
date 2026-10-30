@@ -37,6 +37,7 @@ import FacilityImplantPricing from './components/FacilityImplantPricing';
 import SurgeonPreferenceCards from './components/SurgeonPreferenceCards';
 import CaseImplantUsage from './components/CaseImplantUsage';
 import MedicareRateExplorer from './components/MedicareRateExplorer';
+import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
 import { useInactivityTimeout } from './hooks/useInactivityTimeout';
@@ -4509,9 +4510,11 @@ export default function App() {
               ========================================== */}
               {activeTab === 'medicare_rates' && (
                 <RoleGate requiredRole={['super_admin', 'org_admin', 'facility_admin', 'cfo', 'biller', 'coder', 'viewer']}>
-                  <MedicareRateExplorer
-                    activeFacility={activeFacility}
-                  />
+                  <ErrorBoundary>
+                    <MedicareRateExplorer
+                      activeFacility={activeFacility}
+                    />
+                  </ErrorBoundary>
                 </RoleGate>
               )}
 
