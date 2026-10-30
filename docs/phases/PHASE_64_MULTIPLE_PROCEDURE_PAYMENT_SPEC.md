@@ -198,3 +198,4 @@ Phase 64 must enforce organization and facility tenancy across all stored proced
 1. Reference data (`cms_asc_addenda`, `cms_payment_indicators`, `cms_endoscopy_families`) is globally readable (`facility_id IS NULL`) and system-immutable.
 2. Facility configuration (`facility_medicare_settings`, `mppr_rule_sets`) is scoped by `facility_id` with RLS enforced via `public.is_facility_accessible(facility_id)`.
 3. Financial snapshots (`mppr_calculation_snapshots`, `mppr_calculation_lines`) are immutable financial evidence with statement-level triggers blocking `UPDATE` and `DELETE`.
+

@@ -636,24 +636,29 @@ export const validateProcedureLineClient = (line, allLines = [], cptCatalog = []
 export const calculateAuthoritativeAscRevenue = (procedureLines, cptDatabase = [], options = {}) => {
     if (!Array.isArray(procedureLines) || procedureLines.length === 0) return 0;
 
+    const catalog = Array.isArray(cptDatabase) ? cptDatabase : [];
+    const opts = (!Array.isArray(cptDatabase) && typeof cptDatabase === 'object') ? cptDatabase : (options || {});
+
     const resolvedLines = procedureLines.map(line => {
         const item = typeof line === 'string' ? { code: line.trim() } : line;
-        const catalogItem = cptDatabase.find(c => String(c.code) === String(item.code));
+        const code = item.code || item.cpt_code;
+        const catalogItem = catalog.find(c => String(c.code) === String(code));
         return {
             ...catalogItem,
             ...item,
+            code: code,
             units: Math.max(1, parseInt(item.units, 10) || 1),
             modifiers: Array.isArray(item.modifiers) ? item.modifiers : [],
             laterality: item.laterality || 'NOT_APPLICABLE'
         };
     });
 
-    const applyMPPR = options.applyMPPR !== false;
+    const applyMPPR = opts.applyMPPR !== false;
     let totalRevenue = 0;
 
     // Helper to compute line base price with bilateral and discontinued modifiers
     const getAdjustedLinePrice = (line) => {
-        const rawRate = parseFloat(line.gross_charge !== undefined ? line.gross_charge : (line.contracted_reimbursement !== undefined ? line.contracted_reimbursement : (line.reimbursement || 0)));
+        const rawRate = parseFloat(line.unreduced_rate !== undefined ? line.unreduced_rate : (line.national_unadjusted_rate !== undefined ? line.national_unadjusted_rate : (line.gross_charge !== undefined ? line.gross_charge : (line.contracted_reimbursement !== undefined ? line.contracted_reimbursement : (line.reimbursement || 0)))));
         const isBilateral = (line.modifiers && line.modifiers.includes('50')) || line.laterality === 'BILATERAL';
         const isDiscontinuedPre = line.modifiers && line.modifiers.includes('73');
 
@@ -693,8 +698,18 @@ export const calculateAuthoritativeAscRevenue = (procedureLines, cptDatabase = [
             totalRevenue += price + (price * 0.50 * (effectiveUnits - 1));
             eligibleRank++;
         } else {
-            // Rank 2+ gets 50% under MPPR
-            totalRevenue += price * 0.50 * effectiveUnits;
+            // Rank 2+ gets 50% under MPPR (Phase 64: Protected J8 Device Offset)
+            const isDeviceIntensive = line.payment_indicator === 'J8' || line.procedure_indicator === 'J8' || Boolean(line.is_device_intensive) || Boolean(line.device_offset_percentage);
+            let offsetAmount = parseFloat(line.device_offset_amount || 0);
+            if (offsetAmount === 0 && line.device_offset_percentage && price > 0) {
+                offsetAmount = Math.round(price * parseFloat(line.device_offset_percentage) * 100) / 100;
+            }
+            if (isDeviceIntensive && offsetAmount > 0 && offsetAmount < price) {
+                const serviceShare = price - offsetAmount;
+                totalRevenue += (offsetAmount + (serviceShare * 0.50)) * effectiveUnits;
+            } else {
+                totalRevenue += price * 0.50 * effectiveUnits;
+            }
             eligibleRank++;
         }
     });

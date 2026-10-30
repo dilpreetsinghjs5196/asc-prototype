@@ -90,3 +90,4 @@ Commercial payers enforce contract-specific multiple procedure reduction schedul
 1. **Never Assume Commercial Cascade for Medicare**: Medicare ASC must **strictly** use 100% / 50% with J8 device carve-out under 42 CFR § 416.172.
 2. **Modifier 51 Requirement**: Commercial payers require Modifier 51 on Lines 2, 3, and 4. Claim scrubber rule `SCRUB-COMM-51` must ensure Modifier 51 is present on commercial 837P claims.
 3. **Payer Contract Rule Versioning**: Commercial cascades must be effective-dated in `public.payer_mppr_rule_sets` with explicit start and end dates.
+

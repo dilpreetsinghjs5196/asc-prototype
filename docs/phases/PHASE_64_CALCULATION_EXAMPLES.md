@@ -245,3 +245,4 @@ $$\text{Total Medicare ASC Payment} = \$660.01 + \$126.18 = \mathbf{\$786.19}$$
 ### Step 3: Final Commercial Encounter Total
 $$\text{Total Commercial Reimbursement} = \$3,200.00 + \$900.00 + \$300.00 + \$0.00 = \mathbf{\$4,400.00}$$
 - **Total Contractual Discount Deducted**: $\$7,150.00 - \$4,400.00 = \$2,750.00$
+

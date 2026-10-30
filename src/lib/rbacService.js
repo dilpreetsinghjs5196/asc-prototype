@@ -101,6 +101,15 @@ export const PERMISSIONS_CATALOG = [
   { code: 'device.audit_reconciliation', category: 'reports', name: 'Reconcile Case Device Ledger Against Vendor Invoices', risk_level: 'standard' },
   { code: 'device.export_data', category: 'reports', name: 'Export Device-Intensive Financial & Margin Reports', risk_level: 'sensitive' },
 
+  // Multiple Procedure Payment Rules (Phase 64)
+  { code: 'mppr.view_rules', category: 'billing', name: 'View Multiple Procedure Reduction Rules & Cascades', risk_level: 'standard' },
+  { code: 'mppr.view_calculations', category: 'billing', name: 'View Line-by-Line Encounter MPPR Calculations', risk_level: 'standard' },
+  { code: 'mppr.manage_payer_rules', category: 'finance', name: 'Manage Commercial Payer MPPR Reduction Cascades', risk_level: 'sensitive' },
+  { code: 'mppr.toggle_facility_setting', category: 'finance', name: 'Toggle Facility Medicare MPPR Configuration', risk_level: 'critical' },
+  { code: 'mppr.override_discount', category: 'billing', name: 'Override Multiple Procedure Discount on Encounter', risk_level: 'sensitive' },
+  { code: 'mppr.approve_override', category: 'finance', name: 'Approve Multiple Procedure Billing Override', risk_level: 'critical' },
+  { code: 'mppr.audit_export', category: 'reports', name: 'Export MPPR Financial Audit Snapshots & Impact Reports', risk_level: 'sensitive' },
+
 
   // Medicare Base Rate Engine (Domain: billing / finance)
   { code: 'medicare_rates.view', category: 'billing', name: 'View Published Medicare Base Rates', risk_level: 'standard' },
@@ -287,7 +296,7 @@ export const rbacService = {
         'reports.export_volume', 'reports.export_margins',
         'ai.run_insights', 'audit.view_financial',
         'geographic.view_rates', 'geographic.view_facility_settings', 'geographic.edit_facility_assignment', 'geographic.audit_export',
-        'device.view_offsets', 'device.view_categories', 'device.view_crosswalk', 'device.view_margin_ledger', 'device.export_data'
+        'device.view_offsets', 'device.view_categories', 'device.view_crosswalk', 'mppr.view_rules', 'mppr.view_calculations', 'device.view_margin_ledger', 'device.export_data', 'mppr.view_rules', 'mppr.view_calculations', 'mppr.audit_export'
       ];
     }
     if (roleSlug === 'coder') {
