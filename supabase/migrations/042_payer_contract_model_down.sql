@@ -46,3 +46,4 @@ ALTER TABLE public.payer_contracts
     DROP COLUMN IF EXISTS created_by;
 
 COMMIT;
+
