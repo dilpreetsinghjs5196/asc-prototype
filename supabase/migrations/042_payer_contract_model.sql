@@ -386,6 +386,22 @@ BEGIN
 END;
 $$;
 
+-- 4.3 Return set of organization IDs the authenticated user has active facility memberships in
+CREATE OR REPLACE FUNCTION public.get_auth_user_organizations()
+RETURNS TABLE (organization_id UUID)
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+    SELECT DISTINCT f.organization_id
+    FROM public.facilities f
+    JOIN public.facility_memberships fm ON fm.facility_id = f.id
+    WHERE fm.user_id = auth.uid()
+      AND fm.is_active = TRUE
+      AND f.organization_id IS NOT NULL;
+$$;
+
 -- ==============================================================================
 -- 5. ROW LEVEL SECURITY (RLS) POLICIES
 -- ==============================================================================
@@ -478,7 +494,8 @@ DROP POLICY IF EXISTS "Payer Contract Audit Logs Policy" ON public.payer_contrac
 CREATE POLICY "Payer Contract Audit Logs Policy"
 ON public.payer_contract_audit_logs FOR SELECT TO authenticated
 USING (
-    organization_id IN (SELECT organization_id FROM public.get_auth_user_organizations())
+    public.user_has_facility_role(NULL, ARRAY['super_admin'])
+    OR organization_id IN (SELECT organization_id FROM public.get_auth_user_organizations())
 );
 
 -- ==============================================================================

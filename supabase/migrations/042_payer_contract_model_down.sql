@@ -9,6 +9,7 @@ BEGIN;
 DROP TRIGGER IF EXISTS trg_block_approved_contract_version_modification ON public.payer_contract_versions;
 DROP FUNCTION IF EXISTS public.fn_block_approved_contract_version_modification();
 DROP FUNCTION IF EXISTS public.fn_resolve_payer_contract(UUID, UUID, UUID, DATE, VARCHAR);
+DROP FUNCTION IF EXISTS public.get_auth_user_organizations();
 
 -- 2. Drop new normalized tables in reverse dependency order
 DROP TABLE IF EXISTS public.payer_contract_audit_logs CASCADE;
