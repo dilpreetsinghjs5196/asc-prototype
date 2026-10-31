@@ -18,7 +18,20 @@ BEGIN;
 -- 1. REFACTOR EXISTING PAYER CONTRACT TABLES FOR MULTI-TENANCY & LIFECYCLE
 -- ==============================================================================
 
--- 1.1 Expand public.payer_contracts
+-- 1.1 Baseline public.payer_contracts (if not already created by Migration 041)
+CREATE TABLE IF NOT EXISTS public.payer_contracts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    facility_id UUID REFERENCES public.facilities(id) ON DELETE CASCADE,
+    payer_id UUID NOT NULL REFERENCES public.payer_master(id) ON DELETE RESTRICT,
+    contract_number VARCHAR(80) NOT NULL,
+    contract_title VARCHAR(255) NOT NULL,
+    reimbursement_methodology VARCHAR(30) NOT NULL DEFAULT 'PERCENT_OF_MEDICARE',
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Expand public.payer_contracts
 ALTER TABLE public.payer_contracts 
     ALTER COLUMN facility_id DROP NOT NULL;
 
@@ -48,7 +61,22 @@ WHERE organization_id IS NULL;
 ALTER TABLE public.payer_contracts
     ALTER COLUMN organization_id SET NOT NULL;
 
--- 1.2 Expand public.payer_contract_versions
+-- 1.2 Baseline public.payer_contract_versions (if not already created by Migration 041)
+CREATE TABLE IF NOT EXISTS public.payer_contract_versions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    contract_id UUID NOT NULL REFERENCES public.payer_contracts(id) ON DELETE CASCADE,
+    version_number INTEGER NOT NULL DEFAULT 1,
+    effective_start_date DATE NOT NULL,
+    effective_end_date DATE,
+    medicare_multiplier NUMERIC(6, 4) DEFAULT 1.0000,
+    mppr_rule_set_code VARCHAR(40) NOT NULL DEFAULT 'COM_STD_CASCADE',
+    device_carve_out_enabled BOOLEAN NOT NULL DEFAULT true,
+    device_invoice_markup_pct NUMERIC(6, 4) DEFAULT 0.1000,
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Expand public.payer_contract_versions
 ALTER TABLE public.payer_contract_versions
     ADD COLUMN IF NOT EXISTS reimbursement_methodology VARCHAR(40) NOT NULL DEFAULT 'PERCENT_OF_MEDICARE',
     ADD COLUMN IF NOT EXISTS billed_charge_discount_pct NUMERIC(6, 4),
@@ -564,3 +592,4 @@ BEGIN
 END $$;
 
 COMMIT;
+
