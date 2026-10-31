@@ -494,8 +494,11 @@ DROP POLICY IF EXISTS "Payer Contract Audit Logs Policy" ON public.payer_contrac
 CREATE POLICY "Payer Contract Audit Logs Policy"
 ON public.payer_contract_audit_logs FOR SELECT TO authenticated
 USING (
-    public.user_has_facility_role(NULL, ARRAY['super_admin'])
-    OR organization_id IN (SELECT organization_id FROM public.get_auth_user_organizations())
+    EXISTS (
+        SELECT 1 FROM public.payer_contracts c
+        WHERE c.id = payer_contract_audit_logs.contract_id
+          AND (c.facility_id IS NULL OR public.is_facility_accessible(c.facility_id))
+    )
 );
 
 -- ==============================================================================
