@@ -568,7 +568,7 @@ VALUES
     ('30000000-0000-0000-0000-000000000001', NULL, NULL, 'MEDICARE_ASC_416_172', 'Medicare ASC Statutory Reduction (42 CFR § 416.172)', 'Medicare_ASC', 'ALLOWABLE_DESC', true, true, true, '2024-01-01'),
     ('30000000-0000-0000-0000-000000000002', NULL, NULL, 'COM_STD_CASCADE', 'Commercial Standard 100/50/25/0 Cascade', 'Commercial', 'ALLOWABLE_DESC', false, true, true, '2024-01-01'),
     ('30000000-0000-0000-0000-000000000003', NULL, NULL, 'COM_SYM_50', 'Commercial Symmetric 100/50/50/50 Cascade', 'Commercial', 'ALLOWABLE_DESC', false, true, true, '2024-01-01')
-ON CONFLICT (rule_set_code, facility_id, effective_start_date) DO UPDATE SET
+ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     protect_device_offset = EXCLUDED.protect_device_offset;
 
