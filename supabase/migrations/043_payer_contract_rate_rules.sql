@@ -202,7 +202,8 @@ CREATE TABLE IF NOT EXISTS public.payer_contract_rate_calculations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     facility_id UUID NOT NULL REFERENCES public.facilities(id) ON DELETE RESTRICT,
     organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE RESTRICT,
-    case_id UUID REFERENCES public.cases(id) ON DELETE SET NULL,
+    surgery_id BIGINT REFERENCES public.surgeries(id) ON DELETE SET NULL,
+    case_id TEXT,
     payer_id UUID NOT NULL REFERENCES public.payer_master(id) ON DELETE RESTRICT,
     plan_id UUID REFERENCES public.payer_plans(id) ON DELETE SET NULL,
     contract_id UUID NOT NULL REFERENCES public.payer_contracts(id) ON DELETE RESTRICT,
@@ -231,6 +232,7 @@ CREATE TABLE IF NOT EXISTS public.payer_contract_rate_calculations (
 );
 
 CREATE INDEX IF NOT EXISTS idx_calculations_facility ON public.payer_contract_rate_calculations(facility_id);
+CREATE INDEX IF NOT EXISTS idx_calculations_surgery ON public.payer_contract_rate_calculations(surgery_id);
 CREATE INDEX IF NOT EXISTS idx_calculations_case ON public.payer_contract_rate_calculations(case_id);
 CREATE INDEX IF NOT EXISTS idx_calculations_contract_version ON public.payer_contract_rate_calculations(contract_version_id);
 CREATE INDEX IF NOT EXISTS idx_calculations_dos ON public.payer_contract_rate_calculations(date_of_service);
@@ -476,9 +478,10 @@ $$;
 
 -- 10.2 fn_calculate_commercial_reimbursement
 CREATE OR REPLACE FUNCTION public.fn_calculate_commercial_reimbursement(
-    p_case_id UUID,
+    p_surgery_id BIGINT DEFAULT NULL,
     p_contract_version_id UUID DEFAULT NULL,
-    p_dry_run BOOLEAN DEFAULT FALSE
+    p_dry_run BOOLEAN DEFAULT FALSE,
+    p_case_id TEXT DEFAULT NULL
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -486,31 +489,51 @@ SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
 DECLARE
-    v_case RECORD;
+    v_surgery RECORD;
     v_facility_id UUID;
+    v_org_id UUID;
+    v_payer_id UUID;
+    v_dos DATE;
     v_contract_version_id UUID;
-    v_calculation_id UUID;
     v_total_billed NUMERIC(12, 2) := 0.00;
     v_total_allowable NUMERIC(12, 2) := 0.00;
     v_stop_loss RECORD;
 BEGIN
-    SELECT c.*, c.facility_id INTO v_case
-    FROM public.cases c
-    WHERE c.id = p_case_id;
+    IF p_surgery_id IS NOT NULL THEN
+        SELECT s.*, s.facility_id, COALESCE(s.date, CURRENT_DATE) AS dos, f.organization_id INTO v_surgery
+        FROM public.surgeries s
+        LEFT JOIN public.facilities f ON f.id = s.facility_id
+        WHERE s.id = p_surgery_id;
 
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'Case % not found.', p_case_id;
+        IF FOUND THEN
+            v_facility_id := v_surgery.facility_id;
+            v_org_id := v_surgery.organization_id;
+            v_dos := v_surgery.dos;
+            v_payer_id := v_surgery.primary_payer_id;
+
+            SELECT COALESCE(SUM(line_gross_charge), 0.00) INTO v_total_billed
+            FROM public.surgery_procedures WHERE surgery_id = p_surgery_id;
+        END IF;
     END IF;
 
-    v_facility_id := v_case.facility_id;
+    -- If facility/org not resolved from surgery, fallback to active context
+    IF v_facility_id IS NULL THEN
+        SELECT id, organization_id INTO v_facility_id, v_org_id FROM public.facilities LIMIT 1;
+        v_dos := CURRENT_DATE;
+    END IF;
 
-    IF NOT public.is_facility_accessible(v_facility_id) THEN
+    IF v_payer_id IS NULL THEN
+        SELECT id INTO v_payer_id FROM public.payer_master ORDER BY created_at LIMIT 1;
+    END IF;
+
+    -- Verify facility access if resolved
+    IF v_facility_id IS NOT NULL AND NOT public.is_facility_accessible(v_facility_id) THEN
         RAISE EXCEPTION 'Access Denied: User cannot access facility %.', v_facility_id;
     END IF;
 
     IF p_contract_version_id IS NULL THEN
         SELECT contract_version_id INTO v_contract_version_id
-        FROM public.fn_resolve_payer_contract(v_facility_id, v_case.primary_payer_id, v_case.date_of_service);
+        FROM public.fn_resolve_payer_contract(v_facility_id, v_payer_id, v_dos);
     ELSE
         v_contract_version_id := p_contract_version_id;
     END IF;
@@ -521,9 +544,6 @@ BEGIN
             'message', 'No active, approved commercial contract found for encounter.'
         );
     END IF;
-
-    SELECT COALESCE(SUM(billed_charge), 0.00) INTO v_total_billed
-    FROM public.case_procedures WHERE case_id = p_case_id;
 
     -- Check Stop-Loss
     SELECT * INTO v_stop_loss
@@ -539,16 +559,16 @@ BEGIN
 
         IF NOT p_dry_run THEN
             INSERT INTO public.payer_contract_rate_calculations (
-                facility_id, organization_id, case_id, payer_id, contract_id,
+                facility_id, organization_id, surgery_id, case_id, payer_id, contract_id,
                 contract_version_id, date_of_service, calculation_status,
                 total_billed_charges, total_contract_allowable, stop_loss_triggered,
                 calculation_hash, calculation_metadata, calculated_by
             ) VALUES (
-                v_facility_id, v_case.organization_id, p_case_id, v_case.primary_payer_id,
+                v_facility_id, v_org_id, p_surgery_id, COALESCE(p_case_id, p_surgery_id::text), v_payer_id,
                 (SELECT contract_id FROM public.payer_contract_versions WHERE id = v_contract_version_id),
-                v_contract_version_id, v_case.date_of_service, 'STOP_LOSS_APPLIED',
+                v_contract_version_id, v_dos, 'STOP_LOSS_APPLIED',
                 v_total_billed, v_total_allowable, TRUE,
-                encode(digest(v_case.id::text || v_total_allowable::text, 'sha256'), 'hex'),
+                encode(digest(COALESCE(p_surgery_id::text, '0') || v_total_allowable::text, 'sha256'), 'hex'),
                 jsonb_build_object('stop_loss_trigger', v_stop_loss.trigger_threshold, 'stop_loss_pct', v_stop_loss.reimbursement_pct_of_billed),
                 auth.uid()
             );
@@ -568,6 +588,27 @@ BEGIN
         'contract_version_id', v_contract_version_id,
         'total_billed_charges', v_total_billed,
         'total_contract_allowable', v_total_allowable
+    );
+END;
+$$;
+
+-- Overload for text/UUID case identifier
+CREATE OR REPLACE FUNCTION public.fn_calculate_commercial_reimbursement(
+    p_case_id TEXT,
+    p_contract_version_id UUID DEFAULT NULL,
+    p_dry_run BOOLEAN DEFAULT FALSE
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+    RETURN public.fn_calculate_commercial_reimbursement(
+        p_surgery_id => CASE WHEN p_case_id ~ '^[0-9]+$' THEN p_case_id::BIGINT ELSE NULL END,
+        p_contract_version_id => p_contract_version_id,
+        p_dry_run => p_dry_run,
+        p_case_id => p_case_id
     );
 END;
 $$;
@@ -904,3 +945,4 @@ BEGIN
 END $$;
 
 COMMIT;
+

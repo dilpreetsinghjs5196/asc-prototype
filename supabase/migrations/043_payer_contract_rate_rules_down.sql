@@ -12,10 +12,10 @@ DROP TRIGGER IF EXISTS trg_lock_carve_outs ON public.payer_contract_carve_outs;
 DROP FUNCTION IF EXISTS public.trg_lock_contract_rates_on_approval();
 
 -- Drop Stored Procedures
-DROP FUNCTION IF EXISTS public.fn_commit_rate_schedule_version(UUID);
-DROP FUNCTION IF EXISTS public.fn_stage_rate_schedule_import(UUID, JSONB);
-DROP FUNCTION IF EXISTS public.fn_calculate_commercial_reimbursement(UUID, UUID, BOOLEAN);
-DROP FUNCTION IF EXISTS public.fn_resolve_contract_rate(UUID, VARCHAR, UUID, DATE, VARCHAR, VARCHAR);
+DROP FUNCTION IF EXISTS public.fn_commit_rate_schedule_version;
+DROP FUNCTION IF EXISTS public.fn_stage_rate_schedule_import;
+DROP FUNCTION IF EXISTS public.fn_calculate_commercial_reimbursement;
+DROP FUNCTION IF EXISTS public.fn_resolve_contract_rate;
 
 -- Drop Tables in reverse dependency order
 DROP TABLE IF EXISTS public.payer_contract_rate_import_staging CASCADE;
@@ -30,3 +30,4 @@ DROP TABLE IF EXISTS public.payer_contract_cpt_rates CASCADE;
 DROP TABLE IF EXISTS public.payer_contract_rate_schedules CASCADE;
 
 COMMIT;
+
