@@ -124,3 +124,4 @@ Each contract-related component across the repository is classified below as **K
 | **UI Workflow & Previews** | **35% READY** | **P2 (Medium)** | Replace Tab 4 mock cards in `PayerMasterDirectory.jsx` with full contract manager & resolution simulator. |
 
 *Proceed to Specification documents.*
+

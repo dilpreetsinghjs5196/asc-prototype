@@ -115,14 +115,38 @@ export const PERMISSIONS_CATALOG = [
   { code: 'payer.create', category: 'finance', name: 'Create Payer Master & Benefit Plan Records', risk_level: 'sensitive' },
   { code: 'payer.edit', category: 'finance', name: 'Edit Payer Details & Metadata', risk_level: 'sensitive' },
   { code: 'payer.activate', category: 'finance', name: 'Activate or Suspend Payer Entity', risk_level: 'critical' },
+  { code: 'payer.deactivate', category: 'finance', name: 'Deactivate Payer Master Record', risk_level: 'critical' },
   { code: 'payer.archive', category: 'finance', name: 'Archive Payer Master Record', risk_level: 'critical' },
   { code: 'payer.manage_plans', category: 'finance', name: 'Manage Payer Benefit Plans & Timely Filing', risk_level: 'sensitive' },
+  { code: 'payer.plan.manage', category: 'finance', name: 'Manage Payer Benefit Plans Specification', risk_level: 'sensitive' },
   { code: 'payer.manage_identifiers', category: 'billing', name: 'Manage Electronic EDI Payer Routing IDs', risk_level: 'sensitive' },
+  { code: 'payer.edi.route', category: 'billing', name: 'Resolve EDI Electronic Payer Route & Clearinghouse', risk_level: 'standard' },
   { code: 'payer.configure_facility', category: 'finance', name: 'Configure Facility Participation & In-Network Settings', risk_level: 'sensitive' },
+  { code: 'payer.facility.enable', category: 'finance', name: 'Enable Payer for Specific Facility Scope', risk_level: 'sensitive' },
   { code: 'payer.manage_contracts', category: 'finance', name: 'Manage Commercial Payer Reimbursement Contracts', risk_level: 'critical' },
+  { code: 'payer.contract.manage', category: 'finance', name: 'Author & Sign Commercial Contracts', risk_level: 'critical' },
   { code: 'payer.manage_coverages', category: 'billing', name: 'Manage Patient Insurance Coverages & COB', risk_level: 'sensitive' },
+  { code: 'payer.patient.coverage.view', category: 'billing', name: 'View Patient Insurance Coverage Roster', risk_level: 'standard' },
+  { code: 'payer.patient.coverage.edit', category: 'billing', name: 'Edit Patient Insurance Coverages & Policy IDs', risk_level: 'sensitive' },
   { code: 'payer.import', category: 'finance', name: 'Upload & Stage External Payer Directories', risk_level: 'sensitive' },
   { code: 'payer.export', category: 'reports', name: 'Export Master Payer Directory & Contract Matrices', risk_level: 'sensitive' },
+  // Payer Contract Model & Commercial Reimbursement (Phase 66)
+  { code: 'payer.contract.view', category: 'billing', name: 'View Payer Contracts', risk_level: 'standard' },
+  { code: 'payer.contract.terms.view', category: 'finance', name: 'View Contract Financial Terms & Fee Schedules', risk_level: 'sensitive' },
+  { code: 'payer.contract.document.view', category: 'finance', name: 'View Executed Contract Documents', risk_level: 'sensitive' },
+  { code: 'payer.contract.history.view', category: 'audit', name: 'View Contract Amendment & Version History', risk_level: 'standard' },
+  { code: 'payer.contract.create', category: 'finance', name: 'Create Payer Contract Draft', risk_level: 'sensitive' },
+  { code: 'payer.contract.edit', category: 'finance', name: 'Edit Draft Contract Terms & Multipliers', risk_level: 'sensitive' },
+  { code: 'payer.contract.scope.manage', category: 'finance', name: 'Manage Facility & Plan Contract Scopes', risk_level: 'sensitive' },
+  { code: 'payer.contract.terms.manage', category: 'finance', name: 'Manage Contract Fee Schedules & Case Rates', risk_level: 'critical' },
+  { code: 'payer.contract.document.upload', category: 'finance', name: 'Upload Signed Contract Documents', risk_level: 'sensitive' },
+  { code: 'payer.contract.submit', category: 'finance', name: 'Submit Contract Version for Approval', risk_level: 'sensitive' },
+  { code: 'payer.contract.approve', category: 'finance', name: 'Approve Contract Version (CFO Sign-Off)', risk_level: 'critical' },
+  { code: 'payer.contract.reject', category: 'finance', name: 'Reject Contract Version', risk_level: 'sensitive' },
+  { code: 'payer.contract.activate', category: 'finance', name: 'Activate Approved Contract Version', risk_level: 'critical' },
+  { code: 'payer.contract.suspend', category: 'finance', name: 'Suspend Contract for Legal Dispute', risk_level: 'critical' },
+  { code: 'payer.contract.terminate', category: 'finance', name: 'Terminate Contract Early', risk_level: 'critical' },
+  { code: 'payer.contract.export', category: 'reports', name: 'Export Contract Terms & Rate Matrices', risk_level: 'sensitive' },
 
 
   // Medicare Base Rate Engine (Domain: billing / finance)
@@ -190,6 +214,11 @@ export const PERMISSIONS_CATALOG = [
   { code: 'audit.view_security', category: 'audit', name: 'View Security Audit Logs', risk_level: 'critical' }
 ];
 
+// Index catalog by permission code for backwards-compatible dictionary lookup
+PERMISSIONS_CATALOG.forEach(p => {
+  PERMISSIONS_CATALOG[p.code] = p;
+});
+
 export const rbacService = {
   /**
    * Returns canonical permissions catalog
@@ -225,26 +254,10 @@ export const rbacService = {
   },
 
   /**
-   * Gets list of permissions for a user in a facility
+   * Synchronously returns default canonical permissions for a role slug
    */
-  async getPermissionsForUser(facilityId) {
-    const activeFac = facilityId || db.getActiveFacility()?.id;
-    try {
-      // 1. Try server-side RPC if Migration 002 is applied
-      const { data, error } = await supabase.rpc('get_auth_user_permissions', {
-        p_facility_id: activeFac || null
-      });
-
-      if (!error && Array.isArray(data) && data.length > 0) {
-        return data;
-      }
-    } catch {
-      // Proceed to fallback
-    }
-
-    // 2. Client-side fallback based on resolved role
-    const session = db.getSession();
-    const roleSlug = this.normalizeRole(session?.role);
+  getPermissionsForRole(role) {
+    const roleSlug = this.normalizeRole(role);
 
     if (roleSlug === 'super_admin') {
       return PERMISSIONS_CATALOG.map(p => p.code);
@@ -268,7 +281,8 @@ export const rbacService = {
         'implants.view_variance', 'implants.export_reports',
         'reports.export_volume', 'reports.export_margins',
         'ai.run_insights', 'roles.view', 'tenancy.toggle_mppr',
-        'payer.view', 'payer.create', 'payer.edit', 'payer.activate', 'payer.manage_plans', 'payer.configure_facility', 'payer.manage_contracts', 'payer.import', 'payer.export',
+        'payer.view', 'payer.create', 'payer.edit', 'payer.activate', 'payer.deactivate', 'payer.archive', 'payer.manage_plans', 'payer.plan.manage', 'payer.configure_facility', 'payer.facility.enable', 'payer.manage_contracts', 'payer.contract.manage', 'payer.manage_coverages', 'payer.patient.coverage.view', 'payer.patient.coverage.edit', 'payer.import', 'payer.export', 'payer.edi.route',
+        'payer.contract.view', 'payer.contract.terms.view', 'payer.contract.document.view', 'payer.contract.history.view', 'payer.contract.create', 'payer.contract.edit', 'payer.contract.scope.manage', 'payer.contract.terms.manage', 'payer.contract.document.upload', 'payer.contract.submit', 'payer.contract.approve', 'payer.contract.reject', 'payer.contract.activate', 'payer.contract.suspend', 'payer.contract.terminate', 'payer.contract.export',
         'audit.view_clinical', 'audit.view_financial'
       ];
     }
@@ -292,7 +306,7 @@ export const rbacService = {
         'surgeries.view', 'surgeries.schedule', 'surgeries.edit', 'surgeries.delete',
         'or.view', 'or.reserve_blocks', 'or.edit_allocations', 'or.release_blocks',
         'cpt.view', 'reports.export_volume',
-        'payer.view', 'payer.manage_coverages',
+        'payer.view', 'payer.contract.view', 'payer.manage_coverages',
         'implants.view_catalog', 'implants.manage_preference_cards',
         'ai.run_insights', 'ai.run_simulation', 'ai.auto_schedule'
       ];
@@ -313,7 +327,8 @@ export const rbacService = {
         'ai.run_insights', 'audit.view_financial',
         'geographic.view_rates', 'geographic.view_facility_settings', 'geographic.edit_facility_assignment', 'geographic.audit_export',
         'device.view_offsets', 'device.view_categories', 'device.view_crosswalk', 'mppr.view_rules', 'mppr.view_calculations', 'device.view_margin_ledger', 'device.export_data', 'mppr.view_rules', 'mppr.view_calculations', 'mppr.audit_export',
-        'payer.view', 'payer.manage_coverages', 'payer.manage_identifiers'
+        'payer.view', 'payer.manage_coverages', 'payer.manage_identifiers', 'payer.edi.route', 'payer.patient.coverage.edit',
+        'payer.contract.view', 'payer.contract.terms.view', 'payer.contract.history.view', 'payer.contract.submit', 'payer.contract.export'
       ];
     }
     if (roleSlug === 'coder') {
@@ -328,7 +343,7 @@ export const rbacService = {
         'reports.export_volume', 'ai.run_insights',
         'geographic.view_rates', 'geographic.view_facility_settings',
         'device.view_offsets', 'device.view_categories', 'device.view_crosswalk',
-        'payer.view'
+        'payer.view', 'payer.contract.view'
       ];
     }
     if (roleSlug === 'surgeon') {
@@ -346,6 +361,43 @@ export const rbacService = {
     }
     // Default viewer
     return ['surgeries.view', 'or.view', 'cpt.view', 'implants.view_catalog', 'ai.run_insights'];
+  },
+
+  /**
+   * Gets list of permissions for a user or role options in a facility.
+   * If invoked with an options object specifying { role } or { roles: [...] },
+   * resolves permissions synchronously for fast evaluation.
+   */
+  getPermissionsForUser(facilityOrOptions) {
+    if (facilityOrOptions && typeof facilityOrOptions === 'object') {
+      if (facilityOrOptions.role) {
+        return this.getPermissionsForRole(facilityOrOptions.role);
+      }
+      if (Array.isArray(facilityOrOptions.roles) && facilityOrOptions.roles.length > 0) {
+        return this.getPermissionsForRole(facilityOrOptions.roles[0]);
+      }
+    }
+    return this._fetchPermissionsForUser(facilityOrOptions);
+  },
+
+  async _fetchPermissionsForUser(facilityId) {
+    const activeFac = facilityId || db.getActiveFacility()?.id;
+    try {
+      // 1. Try server-side RPC if Migration 002 is applied
+      const { data, error } = await supabase.rpc('get_auth_user_permissions', {
+        p_facility_id: activeFac || null
+      });
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        return data;
+      }
+    } catch {
+      // Proceed to fallback
+    }
+
+    // 2. Client-side fallback based on resolved role
+    const session = db.getSession();
+    return this.getPermissionsForRole(session?.role);
   },
 
   /**

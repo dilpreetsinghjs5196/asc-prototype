@@ -214,3 +214,4 @@ function calculateCommercialEncounterReimbursement(encounter, contractVersion, t
 ---
 
 *Proceed to Security and RBAC specifications.*
+

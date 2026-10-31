@@ -104,3 +104,4 @@ A feature is complete only when the data model, deterministic logic, permissions
 ## Implementation Notes
 - Audit and specification completed without modifying production code or executing migrations.
 - Reference migration `042_payer_contract_model.sql` and down migration `042_payer_contract_model_down.sql` specified for upcoming execution phase.
+

@@ -80,3 +80,4 @@ A feature is complete only when:
 - [ ] No mock, placeholder, or guessed financial values presented as production truth.
 - [ ] Approved contract versions are cryptographically hashed and immutable.
 - [ ] P0/P1 issues block release.
+

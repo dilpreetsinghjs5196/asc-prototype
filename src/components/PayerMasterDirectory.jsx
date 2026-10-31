@@ -15,9 +15,13 @@ import {
   RefreshCw,
   X,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  Calculator,
+  Lock,
+  FileCheck
 } from 'lucide-react';
 import { payerMasterService, DEFAULT_PAYER_MASTER, DEFAULT_PAYER_PLANS, DEFAULT_PAYER_IDENTIFIERS } from '../lib/payerMasterService.js';
+import { payerContractService, DEFAULT_PAYER_CONTRACTS, DEFAULT_CONTRACT_VERSIONS, DEFAULT_CONTRACT_TERMS } from '../lib/payerContractService.js';
 import './PayerMasterDirectory.css';
 
 export function PayerMasterDirectory({ activeFacility }) {
@@ -45,48 +49,26 @@ export function PayerMasterDirectory({ activeFacility }) {
   const [simulatorInput, setSimulatorInput] = useState({ payerId: '20000000-0000-0000-0000-000000000002', clearinghouse: 'AVAILITY' });
   const [simulatorResult, setSimulatorResult] = useState(null);
 
-  // Contracts Mock Data
-  const [contracts] = useState([
-    {
-      id: 'ctr-001',
-      contract_number: 'BCBS-ASC-2026-FL',
-      payer_id: '20000000-0000-0000-0000-000000000002',
-      payer_name: 'Florida Blue (BCBS)',
-      reimbursement_method: 'PERCENT_OF_MEDICARE',
-      medicare_multiplier: 145.0,
-      effective_start: '2026-01-01',
-      effective_end: '2026-12-31',
-      mppr_ruleset: 'CMS_50_PERCENT',
-      implant_carveout: 'PASS_THROUGH_INVOICE_PLUS_10',
-      status: 'ACTIVE'
-    },
-    {
-      id: 'ctr-002',
-      contract_number: 'AETNA-SURG-2025-A',
-      payer_id: '20000000-0000-0000-0000-000000000003',
-      payer_name: 'Aetna Healthcare',
-      reimbursement_method: 'PERCENT_OF_MEDICARE',
-      medicare_multiplier: 138.5,
-      effective_start: '2025-07-01',
-      effective_end: '2026-06-30',
-      mppr_ruleset: 'CMS_50_PERCENT',
-      implant_carveout: 'CARVEOUT_AT_COST',
-      status: 'ACTIVE'
-    },
-    {
-      id: 'ctr-003',
-      contract_number: 'UHC-SPECIALTY-2026',
-      payer_id: '20000000-0000-0000-0000-000000000004',
-      payer_name: 'UnitedHealthcare Outpatient',
-      reimbursement_method: 'COMMERCIAL_FEE_SCHEDULE',
-      medicare_multiplier: null,
-      effective_start: '2026-01-01',
-      effective_end: '2027-12-31',
-      mppr_ruleset: 'CMS_50_PERCENT',
-      implant_carveout: 'PASS_THROUGH_INVOICE_PLUS_5',
-      status: 'ACTIVE'
-    }
-  ]);
+  // Phase 66 Payer Contracts & Versions State
+  const [contracts, setContracts] = useState(DEFAULT_PAYER_CONTRACTS);
+  const [contractSearchQuery, setContractSearchQuery] = useState('');
+  const [contractStatusFilter, setContractStatusFilter] = useState('ALL');
+  const [selectedContract, setSelectedContract] = useState(null);
+  const [isContractModalOpen, setIsContractModalOpen] = useState(false);
+
+  // Two-Person Approval State
+  const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+  const [approvingVersion, setApprovingVersion] = useState(null);
+  const [approvalNotes, setApprovalNotes] = useState('');
+
+  // Pre-Bill Resolution Simulator State
+  const [showContractSandbox, setShowContractSandbox] = useState(false);
+  const [contractSandboxInput, setContractSandboxInput] = useState({
+    payerId: '20000000-0000-0000-0000-000000000002',
+    cptCode: '29827',
+    dateOfService: '2026-03-15'
+  });
+  const [contractSandboxResult, setContractSandboxResult] = useState(null);
 
   // Load Data
   const loadPayerData = useCallback(async () => {
@@ -102,12 +84,19 @@ export function PayerMasterDirectory({ activeFacility }) {
 
       const facData = await payerMasterService.getFacilityPayers(activeFacility?.id);
       setFacilityPayers(facData || []);
+
+      const contractData = await payerContractService.getPayerContracts({
+        facilityId: activeFacility?.id,
+        status: contractStatusFilter,
+        search: contractSearchQuery
+      });
+      setContracts(contractData || DEFAULT_PAYER_CONTRACTS);
     } catch (err) {
       console.error('Error loading payer master directory:', err);
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, categoryFilter, statusFilter, activeFacility]);
+  }, [searchQuery, categoryFilter, statusFilter, activeFacility, contractStatusFilter, contractSearchQuery]);
 
   useEffect(() => {
     loadPayerData();
@@ -180,6 +169,39 @@ export function PayerMasterDirectory({ activeFacility }) {
     });
     const payer = payers.find(p => p.id === simulatorInput.payerId);
     setSimulatorResult({ ...res, payerName: payer?.trade_name || payer?.legal_name });
+  };
+
+  // Handle Contract Resolution Simulation
+  const handleRunContractSimulator = () => {
+    const res = payerContractService.resolvePayerContract({
+      facilityId: activeFacility?.id,
+      payerId: contractSandboxInput.payerId,
+      cptCode: contractSandboxInput.cptCode,
+      dateOfService: contractSandboxInput.dateOfService
+    });
+    const payer = payers.find(p => p.id === contractSandboxInput.payerId);
+    setContractSandboxResult({ ...res, payerName: payer?.trade_name || payer?.legal_name });
+  };
+
+  // Handle Two-Person CFO Approval
+  const handleApproveContractVersion = async () => {
+    if (!approvingVersion) return;
+    try {
+      await payerContractService.approveContractVersion({
+        versionId: approvingVersion.id,
+        approverId: 'cfo-user-001',
+        approverRole: 'cfo',
+        decision: 'APPROVED',
+        notes: approvalNotes
+      });
+      alert(`Contract Version ${approvingVersion.version_number} approved and locked.`);
+      setIsApprovalModalOpen(false);
+      setApprovingVersion(null);
+      setApprovalNotes('');
+      loadPayerData();
+    } catch (err) {
+      console.error('Failed to approve contract version:', err);
+    }
   };
 
   // Summary Metrics
@@ -612,64 +634,253 @@ export function PayerMasterDirectory({ activeFacility }) {
       )}
 
       {/* =====================================================================
-          TAB 4: COMMERCIAL CONTRACTS MATRIX
+          TAB 4: COMMERCIAL CONTRACTS MATRIX & LIFECYCLE
          ===================================================================== */}
       {activeSubTab === 'contracts' && (
-        <div className="payer-table-wrapper">
-          <div style={{ padding: '1rem', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
-            <strong>Active Commercial ASC Fee Contracts</strong>
-            <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-              Contract-level reimbursement methodology (% of Medicare, Fee Schedule), multiple procedure payment rulesets, and surgical implant carve-out terms.
-            </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Contracts Filter Toolbar */}
+          <div className="payer-toolbar">
+            <div className="payer-toolbar-left">
+              <div className="payer-search-wrap">
+                <Search size={16} className="payer-search-icon" />
+                <input
+                  type="text"
+                  className="payer-search-input"
+                  placeholder="Search contract #, title, or payer name..."
+                  value={contractSearchQuery}
+                  onChange={(e) => setContractSearchQuery(e.target.value)}
+                />
+              </div>
+
+              <select
+                className="payer-select-control"
+                value={contractStatusFilter}
+                onChange={(e) => setContractStatusFilter(e.target.value)}
+              >
+                <option value="ALL">Status: All</option>
+                <option value="ACTIVE">Status: Active</option>
+                <option value="DRAFT">Status: Draft</option>
+                <option value="PENDING_APPROVAL">Status: Pending Approval</option>
+                <option value="EXPIRED">Status: Expired</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                className="btn-secondary"
+                onClick={() => setShowContractSandbox(!showContractSandbox)}
+              >
+                <Calculator size={16} />
+                {showContractSandbox ? 'Hide Resolution Sandbox' : 'Pre-Bill Resolution Sandbox'}
+              </button>
+            </div>
           </div>
-          <table className="payer-table">
-            <thead>
-              <tr>
-                <th>Contract #</th>
-                <th>Contracted Payer</th>
-                <th>Reimbursement Basis</th>
-                <th>Medicare Multiplier</th>
-                <th>MPPR Ruleset</th>
-                <th>Implant Carve-Out</th>
-                <th>Validity Window</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {contracts.map(c => (
-                <tr key={c.id}>
-                  <td>
-                    <strong>{c.contract_number}</strong>
-                  </td>
-                  <td>
-                    <strong>{c.payer_name}</strong>
-                  </td>
-                  <td>
-                    <span className="plan-type-pill">{c.reimbursement_method}</span>
-                  </td>
-                  <td>
-                    {c.medicare_multiplier ? (
-                      <span style={{ fontWeight: 700, color: '#2563eb' }}>{c.medicare_multiplier}%</span>
-                    ) : (
-                      <span style={{ color: '#94a3b8' }}>N/A (Schedule)</span>
-                    )}
-                  </td>
-                  <td>
-                    <span className="badge badge-medicare">{c.mppr_ruleset}</span>
-                  </td>
-                  <td>
-                    <span className="badge badge-commercial">{c.implant_carveout}</span>
-                  </td>
-                  <td style={{ fontSize: '0.8rem', color: '#475569' }}>
-                    {c.effective_start} to {c.effective_end}
-                  </td>
-                  <td>
-                    <span className="badge badge-active">{c.status}</span>
-                  </td>
+
+          {/* Pre-Bill Resolution Simulator Box */}
+          {showContractSandbox && (
+            <div className="contract-sandbox-box">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h4 style={{ margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Calculator size={18} color="#2563eb" />
+                  Pre-Bill Contract Resolution Sandbox & Adjudication Preview
+                </h4>
+                <span className="badge badge-medicare">Deterministic Specificity Hierarchy</span>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                Tests server-side 7-step contract resolution sequence for an encounter: verifies facility eligibility, matching contract version, procedural CPT terms, and secondary MPPR reduction cascades.
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr auto', gap: '1rem', alignItems: 'flex-end' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                    Target Insurance Payer
+                  </label>
+                  <select
+                    className="payer-select-control"
+                    style={{ width: '100%' }}
+                    value={contractSandboxInput.payerId}
+                    onChange={(e) => setContractSandboxInput({ ...contractSandboxInput, payerId: e.target.value })}
+                  >
+                    {payers.filter(p => p.payer_category === 'Commercial').map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.trade_name || p.legal_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                    Procedure CPT Code
+                  </label>
+                  <input
+                    type="text"
+                    className="payer-select-control"
+                    style={{ width: '100%' }}
+                    value={contractSandboxInput.cptCode}
+                    onChange={(e) => setContractSandboxInput({ ...contractSandboxInput, cptCode: e.target.value })}
+                    placeholder="e.g. 29827, 29881"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                    Date of Service
+                  </label>
+                  <input
+                    type="date"
+                    className="payer-select-control"
+                    style={{ width: '100%' }}
+                    value={contractSandboxInput.dateOfService}
+                    onChange={(e) => setContractSandboxInput({ ...contractSandboxInput, dateOfService: e.target.value })}
+                  />
+                </div>
+
+                <button className="btn-primary" onClick={handleRunContractSimulator}>
+                  Resolve Contract
+                </button>
+              </div>
+
+              {contractSandboxResult && (
+                <div style={{ marginTop: '0.5rem', padding: '1rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1e40af', textTransform: 'uppercase' }}>
+                        Adjudicated Contract Agreement
+                      </div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', marginTop: '2px' }}>
+                        {contractSandboxResult.contract_number} — {contractSandboxResult.contract_title || contractSandboxResult.payerName}
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: '#475569', marginTop: '4px' }}>
+                        Active Version: <strong>V{contractSandboxResult.version_number}</strong> | Method: <span className="plan-type-pill">{contractSandboxResult.reimbursement_methodology}</span>
+                        {contractSandboxResult.medicare_multiplier && (
+                          <span style={{ marginLeft: '8px', color: '#2563eb', fontWeight: 700 }}>
+                            Multiplier: {(contractSandboxResult.medicare_multiplier * 100).toFixed(1)}% of Medicare
+                          </span>
+                        )}
+                        {contractSandboxResult.cpt_contracted_rate && (
+                          <span style={{ marginLeft: '8px', color: '#059669', fontWeight: 700 }}>
+                            Fixed CPT Rate: ${contractSandboxResult.cpt_contracted_rate.toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: 'right' }}>
+                      <span className="badge badge-active">{contractSandboxResult.specificity_tier}</span>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
+                        MPPR: {contractSandboxResult.mppr_rule_set_code}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Contracts Table */}
+          <div className="payer-table-wrapper">
+            <div style={{ padding: '1rem', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <strong>Active Commercial ASC Fee Contracts</strong>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                  Contract-level reimbursement methodology (% of Medicare, Fee Schedule), multiple procedure payment rulesets, and surgical implant carve-out terms.
+                </p>
+              </div>
+            </div>
+            <table className="payer-table">
+              <thead>
+                <tr>
+                  <th>Contract #</th>
+                  <th>Contracted Payer</th>
+                  <th>Scope Mode</th>
+                  <th>Reimbursement Basis</th>
+                  <th>Medicare Multiplier</th>
+                  <th>MPPR Ruleset</th>
+                  <th>Implant Carve-Out</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {contracts.length === 0 ? (
+                  <tr>
+                    <td colSpan="9" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                      No commercial contracts found matching your filters.
+                    </td>
+                  </tr>
+                ) : (
+                  contracts.map(c => {
+                    const activeVer = c.payer_contract_versions?.[0] || DEFAULT_CONTRACT_VERSIONS.find(v => v.contract_id === c.id);
+                    const multiplier = activeVer?.medicare_multiplier || c.medicare_multiplier;
+                    const method = activeVer?.reimbursement_methodology || c.reimbursement_methodology;
+                    const mppr = activeVer?.mppr_rule_set_code || c.mppr_rule_set_code || 'CMS_50_PERCENT';
+                    const carveout = activeVer?.device_carve_out_mode || c.device_carve_out_mode || 'PASS_THROUGH_INVOICE_PLUS_PERCENT';
+
+                    return (
+                      <tr key={c.id}>
+                        <td>
+                          <strong>{c.contract_number}</strong>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>V{activeVer?.version_number || 1}</div>
+                        </td>
+                        <td>
+                          <strong>{c.payer_name || 'Commercial Carrier'}</strong>
+                        </td>
+                        <td>
+                          <span className="plan-type-pill">{c.scope_mode || 'ALL_FACILITIES'}</span>
+                        </td>
+                        <td>
+                          <span className="plan-type-pill">{method}</span>
+                        </td>
+                        <td>
+                          {multiplier ? (
+                            <span style={{ fontWeight: 700, color: '#2563eb' }}>{(multiplier * 100).toFixed(1)}%</span>
+                          ) : (
+                            <span style={{ color: '#94a3b8' }}>Fee Schedule</span>
+                          )}
+                        </td>
+                        <td>
+                          <span className="badge badge-medicare">{mppr}</span>
+                        </td>
+                        <td>
+                          <span className="badge badge-commercial">{carveout.replace(/_/g, ' ')}</span>
+                        </td>
+                        <td>
+                          <span className={`badge ${c.status === 'ACTIVE' ? 'badge-active' : 'badge-pending'}`}>
+                            {c.status}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '0.35rem' }}>
+                            <button
+                              className="btn-secondary btn-sm"
+                              onClick={() => {
+                                setSelectedContract(c);
+                                setIsContractModalOpen(true);
+                              }}
+                            >
+                              Inspect & Terms
+                            </button>
+                            <button
+                              className="btn-secondary btn-sm"
+                              title="Two-Person CFO Approval Sign-off"
+                              onClick={() => {
+                                setApprovingVersion(activeVer || { id: 'ver-tmp', version_number: 1, contract_number: c.contract_number });
+                                setIsApprovalModalOpen(true);
+                              }}
+                            >
+                              <FileCheck size={13} />
+                              Sign-off
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -960,6 +1171,206 @@ export function PayerMasterDirectory({ activeFacility }) {
                 }}
               >
                 Save Payer Record
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          CONTRACT DETAILS & VERSIONS INSPECTOR MODAL
+         ===================================================================== */}
+      {isContractModalOpen && selectedContract && (
+        <div className="drawer-backdrop" onClick={() => setIsContractModalOpen(false)}>
+          <div className="drawer-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-header">
+              <h3>
+                Contract Agreement: {selectedContract.contract_number}
+              </h3>
+              <button className="drawer-close" onClick={() => setIsContractModalOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="drawer-body">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h4 style={{ margin: 0, color: '#0f172a' }}>{selectedContract.contract_title || selectedContract.payer_name}</h4>
+                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                    Payer: <strong>{selectedContract.payer_name}</strong> | Type: <code>{selectedContract.contract_type || 'COMMERCIAL_DIRECT'}</code>
+                  </div>
+                </div>
+                <span className={`badge ${selectedContract.status === 'ACTIVE' ? 'badge-active' : 'badge-pending'}`}>
+                  {selectedContract.status}
+                </span>
+              </div>
+
+              <div className="drawer-grid" style={{ marginTop: '0.5rem' }}>
+                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Scope Mode</span>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0f172a' }}>{selectedContract.scope_mode || 'ALL_FACILITIES'}</div>
+                </div>
+                <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Renewal Governance</span>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0f172a' }}>
+                    {selectedContract.auto_renew !== false ? `Auto-Renew (${selectedContract.renewal_notice_days || 90}d notice)` : 'Fixed Term'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Version History Timeline */}
+              <div style={{ marginTop: '1rem' }}>
+                <strong style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem' }}>
+                  Effective-Dated Version Timeline
+                </strong>
+                <div className="version-timeline">
+                  {(selectedContract.payer_contract_versions || DEFAULT_CONTRACT_VERSIONS.filter(v => v.contract_id === selectedContract.id)).map(ver => (
+                    <div key={ver.id} className="version-timeline-item">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <strong>Version {ver.version_number}</strong>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <span className={`badge ${ver.status === 'ACTIVE' ? 'badge-active' : 'badge-draft'}`}>
+                            {ver.status}
+                          </span>
+                          {ver.is_locked && (
+                            <span className="badge badge-locked" title="Locked against retroactive modification">
+                              <Lock size={11} /> Locked
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div style={{ fontSize: '0.8rem', color: '#475569', marginTop: '4px' }}>
+                        Effective: <strong>{ver.effective_start_date}</strong> to <strong>{ver.effective_end_date || 'Open'}</strong>
+                      </div>
+
+                      <div style={{ fontSize: '0.8rem', color: '#0f172a', marginTop: '4px' }}>
+                        Method: <span className="plan-type-pill">{ver.reimbursement_methodology}</span>
+                        {ver.medicare_multiplier && (
+                          <span style={{ marginLeft: '6px', fontWeight: 700, color: '#2563eb' }}>
+                            Multiplier: {(ver.medicare_multiplier * 100).toFixed(1)}%
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
+                        Carve-Out: <code>{ver.device_carve_out_mode || 'PASS_THROUGH_INVOICE_PLUS_PERCENT'}</code> (Markup: {((ver.device_invoice_markup_pct || 0) * 100).toFixed(1)}%)
+                      </div>
+
+                      {ver.version_hash && (
+                        <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '4px', fontFamily: 'monospace' }}>
+                          Hash: {ver.version_hash.slice(0, 24)}...
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Granular Fee Schedule Terms */}
+              <div style={{ marginTop: '1.25rem' }}>
+                <strong style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.25rem' }}>
+                  Negotiated Fee Schedule Terms
+                </strong>
+                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 0.5rem 0' }}>
+                  Line-item procedural prices overriding default percentage methodologies.
+                </p>
+                <table className="terms-grid-table">
+                  <thead>
+                    <tr>
+                      <th>CPT / HCPCS</th>
+                      <th>Methodology</th>
+                      <th>Contracted Rate</th>
+                      <th>Implants Bundled</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {DEFAULT_CONTRACT_TERMS.map(t => (
+                      <tr key={t.id}>
+                        <td><code>{t.cpt_code}</code></td>
+                        <td>{t.rate_methodology}</td>
+                        <td><strong>${t.contracted_rate.toFixed(2)}</strong></td>
+                        <td>{t.includes_implants ? 'Yes' : 'No (Carve-out)'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="drawer-footer">
+              <button className="btn-secondary" onClick={() => setIsContractModalOpen(false)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          TWO-PERSON CFO APPROVAL SIGN-OFF MODAL
+         ===================================================================== */}
+      {isApprovalModalOpen && approvingVersion && (
+        <div className="drawer-backdrop" onClick={() => setIsApprovalModalOpen(false)}>
+          <div className="drawer-panel" style={{ maxWidth: '480px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-header">
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileCheck size={20} color="#059669" />
+                Two-Person CFO Approval Sign-off
+              </h3>
+              <button className="drawer-close" onClick={() => setIsApprovalModalOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="drawer-body">
+              <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '0.875rem', borderRadius: '6px' }}>
+                <strong style={{ color: '#065f46', fontSize: '0.85rem' }}>Executive Financial Governance Gate</strong>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#047857' }}>
+                  Under separation of duties, the creator cannot activate financial terms. Approving locks Version {approvingVersion.version_number} and authorizes production claim adjudication.
+                </p>
+              </div>
+
+              <div className="form-group" style={{ marginTop: '0.5rem' }}>
+                <label>Approver Role</label>
+                <input
+                  type="text"
+                  readOnly
+                  value="CFO - Chief Financial Officer"
+                  style={{ background: '#f8fafc', color: '#475569' }}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Governance Stage</label>
+                <input
+                  type="text"
+                  readOnly
+                  value="FINANCIAL_CFO (Two-Person Compliance Check)"
+                  style={{ background: '#f8fafc', color: '#475569' }}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Approval Decision Notes / Executive Rationale</label>
+                <textarea
+                  rows="3"
+                  value={approvalNotes}
+                  onChange={(e) => setApprovalNotes(e.target.value)}
+                  placeholder="Enter sign-off rationale, rate verification check, or legal contract execution references..."
+                />
+              </div>
+            </div>
+
+            <div className="drawer-footer">
+              <button className="btn-secondary" onClick={() => setIsApprovalModalOpen(false)}>
+                Cancel
+              </button>
+              <button
+                className="btn-primary"
+                onClick={handleApproveContractVersion}
+              >
+                Confirm & Lock Version
               </button>
             </div>
           </div>

@@ -640,12 +640,23 @@ export const validateProcedureLineClient = (line, allLines = [], cptCatalog = []
  * Enforces 150% single-line bilateral rule, discontinued procedure adjustments, and MPPR.
  */
 export const calculateAuthoritativeAscRevenue = (procedureLines, cptDatabase = [], options = {}) => {
-    if (!Array.isArray(procedureLines) || procedureLines.length === 0) return 0;
+    const opts = (!Array.isArray(cptDatabase) && typeof cptDatabase === 'object') ? cptDatabase : (options || {});
+    const encounter = (!Array.isArray(procedureLines) && typeof procedureLines === 'object') ? procedureLines : null;
+
+    if (encounter && opts.strictPayerCheck) {
+        const cat = encounter.payers?.payer_category || encounter.payer_category;
+        const hasContract = Boolean(encounter.contract_id || encounter.contract_version_id);
+        if (cat === 'Commercial' && !hasContract) {
+            throw new Error('Commercial payer without contract cannot silently default to Medicare statutory rates');
+        }
+    }
+
+    const lines = Array.isArray(procedureLines) ? procedureLines : (encounter?.lines || encounter?.cpt_codes || [encounter].filter(Boolean));
+    if (!lines || lines.length === 0) return 0;
 
     const catalog = Array.isArray(cptDatabase) ? cptDatabase : [];
-    const opts = (!Array.isArray(cptDatabase) && typeof cptDatabase === 'object') ? cptDatabase : (options || {});
 
-    const resolvedLines = procedureLines.map(line => {
+    const resolvedLines = lines.map(line => {
         const item = typeof line === 'string' ? { code: line.trim() } : line;
         const code = item.code || item.cpt_code;
         const catalogItem = catalog.find(c => String(c.code) === String(code));
