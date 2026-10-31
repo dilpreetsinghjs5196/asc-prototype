@@ -155,7 +155,7 @@ CREATE TABLE IF NOT EXISTS public.patient_insurance_coverages (
     subscriber_name VARCHAR(150) NOT NULL,
     subscriber_dob DATE,
     subscriber_relationship VARCHAR(20) NOT NULL DEFAULT 'SELF'
-        CHECK (subscriber_relationship IN ('SELF', 'SPOUSE', 'CHILD', 'OTHER')),
+        CHECK (UPPER(subscriber_relationship) IN ('SELF', 'SPOUSE', 'CHILD', 'OTHER')),
     effective_start_date DATE,
     effective_end_date DATE,
     copay_amount NUMERIC(10, 2),
@@ -554,12 +554,13 @@ ON CONFLICT (payer_id, identifier_type, clearinghouse, transaction_scope, effect
 -- 12.4 Enable Baseline Payers for Primary Facility (00000000-0000-0000-0000-000000000002)
 INSERT INTO public.facility_payers (facility_id, payer_id, participation_status, preferred_clearinghouse, is_enabled)
 SELECT
-    '00000000-0000-0000-0000-000000000002'::uuid,
+    f.id,
     pm.id,
     'IN_NETWORK',
     'AVAILITY',
     true
 FROM public.payer_master pm
+JOIN public.facilities f ON f.id = '00000000-0000-0000-0000-000000000002'::uuid
 ON CONFLICT (facility_id, payer_id) DO NOTHING;
 
 -- 12.5 Backfill Flat Patient Insurance into patient_insurance_coverages (Primary)
@@ -570,11 +571,20 @@ SELECT
     p.facility_id,
     p.id,
     'PRIMARY',
-    COALESCE(p.primary_payer_id, '20000000-0000-0000-0000-000000000001'::uuid),
+    CASE 
+        WHEN p.primary_payer_id IS NOT NULL AND EXISTS (SELECT 1 FROM public.payer_master pm WHERE pm.id = p.primary_payer_id) 
+            THEN p.primary_payer_id
+        ELSE '20000000-0000-0000-0000-000000000001'::uuid
+    END,
     COALESCE(p.insurance_policy_number, 'POL-' || p.mrn),
     p.insurance_group_number,
     COALESCE(p.subscriber_name, p.name),
-    COALESCE(p.subscriber_relationship, 'SELF'),
+    CASE UPPER(TRIM(COALESCE(p.subscriber_relationship, 'SELF')))
+        WHEN 'SELF' THEN 'SELF'
+        WHEN 'SPOUSE' THEN 'SPOUSE'
+        WHEN 'CHILD' THEN 'CHILD'
+        ELSE 'OTHER'
+    END,
     p.copay_amount,
     p.deductible_amount
 FROM public.patients p
@@ -583,7 +593,8 @@ ON CONFLICT (patient_id, coverage_order) DO UPDATE SET
     payer_id = EXCLUDED.payer_id,
     policy_number = EXCLUDED.policy_number,
     group_number = EXCLUDED.group_number,
-    subscriber_name = EXCLUDED.subscriber_name;
+    subscriber_name = EXCLUDED.subscriber_name,
+    subscriber_relationship = EXCLUDED.subscriber_relationship;
 
 COMMIT;
 
