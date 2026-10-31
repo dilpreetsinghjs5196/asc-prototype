@@ -337,7 +337,7 @@ export default function ReimbursementInspectorModal({
               {/* SHA-256 Ledger Fingerprint Card */}
               <div className="reimb-hash-card">
                 <div>
-                  <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-primary, #f8fafc)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Hash size={14} color="#38bdf8" /> Cryptographic Ledger Snapshot SHA-256
                   </div>
                   <div className="reimb-hash-text">
@@ -362,7 +362,7 @@ export default function ReimbursementInspectorModal({
             </div>
           ) : activeTab === 'patient' ? (
             <div style={{ maxWidth: '650px' }}>
-              <h3 style={{ fontSize: '1rem', color: '#ffffff', marginBottom: '8px' }}>
+              <h3 style={{ fontSize: '1rem', color: 'var(--text-primary, #f8fafc)', marginBottom: '8px' }}>
                 Patient Responsibility Partitioning Model
               </h3>
               <p style={{ fontSize: '0.82rem', color: '#94a3b8', marginBottom: '16px' }}>
@@ -379,14 +379,14 @@ export default function ReimbursementInspectorModal({
                   <span style={{ fontWeight: 700, color: '#fbbf24' }}>-${patientShare.toFixed(2)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: '1rem' }}>
-                  <span style={{ fontWeight: 600, color: '#f8fafc' }}>Net Estimated Payer Reimbursement:</span>
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary, #f8fafc)' }}>Net Estimated Payer Reimbursement:</span>
                   <span style={{ fontWeight: 700, color: '#38bdf8' }}>${payerShare.toFixed(2)}</span>
                 </div>
               </div>
             </div>
           ) : activeTab === 'history' ? (
             <div>
-              <h3 style={{ fontSize: '1rem', color: '#ffffff', marginBottom: '8px' }}>
+              <h3 style={{ fontSize: '1rem', color: 'var(--text-primary, #f8fafc)', marginBottom: '8px' }}>
                 Calculation Audit History & Recalculation Lineage
               </h3>
               <p style={{ fontSize: '0.82rem', color: '#94a3b8', marginBottom: '16px' }}>
@@ -520,3 +520,4 @@ export default function ReimbursementInspectorModal({
     </div>
   );
 }
+

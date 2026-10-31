@@ -354,18 +354,18 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
     switch (status) {
       case 'SCRUB_PASSED':
       case 'READY_FOR_SUBMISSION':
-        return { bg: 'rgba(16, 185, 129, 0.15)', text: '#34d399', border: 'rgba(16, 185, 129, 0.4)' };
+        return { bg: 'rgba(16, 185, 129, 0.15)', text: '#059669', border: 'rgba(16, 185, 129, 0.4)' };
       case 'SCRUB_FAILED':
-        return { bg: 'rgba(239, 68, 68, 0.15)', text: '#f87171', border: 'rgba(239, 68, 68, 0.4)' };
+        return { bg: 'rgba(239, 68, 68, 0.15)', text: '#dc2626', border: 'rgba(239, 68, 68, 0.4)' };
       case 'OVERRIDDEN':
-        return { bg: 'rgba(168, 85, 247, 0.15)', text: '#c084fc', border: 'rgba(168, 85, 247, 0.4)' };
+        return { bg: 'rgba(14, 165, 233, 0.15)', text: '#0284c7', border: 'rgba(14, 165, 233, 0.4)' };
       default:
-        return { bg: 'rgba(245, 158, 11, 0.15)', text: '#fbbf24', border: 'rgba(245, 158, 11, 0.4)' };
+        return { bg: 'rgba(245, 158, 11, 0.15)', text: '#d97706', border: 'rgba(245, 158, 11, 0.4)' };
     }
   };
 
   return (
-    <div style={{ padding: '24px', color: 'var(--text-primary, #f8fafc)' }}>
+    <div style={{ padding: '24px', color: 'var(--text-primary, #0f172a)' }}>
       {/* Page Title & Stats */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
@@ -435,9 +435,10 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
                   onClick={() => setStatusFilter(st)}
                   style={{
                     padding: '4px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '700',
-                    border: 'none', cursor: 'pointer',
-                    backgroundColor: statusFilter === st ? '#3b82f6' : 'rgba(255, 255, 255, 0.05)',
-                    color: statusFilter === st ? '#ffffff' : 'var(--text-muted, #94a3b8)'
+                    border: '1px solid ' + (statusFilter === st ? '#3b82f6' : 'var(--border-color, #cbd5e1)'),
+                    cursor: 'pointer',
+                    backgroundColor: statusFilter === st ? '#3b82f6' : 'var(--bg-card, #ffffff)',
+                    color: statusFilter === st ? '#ffffff' : 'var(--text-secondary, #475569)'
                   }}
                 >
                   {st.replace('SCRUB_', '')}
@@ -461,13 +462,13 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
                     onClick={() => setSelectedClaim(c)}
                     style={{
                       padding: '12px 14px', borderRadius: '8px', marginBottom: '8px', cursor: 'pointer',
-                      border: isSelected ? '1px solid #3b82f6' : '1px solid var(--border-color, #334155)',
-                      backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.12)' : 'rgba(255, 255, 255, 0.02)',
+                      border: isSelected ? '1px solid #3b82f6' : '1px solid var(--border-color, #cbd5e1)',
+                      backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.12)' : 'var(--bg-card, #ffffff)',
                       transition: 'all 0.15s'
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                      <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#f8fafc', fontFamily: 'monospace' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-primary, #0f172a)', fontFamily: 'monospace' }}>
                         {c.patient_control_number}
                       </span>
                       <span style={{
@@ -478,13 +479,13 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
                       </span>
                     </div>
 
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', marginBottom: '4px' }}>
-                      Patient: <strong style={{ color: '#f8fafc' }}>{c.patients?.name || 'Patient'}</strong>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #64748b)', marginBottom: '4px' }}>
+                      Patient: <strong style={{ color: 'var(--text-primary, #0f172a)' }}>{c.patients?.name || c.patient_name || 'Patient'}</strong>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
-                      <span style={{ color: '#60a5fa' }}>{c.payers?.name || 'Commercial Payer'}</span>
-                      <span style={{ fontWeight: '700', color: '#34d399' }}>${parseFloat(c.total_gross_charge || 0).toLocaleString()}</span>
+                      <span style={{ color: '#2563eb', fontWeight: '600' }}>{c.payers?.name || 'Commercial Payer'}</span>
+                      <span style={{ fontWeight: '700', color: '#059669' }}>${parseFloat(c.total_gross_charge || 0).toLocaleString()}</span>
                     </div>
                   </div>
                 );
@@ -499,13 +500,13 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
             
             {/* Header Card */}
             <div style={{
-              backgroundColor: 'var(--bg-card, #1e293b)', border: '1px solid var(--border-color, #334155)',
+              backgroundColor: 'var(--bg-card, #ffffff)', border: '1px solid var(--border-color, #cbd5e1)',
               borderRadius: '12px', padding: '18px 22px'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '800' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-primary, #0f172a)' }}>
                       Claim {selectedClaim.patient_control_number}
                     </h3>
                     <span style={{
@@ -515,7 +516,7 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
                       {selectedClaim.scrub_status}
                     </span>
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted, #94a3b8)', marginTop: '4px' }}>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted, #64748b)', marginTop: '4px' }}>
                     Encounter #{selectedClaim.surgery_id} • Payer: {selectedClaim.payers?.name || 'Commercial Payer'} ({selectedClaim.payers?.payer_code || '00100'}) • Place of Service: {selectedClaim.place_of_service}
                   </div>
                 </div>
@@ -566,34 +567,34 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
               </div>
 
               {/* EDI Header Summary Matrix */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', paddingTop: '10px', borderTop: '1px solid var(--border-color, #334155)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', paddingTop: '10px', borderTop: '1px solid var(--border-color, #cbd5e1)' }}>
                 <div>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted, #94a3b8)', textTransform: 'uppercase' }}>Billing NPI</span>
-                  <div style={{ fontFamily: 'monospace', fontWeight: '700', fontSize: '0.85rem', color: '#f8fafc' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', textTransform: 'uppercase' }}>Billing NPI</span>
+                  <div style={{ fontFamily: 'monospace', fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-primary, #0f172a)' }}>
                     {selectedClaim.billing_provider_npi || 'Missing'}
                   </div>
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted, #94a3b8)', textTransform: 'uppercase' }}>Rendering NPI</span>
-                  <div style={{ fontFamily: 'monospace', fontWeight: '700', fontSize: '0.85rem', color: '#f8fafc' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', textTransform: 'uppercase' }}>Rendering NPI</span>
+                  <div style={{ fontFamily: 'monospace', fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-primary, #0f172a)' }}>
                     {selectedClaim.rendering_provider_npi || 'Missing'}
                   </div>
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted, #94a3b8)', textTransform: 'uppercase' }}>Federal EIN</span>
-                  <div style={{ fontFamily: 'monospace', fontWeight: '700', fontSize: '0.85rem', color: '#f8fafc' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', textTransform: 'uppercase' }}>Federal EIN</span>
+                  <div style={{ fontFamily: 'monospace', fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-primary, #0f172a)' }}>
                     {selectedClaim.billing_provider_tax_id || 'Missing'}
                   </div>
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted, #94a3b8)', textTransform: 'uppercase' }}>Gross Charge</span>
-                  <div style={{ fontWeight: '700', fontSize: '0.85rem', color: '#34d399' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', textTransform: 'uppercase' }}>Gross Charge</span>
+                  <div style={{ fontWeight: '700', fontSize: '0.85rem', color: '#059669' }}>
                     ${parseFloat(selectedClaim.total_gross_charge || 0).toFixed(2)}
                   </div>
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted, #94a3b8)', textTransform: 'uppercase' }}>Fatal Errors</span>
-                  <div style={{ fontWeight: '800', fontSize: '0.85rem', color: fatalFindings.length > 0 ? '#f87171' : '#34d399' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', textTransform: 'uppercase' }}>Fatal Errors</span>
+                  <div style={{ fontWeight: '800', fontSize: '0.85rem', color: fatalFindings.length > 0 ? '#dc2626' : '#059669' }}>
                     {fatalFindings.length} active
                   </div>
                 </div>
@@ -603,24 +604,24 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
             {/* Proposed Automated Edits Alert */}
             {proposedEdits.filter(e => e.status === 'PROPOSED').length > 0 && (
               <div style={{
-                backgroundColor: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.3)',
+                backgroundColor: 'var(--bg-subtab, #f1f5f9)', border: '1px solid var(--border-color, #cbd5e1)',
                 borderRadius: '12px', padding: '16px 20px'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#818cf8', fontWeight: '700', fontSize: '0.9rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#0284c7', fontWeight: '700', fontSize: '0.9rem' }}>
                   <Layers size={18} />
                   Proposed Automated Claim Edits ({proposedEdits.filter(e => e.status === 'PROPOSED').length})
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {proposedEdits.filter(e => e.status === 'PROPOSED').map(edit => (
-                    <div key={edit.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.2)', padding: '10px 14px', borderRadius: '8px' }}>
-                      <div style={{ fontSize: '0.8rem' }}>
-                        <strong style={{ color: '#c084fc' }}>{edit.rule_id}:</strong> {edit.target_field} &rarr; <span style={{ color: '#34d399' }}>{edit.proposed_value}</span>
+                    <div key={edit.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-card, #ffffff)', border: '1px solid var(--border-color, #cbd5e1)', padding: '10px 14px', borderRadius: '8px' }}>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-primary, #0f172a)' }}>
+                        <strong style={{ color: '#0284c7' }}>{edit.rule_id}:</strong> {edit.target_field} &rarr; <span style={{ color: '#059669', fontWeight: '700' }}>{edit.proposed_value}</span>
                       </div>
                       {canApplyEdits && (
                         <button
                           onClick={() => handleApplyEdit(edit.id)}
                           style={{
-                            padding: '6px 12px', borderRadius: '6px', backgroundColor: '#6366f1', border: 'none',
+                            padding: '6px 12px', borderRadius: '6px', backgroundColor: '#0284c7', border: 'none',
                             color: '#ffffff', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer'
                           }}
                         >
@@ -635,16 +636,16 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
 
             {/* Claim Lines Table */}
             <div style={{
-              backgroundColor: 'var(--bg-card, #1e293b)', border: '1px solid var(--border-color, #334155)',
+              backgroundColor: 'var(--bg-card, #ffffff)', border: '1px solid var(--border-color, #cbd5e1)',
               borderRadius: '12px', padding: '18px 22px'
             }}>
-              <h4 style={{ margin: '0 0 12px', fontSize: '0.95rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FileText size={16} style={{ color: '#60a5fa' }} />
+              <h4 style={{ margin: '0 0 12px', fontSize: '0.95rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary, #0f172a)' }}>
+                <FileText size={16} style={{ color: '#2563eb' }} />
                 Itemized Service Lines ({claimLines.length})
               </h4>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-color, #334155)', color: 'var(--text-muted, #94a3b8)', textAlign: 'left' }}>
+                  <tr style={{ borderBottom: '1px solid var(--border-color, #cbd5e1)', color: 'var(--text-muted, #64748b)', textAlign: 'left' }}>
                     <th style={{ padding: '8px 10px' }}>Line</th>
                     <th style={{ padding: '8px 10px' }}>CPT Code</th>
                     <th style={{ padding: '8px 10px' }}>Description</th>
@@ -657,14 +658,14 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
                 </thead>
                 <tbody>
                   {claimLines.map(line => (
-                    <tr key={line.id} style={{ borderBottom: '1px solid var(--border-color, #334155)' }}>
+                    <tr key={line.id} style={{ borderBottom: '1px solid var(--border-color, #cbd5e1)', color: 'var(--text-primary, #0f172a)' }}>
                       <td style={{ padding: '10px', fontFamily: 'monospace', fontWeight: '700' }}>#{line.line_number}</td>
-                      <td style={{ padding: '10px', fontFamily: 'monospace', color: '#60a5fa', fontWeight: '700' }}>{line.cpt_code}</td>
-                      <td style={{ padding: '10px', color: '#f8fafc' }}>{line.procedure_description || 'Procedure'}</td>
+                      <td style={{ padding: '10px', fontFamily: 'monospace', color: '#2563eb', fontWeight: '700' }}>{line.cpt_code}</td>
+                      <td style={{ padding: '10px', color: 'var(--text-primary, #0f172a)' }}>{line.procedure_description || 'Procedure'}</td>
                       <td style={{ padding: '10px' }}>
                         {line.modifiers && line.modifiers.length > 0 ? (
                           line.modifiers.map(m => (
-                            <span key={m} style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.7rem', marginRight: '4px' }}>
+                            <span key={m} style={{ backgroundColor: 'var(--bg-subtab, #f1f5f9)', border: '1px solid var(--border-color, #cbd5e1)', color: 'var(--text-secondary, #475569)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.7rem', marginRight: '4px' }}>
                               {m}
                             </span>
                           ))
@@ -674,7 +675,7 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
                       </td>
                       <td style={{ padding: '10px', textAlign: 'right' }}>{line.units}</td>
                       <td style={{ padding: '10px', textAlign: 'right', fontFamily: 'monospace' }}>${parseFloat(line.gross_charge || 0).toFixed(2)}</td>
-                      <td style={{ padding: '10px', textAlign: 'right', fontFamily: 'monospace', color: '#34d399', fontWeight: '700' }}>
+                      <td style={{ padding: '10px', textAlign: 'right', fontFamily: 'monospace', color: '#059669', fontWeight: '700' }}>
                         ${parseFloat(line.expected_reimbursement || 0).toFixed(2)}
                       </td>
                       <td style={{ padding: '10px', textAlign: 'center' }}>{line.diagnosis_pointers?.join(',') || 'A'}</td>
@@ -686,18 +687,18 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
 
             {/* Findings Section */}
             <div style={{
-              backgroundColor: 'var(--bg-card, #1e293b)', border: '1px solid var(--border-color, #334155)',
+              backgroundColor: 'var(--bg-card, #ffffff)', border: '1px solid var(--border-color, #cbd5e1)',
               borderRadius: '12px', padding: '18px 22px'
             }}>
-              <h4 style={{ margin: '0 0 12px', fontSize: '0.95rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ShieldAlert size={16} style={{ color: '#f87171' }} />
+              <h4 style={{ margin: '0 0 12px', fontSize: '0.95rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary, #0f172a)' }}>
+                <ShieldAlert size={16} style={{ color: '#dc2626' }} />
                 Scrubbing Findings & Compliance Errors ({findings.length})
               </h4>
               {findings.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '24px', backgroundColor: 'rgba(16, 185, 129, 0.05)', borderRadius: '8px' }}>
-                  <CheckCircle2 size={32} style={{ color: '#34d399', margin: '0 auto 6px' }} />
-                  <div style={{ fontWeight: '700', color: '#34d399' }}>Clean Claim Validated</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', marginTop: '2px' }}>
+                <div style={{ textAlign: 'center', padding: '24px', backgroundColor: 'rgba(16, 185, 129, 0.08)', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <CheckCircle2 size={32} style={{ color: '#059669', margin: '0 auto 6px' }} />
+                  <div style={{ fontWeight: '700', color: '#059669' }}>Clean Claim Validated</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
                     Zero fatal errors or unbundling violations found.
                   </div>
                 </div>
@@ -710,31 +711,31 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
                         key={f.id}
                         style={{
                           padding: '12px 14px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-                          backgroundColor: f.is_overridden ? 'rgba(168, 85, 247, 0.06)' : isFatal ? 'rgba(239, 68, 68, 0.06)' : 'rgba(245, 158, 11, 0.06)',
-                          border: `1px solid ${f.is_overridden ? 'rgba(168, 85, 247, 0.3)' : isFatal ? 'rgba(239, 68, 68, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`
+                          backgroundColor: f.is_overridden ? 'rgba(14, 165, 233, 0.08)' : isFatal ? 'rgba(239, 68, 68, 0.08)' : 'rgba(245, 158, 11, 0.08)',
+                          border: `1px solid ${f.is_overridden ? 'rgba(14, 165, 233, 0.3)' : isFatal ? 'rgba(239, 68, 68, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`
                         }}
                       >
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                            <span style={{ fontFamily: 'monospace', fontWeight: '700', fontSize: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                            <span style={{ fontFamily: 'monospace', fontWeight: '700', fontSize: '0.75rem', backgroundColor: 'var(--bg-subtab, #f1f5f9)', color: 'var(--text-primary, #0f172a)', border: '1px solid var(--border-color, #cbd5e1)', padding: '2px 6px', borderRadius: '4px' }}>
                               {f.rule_id}
                             </span>
-                            <span style={{ fontSize: '0.65rem', fontWeight: '800', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase', backgroundColor: isFatal ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)', color: isFatal ? '#f87171' : '#fbbf24' }}>
+                            <span style={{ fontSize: '0.65rem', fontWeight: '800', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase', backgroundColor: isFatal ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)', color: isFatal ? '#dc2626' : '#d97706' }}>
                               {f.severity}
                             </span>
                             {f.edi_loop_reference && (
-                              <span style={{ fontSize: '0.7rem', color: '#60a5fa' }}>EDI: {f.edi_loop_reference}</span>
+                              <span style={{ fontSize: '0.7rem', color: '#0284c7' }}>EDI: {f.edi_loop_reference}</span>
                             )}
                             {f.is_overridden && (
-                              <span style={{ fontSize: '0.65rem', fontWeight: '800', backgroundColor: 'rgba(168, 85, 247, 0.2)', color: '#c084fc', padding: '2px 6px', borderRadius: '4px' }}>
+                              <span style={{ fontSize: '0.65rem', fontWeight: '800', backgroundColor: 'rgba(14, 165, 233, 0.2)', color: '#0284c7', padding: '2px 6px', borderRadius: '4px' }}>
                                 OVERRIDDEN
                               </span>
                             )}
                           </div>
-                          <div style={{ fontSize: '0.82rem', fontWeight: '600', color: '#f8fafc' }}>{f.finding_message}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', marginTop: '2px' }}>{f.remediation_guidance}</div>
+                          <div style={{ fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-primary, #0f172a)' }}>{f.finding_message}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>{f.remediation_guidance}</div>
                           {f.is_overridden && (
-                            <div style={{ fontSize: '0.75rem', color: '#c084fc', fontStyle: 'italic', marginTop: '4px' }}>
+                            <div style={{ fontSize: '0.75rem', color: '#0284c7', fontStyle: 'italic', marginTop: '4px' }}>
                               Justification: "{f.override_reason}"
                             </div>
                           )}
@@ -745,8 +746,8 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
                             onClick={() => handleOpenOverride(f)}
                             style={{
                               display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 10px', borderRadius: '6px',
-                              backgroundColor: 'rgba(168, 85, 247, 0.2)', border: '1px solid rgba(168, 85, 247, 0.4)',
-                              color: '#c084fc', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer'
+                              backgroundColor: 'rgba(14, 165, 233, 0.15)', border: '1px solid rgba(14, 165, 233, 0.4)',
+                              color: '#0284c7', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer'
                             }}
                           >
                             <Key size={12} />
@@ -762,7 +763,7 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
 
           </div>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-card, #1e293b)', borderRadius: '12px', border: '1px solid var(--border-color, #334155)', color: 'var(--text-muted, #94a3b8)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-card, #ffffff)', borderRadius: '12px', border: '1px solid var(--border-color, #cbd5e1)', color: 'var(--text-muted, #64748b)' }}>
             Select a claim from the queue to inspect service lines and run scrubbing rules.
           </div>
         )}
@@ -772,28 +773,28 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
       {overrideModalOpen && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(5, 11, 24, 0.85)', backdropFilter: 'blur(6px)', zIndex: 99999,
+          backgroundColor: 'rgba(5, 11, 24, 0.65)', backdropFilter: 'blur(6px)', zIndex: 99999,
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
         }} onClick={() => setOverrideModalOpen(false)}>
           <div style={{
-            width: '500px', maxWidth: '95vw', backgroundColor: 'var(--bg-card, #1e293b)',
-            border: '1px solid rgba(168, 85, 247, 0.4)', borderRadius: '12px', padding: '22px'
+            width: '500px', maxWidth: '95vw', backgroundColor: 'var(--bg-card, #ffffff)',
+            border: '1px solid var(--border-color, #cbd5e1)', borderRadius: '12px', padding: '22px'
           }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <div style={{ fontSize: '1.1rem', fontWeight: '800', color: '#c084fc', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0284c7', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Key size={18} /> Override Claim Scrub Blocker
               </div>
-              <button onClick={() => setOverrideModalOpen(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
+              <button onClick={() => setOverrideModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted, #64748b)', cursor: 'pointer' }}>
                 <X size={18} />
               </button>
             </div>
 
-            <div style={{ fontSize: '0.8rem', color: '#c084fc', backgroundColor: 'rgba(168, 85, 247, 0.1)', padding: '10px 12px', borderRadius: '6px', marginBottom: '14px' }}>
+            <div style={{ fontSize: '0.8rem', color: '#0284c7', backgroundColor: 'rgba(14, 165, 233, 0.1)', border: '1px solid rgba(14, 165, 233, 0.25)', padding: '10px 12px', borderRadius: '6px', marginBottom: '14px' }}>
               <strong>{selectedFinding?.rule_id}:</strong> {selectedFinding?.finding_message}
             </div>
 
             <form onSubmit={handleSubmitOverride}>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-primary, #0f172a)', marginBottom: '6px' }}>
                 Mandatory Clinical / Payer Justification:
               </label>
               <textarea
@@ -802,22 +803,32 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
                 rows={3}
                 placeholder="Document payer agreement, emergency authorization, or director override..."
                 style={{
-                  width: '100%', padding: '10px', borderRadius: '6px', backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                  border: '1px solid var(--border-color, #334155)', color: '#f8fafc', fontSize: '0.85rem', boxSizing: 'border-box'
+                  width: '100%', padding: '10px', borderRadius: '6px', backgroundColor: 'var(--bg-subtab, #f1f5f9)',
+                  border: '1px solid var(--border-color, #cbd5e1)', color: 'var(--text-primary, #0f172a)', fontSize: '0.85rem', boxSizing: 'border-box'
                 }}
                 required
               />
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '14px' }}>
-                <button type="button" onClick={() => setOverrideModalOpen(false)} style={{ padding: '6px 14px', borderRadius: '6px', backgroundColor: 'transparent', border: '1px solid var(--border-color, #334155)', color: '#94a3b8', cursor: 'pointer' }}>
+                <button type="button" onClick={() => setOverrideModalOpen(false)} style={{ padding: '6px 14px', borderRadius: '6px', backgroundColor: 'transparent', border: '1px solid var(--border-color, #cbd5e1)', color: 'var(--text-secondary, #475569)', cursor: 'pointer' }}>
                   Cancel
                 </button>
-                <button type="submit" style={{ padding: '6px 16px', borderRadius: '6px', backgroundColor: '#8b5cf6', border: 'none', color: '#ffffff', fontWeight: '700', cursor: 'pointer' }}>
+                <button type="submit" style={{ padding: '6px 16px', borderRadius: '6px', backgroundColor: '#0284c7', border: 'none', color: '#ffffff', fontWeight: '700', cursor: 'pointer' }}>
                   Commit Override
                 </button>
               </div>
             </form>
           </div>
         </div>
+      )}
+
+      {/* Reimbursement Inspector Modal */}
+      {reimbModalOpen && selectedClaim && (
+        <ReimbursementInspectorModal
+          claimId={selectedClaim.id}
+          surgeryId={selectedClaim.surgery_id}
+          claimData={selectedClaim}
+          onClose={() => setReimbModalOpen(false)}
+        />
       )}
 
       {/* EDI 837P Preview Modal */}

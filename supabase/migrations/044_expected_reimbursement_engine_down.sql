@@ -29,3 +29,4 @@ DROP TABLE IF EXISTS public.reimbursement_calculation_lines CASCADE;
 DROP TABLE IF EXISTS public.reimbursement_calculations CASCADE;
 
 COMMIT;
+

@@ -835,3 +835,4 @@ CREATE TRIGGER trg_reimb_calc_lines_immutable
     FOR EACH ROW EXECUTE FUNCTION public.trg_block_reimbursement_mutation();
 
 COMMIT;
+
