@@ -9,8 +9,7 @@
  */
 
 import { supabase, db } from './supabase.js';
-import { payerRateService } from './payerRateService.js';
-import { medicareRateService } from './medicareRateService.js';
+// Specialized rate services available for future extensions
 
 export const CALCULATION_STATUSES = Object.freeze({
   CALCULATED: 'CALCULATED',

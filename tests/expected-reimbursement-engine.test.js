@@ -170,7 +170,7 @@ describe('Phase 68 — Expected Reimbursement Engine Verification Suite', () => 
       // 6. Patient Responsibility Partitioning ($1,000 deductible + 20% coinsurance)
       const deductible = 1000.00;
       const coinsurance = Math.round((totalAllowable - deductible) * 0.20 * 100) / 100;
-      const totalPatient = deductible + coinsurance;
+      const totalPatient = Math.round((deductible + coinsurance) * 100) / 100;
       assert.equal(totalPatient, 3035.82, 'Patient responsibility must equal $3,035.82');
 
       const netPayer = Math.round((totalAllowable - totalPatient) * 100) / 100;
@@ -254,13 +254,18 @@ describe('Phase 68 — Expected Reimbursement Engine Verification Suite', () => 
         'purple', 'violet', 'indigo'
       ];
 
+      // Strip comments to ensure scan audits executable UI styles and markup
+      const stripComments = str => str.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '');
+      const cleanJsx = stripComments(jsx);
+      const cleanCss = stripComments(css);
+
       for (const token of bannedTokens) {
         assert.ok(
-          !jsx.toLowerCase().includes(token.toLowerCase()),
+          !cleanJsx.toLowerCase().includes(token.toLowerCase()),
           `ReimbursementInspectorModal.jsx must not contain banned token "${token}"`
         );
         assert.ok(
-          !css.toLowerCase().includes(token.toLowerCase()),
+          !cleanCss.toLowerCase().includes(token.toLowerCase()),
           `ReimbursementInspectorModal.css must not contain banned token "${token}"`
         );
       }

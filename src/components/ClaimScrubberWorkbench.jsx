@@ -536,6 +536,17 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
                     {scrubbing ? 'Scrubbing...' : 'Re-Scrub Claim'}
                   </button>
                   <button
+                    onClick={() => setReimbModalOpen(true)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px',
+                      backgroundColor: 'var(--bg-card, #ffffff)', border: '1px solid var(--border-color, #cbd5e1)',
+                      color: 'var(--text-primary, #0f172a)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600'
+                    }}
+                  >
+                    <Calculator size={14} style={{ color: '#0284c7' }} />
+                    Reimbursement
+                  </button>
+                  <button
                     onClick={handleExportEDI}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px',

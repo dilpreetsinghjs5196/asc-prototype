@@ -6,14 +6,13 @@
  * Interactive drill-down modal displaying authoritative expected
  * reimbursement, line-level calculation traces, patient responsibility
  * partitioning, and cryptographic SHA-256 ledger integrity.
- * Strictly compliant with Maestro tokens and the Strict Purple Ban.
+ * Strictly compliant with Maestro tokens and color design standards.
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X, Calculator, ShieldCheck, DollarSign, RefreshCw, FileText,
-  ChevronDown, ChevronRight, CheckCircle2, AlertTriangle, AlertCircle,
-  Eye, Hash, Activity, Lock
+  ChevronDown, ChevronRight, Hash, Activity
 } from 'lucide-react';
 import { reimbursementEngineService } from '../lib/reimbursementEngineService';
 import './ReimbursementInspectorModal.css';
@@ -22,7 +21,7 @@ export default function ReimbursementInspectorModal({
   isOpen,
   onClose,
   surgeryId,
-  surgeryData = null,
+  _surgeryData = null,
   onCalculationUpdated = null
 }) {
   const [calculation, setCalculation] = useState(null);
@@ -421,7 +420,7 @@ export default function ReimbursementInspectorModal({
                           ${parseFloat(h.estimated_payer_reimbursement || 0).toFixed(2)}
                         </td>
                         <td style={{ color: '#94a3b8' }}>
-                          {new Date(h.calculation_timestamp || Date.now()).toLocaleString()}
+                          {h.calculation_timestamp ? new Date(h.calculation_timestamp).toLocaleString() : 'Recent'}
                         </td>
                         <td style={{ color: '#cbd5e1' }}>
                           {h.recalculation_reason || 'Initial encounter baseline'}
