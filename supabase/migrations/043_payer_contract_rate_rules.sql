@@ -327,33 +327,20 @@ RETURNS TRIGGER AS $$
 DECLARE
     v_status VARCHAR(50);
 BEGIN
-    SELECT status INTO v_status
-    FROM public.payer_contract_versions
-    WHERE id = COALESCE(NEW.contract_version_id, OLD.contract_version_id);
+    IF TG_OP IN ('UPDATE', 'DELETE') THEN
+        SELECT status INTO v_status
+        FROM public.payer_contract_versions
+        WHERE id = OLD.contract_version_id;
 
-    IF v_status IN ('ACTIVE', 'APPROVED', 'SUPERSEDED', 'TERMINATED') THEN
-        RAISE EXCEPTION 'Financial Data Integrity Violation: Rates attached to contract version % in status % cannot be modified or deleted. Create a new contract version.',
-            COALESCE(NEW.contract_version_id, OLD.contract_version_id), v_status;
+        IF v_status IN ('ACTIVE', 'APPROVED', 'SUPERSEDED', 'TERMINATED') THEN
+            RAISE EXCEPTION 'Financial Data Integrity Violation: Rates attached to contract version % in status % cannot be modified or deleted. Create a new contract version.',
+                OLD.contract_version_id, v_status;
+        END IF;
     END IF;
 
-    RETURN NEW;
+    RETURN COALESCE(NEW, OLD);
 END;
 $$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trg_lock_cpt_rates ON public.payer_contract_cpt_rates;
-CREATE TRIGGER trg_lock_cpt_rates
-    BEFORE INSERT OR UPDATE OR DELETE ON public.payer_contract_cpt_rates
-    FOR EACH ROW EXECUTE FUNCTION public.trg_lock_contract_rates_on_approval();
-
-DROP TRIGGER IF EXISTS trg_lock_case_rates ON public.payer_contract_case_rates;
-CREATE TRIGGER trg_lock_case_rates
-    BEFORE INSERT OR UPDATE OR DELETE ON public.payer_contract_case_rates
-    FOR EACH ROW EXECUTE FUNCTION public.trg_lock_contract_rates_on_approval();
-
-DROP TRIGGER IF EXISTS trg_lock_carve_outs ON public.payer_contract_carve_outs;
-CREATE TRIGGER trg_lock_carve_outs
-    BEFORE INSERT OR UPDATE OR DELETE ON public.payer_contract_carve_outs
-    FOR EACH ROW EXECUTE FUNCTION public.trg_lock_contract_rates_on_approval();
 
 -- =====================================================================
 -- 10. AUTHORITATIVE STORED PROCEDURES
@@ -886,7 +873,7 @@ BEGIN
         ) VALUES (
             v_sch_humana, v_ver_humana, 'EXHIBIT_A_ORTHO_2024', 'Exhibit A - Orthopedic Master Fee Schedule',
             'FEE_SCHEDULE', '2024-01-01', 'Contracted CPT line rates for high-volume musculoskeletal cases', TRUE
-        ) ON CONFLICT (id) DO UPDATE SET updated_at = timezone('utc', now());
+        ) ON CONFLICT (id) DO NOTHING;
 
         -- CPT Rates for Humana
         INSERT INTO public.payer_contract_cpt_rates (
@@ -896,7 +883,7 @@ BEGIN
             (v_sch_humana, v_ver_humana, '29881', 'Knee arthroscopy with meniscectomy', 'COMMERCIAL_FEE_SCHEDULE', 3200.00, 1.5000),
             (v_sch_humana, v_ver_humana, '29877', 'Knee arthroscopy chondroplasty', 'COMMERCIAL_FEE_SCHEDULE', 1800.00, 1.5000),
             (v_sch_humana, v_ver_humana, '64721', 'Carpal tunnel neuroplasty open', 'COMMERCIAL_FEE_SCHEDULE', 1600.00, 2.0000)
-        ON CONFLICT (rate_schedule_id, cpt_code) DO UPDATE SET negotiated_rate = EXCLUDED.negotiated_rate;
+        ON CONFLICT (rate_schedule_id, cpt_code) DO NOTHING;
 
         -- Carve-Out: Implants Invoice + 10%
         INSERT INTO public.payer_contract_carve_outs (
@@ -925,7 +912,7 @@ BEGIN
         ) VALUES (
             v_sch_anthem, v_ver_anthem, 'EXHIBIT_B_EYE_CASERATES', 'Exhibit B - Ophthalmology Bundled Packages',
             'CASE_RATE_SET', '2024-01-01', 'Bundled case rates covering cataract surgery and standard IOL', TRUE
-        ) ON CONFLICT (id) DO UPDATE SET updated_at = timezone('utc', now());
+        ) ON CONFLICT (id) DO NOTHING;
 
         INSERT INTO public.payer_contract_case_rates (
             id, rate_schedule_id, contract_version_id, package_code, package_name,
@@ -933,7 +920,7 @@ BEGIN
         ) VALUES (
             v_case_cataract, v_sch_anthem, v_ver_anthem, 'CATARACT_STD_IOL', 'Cataract Extraction with Standard Monofocal IOL',
             '66984', 2250.00, FALSE, TRUE, TRUE
-        ) ON CONFLICT (id) DO UPDATE SET bundled_rate = EXCLUDED.bundled_rate;
+        ) ON CONFLICT (id) DO NOTHING;
 
         INSERT INTO public.payer_contract_case_rate_inclusions (
             case_rate_id, included_code, code_type, description, is_bundled
@@ -943,6 +930,25 @@ BEGIN
         ON CONFLICT (case_rate_id, included_code) DO NOTHING;
     END IF;
 END $$;
+
+-- =====================================================================
+-- 13. ATTACH LOCK TRIGGERS TO PREVENT MODIFICATION OF APPROVED RATES
+-- =====================================================================
+
+DROP TRIGGER IF EXISTS trg_lock_cpt_rates ON public.payer_contract_cpt_rates;
+CREATE TRIGGER trg_lock_cpt_rates
+    BEFORE UPDATE OR DELETE ON public.payer_contract_cpt_rates
+    FOR EACH ROW EXECUTE FUNCTION public.trg_lock_contract_rates_on_approval();
+
+DROP TRIGGER IF EXISTS trg_lock_case_rates ON public.payer_contract_case_rates;
+CREATE TRIGGER trg_lock_case_rates
+    BEFORE UPDATE OR DELETE ON public.payer_contract_case_rates
+    FOR EACH ROW EXECUTE FUNCTION public.trg_lock_contract_rates_on_approval();
+
+DROP TRIGGER IF EXISTS trg_lock_carve_outs ON public.payer_contract_carve_outs;
+CREATE TRIGGER trg_lock_carve_outs
+    BEFORE UPDATE OR DELETE ON public.payer_contract_carve_outs
+    FOR EACH ROW EXECUTE FUNCTION public.trg_lock_contract_rates_on_approval();
 
 COMMIT;
 
