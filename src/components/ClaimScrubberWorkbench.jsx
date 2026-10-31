@@ -2,10 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   ShieldAlert, CheckCircle2, AlertOctagon,
   RefreshCw, Key, FileText, Download,
-  Filter, Play, Layers, X
+  Filter, Play, Layers, X, Calculator
 } from 'lucide-react';
 import { db } from '../lib/supabase';
 import { rbacService } from '../lib/rbacService';
+import ReimbursementInspectorModal from './ReimbursementInspectorModal';
 
 const SAMPLE_CLAIMS = [
   {
@@ -136,6 +137,7 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
   const [selectedFinding, setSelectedFinding] = useState(null);
   const [overrideReason, setOverrideReason] = useState('');
   const [ediModalOpen, setEdiModalOpen] = useState(false);
+  const [reimbModalOpen, setReimbModalOpen] = useState(false);
   const [ediContent, setEdiContent] = useState('');
 
   const targetFacilityId = activeFacility?.id || db.getActiveFacility()?.id;

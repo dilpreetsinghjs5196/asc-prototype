@@ -1,5 +1,5 @@
 /**
- * Billing Agent (Phase 47 Authoritative Engine Integration)
+ * Billing Agent (Phase 47 Authoritative Engine Integration & Phase 68 Expected Reimbursement)
  * Evaluates claims, verifies NCCI PTP edits, and checks pre-bill completeness.
  */
 import { db } from '../../lib/supabase.js';
@@ -8,6 +8,7 @@ export const executeBillingTask = async (taskContext = {}, _systemContext = {}) 
     try {
         let claim = null;
         let scrubResult = null;
+        let authoritativeReimbursement = null;
 
         if (taskContext.claimId) {
             claim = await db.getClaimById(taskContext.claimId);
@@ -18,9 +19,14 @@ export const executeBillingTask = async (taskContext = {}, _systemContext = {}) 
                 claim = await db.getClaimById(genRes.claim_id);
                 scrubResult = await db.scrubClaim(genRes.claim_id);
             }
+            if (db.calculateExpectedReimbursement) {
+                authoritativeReimbursement = await db.calculateExpectedReimbursement(taskContext.surgeryId, { dryRun: true });
+            }
         }
 
         const isClean = scrubResult?.status === 'SCRUB_PASSED' || (scrubResult?.fatal_errors_count === 0);
+        const resolvedExpected = authoritativeReimbursement?.total_contract_allowable ?? 
+                                 (claim ? parseFloat(claim.total_expected_reimbursement || 0) : 0);
 
         return {
             agent: "billing",
@@ -30,7 +36,10 @@ export const executeBillingTask = async (taskContext = {}, _systemContext = {}) 
                 claimId: claim?.id || taskContext.claimId || null,
                 patientControlNumber: claim?.patient_control_number || null,
                 billedAmount: claim ? parseFloat(claim.total_gross_charge || 0) : (taskContext.billedAmount || 0),
-                expectedReimbursement: claim ? parseFloat(claim.total_expected_reimbursement || 0) : 0,
+                expectedReimbursement: resolvedExpected,
+                estimatedPayerReimbursement: authoritativeReimbursement?.estimated_payer_reimbursement ?? resolvedExpected,
+                estimatedPatientResponsibility: authoritativeReimbursement?.estimated_patient_responsibility ?? 0,
+                calculationStatus: authoritativeReimbursement?.calculation_status || 'ESTIMATED',
                 scrubStatus: scrubResult?.status || 'UNSCRUBBED',
                 fatalErrorsCount: scrubResult?.fatal_errors_count || 0,
                 warningsCount: scrubResult?.warnings_count || 0,
