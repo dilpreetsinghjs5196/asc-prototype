@@ -422,7 +422,12 @@ export const payerContractService = {
         baseAllowable = term ? term.contracted_rate : 0;
       } else if (contractResolution.reimbursement_methodology === 'PERCENT_OF_BILLED_CHARGES') {
         const gross = parseFloat(line.gross_charge || 0);
-        baseAllowable = Math.round(gross * 0.65 * 100) / 100; // 35% discount standard
+        const discountRate = contractResolution.billed_charge_discount_pct != null 
+          ? parseFloat(contractResolution.billed_charge_discount_pct) 
+          : (line.billed_charge_discount_pct != null ? parseFloat(line.billed_charge_discount_pct) : 0.35);
+        // Compute allowable as gross minus discount rate (or multiplier if discountRate < 0.50 representing discount)
+        const effectiveMultiplier = discountRate > 0 && discountRate <= 1.0 ? (1.0 - discountRate) : 0.65;
+        baseAllowable = Math.round(gross * effectiveMultiplier * 100) / 100;
       }
       return { ...line, base_allowable: baseAllowable };
     });

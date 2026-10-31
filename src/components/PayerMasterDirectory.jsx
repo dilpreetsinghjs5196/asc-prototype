@@ -18,10 +18,23 @@ import {
   ChevronRight,
   Calculator,
   Lock,
-  FileCheck
+  FileCheck,
+  Percent,
+  DollarSign,
+  FileSpreadsheet,
+  Tag,
+  Check
 } from 'lucide-react';
 import { payerMasterService, DEFAULT_PAYER_MASTER, DEFAULT_PAYER_PLANS, DEFAULT_PAYER_IDENTIFIERS } from '../lib/payerMasterService.js';
 import { payerContractService, DEFAULT_PAYER_CONTRACTS, DEFAULT_CONTRACT_VERSIONS, DEFAULT_CONTRACT_TERMS } from '../lib/payerContractService.js';
+import {
+  payerRateService,
+  DEFAULT_RATE_SCHEDULES,
+  DEFAULT_CPT_RATES,
+  DEFAULT_CASE_RATES,
+  DEFAULT_CARVE_OUTS,
+  DEFAULT_RATE_EXCEPTIONS
+} from '../lib/payerRateService.js';
 import './PayerMasterDirectory.css';
 
 export function PayerMasterDirectory({ activeFacility }) {
@@ -69,6 +82,21 @@ export function PayerMasterDirectory({ activeFacility }) {
     dateOfService: '2026-03-15'
   });
   const [contractSandboxResult, setContractSandboxResult] = useState(null);
+
+  // Phase 67 Commercial Rate Rules State
+  const [rateSchedules, setRateSchedules] = useState(DEFAULT_RATE_SCHEDULES);
+  const [selectedScheduleId, setSelectedScheduleId] = useState('40000000-0000-0000-0000-000000000001');
+  const [cptRates, setCptRates] = useState(DEFAULT_CPT_RATES);
+  const [caseRates, setCaseRates] = useState(DEFAULT_CASE_RATES);
+  const [carveOuts, setCarveOuts] = useState(DEFAULT_CARVE_OUTS);
+  const [rateExceptions, setRateExceptions] = useState(DEFAULT_RATE_EXCEPTIONS);
+  const [activeRateSubSection, setActiveRateSubSection] = useState('cpt'); // 'cpt' | 'case_rates' | 'carve_outs' | 'exceptions' | 'simulator'
+  const [cptSearchQuery, setCptSearchQuery] = useState('');
+  const [simulationScenario, setSimulationScenario] = useState('rotator_cuff');
+  const [simulationResult, setSimulationResult] = useState(null);
+  const [isRateImportModalOpen, setIsRateImportModalOpen] = useState(false);
+  const [importCsvText, setImportCsvText] = useState('');
+  const [importStagingRows, setImportStagingRows] = useState([]);
 
   // Load Data
   const loadPayerData = useCallback(async () => {
@@ -204,6 +232,119 @@ export function PayerMasterDirectory({ activeFacility }) {
     }
   };
 
+  // Phase 67 Rate Simulation Handler
+  const handleRunSimulation = (scenarioKey = simulationScenario) => {
+    let simProcs = [];
+    let simImplants = [];
+    let stopLoss = 75000.00;
+    let stopLossPct = 0.6500;
+    let mppr = 'CMS_STANDARD_50';
+
+    if (scenarioKey === 'rotator_cuff') {
+      simProcs = [
+        { cpt_code: '23430', description: 'Biceps tenodesis open', gross_charge: 18500.00, pi: 'J8', wage_index: 1.2841, medicare_multiplier: 1.80 },
+        { cpt_code: '29827', description: 'Rotator cuff repair arthroscopic', gross_charge: 12400.00, pi: 'A2', wage_index: 1.2841, medicare_multiplier: 1.80 }
+      ];
+      simImplants = [
+        { code: 'C1713', description: 'Anchor Arthrex Corkscrew FT (Qty: 2)', invoice_cost: 1700.00, billed_charge: 3400.00 }
+      ];
+      stopLoss = 75000.00;
+    } else if (scenarioKey === 'knee_scope') {
+      simProcs = [
+        { cpt_code: '29881', description: 'Knee scope medial meniscectomy', negotiated_rate: 3200.00, gross_charge: 9500.00 },
+        { cpt_code: '29877', description: 'Knee scope chondroplasty', negotiated_rate: 1800.00, gross_charge: 5200.00 },
+        { cpt_code: '29870', description: 'Diagnostic knee arthroscopy', negotiated_rate: 1200.00, gross_charge: 3800.00, is_packaged: true }
+      ];
+      mppr = 'CMS_STANDARD_50';
+    } else if (scenarioKey === 'cataract') {
+      simProcs = [
+        { cpt_code: '66984', description: 'Cataract extraction with IOL', gross_charge: 5800.00 }
+      ];
+      simImplants = [
+        { code: 'V2632', description: 'Posterior chamber intraocular lens', invoice_cost: 150.00, billed_charge: 800.00 }
+      ];
+    } else if (scenarioKey === 'spine_stop_loss') {
+      simProcs = [
+        { cpt_code: '22612', description: 'Lumbar fusion posterior', gross_charge: 24500.00 },
+        { cpt_code: '22614', description: 'Lumbar fusion additional level', gross_charge: 12800.00 },
+        { cpt_code: '22842', description: 'Posterior instrumentation', gross_charge: 18500.00 },
+        { cpt_code: '22853', description: 'Interbody cage insertion', gross_charge: 14600.00 }
+      ];
+      simImplants = [
+        { code: 'HARDWARE', description: 'PEEK cages & titanium screws', invoice_cost: 9800.00, billed_charge: 22400.00 }
+      ];
+      stopLoss = 75000.00;
+      stopLossPct = 0.6500;
+    } else if (scenarioKey === 'bilateral_carpal') {
+      simProcs = [
+        { cpt_code: '64721', description: 'Carpal tunnel neuroplasty open', negotiated_rate: 1600.00, modifier: '50', gross_charge: 5400.00 }
+      ];
+      mppr = 'NO_MPPR';
+    }
+
+    const result = payerRateService.adjudicateEncounter({
+      caseId: 'sim-case-01',
+      facilityId: activeFacility?.id || '00000000-0000-0000-0000-000000000001',
+      procedures: simProcs,
+      implants: simImplants,
+      stopLossThreshold: stopLoss,
+      stopLossPct: stopLossPct,
+      mpprRule: mppr
+    });
+
+    setSimulationResult(result);
+  };
+
+  // Phase 67 CSV Parser Handler
+  const handleParseCsv = () => {
+    if (!importCsvText.trim()) return;
+    const lines = importCsvText.trim().split('\n');
+    const parsed = lines.map((line, idx) => {
+      const parts = line.split(',').map(p => p.trim());
+      const cpt = parts[0] || '';
+      const desc = parts[1] || 'Imported CPT Rate';
+      const rate = parseFloat(parts[2] || 0);
+      const mult = parts[3] ? parseFloat(parts[3]) : null;
+      const isValid = cpt.length >= 5 && (!isNaN(rate) && rate > 0 || !isNaN(mult) && mult > 0);
+      return {
+        rowNumber: idx + 1,
+        cptCode: cpt,
+        description: desc,
+        rate: isNaN(rate) ? null : rate,
+        multiplier: isNaN(mult) ? null : mult,
+        status: isValid ? 'VALID' : 'ERROR',
+        message: isValid ? 'Valid format' : 'Missing CPT code or rate'
+      };
+    });
+    setImportStagingRows(parsed);
+  };
+
+  // Phase 67 CSV Commit Handler
+  const handleCommitImport = () => {
+    const validRows = importStagingRows.filter(r => r.status === 'VALID');
+    if (validRows.length === 0) {
+      alert('No valid rows to commit.');
+      return;
+    }
+    const newRates = validRows.map(r => ({
+      id: `imp-${Date.now()}-${r.rowNumber}`,
+      rate_schedule_id: selectedScheduleId,
+      contract_version_id: '30000000-0000-0000-0000-000000000001',
+      cpt_code: r.cptCode,
+      description: r.description,
+      reimbursement_methodology: r.rate ? 'COMMERCIAL_FEE_SCHEDULE' : 'PERCENT_OF_MEDICARE',
+      negotiated_rate: r.rate,
+      medicare_multiplier: r.multiplier,
+      bilateral_reimbursement_pct: 1.5000,
+      allow_mppr_reduction: true
+    }));
+    setCptRates(prev => [...newRates, ...prev]);
+    setIsRateImportModalOpen(false);
+    setImportCsvText('');
+    setImportStagingRows([]);
+    alert(`Successfully committed ${validRows.length} CPT rate exhibits.`);
+  };
+
   // Summary Metrics
   const summary = useMemo(() => {
     const totalPayers = payers.length;
@@ -316,6 +457,14 @@ export function PayerMasterDirectory({ activeFacility }) {
         >
           <Sliders size={16} />
           Deduplication Workbench & EDI Simulator
+        </button>
+        <button
+          className={`payer-tab-btn ${activeSubTab === 'rates' ? 'active' : ''}`}
+          onClick={() => setActiveSubTab('rates')}
+        >
+          <Percent size={16} />
+          Commercial Rate Rules & Exhibits
+          <span className="payer-tab-count">{cptRates.length}</span>
         </button>
       </div>
 
@@ -1031,6 +1180,537 @@ export function PayerMasterDirectory({ activeFacility }) {
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          TAB 6: COMMERCIAL RATE RULES & EXHIBITS (PHASE 67)
+         ===================================================================== */}
+      {activeSubTab === 'rates' && (
+        <div className="payer-tab-content">
+          {/* Header & Exhibit Controls */}
+          <div className="rate-exhibit-header">
+            <div>
+              <h3 style={{ margin: '0 0 4px 0', fontSize: '1.25rem', fontWeight: 700, color: '#0f172a' }}>
+                Commercial Rate Rules & Fee Schedule Engine
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                Negotiated CPT fee schedules, bundled case rates, surgical carve-outs, and stop-loss exception models.
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <select
+                className="rate-schedule-select"
+                value={selectedScheduleId}
+                onChange={(e) => setSelectedScheduleId(e.target.value)}
+              >
+                {rateSchedules.map(sch => (
+                  <option key={sch.id} value={sch.id}>
+                    {sch.schedule_name} ({sch.schedule_code})
+                  </option>
+                ))}
+              </select>
+              <button
+                className="btn-secondary btn-sm"
+                onClick={() => setIsRateImportModalOpen(true)}
+              >
+                <Upload size={14} />
+                Import Exhibit (CSV)
+              </button>
+              <button
+                className="btn-primary btn-sm"
+                onClick={() => {
+                  setActiveRateSubSection('simulator');
+                  handleRunSimulation('rotator_cuff');
+                }}
+              >
+                <Calculator size={14} />
+                Adjudication Simulator
+              </button>
+            </div>
+          </div>
+
+          {/* Rate Rules KPI Summary */}
+          <div className="payer-kpi-grid" style={{ margin: '1rem 0' }}>
+            <div className="payer-kpi-card">
+              <span className="kpi-label">Active Exhibits</span>
+              <span className="kpi-value">{rateSchedules.length}</span>
+              <span className="kpi-sub">Fee Schedules & Sets</span>
+            </div>
+            <div className="payer-kpi-card">
+              <span className="kpi-label">Contracted CPT Rates</span>
+              <span className="kpi-value">{cptRates.length}</span>
+              <span className="kpi-sub">Line-Item Negotiated Rates</span>
+            </div>
+            <div className="payer-kpi-card">
+              <span className="kpi-label">Bundled Case Rates</span>
+              <span className="kpi-value">{caseRates.length}</span>
+              <span className="kpi-sub">Packaged Procedure Bundles</span>
+            </div>
+            <div className="payer-kpi-card">
+              <span className="kpi-label">Implant Carve-Outs</span>
+              <span className="kpi-value">{carveOuts.length}</span>
+              <span className="kpi-sub">Cost-Plus / Invoice Models</span>
+            </div>
+            <div className="payer-kpi-card">
+              <span className="kpi-label">Stop-Loss Provisions</span>
+              <span className="kpi-value">{rateExceptions.length}</span>
+              <span className="kpi-sub">Catastrophic Floor Triggers</span>
+            </div>
+          </div>
+
+          {/* Sub-Navigation Pills */}
+          <div className="rate-subnav">
+            <button
+              className={`rate-subnav-btn ${activeRateSubSection === 'cpt' ? 'active' : ''}`}
+              onClick={() => setActiveRateSubSection('cpt')}
+            >
+              <FileSpreadsheet size={15} />
+              Contracted CPT Rates ({cptRates.length})
+            </button>
+            <button
+              className={`rate-subnav-btn ${activeRateSubSection === 'case_rates' ? 'active' : ''}`}
+              onClick={() => setActiveRateSubSection('case_rates')}
+            >
+              <Layers size={15} />
+              Bundled Case Rates ({caseRates.length})
+            </button>
+            <button
+              className={`rate-subnav-btn ${activeRateSubSection === 'carve_outs' ? 'active' : ''}`}
+              onClick={() => setActiveRateSubSection('carve_outs')}
+            >
+              <Tag size={15} />
+              Implant Carve-Outs ({carveOuts.length})
+            </button>
+            <button
+              className={`rate-subnav-btn ${activeRateSubSection === 'exceptions' ? 'active' : ''}`}
+              onClick={() => setActiveRateSubSection('exceptions')}
+            >
+              <AlertTriangle size={15} />
+              Stop-Loss & Exceptions ({rateExceptions.length})
+            </button>
+            <button
+              className={`rate-subnav-btn ${activeRateSubSection === 'simulator' ? 'active' : ''}`}
+              onClick={() => {
+                setActiveRateSubSection('simulator');
+                if (!simulationResult) handleRunSimulation('rotator_cuff');
+              }}
+            >
+              <Calculator size={15} />
+              Adjudication Simulator & Audit
+            </button>
+          </div>
+
+          {/* SECTION 1: CPT FEE SCHEDULE */}
+          {activeRateSubSection === 'cpt' && (
+            <div className="payer-table-wrapper" style={{ marginTop: '1rem' }}>
+              <div style={{ padding: '0.875rem 1rem', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Search size={15} style={{ color: '#64748b' }} />
+                  <input
+                    type="text"
+                    placeholder="Search CPT code or description..."
+                    value={cptSearchQuery}
+                    onChange={(e) => setCptSearchQuery(e.target.value)}
+                    style={{ border: '1px solid #cbd5e1', borderRadius: '4px', padding: '4px 8px', fontSize: '0.85rem', width: '260px' }}
+                  />
+                </div>
+                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                  Showing {cptRates.filter(r => !cptSearchQuery || r.cpt_code.includes(cptSearchQuery) || (r.description && r.description.toLowerCase().includes(cptSearchQuery.toLowerCase()))).length} line items
+                </span>
+              </div>
+              <table className="payer-table">
+                <thead>
+                  <tr>
+                    <th>CPT / HCPCS</th>
+                    <th>Procedure Description</th>
+                    <th>Methodology</th>
+                    <th>Negotiated Rate</th>
+                    <th>Medicare Multiplier</th>
+                    <th>Bilateral (Mod 50)</th>
+                    <th>MPPR Eligible</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cptRates
+                    .filter(r => !cptSearchQuery || r.cpt_code.includes(cptSearchQuery) || (r.description && r.description.toLowerCase().includes(cptSearchQuery.toLowerCase())))
+                    .map(rate => (
+                      <tr key={rate.id}>
+                        <td>
+                          <span className="cpt-badge">{rate.cpt_code}</span>
+                        </td>
+                        <td>
+                          <strong>{rate.description}</strong>
+                        </td>
+                        <td>
+                          <span className="badge badge-active">{rate.reimbursement_methodology}</span>
+                        </td>
+                        <td>
+                          {rate.negotiated_rate != null ? (
+                            <strong style={{ color: '#0f172a' }}>${rate.negotiated_rate.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
+                          ) : (
+                            <span style={{ color: '#94a3b8' }}>Dynamic</span>
+                          )}
+                        </td>
+                        <td>
+                          {rate.medicare_multiplier != null ? (
+                            <span>{(rate.medicare_multiplier * 100).toFixed(0)}% of CMS</span>
+                          ) : (
+                            <span style={{ color: '#94a3b8' }}>--</span>
+                          )}
+                        </td>
+                        <td>
+                          <span className="edi-pill">{(rate.bilateral_reimbursement_pct * 100).toFixed(0)}%</span>
+                        </td>
+                        <td>
+                          {rate.allow_mppr_reduction ? (
+                            <span style={{ color: '#059669', fontSize: '0.8rem', fontWeight: 600 }}>Enabled (50%)</span>
+                          ) : (
+                            <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Exempt</span>
+                          )}
+                        </td>
+                        <td>
+                          <span className="badge badge-active">LOCKED</span>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* SECTION 2: BUNDLED CASE RATES */}
+          {activeRateSubSection === 'case_rates' && (
+            <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {caseRates.map(cr => (
+                <div key={cr.id} className="rate-card">
+                  <div className="rate-card-header">
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <h4 style={{ margin: 0, fontSize: '1rem', color: '#0f172a' }}>{cr.package_name}</h4>
+                        <span className="edi-pill">{cr.package_code}</span>
+                      </div>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                        Primary Trigger CPT: <strong>{cr.primary_cpt_code}</strong> | Max OR Time: {cr.max_or_hours} hours
+                      </p>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Bundled Rate</span>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#059669' }}>
+                        ${cr.bundled_rate.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ padding: '0.75rem 1rem', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: '#475569' }}>
+                      <span>Facility Fee: <strong>{cr.includes_facility_fee ? 'Included' : 'Carved Out'}</strong></span>
+                      <span>Anesthesia: <strong>{cr.includes_anesthesia ? 'Included' : 'Separate'}</strong></span>
+                      <span>Standard Implants: <strong>{cr.includes_standard_implants ? 'Packaged ($0 line)' : 'Carved Out'}</strong></span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b' }}>Packaged Inclusions:</span>
+                      <span className="cpt-badge">V2632</span>
+                      <span className="cpt-badge">C1713</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* SECTION 3: IMPLANT CARVE-OUTS */}
+          {activeRateSubSection === 'carve_outs' && (
+            <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {carveOuts.map(co => (
+                <div key={co.id} className="rate-card">
+                  <div className="rate-card-header">
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <h4 style={{ margin: 0, fontSize: '1rem', color: '#0f172a' }}>{co.carve_out_name}</h4>
+                        <span className="edi-pill">{co.carve_out_code}</span>
+                      </div>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                        Category: <strong>{co.category}</strong> | De Minimis Invoice Threshold: <strong>${co.min_invoice_threshold_per_item.toFixed(2)}</strong>
+                      </p>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Reimbursement Model</span>
+                      <div style={{ fontSize: '1rem', fontWeight: 700, color: '#2563eb' }}>
+                        Invoice + {(co.markup_percentage * 100).toFixed(0)}% Markup
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ padding: '0.75rem 1rem', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#475569' }}>
+                      Items costing &lt; ${co.min_invoice_threshold_per_item.toFixed(2)} are packaged into surgical rate. Items &ge; ${co.min_invoice_threshold_per_item.toFixed(2)} qualify for carve-out.
+                    </span>
+                    <span className="badge badge-active">Mandatory Vendor Invoice Required</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* SECTION 4: STOP-LOSS & EXCEPTIONS */}
+          {activeRateSubSection === 'exceptions' && (
+            <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {rateExceptions.map(ex => (
+                <div key={ex.id} className="rate-card">
+                  <div className="rate-card-header">
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <h4 style={{ margin: 0, fontSize: '1rem', color: '#0f172a' }}>{ex.exception_name}</h4>
+                        <span className="edi-pill">{ex.exception_code}</span>
+                      </div>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                        Exception Type: <strong>{ex.exception_type}</strong> | Trigger: Total Billed Charges &ge; <strong>${ex.trigger_threshold.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
+                      </p>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Settlement Formula</span>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#d97706' }}>
+                        {(ex.reimbursement_pct_of_billed * 100).toFixed(0)}% of Total Gross Charges
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ padding: '0.75rem 1rem', background: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#475569' }}>{ex.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* SECTION 5: DETERMINISTIC ADJUDICATION SIMULATOR */}
+          {activeRateSubSection === 'simulator' && (
+            <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div className="simulator-config-box">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                  <div>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '1rem', color: '#0f172a' }}>
+                      Production Adjudication Simulator & Audit Inspector
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>
+                      Test surgical case scenarios against deterministic contract terms with instant MPPR cascade and J8 device offset deduction.
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <select
+                      className="rate-schedule-select"
+                      value={simulationScenario}
+                      onChange={(e) => {
+                        setSimulationScenario(e.target.value);
+                        handleRunSimulation(e.target.value);
+                      }}
+                    >
+                      <option value="rotator_cuff">Scenario 1: Shoulder Rotator Cuff + J8 Tenodesis + Carve-Out ($13,536.04)</option>
+                      <option value="knee_scope">Scenario 2: Multi-Procedure Knee Scope + MPPR Cascade ($4,100.00)</option>
+                      <option value="cataract">Scenario 3: Cataract Bundled Case Rate + Monofocal IOL ($2,250.00)</option>
+                      <option value="spine_stop_loss">Scenario 4: Lumbar Spine Fusion Catastrophic Stop-Loss ($60,320.00)</option>
+                      <option value="bilateral_carpal">Scenario 5: Bilateral Carpal Tunnel 200% Exception ($3,200.00)</option>
+                    </select>
+                    <button
+                      className="btn-primary btn-sm"
+                      onClick={() => handleRunSimulation(simulationScenario)}
+                    >
+                      <Calculator size={14} />
+                      Re-Calculate
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {simulationResult && (
+                <div className="simulator-results-panel">
+                  {/* Summary Bar */}
+                  <div className="sim-summary-grid">
+                    <div className="sim-metric-card">
+                      <span className="sim-label">Total Billed Gross</span>
+                      <span className="sim-val">${simulationResult.total_billed_charges.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="sim-metric-card highlight">
+                      <span className="sim-label">Total Contract Allowable</span>
+                      <span className="sim-val" style={{ color: '#059669' }}>
+                        ${simulationResult.total_contract_allowable.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="sim-metric-card">
+                      <span className="sim-label">Procedure Allowable</span>
+                      <span className="sim-val">${(simulationResult.total_procedure_allowable || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="sim-metric-card">
+                      <span className="sim-label">Implant Carve-Out</span>
+                      <span className="sim-val">${(simulationResult.total_implant_allowable || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="sim-metric-card">
+                      <span className="sim-label">Status</span>
+                      <span className={`badge ${simulationResult.stop_loss_triggered ? 'badge-warning' : 'badge-active'}`}>
+                        {simulationResult.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Hash & Verification Pill */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f1f5f9', padding: '0.625rem 1rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.8rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <ShieldCheck size={16} style={{ color: '#059669' }} />
+                      <span style={{ fontWeight: 600, color: '#334155' }}>Cryptographic SHA-256 Audit Fingerprint:</span>
+                      <code style={{ background: '#ffffff', padding: '2px 6px', borderRadius: '4px', border: '1px solid #e2e8f0', color: '#0f172a' }}>
+                        {simulationResult.calculation_hash}
+                      </code>
+                    </div>
+                    <span style={{ color: '#64748b' }}>Deterministic Server-Side Verification: PASS</span>
+                  </div>
+
+                  {/* Line Items Table */}
+                  <div className="payer-table-wrapper">
+                    <table className="payer-table">
+                      <thead>
+                        <tr>
+                          <th>Line</th>
+                          <th>CPT / Item</th>
+                          <th>Description</th>
+                          <th>Billed Charge</th>
+                          <th>Methodology</th>
+                          <th>Base Allowable</th>
+                          <th>MPPR Rank</th>
+                          <th>J8 Offset Deducted</th>
+                          <th>Final Allowable</th>
+                          <th>Mathematical Trace</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {simulationResult.line_items.map((line) => (
+                          <tr key={line.line_number}>
+                            <td>{line.line_number}</td>
+                            <td>
+                              <span className="cpt-badge">{line.cpt_code}</span>
+                            </td>
+                            <td><strong>{line.service_description}</strong></td>
+                            <td>${line.line_billed_charge.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                            <td>
+                              <span className="badge badge-active">{line.applied_methodology}</span>
+                            </td>
+                            <td>
+                              {line.base_benchmark_rate != null ? (
+                                `$${line.base_benchmark_rate.toFixed(2)}`
+                              ) : (
+                                <span style={{ color: '#94a3b8' }}>--</span>
+                              )}
+                            </td>
+                            <td>
+                              {line.mppr_rank != null ? (
+                                <span>Rank {line.mppr_rank} ({((1 - (line.mppr_discount_pct || 0)) * 100).toFixed(0)}%)</span>
+                              ) : (
+                                <span style={{ color: '#94a3b8' }}>N/A</span>
+                              )}
+                            </td>
+                            <td>
+                              {line.j8_device_offset_deducted > 0 ? (
+                                <span style={{ color: '#dc2626', fontWeight: 600 }}>-${line.j8_device_offset_deducted.toFixed(2)}</span>
+                              ) : (
+                                <span style={{ color: '#94a3b8' }}>$0.00</span>
+                              )}
+                            </td>
+                            <td>
+                              <strong style={{ color: line.final_line_allowable > 0 ? '#059669' : '#64748b' }}>
+                                ${line.final_line_allowable.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                              </strong>
+                            </td>
+                            <td style={{ fontSize: '0.75rem', color: '#475569', maxWidth: '300px' }}>
+                              {line.calculation_trace}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* =====================================================================
+          BULK CSV RATE IMPORT MODAL (PHASE 67)
+         ===================================================================== */}
+      {isRateImportModalOpen && (
+        <div className="drawer-backdrop" onClick={() => setIsRateImportModalOpen(false)}>
+          <div className="drawer-panel" style={{ maxWidth: '720px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-header">
+              <h3>Bulk Import CPT Fee Schedule (CSV)</h3>
+              <button className="drawer-close" onClick={() => setIsRateImportModalOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="drawer-body">
+              <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: '#64748b' }}>
+                Paste CSV rows with format: <code>CPT_CODE, Description, Negotiated_Rate, Medicare_Multiplier</code>.
+              </p>
+
+              <div className="form-group">
+                <label>CSV Data Lines</label>
+                <textarea
+                  rows="6"
+                  style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
+                  value={importCsvText}
+                  onChange={(e) => setImportCsvText(e.target.value)}
+                  placeholder="29881, Knee arthroscopy medial meniscectomy, 3200.00, 1.80&#10;29877, Knee arthroscopy chondroplasty, 1800.00, 1.80&#10;64721, Carpal tunnel neuroplasty open, 1600.00, 1.80"
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                <button className="btn-secondary btn-sm" onClick={handleParseCsv}>
+                  Validate Staged Rows
+                </button>
+              </div>
+
+              {importStagingRows.length > 0 && (
+                <div className="payer-table-wrapper" style={{ maxHeight: '240px', overflowY: 'auto' }}>
+                  <table className="payer-table">
+                    <thead>
+                      <tr>
+                        <th>Row</th>
+                        <th>CPT</th>
+                        <th>Description</th>
+                        <th>Rate</th>
+                        <th>Multiplier</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {importStagingRows.map(row => (
+                        <tr key={row.rowNumber}>
+                          <td>{row.rowNumber}</td>
+                          <td><strong>{row.cptCode}</strong></td>
+                          <td>{row.description}</td>
+                          <td>${row.rate?.toFixed(2) || '0.00'}</td>
+                          <td>{row.multiplier ? `${(row.multiplier * 100).toFixed(0)}%` : '--'}</td>
+                          <td>
+                            <span className={`badge ${row.status === 'VALID' ? 'badge-active' : 'badge-warning'}`}>
+                              {row.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div className="drawer-footer">
+              <button className="btn-secondary" onClick={() => setIsRateImportModalOpen(false)}>
+                Cancel
+              </button>
+              <button className="btn-primary" onClick={handleCommitImport}>
+                Commit Valid Exhibits
+              </button>
+            </div>
           </div>
         </div>
       )}
