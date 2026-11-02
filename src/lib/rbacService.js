@@ -211,7 +211,19 @@ export const PERMISSIONS_CATALOG = [
   // Audit
   { code: 'audit.view_clinical', category: 'audit', name: 'View Clinical Audit Trail', risk_level: 'standard' },
   { code: 'audit.view_financial', category: 'audit', name: 'View Financial Audit Trail', risk_level: 'sensitive' },
-  { code: 'audit.view_security', category: 'audit', name: 'View Security Audit Logs', risk_level: 'critical' }
+  { code: 'audit.view_security', category: 'audit', name: 'View Security Audit Logs', risk_level: 'critical' },
+
+  // Commercial Reimbursement Engine (Phase 68)
+  { code: 'reimbursement.calculation.view', category: 'billing', name: 'View Contract Calculation Ledger', risk_level: 'standard' },
+  { code: 'reimbursement.explanation.view', category: 'billing', name: 'View Calculation Step Trace & Audit Logic', risk_level: 'standard' },
+  { code: 'reimbursement.calculation.execute', category: 'billing', name: 'Execute Authoritative Reimbursement Engine', risk_level: 'standard' },
+  { code: 'reimbursement.calculation.recalculate', category: 'billing', name: 'Execute Calculation Recalculation Sequence', risk_level: 'sensitive' },
+  { code: 'reimbursement.calculation.approve', category: 'finance', name: 'Approve & Release Expected Reimbursement', risk_level: 'critical' },
+  { code: 'reimbursement.snapshot.view', category: 'audit', name: 'View Cryptographic Calculation Ledger', risk_level: 'standard' },
+  { code: 'reimbursement.margin.view', category: 'finance', name: 'View Case Direct Margin Breakdown', risk_level: 'sensitive' },
+  { code: 'reimbursement.margin.aggregate.view', category: 'finance', name: 'View Facility & Surgeon Aggregate Margins', risk_level: 'sensitive' },
+  { code: 'reimbursement.report.export', category: 'reports', name: 'Export Financial Reimbursement Datasets', risk_level: 'sensitive' },
+  { code: 'reimbursement.config.manage', category: 'finance', name: 'Configure Facility Reimbursement Parameters', risk_level: 'critical' }
 ];
 
 // Index catalog by permission code for backwards-compatible dictionary lookup
@@ -283,7 +295,10 @@ export const rbacService = {
         'ai.run_insights', 'roles.view', 'tenancy.toggle_mppr',
         'payer.view', 'payer.create', 'payer.edit', 'payer.activate', 'payer.deactivate', 'payer.archive', 'payer.manage_plans', 'payer.plan.manage', 'payer.configure_facility', 'payer.facility.enable', 'payer.manage_contracts', 'payer.contract.manage', 'payer.manage_coverages', 'payer.patient.coverage.view', 'payer.patient.coverage.edit', 'payer.import', 'payer.export', 'payer.edi.route',
         'payer.contract.view', 'payer.contract.terms.view', 'payer.contract.document.view', 'payer.contract.history.view', 'payer.contract.create', 'payer.contract.edit', 'payer.contract.scope.manage', 'payer.contract.terms.manage', 'payer.contract.document.upload', 'payer.contract.submit', 'payer.contract.approve', 'payer.contract.reject', 'payer.contract.activate', 'payer.contract.suspend', 'payer.contract.terminate', 'payer.contract.export',
-        'audit.view_clinical', 'audit.view_financial'
+        'audit.view_clinical', 'audit.view_financial',
+        'reimbursement.calculation.view', 'reimbursement.explanation.view', 'reimbursement.calculation.execute',
+        'reimbursement.calculation.recalculate', 'reimbursement.calculation.approve', 'reimbursement.snapshot.view',
+        'reimbursement.margin.view', 'reimbursement.margin.aggregate.view', 'reimbursement.report.export', 'reimbursement.config.manage'
       ];
     }
     if (roleSlug === 'clinical_manager') {
@@ -328,7 +343,9 @@ export const rbacService = {
         'geographic.view_rates', 'geographic.view_facility_settings', 'geographic.edit_facility_assignment', 'geographic.audit_export',
         'device.view_offsets', 'device.view_categories', 'device.view_crosswalk', 'mppr.view_rules', 'mppr.view_calculations', 'device.view_margin_ledger', 'device.export_data', 'mppr.view_rules', 'mppr.view_calculations', 'mppr.audit_export',
         'payer.view', 'payer.manage_coverages', 'payer.manage_identifiers', 'payer.edi.route', 'payer.patient.coverage.edit',
-        'payer.contract.view', 'payer.contract.terms.view', 'payer.contract.history.view', 'payer.contract.submit', 'payer.contract.export'
+        'payer.contract.view', 'payer.contract.terms.view', 'payer.contract.history.view', 'payer.contract.submit', 'payer.contract.export',
+        'reimbursement.calculation.view', 'reimbursement.explanation.view', 'reimbursement.calculation.execute',
+        'reimbursement.calculation.recalculate', 'reimbursement.snapshot.view', 'reimbursement.report.export'
       ];
     }
     if (roleSlug === 'coder') {
@@ -343,7 +360,8 @@ export const rbacService = {
         'reports.export_volume', 'ai.run_insights',
         'geographic.view_rates', 'geographic.view_facility_settings',
         'device.view_offsets', 'device.view_categories', 'device.view_crosswalk',
-        'payer.view', 'payer.contract.view'
+        'payer.view', 'payer.contract.view',
+        'reimbursement.calculation.view', 'reimbursement.explanation.view'
       ];
     }
     if (roleSlug === 'surgeon') {
@@ -356,7 +374,8 @@ export const rbacService = {
         'finance.view_margins',
         'implants.view_catalog', 'implants.manage_preference_cards', 'implants.view_variance',
         'reports.export_volume',
-        'ai.run_insights', 'ai.run_simulation', 'ai.auto_schedule'
+        'ai.run_insights', 'ai.run_simulation', 'ai.auto_schedule',
+        'reimbursement.calculation.view', 'reimbursement.margin.view'
       ];
     }
     // Default viewer

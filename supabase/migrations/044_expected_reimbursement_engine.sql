@@ -184,10 +184,15 @@ CREATE INDEX IF NOT EXISTS idx_reimb_adj_line ON public.reimbursement_calculatio
 -- =====================================================================
 
 ALTER TABLE public.reimbursement_calculations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.reimbursement_calculation_lines ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.reimbursement_calculation_adjustments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reimbursement_calculations FORCE ROW LEVEL SECURITY;
 
--- Calculations Select Policy
+ALTER TABLE public.reimbursement_calculation_lines ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reimbursement_calculation_lines FORCE ROW LEVEL SECURITY;
+
+ALTER TABLE public.reimbursement_calculation_adjustments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reimbursement_calculation_adjustments FORCE ROW LEVEL SECURITY;
+
+-- 1. Calculations Select Policy (Multi-Tenant & Role Scoped)
 DROP POLICY IF EXISTS reimb_calc_select_policy ON public.reimbursement_calculations;
 CREATE POLICY reimb_calc_select_policy
 ON public.reimbursement_calculations
@@ -195,19 +200,23 @@ FOR SELECT
 TO authenticated
 USING (
     public.is_facility_accessible(facility_id)
+    AND (
+        -- Administrative, billing, coding, and auditing roles have facility-wide read
+        public.user_has_facility_role(facility_id, ARRAY['super_admin', 'org_admin', 'facility_admin', 'biller', 'coder', 'auditor'])
+        OR
+        -- Surgeons are strictly scoped to their own surgical encounters
+        (
+            public.user_has_facility_role(facility_id, ARRAY['surgeon'])
+            AND EXISTS (
+                SELECT 1 FROM public.surgeries s
+                WHERE s.id = reimbursement_calculations.surgery_id
+                  AND s.surgeon_id = auth.uid()
+            )
+        )
+    )
 );
 
--- Calculations Insert Policy
-DROP POLICY IF EXISTS reimb_calc_insert_policy ON public.reimbursement_calculations;
-CREATE POLICY reimb_calc_insert_policy
-ON public.reimbursement_calculations
-FOR INSERT
-TO authenticated
-WITH CHECK (
-    public.is_facility_accessible(facility_id)
-);
-
--- Calculation Lines Select Policy
+-- 2. Calculation Lines Select Policy (Inherits Tenant & Role Scoping)
 DROP POLICY IF EXISTS reimb_calc_lines_select_policy ON public.reimbursement_calculation_lines;
 CREATE POLICY reimb_calc_lines_select_policy
 ON public.reimbursement_calculation_lines
@@ -218,24 +227,21 @@ USING (
         SELECT 1 FROM public.reimbursement_calculations calc
         WHERE calc.id = reimbursement_calculation_lines.calculation_id
           AND public.is_facility_accessible(calc.facility_id)
+          AND (
+              public.user_has_facility_role(calc.facility_id, ARRAY['super_admin', 'org_admin', 'facility_admin', 'biller', 'coder', 'auditor'])
+              OR (
+                  public.user_has_facility_role(calc.facility_id, ARRAY['surgeon'])
+                  AND EXISTS (
+                      SELECT 1 FROM public.surgeries s
+                      WHERE s.id = calc.surgery_id
+                        AND s.surgeon_id = auth.uid()
+                  )
+              )
+          )
     )
 );
 
--- Calculation Lines Insert Policy
-DROP POLICY IF EXISTS reimb_calc_lines_insert_policy ON public.reimbursement_calculation_lines;
-CREATE POLICY reimb_calc_lines_insert_policy
-ON public.reimbursement_calculation_lines
-FOR INSERT
-TO authenticated
-WITH CHECK (
-    EXISTS (
-        SELECT 1 FROM public.reimbursement_calculations calc
-        WHERE calc.id = reimbursement_calculation_lines.calculation_id
-          AND public.is_facility_accessible(calc.facility_id)
-    )
-);
-
--- Calculation Adjustments Select Policy
+-- 3. Calculation Adjustments Select Policy (Inherits Parent Scope)
 DROP POLICY IF EXISTS reimb_calc_adj_select_policy ON public.reimbursement_calculation_adjustments;
 CREATE POLICY reimb_calc_adj_select_policy
 ON public.reimbursement_calculation_adjustments
@@ -247,32 +253,38 @@ USING (
         JOIN public.reimbursement_calculations calc ON calc.id = l.calculation_id
         WHERE l.id = reimbursement_calculation_adjustments.calculation_line_id
           AND public.is_facility_accessible(calc.facility_id)
+          AND (
+              public.user_has_facility_role(calc.facility_id, ARRAY['super_admin', 'org_admin', 'facility_admin', 'biller', 'coder', 'auditor'])
+              OR (
+                  public.user_has_facility_role(calc.facility_id, ARRAY['surgeon'])
+                  AND EXISTS (
+                      SELECT 1 FROM public.surgeries s
+                      WHERE s.id = calc.surgery_id
+                        AND s.surgeon_id = auth.uid()
+                  )
+              )
+          )
     )
 );
 
--- Calculation Adjustments Insert Policy
+-- Drop any legacy client INSERT policies
+DROP POLICY IF EXISTS reimb_calc_insert_policy ON public.reimbursement_calculations;
+DROP POLICY IF EXISTS reimb_calc_lines_insert_policy ON public.reimbursement_calculation_lines;
 DROP POLICY IF EXISTS reimb_calc_adj_insert_policy ON public.reimbursement_calculation_adjustments;
-CREATE POLICY reimb_calc_adj_insert_policy
-ON public.reimbursement_calculation_adjustments
-FOR INSERT
-TO authenticated
-WITH CHECK (
-    EXISTS (
-        SELECT 1 FROM public.reimbursement_calculation_lines l
-        JOIN public.reimbursement_calculations calc ON calc.id = l.calculation_id
-        WHERE l.id = reimbursement_calculation_adjustments.calculation_line_id
-          AND public.is_facility_accessible(calc.facility_id)
-    )
-);
 
--- Defense-in-depth: Revoke anon, restrict mutations
-REVOKE ALL ON public.reimbursement_calculations FROM anon;
-REVOKE ALL ON public.reimbursement_calculation_lines FROM anon;
-REVOKE ALL ON public.reimbursement_calculation_adjustments FROM anon;
+-- Zero Client-Side Write Access: Revoke all mutation privileges from public, anon, and authenticated
+REVOKE ALL ON public.reimbursement_calculations FROM anon, public;
+REVOKE ALL ON public.reimbursement_calculation_lines FROM anon, public;
+REVOKE ALL ON public.reimbursement_calculation_adjustments FROM anon, public;
 
-GRANT SELECT, INSERT ON public.reimbursement_calculations TO authenticated;
-GRANT SELECT, INSERT ON public.reimbursement_calculation_lines TO authenticated;
-GRANT SELECT, INSERT ON public.reimbursement_calculation_adjustments TO authenticated;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON public.reimbursement_calculations FROM authenticated;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON public.reimbursement_calculation_lines FROM authenticated;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON public.reimbursement_calculation_adjustments FROM authenticated;
+
+-- Grant strictly read-only access to authenticated clients (mutations route via SECURITY DEFINER RPCs)
+GRANT SELECT ON public.reimbursement_calculations TO authenticated;
+GRANT SELECT ON public.reimbursement_calculation_lines TO authenticated;
+GRANT SELECT ON public.reimbursement_calculation_adjustments TO authenticated;
 
 -- =====================================================================
 -- 6. AUTHORITATIVE STORED PROCEDURES
@@ -365,9 +377,20 @@ BEGIN
     v_dos := v_surgery.resolved_dos;
     v_payer_id := COALESCE(p_payer_id, v_surgery.primary_payer_id);
 
-    -- Enforce Tenancy
-    IF v_facility_id IS NOT NULL AND NOT public.is_facility_accessible(v_facility_id) THEN
-        RAISE EXCEPTION 'Access Denied: Facility % is not accessible to current user.', v_facility_id;
+    -- Enforce Authentication, Tenancy & RBAC Execution Privileges
+    IF auth.role() = 'authenticated' THEN
+        IF NOT public.is_facility_accessible(v_facility_id) THEN
+            RAISE EXCEPTION 'Access Denied: User % cannot access facility %', auth.uid(), v_facility_id
+                USING ERRCODE = '42501';
+        END IF;
+
+        IF NOT public.user_has_facility_role(v_facility_id, ARRAY['super_admin', 'org_admin', 'facility_admin', 'biller']) THEN
+            RAISE EXCEPTION 'RBAC Authorization Violation: Role does not have permission reimbursement.calculation.execute'
+                USING ERRCODE = '42501';
+        END IF;
+    ELSIF v_facility_id IS NOT NULL AND NOT public.is_facility_accessible(v_facility_id) THEN
+        RAISE EXCEPTION 'Access Denied: Facility % is not accessible to current context.', v_facility_id
+            USING ERRCODE = '42501';
     END IF;
 
     -- 2. Resolve Contract Version
@@ -563,6 +586,11 @@ BEGIN
         LIMIT 1;
 
         IF v_last_calc_id IS NOT NULL THEN
+            IF p_recalculation_reason IS NULL OR length(trim(p_recalculation_reason)) < 10 THEN
+                RAISE EXCEPTION 'Recalculation Governance Violation: Mandatory audit reason (>= 10 chars) required to supersede calculation %', v_last_calc_id
+                    USING ERRCODE = 'P0005';
+            END IF;
+
             UPDATE public.reimbursement_calculations
             SET is_latest_calculation = FALSE,
                 superseded_by_calculation_id = v_calc_id
@@ -816,13 +844,29 @@ END $$;
 -- =====================================================================
 
 CREATE OR REPLACE FUNCTION public.trg_block_reimbursement_mutation()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $
 BEGIN
+    -- Allow updating ONLY the supersession pointers (is_latest_calculation, superseded_by_calculation_id)
+    -- All financial columns, calculations, and line items remain permanently immutable.
+    IF TG_OP = 'UPDATE' THEN
+        IF (OLD.is_latest_calculation IS DISTINCT FROM NEW.is_latest_calculation OR
+            OLD.superseded_by_calculation_id IS DISTINCT FROM NEW.superseded_by_calculation_id)
+           AND OLD.total_contract_allowable = NEW.total_contract_allowable
+           AND OLD.total_gross_billed = NEW.total_gross_billed
+           AND OLD.estimated_patient_responsibility = NEW.estimated_patient_responsibility
+           AND OLD.estimated_payer_reimbursement = NEW.estimated_payer_reimbursement
+           AND OLD.calculation_hash = NEW.calculation_hash
+           AND OLD.calculation_sequence = NEW.calculation_sequence THEN
+            RETURN NEW;
+        END IF;
+    END IF;
+
     RAISE EXCEPTION 'Financial Ledger Violation: Calculation snapshot records (ID %) are permanently immutable and cannot be modified or deleted. To recalculate, execute a new calculation sequence.',
-        OLD.id;
+        OLD.id
+        USING ERRCODE = 'P0001';
     RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trg_reimb_calc_immutable ON public.reimbursement_calculations;
 CREATE TRIGGER trg_reimb_calc_immutable
