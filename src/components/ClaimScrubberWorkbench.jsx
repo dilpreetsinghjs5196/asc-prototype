@@ -11,11 +11,12 @@ import ReimbursementInspectorModal from './ReimbursementInspectorModal';
 const SAMPLE_CLAIMS = [
   {
     id: 'clm-demo-001',
+    surgery_id: 1,
     claim_number: 'CLM-2026-0042',
     patient_control_number: 'CLM-2026-0042',
     patient_name: 'GARON, SUZANNE',
     patients: { name: 'GARON, SUZANNE', mrn: '2034', dob: '1960-11-15', gender: 'Female' },
-    surgeries: { date: '2026-02-23', status: 'Completed', procedure_name: 'Knee Arthroscopy Meniscectomy' },
+    surgeries: { id: 1, date: '2026-02-23', status: 'Completed', procedure_name: 'Knee Arthroscopy Meniscectomy' },
     payers: { name: 'UnitedHealthcare', payer_code: 'UHC01' },
     primary_procedure: '29881 - Knee Arthroscopy Meniscectomy',
     total_charge: 7300,
@@ -43,11 +44,12 @@ const SAMPLE_CLAIMS = [
   },
   {
     id: 'clm-demo-002',
+    surgery_id: 2,
     claim_number: 'CLM-2026-0088',
     patient_control_number: 'CLM-2026-0088',
     patient_name: 'SMITH, JOHNATHAN',
     patients: { name: 'SMITH, JOHNATHAN', mrn: '1052', dob: '1975-04-22', gender: 'Male' },
-    surgeries: { date: '2026-02-23', status: 'Completed', procedure_name: 'Cataract Extraction' },
+    surgeries: { id: 2, date: '2026-02-23', status: 'Completed', procedure_name: 'Cataract Extraction' },
     payers: { name: 'Medicare Part B', payer_code: '00400' },
     primary_procedure: '66984 - Cataract Removal with IOL',
     total_charge: 4550,
@@ -68,11 +70,12 @@ const SAMPLE_CLAIMS = [
   },
   {
     id: 'clm-demo-003',
+    surgery_id: 3,
     claim_number: 'CLM-2026-0105',
     patient_control_number: 'CLM-2026-0105',
     patient_name: 'RODRIGUEZ, MARIA',
     patients: { name: 'RODRIGUEZ, MARIA', mrn: '4491', dob: '1988-09-02', gender: 'Female' },
-    surgeries: { date: '2026-02-23', status: 'Completed', procedure_name: 'Colonoscopy Biopsy' },
+    surgeries: { id: 3, date: '2026-02-23', status: 'Completed', procedure_name: 'Colonoscopy Biopsy' },
     payers: { name: 'Aetna Health', payer_code: 'AETNA' },
     primary_procedure: '45380 - Colonoscopy Biopsy',
     total_charge: 3250,
@@ -96,11 +99,12 @@ const SAMPLE_CLAIMS = [
   },
   {
     id: 'clm-demo-004',
+    surgery_id: 4,
     claim_number: 'CLM-2026-0112',
     patient_control_number: 'CLM-2026-0112',
     patient_name: 'DAVIS, ROBERT',
     patients: { name: 'DAVIS, ROBERT', mrn: '3029', dob: '1952-12-30', gender: 'Male' },
-    surgeries: { date: '2026-02-23', status: 'Completed', procedure_name: 'Total Knee Arthroplasty' },
+    surgeries: { id: 4, date: '2026-02-23', status: 'Completed', procedure_name: 'Total Knee Arthroplasty' },
     payers: { name: 'Blue Cross Blue Shield', payer_code: 'BCBS' },
     primary_procedure: '27447 - Total Knee Joint Repair',
     total_charge: 14200,
@@ -835,8 +839,9 @@ export default function ClaimScrubberWorkbench({ activeFacility, onSelectSurgery
       {/* Reimbursement Inspector Modal */}
       {reimbModalOpen && selectedClaim && (
         <ReimbursementInspectorModal
+          isOpen={reimbModalOpen}
           claimId={selectedClaim.id}
-          surgeryId={selectedClaim.surgery_id}
+          surgeryId={selectedClaim.surgery_id || 1}
           claimData={selectedClaim}
           onClose={() => setReimbModalOpen(false)}
         />

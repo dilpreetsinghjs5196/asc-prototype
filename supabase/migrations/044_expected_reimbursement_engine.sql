@@ -844,7 +844,7 @@ END $$;
 -- =====================================================================
 
 CREATE OR REPLACE FUNCTION public.trg_block_reimbursement_mutation()
-RETURNS TRIGGER AS $
+RETURNS TRIGGER AS $$
 BEGIN
     -- Allow updating ONLY the supersession pointers (is_latest_calculation, superseded_by_calculation_id)
     -- All financial columns, calculations, and line items remain permanently immutable.
@@ -866,7 +866,7 @@ BEGIN
         USING ERRCODE = 'P0001';
     RETURN NULL;
 END;
-$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trg_reimb_calc_immutable ON public.reimbursement_calculations;
 CREATE TRIGGER trg_reimb_calc_immutable

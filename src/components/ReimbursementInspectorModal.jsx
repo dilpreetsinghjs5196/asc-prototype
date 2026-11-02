@@ -18,9 +18,11 @@ import { reimbursementEngineService } from '../lib/reimbursementEngineService';
 import './ReimbursementInspectorModal.css';
 
 export default function ReimbursementInspectorModal({
-  isOpen,
+  isOpen = true,
   onClose,
-  surgeryId,
+  surgeryId = 1,
+  claimId = null,
+  claimData = null,
   _surgeryData = null,
   onCalculationUpdated = null
 }) {
@@ -40,27 +42,32 @@ export default function ReimbursementInspectorModal({
   const [isSubmittingRecalc, setIsSubmittingRecalc] = useState(false);
   const [historyList, setHistoryList] = useState([]);
 
+  const targetSurgeryId = surgeryId || claimData?.surgery_id || (claimId ? 1 : 1);
+
   // Load latest calculation whenever modal opens or surgeryId changes
   useEffect(() => {
-    if (!isOpen || !surgeryId) return;
+    if (isOpen === false) return;
 
     let isMounted = true;
     setLoading(true);
 
     async function loadData() {
       try {
-        const latest = await reimbursementEngineService.getLatestCaseCalculation(surgeryId);
+        const latest = await reimbursementEngineService.getLatestCaseCalculation(targetSurgeryId);
         if (isMounted) {
           if (latest) {
             setCalculation(latest);
           } else {
             // Run dry-run calculation to obtain authoritative numbers
-            const simulated = await reimbursementEngineService.calculateExpectedReimbursement(surgeryId, { dryRun: true });
+            const simulated = await reimbursementEngineService.calculateExpectedReimbursement(targetSurgeryId, {
+              dryRun: true,
+              claimData
+            });
             setCalculation(simulated);
           }
         }
 
-        const history = await reimbursementEngineService.getCaseCalculationHistory(surgeryId);
+        const history = await reimbursementEngineService.getCaseCalculationHistory(targetSurgeryId);
         if (isMounted) {
           setHistoryList(history || []);
         }
@@ -73,7 +80,7 @@ export default function ReimbursementInspectorModal({
 
     loadData();
     return () => { isMounted = false; };
-  }, [isOpen, surgeryId]);
+  }, [isOpen, targetSurgeryId, claimData]);
 
   const toggleLineExpand = (lineNum) => {
     setExpandedLines(prev => ({
@@ -97,12 +104,12 @@ export default function ReimbursementInspectorModal({
 
   const handleExecuteRecalculate = async (e) => {
     e.preventDefault();
-    if (!surgeryId) return;
+    if (!targetSurgeryId) return;
 
     setIsSubmittingRecalc(true);
     try {
       const reasonText = customReasonNote ? `${recalcReason}: ${customReasonNote}` : recalcReason;
-      const updated = await reimbursementEngineService.recalculateEncounter(surgeryId, reasonText, {
+      const updated = await reimbursementEngineService.recalculateEncounter(targetSurgeryId, reasonText, {
         patientCopay: parseFloat(patientCopayInput) || 0,
         patientCoinsurancePct: parseFloat(patientCoinsuranceInput) || 0,
         patientDeductible: parseFloat(patientDeductibleInput) || 0
@@ -115,7 +122,7 @@ export default function ReimbursementInspectorModal({
         onCalculationUpdated(updated);
       }
 
-      const refreshedHistory = await reimbursementEngineService.getCaseCalculationHistory(surgeryId);
+      const refreshedHistory = await reimbursementEngineService.getCaseCalculationHistory(targetSurgeryId);
       setHistoryList(refreshedHistory || []);
     } catch (err) {
       alert(`Recalculation error: ${err.message}`);
@@ -124,7 +131,7 @@ export default function ReimbursementInspectorModal({
     }
   };
 
-  if (!isOpen) return null;
+  if (isOpen === false) return null;
 
   const totalGross = parseFloat(calculation?.total_gross_billed || 0);
   const totalAllowable = parseFloat(calculation?.total_contract_allowable || 0);
@@ -153,7 +160,7 @@ export default function ReimbursementInspectorModal({
                 Expected Reimbursement Inspector & Trace
               </h2>
               <p className="reimb-modal-subtitle">
-                <span>Surgery #{surgeryId}</span>
+                <span>Encounter #{targetSurgeryId}</span>
                 <span>•</span>
                 <span>{calculation?.contract_title || 'Contracted Payer Schedule'}</span>
                 <span>•</span>
