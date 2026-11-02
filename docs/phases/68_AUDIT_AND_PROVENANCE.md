@@ -3,8 +3,9 @@
 
 > **Phase:** 68 — Expected Reimbursement Engine  
 > **Author:** Principal Security Architect, Compliance and Audit Officer  
-> **Status:** AUDIT & PROVENANCE SPECIFICATION  
+> **Status:** AUDIT & PROVENANCE SPECIFICATION — READ-ONLY VALIDATION  
 > **Target Version:** ASCANALYST v2026.1  
+> **Comprehensive Audit Suite:** See [`68_AUDIT_AND_PROVENANCE_SPECIFICATION.md`](file:///e:/medicalAI/asc-prototype/docs/phases/68_AUDIT_AND_PROVENANCE_SPECIFICATION.md) for master review.  
 
 ---
 
@@ -24,78 +25,39 @@ A SHA-256 hash alone is insufficient without database-level write restrictions, 
 
 ## 2. CANONICAL FINGERPRINTING & HASH GENERATION
 
-### 2.1 Canonical Payload Serialization
-Before committing to `public.reimbursement_calculations`, the PostgreSQL engine constructs a canonical JSON string comprising strictly ordered, normalized fields:
+### 2.1 RFC 8785 Canonical JSON Serialization
+Rather than primitive string concatenation (`CONCAT_WS('|', ...)`), which is vulnerable to delimiter collision and NULL-skipping ambiguity, the engine serializes an RFC 8785 Canonical JSON payload covering header, line items, and adjustments:
 
 ```sql
-v_canonical_string := CONCAT_WS('|',
-    v_facility_id::text,
-    v_surgery_id::text,
-    v_payer_id::text,
-    v_contract_version_id::text,
-    v_dos::text,
-    v_total_gross_billed::text,
-    v_total_allowable::text,
-    v_patient_responsibility::text,
-    v_payer_reimbursement::text,
-    v_mppr_rule_set_code,
-    (SELECT string_agg(cpt_code || ':' || units::text || ':' || final_line_allowable::text, ',' ORDER BY line_number) 
-     FROM v_staged_lines)
+-- Full sub-tree serialization (Header + Lines + Adjustments)
+v_canonical_json := jsonb_build_object(
+    'header', jsonb_build_object(
+        'facility_id', v_facility_id,
+        'surgery_id', p_surgery_id,
+        'payer_id', v_payer_id,
+        'contract_version_id', v_contract_version_id,
+        'date_of_service', v_dos,
+        'total_gross_billed', to_char(v_total_gross, 'FM999999990.00'),
+        'total_contract_allowable', to_char(v_total_allowable, 'FM999999990.00'),
+        'estimated_patient_responsibility', to_char(v_est_patient_resp, 'FM999999990.00'),
+        'estimated_payer_reimbursement', to_char(v_est_payer_reimb, 'FM999999990.00'),
+        'mppr_rule_set_code', v_mppr_code,
+        'stop_loss_triggered', v_stop_loss_triggered
+    ),
+    'lines', (
+        SELECT jsonb_agg(
+            jsonb_build_object(
+                'line_number', line_number,
+                'cpt_code', cpt_code,
+                'modifiers', modifiers,
+                'units', to_char(units, 'FM9990.00'),
+                'line_allowable', to_char(line_contract_allowable, 'FM999999990.00')
+            ) ORDER BY line_number ASC, cpt_code ASC
+        ) FROM public.reimbursement_calculation_lines WHERE calculation_id = v_calc_id
+    )
 );
 
-v_calculation_hash := encode(digest(v_canonical_string, 'sha256'), 'hex');
-```
-
-### 2.2 Server-Side Integrity Verification RPC
-```sql
-CREATE OR REPLACE FUNCTION public.fn_verify_reimbursement_calculation_integrity(
-    p_calculation_id UUID
-)
-RETURNS TABLE (
-    is_valid BOOLEAN,
-    recorded_hash VARCHAR(64),
-    computed_hash VARCHAR(64),
-    verification_message TEXT
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public, pg_temp
-AS $$
-DECLARE
-    v_calc RECORD;
-    v_recomputed_hash VARCHAR(64);
-BEGIN
-    SELECT * INTO v_calc FROM public.reimbursement_calculations WHERE id = p_calculation_id;
-    IF NOT FOUND THEN
-        RETURN QUERY SELECT FALSE, NULL::VARCHAR(64), NULL::VARCHAR(64), 'Calculation record not found.'::TEXT;
-        RETURN;
-    END IF;
-
-    -- Re-generate canonical hash from current database row contents
-    -- If any row column was tampered with, hash will not match
-    v_recomputed_hash := encode(digest(
-        CONCAT_WS('|',
-            v_calc.facility_id::text,
-            v_calc.surgery_id::text,
-            v_calc.payer_id::text,
-            v_calc.contract_version_id::text,
-            v_calc.date_of_service::text,
-            v_calc.total_gross_billed::text,
-            v_calc.total_contract_allowable::text,
-            v_calc.estimated_patient_responsibility::text,
-            v_calc.estimated_payer_reimbursement::text,
-            v_calc.mppr_rule_set_code,
-            (SELECT string_agg(cpt_code || ':' || units::text || ':' || line_contract_allowable::text, ',' ORDER BY line_number)
-             FROM public.reimbursement_calculation_lines WHERE calculation_id = p_calculation_id)
-        ), 'sha256'), 'hex');
-
-    IF v_recomputed_hash = v_calc.calculation_hash THEN
-        RETURN QUERY SELECT TRUE, v_calc.calculation_hash, v_recomputed_hash, 'Ledger record verified: Hash matches canonical payload.'::TEXT;
-    ELSE
-        RETURN QUERY SELECT FALSE, v_calc.calculation_hash, v_recomputed_hash, 'TAMPER ALERT: Recorded hash does not match computed payload.'::TEXT;
-    END IF;
-END;
-$$;
+v_calculation_hash := encode(digest(convert_to(v_canonical_json::text, 'UTF8'), 'sha256'), 'hex');
 ```
 
 ---
@@ -104,7 +66,7 @@ $$;
 
 When clinical coding, implant invoices, or contracts change post-operatively:
 1. **Never Overwrite:** The initial calculation (Sequence #1) is preserved unaltered.
-2. **Succession Pointer:** Sequence #1 has its `is_latest_calculation` flag set to `FALSE` and `superseded_by_calculation_id` set to the UUID of Sequence #2.
+2. **Decoupled Pointer Model:** The historical row is 100% append-only. Active sequence tracking is managed via `reimbursement_calculation_pointers` (or derived state queries) to avoid mutating historical rows.
 3. **Mandatory Audit Reason:** The user must supply a documented business rationale (e.g. `POST_OP_CPT_RECODING`), recorded in `recalculation_reason`.
 4. **Historical Comparison:** Auditors can run diff queries comparing Sequence #1 with Sequence #2 at any future date to verify why accounts receivable estimates shifted.
 
@@ -121,3 +83,13 @@ Every calculation invocation generates an automatic event in `public.audit_logs`
 - **State Diff:** Stored in `audit_logs.payload`, detailing total gross, allowable, patient share, and calculation hash.
 - **Client Metadata:** User agent, client IP, calculation engine version (`v2026.1-ph68`).
 
+---
+
+## 5. TECHNICAL SPECIFICATION COMPANIONS
+- [`68_AUDIT_AND_PROVENANCE_SPECIFICATION.md`](file:///e:/medicalAI/asc-prototype/docs/phases/68_AUDIT_AND_PROVENANCE_SPECIFICATION.md): Master audit and governance specification.
+- [`68_CANONICAL_HASH_DESIGN.md`](file:///e:/medicalAI/asc-prototype/docs/phases/68_CANONICAL_HASH_DESIGN.md): Detailed RFC 8785 serialization model and field-coverage matrix.
+- [`68_LEDGER_IMMUTABILITY_AND_LINEAGE.md`](file:///e:/medicalAI/asc-prototype/docs/phases/68_LEDGER_IMMUTABILITY_AND_LINEAGE.md): Analysis of append-only ledger designs and concurrency safeguards.
+- [`68_AUDIT_LOG_AND_IDENTITY_PROVENANCE.md`](file:///e:/medicalAI/asc-prototype/docs/phases/68_AUDIT_LOG_AND_IDENTITY_PROVENANCE.md): HIPAA audit log integration, atomic transactions, and PHI minimization.
+- [`68_HISTORICAL_REPRODUCIBILITY.md`](file:///e:/medicalAI/asc-prototype/docs/phases/68_HISTORICAL_REPRODUCIBILITY.md): The 10-year audit reproduction architecture and source table version-locking.
+- [`68_AUDIT_SECURITY_AND_QA_MATRIX.md`](file:///e:/medicalAI/asc-prototype/docs/phases/68_AUDIT_SECURITY_AND_QA_MATRIX.md): Comprehensive 25-scenario acceptance and security test matrix.
+- [`68_AUDIT_CROSS_DOCUMENT_CONSISTENCY.md`](file:///e:/medicalAI/asc-prototype/docs/phases/68_AUDIT_CROSS_DOCUMENT_CONSISTENCY.md): Cross-phase consistency analysis across all Phase 66, 67, and 68 artifacts.
