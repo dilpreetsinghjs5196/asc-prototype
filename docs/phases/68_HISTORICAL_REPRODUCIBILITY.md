@@ -84,3 +84,4 @@ To guarantee that any calculation can be reproduced identically 10 years later, 
 1. **Deterministic Floating-Point Prohibition:** Floating-point arithmetic (`FLOAT`, `DOUBLE PRECISION`, or JavaScript IEEE 754 `Number`) is **strictly forbidden** in authoritative financial paths. All financial columns are evaluated in PostgreSQL `NUMERIC(12, 2)` or `NUMERIC(6, 4)`.
 2. **Deterministic Rounding Policy:** Intermediate multiplication (e.g. baseline $\times$ multiplier) uses **Round Half-Up** (`ROUND(val, 2)`).
 3. **Reproducibility Test Harness:** Acceptance criteria require automated unit tests (`tests/expected-reimbursement-engine.test.js`) to assert reproducibility of all 5 clinical case studies to the exact cent (`$0.01`).
+

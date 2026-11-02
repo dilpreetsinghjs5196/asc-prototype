@@ -48,3 +48,4 @@ The matrix below specifies the exact test assertions, execution harnesses, and p
 2. **Dual-Harness Execution:**
    - **Database-Level Controls:** Verified using `pgTAP` suites inside isolated PostgreSQL testing containers.
    - **Service & Contract Controls:** Verified using Node.js test runner (`node --test tests/reimbursement-security-rbac.test.js`).
+

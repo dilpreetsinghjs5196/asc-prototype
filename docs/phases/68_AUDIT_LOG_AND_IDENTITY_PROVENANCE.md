@@ -105,3 +105,4 @@ The `public.audit_logs` table represents the legal record of disclosure and fina
 1. **Direct Mutation Revoked:** `authenticated`, `anon`, and `public` roles have zero `UPDATE`, `DELETE`, or `TRUNCATE` permissions on `public.audit_logs`.
 2. **Access Control (RLS):** Governed by Row-Level Security; only users possessing `reimbursement.audit` or `super_admin` permissions can query audit logs for their active facility.
 3. **Retention Policy:** In compliance with CMS ASC Medicare record-retention statutes, audit records must be retained in an append-only archive for a minimum of **ten (10) years**.
+

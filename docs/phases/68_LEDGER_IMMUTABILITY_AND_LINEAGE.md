@@ -155,3 +155,4 @@ If adjudication encounters missing data (`REQUIRED_DATA_MISSING`), missing fee s
 1. **State Machine Integrity:** The row is assigned status `CALCULATION_FAILED`, `REQUIRED_DATA_MISSING`, or `RATE_NOT_FOUND`.
 2. **Allowable Zeroing Protection:** A failed calculation **must never** overwrite or clear the active calculation pointer of a previously valid `CALCULATED` snapshot.
 3. **Audit Event Generation:** Failed calculations are logged in `public.audit_logs` with the failure code, reason, and missing data attributes for operational alerting.
+

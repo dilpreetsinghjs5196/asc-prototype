@@ -202,3 +202,4 @@ The matrix below audits every database column across calculation entities to est
 | `adjustment_type` | `calculation_adjustments` | **YES** | Exact modifier, MPPR, or offset deduction | — |
 | `adjustment_amount` | `calculation_adjustments` | **YES** | Numeric adjustment dollar value | — |
 | `factor_applied` | `calculation_adjustments` | **YES** | Percentage factor applied | — |
+
