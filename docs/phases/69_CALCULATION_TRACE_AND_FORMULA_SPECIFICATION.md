@@ -108,3 +108,4 @@ CREATE TABLE IF NOT EXISTS public.reimbursement_unapplied_rules (
 4. **Catastrophic Stop-Loss Unmet:**  
    - *Reason Code:* `THRESHOLD_NOT_EXCEEDED`  
    - *Explanation:* *"Total encounter gross billed charges ($28,500.00) did not exceed contract stop-loss trigger ($35,000.00). Standard fee schedule governs."*
+

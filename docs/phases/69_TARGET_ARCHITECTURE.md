@@ -123,3 +123,4 @@ The architecture strictly decouples 10 discrete financial metrics to prevent rev
 
 > 🔴 **CRITICAL ARCHITECTURAL DIRECTIVE:**  
 > Expected reimbursement is an internal estimate and audit metric. It must **never** be treated as guaranteed revenue, and it must **never** overwrite or modify the submitted chargemaster claim line charges.
+

@@ -59,3 +59,4 @@ A critical audit requirement is ensuring that client-side JavaScript never serve
    - *Audit Directive:* Client-side calculation must be explicitly labeled `SIMULATED_MOCK_DATA` and flagged with status `UNVERIFIED_CLIENT_ESTIMATE`. It must **never** be written to the database or presented as an authoritative settlement ledger.
 2. **`ReimbursementInspectorModal.jsx` (Lines 111–125):** Allows users to enter test patient liability overrides (copay, deductible, coinsurance).
    - *Integrity Verification:* When submitted, these inputs are passed as parameters to the server-side RPC `fn_calculate_expected_reimbursement`, which executes authoritative recalculation inside PostgreSQL. This preserves server-side calculation authority.
+

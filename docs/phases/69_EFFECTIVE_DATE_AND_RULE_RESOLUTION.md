@@ -104,3 +104,4 @@ Universal billing assumptions are strictly prohibited. Payment modifiers and red
 | **Multiple Procedure Reduction (MPPR)**| Contract binds to defined `mppr_rule_set_code` (e.g. `COM_STD_CASCADE`). | **Fail Closed (`RULE_CONFLICT`)**. Do not apply default cascade. |
 | **J8 Device Offset Deduction**| Contract specifies `device_offset_policy = 'DEDUCT_OFFSET'` AND implants carved out.| Deduct offset; if implants not carved out, pay base rate intact. |
 | **Catastrophic Stop-Loss**| Encounter gross charges or allowable exceed contract threshold. | Apply contract formula (Excess-only vs Whole-case); do not auto-convert. |
+

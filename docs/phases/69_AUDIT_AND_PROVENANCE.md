@@ -35,3 +35,4 @@ In compliance with CMS Medicare ASC regulations, SOX § 404 financial audits, an
 > - That the calculation is immune to root-level database superuser tampering.
 
 True auditability requires combining cryptographic hashes with **source provenance, effective-date validation, unapplied rule logs, and immutable append-only ledgers**.
+

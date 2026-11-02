@@ -176,3 +176,4 @@ CREATE TRIGGER trg_unapplied_rules_immutable
 > It cannot be scheduled or executed until:
 > 1. Phase 67 (`043_payer_contract_rate_rules.sql`) is approved and deployed.
 > 2. Phase 68 (`044_expected_reimbursement_engine.sql`) completes its cryptographic revisions, receives sign-off, and is deployed.
+

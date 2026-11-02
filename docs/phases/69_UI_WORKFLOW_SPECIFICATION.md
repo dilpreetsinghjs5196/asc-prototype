@@ -104,3 +104,4 @@ Enforces strict Separation of Duties (SoD) for external rate exhibits:
   - Patient Share & Recalculation Warnings: Amber-400 (`#fbbf24`).
   - Payer Reimbursement & Informational: Sky-400 (`#38bdf8`).
   - Fatal Errors & Discrepancies: Rose-400 (`#f87171`).
+
