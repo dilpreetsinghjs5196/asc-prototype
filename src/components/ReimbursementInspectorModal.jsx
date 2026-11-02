@@ -143,8 +143,9 @@ export default function ReimbursementInspectorModal({
 
   const statusClass = 
     calculation?.calculation_status === 'CALCULATED' ? 'status-calculated' :
-    calculation?.calculation_status === 'STOP_LOSS_APPLIED' ? 'status-stoploss' :
-    calculation?.calculation_status === 'PARTIALLY_CALCULATED' ? 'status-partial' : 'status-error';
+    calculation?.calculation_status === 'PARTIALLY_CALCULATED' ? 'status-partial' :
+    calculation?.calculation_status === 'MANUAL_REVIEW_REQUIRED' ? 'status-review' :
+    calculation?.calculation_status === 'STOP_LOSS_APPLIED' ? 'status-stoploss' : 'status-error';
 
   return (
     <div className="reimb-modal-overlay" onClick={onClose}>
@@ -167,6 +168,11 @@ export default function ReimbursementInspectorModal({
                 <span className={`reimb-status-pill ${statusClass}`}>
                   {calculation?.calculation_status || 'PENDING'}
                 </span>
+                {calculation?.stop_loss_triggered && (
+                  <span className="reimb-status-pill status-stoploss" title="Contract Stop-Loss Threshold Triggered">
+                    ⚡ Stop-Loss Active
+                  </span>
+                )}
               </p>
             </div>
           </div>
