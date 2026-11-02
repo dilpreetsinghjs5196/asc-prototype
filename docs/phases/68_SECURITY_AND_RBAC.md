@@ -143,7 +143,11 @@ All three Phase 68 ledger tables are protected by multi-tenant RLS policies usin
               AND EXISTS (
                   SELECT 1 FROM public.surgeries s
                   WHERE s.id = reimbursement_calculations.surgery_id
-                    AND s.surgeon_id = auth.uid()
+                    AND s.surgeon_id IN (
+                        SELECT surg.id FROM public.surgeons surg
+                        WHERE surg.user_id = auth.uid()
+                           OR LOWER(TRIM(surg.email)) = LOWER(TRIM(COALESCE(auth.jwt()->>'email', '')))
+                    )
               )
           )
       )
@@ -178,7 +182,11 @@ All three Phase 68 ledger tables are protected by multi-tenant RLS policies usin
                     AND EXISTS (
                         SELECT 1 FROM public.surgeries s
                         WHERE s.id = rc.surgery_id
-                          AND s.surgeon_id = auth.uid()
+                          AND s.surgeon_id IN (
+                              SELECT surg.id FROM public.surgeons surg
+                              WHERE surg.user_id = auth.uid()
+                                 OR LOWER(TRIM(surg.email)) = LOWER(TRIM(COALESCE(auth.jwt()->>'email', '')))
+                          )
                     )
                 )
             )

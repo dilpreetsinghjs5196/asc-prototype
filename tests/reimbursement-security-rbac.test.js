@@ -94,14 +94,14 @@ describe('Phase 68 Security & RBAC Matrix Verification', () => {
       );
     });
 
-    it('SEC-68-06: Surgeon role is strictly scoped to own encounters via s.surgeon_id = auth.uid()', () => {
+    it('SEC-68-06: Surgeon role is strictly scoped to own encounters via s.surgeon_id matching auth.uid()', () => {
       assert.ok(
         migration044.includes("public.user_has_facility_role(facility_id, ARRAY['surgeon'])"),
         'Surgeon role check must be present'
       );
       assert.ok(
-        migration044.includes('s.surgeon_id = auth.uid()'),
-        'Surgeon access must be bounded by s.surgeon_id = auth.uid()'
+        migration044.includes('surg.user_id = auth.uid()'),
+        'Surgeon access must be bounded by surgeon identity matching auth.uid()'
       );
     });
 
@@ -111,7 +111,7 @@ describe('Phase 68 Security & RBAC Matrix Verification', () => {
         'Child lines policy must check calc.facility_id accessibility'
       );
       assert.ok(
-        migration044.includes('s.id = calc.surgery_id') && migration044.includes('s.surgeon_id = auth.uid()'),
+        migration044.includes('s.id = calc.surgery_id') && migration044.includes('surg.user_id = auth.uid()'),
         'Child lines policy must enforce surgeon encounter binding'
       );
     });
