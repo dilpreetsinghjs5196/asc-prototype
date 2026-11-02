@@ -10,7 +10,9 @@
 
 ## 1. POSTGRESQL STORED PROCEDURE SIGNATURES
 
-All production financial calculations run server-side inside PostgreSQL `SECURITY DEFINER` functions with fixed `search_path = public, pg_temp`.
+All production financial calculations run server-side inside PostgreSQL `SECURITY DEFINER` functions with fixed, hardened `search_path = pg_catalog, public, pg_temp`.
+
+Actor identity is derived strictly from the authenticated session context (`auth.uid()`) and is never accepted as an untrusted client parameter. Any authorized administrative overrides of date of service, facility, or payer require explicit `payer.rate.override` permissions and are permanently recorded in the HIPAA audit ledger.
 
 ### 1.1 RPC 1: `public.fn_calculate_expected_reimbursement`
 Calculates the authoritative expected reimbursement for an encounter, validates contracts, and commits an immutable snapshot.
@@ -27,7 +29,7 @@ CREATE OR REPLACE FUNCTION public.fn_calculate_expected_reimbursement(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp;
+SET search_path = pg_catalog, public, pg_temp;
 ```
 
 #### Return Payload (`JSONB`):
@@ -117,7 +119,7 @@ CREATE OR REPLACE FUNCTION public.fn_get_reimbursement_explanation(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp;
+SET search_path = pg_catalog, public, pg_temp;
 ```
 
 ---

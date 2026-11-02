@@ -211,7 +211,7 @@ flowchart TD
   - *TC-68-11B (Exactly At Threshold):* Gross Billed = `$35,000.00`. Standard fee schedule applies. Allowable = `$16,800.00`.
   - *TC-68-11C (Above Threshold):* Gross Billed = `$58,400.00` ($23,400 excess). Stop-loss applies.
     $$\text{Settlement Allowable} = \$58,400.00 \times 0.6500 = \mathbf{\$37,960.00}$$
-    - Status: `STOP_LOSS_APPLIED`.
+    - Status: `CALCULATED` (with `stop_loss_triggered = TRUE`; flagged for `MANUAL_REVIEW_REQUIRED` if review threshold exceeded).
     - Calculation Lineage: Retains standard schedule calculation (`$24,200.00`) and logs stop-loss variance adjustment (`+$13,760.00`) in explanation trace.
 
 ---

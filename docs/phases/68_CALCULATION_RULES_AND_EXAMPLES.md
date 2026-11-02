@@ -19,19 +19,21 @@
 ### 1.2 The Ten-Step Authoritative Adjudication Cascade
 1. **Context Resolution:** Load encounter DOS, facility, primary payer, patient health plan, line procedures, and implanted devices.
 2. **Contract Version Lock:** Resolve single approved, active contract version valid for facility and DOS.
-3. **Catastrophic Stop-Loss Assessment:** Evaluate total gross billed charges against contract exception stop-loss threshold. If triggered, bypass line-item fee schedule and apply agreed percentage of billed charges across the entire case.
-4. **Case Rate Packaging Identification:** Identify primary CPT. If covered under an active case rate bundle, price the case rate package and mark all bundled secondary procedures as packaged (`$0.00` line allowable).
-5. **Implant Carve-Out Evaluation:** Identify billable implants. Verify invoice cost $\ge$ minimum carve-out threshold (e.g. $\$250.00$). Compute carve-out reimbursement (e.g. Invoice Cost $+ 10.0\%$).
-6. **CPT Pricing Resolution:** For unbundled procedures, resolve rate via:
-   - Line CPT Fee Schedule (negotiated dollar rate), OR
+3. **Catastrophic Stop-Loss Assessment:** Evaluate total eligible encounter charges against contract stop-loss rules. The engine evaluates 7 configurable contractual dimensions (Threshold Basis, Comparison, Application Method: Whole-Case vs. Excess-Only, Included/Excluded Charges, Implant Treatment: Deduct vs. Additional, Percentage Basis: Flat vs. Tiered, Scope: Per-Case vs. Episode). Whole-case percentage conversion is applied **only** when explicitly mandated by contract terms. If stop-loss terms conflict or are unconfigured, fail closed (`RULE_CONFLICT`).
+4. **Case Rate Packaging Identification:** Identify primary CPT. If covered under an active case rate bundle, price the case rate package and mark all bundled secondary procedures as packaged (`$0.00` line allowable with status `PACKAGED`). Add-on codes (`+`) are exempt from packaging unless contractually specified.
+5. **Implant Carve-Out Evaluation:** Identify billable implants. Verify invoice cost $\ge$ contract minimum carve-out threshold (e.g. $\$250.00$). Compute carve-out reimbursement (e.g. Invoice Cost $+ 10.0\%$).
+6. **CPT Pricing Resolution:** For unbundled procedures, resolve rate via the 5-tier deterministic precedence hierarchy:
+   - Specific CPT Fee Schedule Exhibit (negotiated dollar rate), OR
    - Percent of Medicare (Medicare Wage-Adjusted Baseline $\times$ Multiplier), OR
    - Percent of Billed Charges (Gross Charge $\times$ (1.0000 - Discount Pct)).
-7. **J8 Device Offset Protection:** If a procedure is CMS Payment Indicator `J8` and implants are carved out separately, deduct the statutory CMS device offset from the Medicare baseline before applying the contract multiplier to prevent paying for the device twice.
-8. **Modifier Adjustment:** Apply bilateral (Modifier 50 @ 150% standard, or 200% exception) or discontinued surgery reductions (Modifier 73 @ 50%, Modifier 74 @ 100%).
-9. **Multiple Procedure Payment Reduction (MPPR):** Sort eligible surgical lines by base allowable descending. Apply contract `mppr_rule_set_code` multipliers (Rank 1: 100%, Rank 2: 50%, Rank 3: 25%, Rank 4+: 0%). Add-on codes (`+`) are exempt from reduction.
-10. **Patient Responsibility & Net Payer Partitioning:** Calculate patient copay, coinsurance, and deductible. Compute:
-    $$\text{Estimated Payer Reimbursement} = \text{Total Contract Allowable} - \text{Estimated Patient Responsibility}$$
+   - If no rate rule exists, fail closed with status `RATE_NOT_FOUND`.
+7. **J8 Device Offset Protection:** If a procedure is CMS Payment Indicator `J8` and implants are carved out separately, deduct the statutory CMS device offset from the Medicare baseline before applying the contract multiplier to prevent paying for the device twice (governed by contract `device_offset_policy`).
+8. **Modifier Adjustment:** Apply bilateral (Modifier 50) or discontinued surgery reductions (Modifier 73/74) strictly according to contract-specific terms (e.g., bilateral @ 150% standard, or 200% exception; discontinued @ 50% or 100%). If modifier rules are undefined, fail closed (`RULE_CONFLICT`).
+9. **Multiple Procedure Payment Reduction (MPPR):** Sort eligible surgical lines by base allowable descending. Apply contract `mppr_rule_set_code` multipliers (e.g. Standard Cascade: Rank 1: 100%, Rank 2: 50%, Rank 3: 25%, Rank 4+: 0%). If MPPR terms are missing or conflicting, fail closed (`RULE_CONFLICT`). Add-on codes (`+`) are exempt from MPPR reduction.
+10. **Patient Responsibility & Net Payer Partitioning:** Apply verified benefit structures (copay, deductible, coinsurance, OOP max). Enforce the zero-sum invariant:
+    $$\text{Total Contract Allowable} = \text{Estimated Patient Responsibility} + \text{Estimated Payer Reimbursement}$$
     $$\text{Expected Contribution Margin} = \text{Total Contract Allowable} - \text{Facility Acquisition Cost}$$
+    Missing prior authorization flags `authorization_risk_flag = TRUE` and status `MANUAL_REVIEW_REQUIRED`, but does **not** zero out the contracted fee schedule allowable.
 
 ---
 

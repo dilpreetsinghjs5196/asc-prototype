@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS public.reimbursement_calculations (
     date_of_service DATE NOT NULL,
     calculation_timestamp TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
     
-    -- Calculation State Machine
+    -- Calculation State Machine (Canonical 10 Status Codes; Stop-loss is flagged via stop_loss_triggered)
     calculation_status VARCHAR(50) NOT NULL CHECK (calculation_status IN (
         'CALCULATED',
         'PARTIALLY_CALCULATED',
@@ -116,8 +116,7 @@ CREATE TABLE IF NOT EXISTS public.reimbursement_calculations (
         'REQUIRED_DATA_MISSING',
         'RULE_CONFLICT',
         'MANUAL_REVIEW_REQUIRED',
-        'CALCULATION_FAILED',
-        'STOP_LOSS_APPLIED'
+        'CALCULATION_FAILED'
     )),
     
     -- Financial Summary (Fixed Precision)
@@ -254,13 +253,17 @@ To guarantee HIPAA and financial accounting compliance, calculation tables are *
 
 ```sql
 CREATE OR REPLACE FUNCTION public.trg_block_reimbursement_mutation()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public, pg_temp
+AS $$
 BEGIN
     RAISE EXCEPTION 'Financial Ledger Violation: Calculation snapshot records (ID %) are permanently immutable and cannot be modified or deleted. To recalculate, execute a new calculation sequence.',
         OLD.id;
     RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 CREATE TRIGGER trg_reimb_calc_immutable
     BEFORE UPDATE OR DELETE ON public.reimbursement_calculations
