@@ -103,6 +103,45 @@ flowchart TD
 
 ---
 
+
+
+### Canonical Financial Terminology Matrix (30 Core Metrics)
+
+| # | Canonical Financial Term | Category | Datatype / Precision | Source of Truth | Facility / Case Scope | Permitted Usage | Prohibited Usage |
+| :---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1** | `gross_billed_charges` | Charges | `NUMERIC(12,2)` | Chargemaster / `surgery_procedures` | Case / Facility | Total list prices billed on claims | Prohibited from being labeled as "Revenue" |
+| **2** | `gross_scheduled_charges` | Charges | `NUMERIC(12,2)` | Sched CPTs / Chargemaster | Pre-Op Estimate | Sched case volume valuation | Prohibited from billing or accounting use |
+| **3** | `posted_charges` | Charges | `NUMERIC(12,2)` | Finalized `claim_lines` | Post-Op Billed | Authoritative UB-04/CMS-1500 charges | Prohibited from modifying after submission |
+| **4** | `contract_total_allowable` | Contractual | `NUMERIC(12,2)` | `reimbursement_calculations` | Case Adjudication | Authoritative expected reimbursement | Prohibited from assuming 100% collection |
+| **5** | `medicare_benchmark_allowable` | Benchmark | `NUMERIC(12,2)` | `medicare_base_rates` | Regulatory Ref | 100% Medicare baseline comparison | Prohibited from billing commercial payers |
+| **6** | `expected_contractual_revenue` | Revenue | `NUMERIC(12,2)` | Net Allowable Calculation | Operational Accrual | Budgeting & operational forecasts | Prohibited from GAAP audited reporting |
+| **7** | `net_patient_service_revenue` | Revenue | `NUMERIC(12,2)` | Remittances & Earned Fee | Accounting | GAAP financial statements | Prohibited from using pre-bill estimates |
+| **8** | `gross_payer_payment` | Payments | `NUMERIC(12,2)` | 835 Remittance / Check | Cash Receipt | Total remittance from insurance carrier | Prohibited from combining with patient cash |
+| **9** | `net_payer_payment` | Payments | `NUMERIC(12,2)` | Gross Payer less Recoupments | Cash Flow | Net cash realized from payer | Prohibited from ignoring recoupments |
+| **10** | `patient_payment` | Payments | `NUMERIC(12,2)` | POS Card / Patient Portal | Cash Receipt | Direct patient copay/coinsurance paid | Prohibited from counting secondary insurance |
+| **11** | `secondary_payer_payment` | Payments | `NUMERIC(12,2)` | Secondary 835 Remittance | Cash Receipt | Adjudication from secondary insurer | Prohibited from double-counting with primary |
+| **12** | `contractual_adjustment` | Deductions | `NUMERIC(12,2)` | Gross Charge less Allowable | Write-Off Ledger | Required contractual discount | Prohibited from treating as bad debt |
+| **13** | `administrative_write_off` | Deductions | `NUMERIC(12,2)` | Management Authorization | Non-Contractual | Timely filing / disputed write-offs | Prohibited without supervisor approval |
+| **14** | `payer_refund_recoupment` | Deductions | `NUMERIC(12,2)` | Payer Takeback Notice | Cash Reduction | Retroactive audit recoupment | Prohibited from hiding in net revenue |
+| **15** | `total_net_collections` | Collections | `NUMERIC(12,2)` | Net Payer + Net Patient | Cash Realization | Actual cash deposited in bank | Prohibited from including expected revenue |
+| **16** | `collection_rate` | Metric | `NUMERIC(6,4)` | Net Collections / Allowable | Efficiency KPI | Realized collections vs allowable | Prohibited from using charges as denominator |
+| **17** | `days_in_ar` | Metric | `NUMERIC(6,2)` | (Gross AR / Avg Daily Charges) | RCM Performance | Outstanding claim aging indicator | Prohibited from using net revenue in denominator |
+| **18** | `estimated_patient_liability` | Responsibility | `NUMERIC(12,2)` | Contract Deductible/Coins | Pre-Bill Estimate | Patient pre-collection estimate | Prohibited from guaranteeing as final balance |
+| **19** | `actual_patient_liability` | Responsibility | `NUMERIC(12,2)` | 835 PR Group | Post-Adjudication | Authoritative patient balance due | Prohibited from altering without EOB |
+| **20** | `implant_acquisition_cost` | Cost | `NUMERIC(12,2)` | `case_devices` / Invoice Lines | Direct Expense | True invoice acquisition cost of device | Prohibited from using list price |
+| **21** | `direct_supply_cost` | Cost | `NUMERIC(12,2)` | `surgeries.supplies_cost` | Direct Expense | Non-implant surgical supplies & drapes | Prohibited from duplicating implant costs |
+| **22** | `direct_clinical_labor_cost` | Cost | `NUMERIC(12,2)` | `case_staff_assignments` | Direct Expense | Actual hourly wages of assigned staff | Prohibited from using 30% heuristic |
+| **23** | `direct_or_time_cost` | Cost | `NUMERIC(12,2)` | `operating_rooms.hourly_rate` | Direct Expense | Operating room overhead per minute | Prohibited from using stepped client math |
+| **24** | `total_direct_case_cost` | Cost | `NUMERIC(12,2)` | Sum of Direct Costs (20..23) | Direct Case Total | Full variable clinical case expense | Prohibited from including corporate SG&A |
+| **25** | `expected_contribution_margin` | Margin | `NUMERIC(12,2)` | Allowable less Direct Cost | Profitability | Procedural net contribution to fixed OH | Prohibited from labeling as Net Profit |
+| **26** | `actual_contribution_margin` | Margin | `NUMERIC(12,2)` | Net Collections less Direct Cost | Post-Op Actual | True cash contribution margin | Prohibited from using billed charges |
+| **27** | `contribution_margin_pct` | Margin | `NUMERIC(6,4)` | Margin / Allowable × 100 | Financial Spread | Case margin percentage yield | Prohibited if denominator is zero or neg |
+| **28** | `margin_per_or_minute` | Efficiency | `NUMERIC(12,2)` | Contribution Margin / Minutes | Room Efficiency | Yield per minute of surgical OR time | Prohibited from using elapsed turnover |
+| **29** | `contractual_underpayment` | Variance | `NUMERIC(12,2)` | Allowable less Actual Payment | Audit Ledger | Underpayment variance > $50.00 | Prohibited if denial was valid clinical |
+| **30** | `financial_completeness_code` | Quality | `VARCHAR(32)` | Completeness Engine | Quality Status | COMPLETE, ESTIMATED, etc. | Prohibited from hiding incomplete data |
+
+---
+
 ## 5. DATA MODEL / SCHEMA (PROPOSED)
 
 Phase 70 defines the schema for a centralized **Financial Metadata Registry** (Proposed Migration 046 / Design-Only). No database changes are executed in this phase.
@@ -236,7 +275,12 @@ Phase 70 is complete only when:
 
 ## 14. IMPLEMENTATION NOTES
 
-- **Status:** `NOT STARTED` (Read-Only Specification Delivered).
-- **Migrations Applied:** `NONE`.
-- **Runtime Files Modified:** `NONE` (Specification and documentation files only).
-
+- **Status:** `COMPLETED`
+- **Active Branch:** `feature/phase-70-financial-data-dictionary` (Commits: `145fd62`, `5f1c189`)
+- **Delivered Production Code:**
+  1. `src/lib/financialDataDictionaryService.js`: Authoritative client-side registry for all 30 canonical metrics, 8 financial categories, and 10 completeness lifecycle statuses. Implements lookup, search, zero-substitution evaluation (`evaluateEncounterCompleteness`), and safe numeric formatting.
+  2. `src/components/FinancialDictionaryView.jsx` & `FinancialDictionaryView.css`: Interactive dictionary explorer featuring real-time search, category pills, table/card layout, and detailed slide-out audit inspector drawer. Strictly compliant with Maestro Clinical Design System (zero purple/violet tokens).
+  3. `src/App.jsx`: Navigation integration under System Settings with BookOpen icon and tab view.
+  4. `supabase/migrations/046_financial_data_dictionary.sql` & down: Staged DDL for tables `financial_metric_definitions`, `financial_formula_registry`, `case_financial_reconciliations`, RLS policies, and RPC function `fn_get_financial_metric_definition`.
+  5. `tests/financial-data-dictionary.test.js`: 13 automated tests verifying canonical registry integrity, zero-substitution ban, safe formatting, DDL files, and Maestro color token compliance.
+- **Verification Summary:** All 13 unit tests pass; all 912 tests across 83 suites pass; production build compiles cleanly in ~12s.
