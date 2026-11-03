@@ -67,3 +67,4 @@ To prevent operational disruptions during dictionary adoption:
 - **Phase A (Documentation & Standards - Complete):** Establish canonical dictionary definitions and deprecate heuristic terminology in documentation.
 - **Phase B (Client Relabeling - Non-Breaking):** Update UI display labels in `CommandCenter.jsx` and `SurgeonPortal.jsx` (e.g. changing "EBITDA" to "Contribution Margin" and adding `ESTIMATED` pills) without modifying underlying API payloads.
 - **Phase C (Server-Authoritative Transition):** Upon executive authorization of Migrations 043, 044, and 045, deploy Migration 046 to bind all modules directly to `financial_metric_definitions`.
+

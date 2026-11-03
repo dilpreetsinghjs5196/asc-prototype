@@ -102,3 +102,4 @@ flowchart TD
    $$\text{Contractual Adjustment} = \text{Gross Billed Charges} - \text{Contract Total Allowable}$$
    $$\text{Recognized Revenue} = \text{Gross Billed Charges} - \text{Contractual Adjustment} - \text{Implicit Bad Debt Reserve}$$
 3. **Audit Trail Requirement:** Any retroactive modification to recognized revenue resulting from payer takebacks or audit recoupments must be recorded as an adjustment event in `case_events` with an audit reason.
+

@@ -128,3 +128,4 @@ ASCANALYST establishes mathematical formulas for 12 standardized margin metrics:
 | **Missing Implant Invoice** | Return `NULL` | Render "Incomplete" Badge | `MISSING_SOURCE_DATA` |
 | **Pro Bono / Charity Case** | Allowable = $0.00; Direct Costs logged | Highlight as Pro Bono | `PRO_BONO_ENCOUNTER` |
 | **Cosmetic Fixed Fee Case** | Allowable = Fixed Package Price | Margin computed against direct supplies | `COSMETIC_FIXED_FEE` |
+

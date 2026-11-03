@@ -83,3 +83,4 @@ Every database table holding financial numbers was evaluated against enterprise 
 The current codebase contains high-quality modern schemas (especially in Migrations 040–044) and rich UI representations, but suffers from legacy prototype terminology drift in older files. 
 
 **Recommendation:** Execute Phase 70 to establish immutable canonical definitions, deprecate heuristic calculations in `hospitalUtils.js`, and standardize terminology across all dashboards and reports.
+

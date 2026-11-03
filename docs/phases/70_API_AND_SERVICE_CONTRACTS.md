@@ -169,3 +169,4 @@ export interface FinancialCompletenessEvaluation {
 - `ERR_INCOMPLETE_SOURCE_DATA`: Calculation blocked due to missing vendor invoices or wage hours.
 - `ERR_UNAUTHORIZED_FINANCIAL_ACCESS`: User lacks role permissions to view sensitive fee schedules or margins.
 - `ERR_INVALID_DENOMINATOR`: Attempted margin percentage calculation with zero or negative allowable.
+

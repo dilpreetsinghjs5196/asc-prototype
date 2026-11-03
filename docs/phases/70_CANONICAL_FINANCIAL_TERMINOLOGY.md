@@ -85,3 +85,4 @@ Every financial metric must explicitly declare its scope:
 - **Encounter / Case Scope:** Applies to a single surgical surgery event (e.g., Total Allowable, Direct Cost, Contribution Margin).
 - **Facility Scope:** Aggregates encounters across a single physical ASC facility (e.g., Facility Utilization, Monthly Margin).
 - **Organization Scope:** Aggregates sibling facilities under a corporate parent entity (e.g., Corporate EBITDA, Enterprise Accounts Receivable).
+

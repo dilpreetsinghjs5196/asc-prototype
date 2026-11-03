@@ -62,3 +62,4 @@ When an audit review flags a discrepancy, it must be categorized into one of thr
 | **Data Quality Defect** | Missing implant invoice or unlogged staff hours | Case marked `MISSING_SOURCE_DATA` | Route to Incomplete Queue for staff document upload |
 | **Calculation Drift Defect** | Discrepancy between client estimate and DB stored proc | Variance flagged $> \$0.01$ | Re-invoke authoritative stored procedure `fn_calculate_expected_reimbursement` |
 | **Ledger Tampering Defect** | Stored row columns modified directly via DB console | SHA-256 Hash Mismatch | Lock record, log P0 Security Violation, alert Compliance Officer |
+

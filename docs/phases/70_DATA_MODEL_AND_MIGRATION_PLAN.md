@@ -116,3 +116,4 @@ DROP TABLE IF EXISTS public.case_financial_reconciliations CASCADE;
 DROP TABLE IF EXISTS public.financial_formula_registry CASCADE;
 DROP TABLE IF EXISTS public.financial_metric_definitions CASCADE;
 ```
+

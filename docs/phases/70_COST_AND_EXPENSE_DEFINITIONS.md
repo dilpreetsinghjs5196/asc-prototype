@@ -112,3 +112,4 @@ Fixed expenses exist independently of case volume and are reported only at the f
 
 ### Anti-Distortion Policy:
 Fixed overhead must **never be allocated on a per-minute basis to case contribution margins**. Allocating fixed building rent to individual cases artificially distorts clinical specialty profitability (e.g. penalizing long orthopedic cases with fixed building rent, making profitable surgeons appear unprofitable).
+

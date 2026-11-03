@@ -38,6 +38,7 @@ import SurgeonPreferenceCards from './components/SurgeonPreferenceCards';
 import CaseImplantUsage from './components/CaseImplantUsage';
 import MedicareRateExplorer from './components/MedicareRateExplorer';
 import PayerMasterDirectory from './components/PayerMasterDirectory';
+import FinancialDictionaryView from './components/FinancialDictionaryView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -92,7 +93,8 @@ import {
   ClipboardList,
   Cpu,
   Scale,
-  CreditCard
+  CreditCard,
+  BookOpen
 } from 'lucide-react';
 
 // ==========================================
@@ -2612,6 +2614,13 @@ export default function App() {
             <div className="menu-item-icon"><Settings size={16} /></div>
             System Settings
           </div>
+          <div
+            className={`menu-item ${activeTab === 'financial_dictionary' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('financial_dictionary'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><BookOpen size={16} /></div>
+            Financial Data Dictionary
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -2718,6 +2727,7 @@ export default function App() {
                   {activeTab === 'ai_ops_analyst' && 'AI Insights'}
                   {activeTab === 'data' && 'Data Explorer'}
                   {activeTab === 'settings' && 'System Configuration Settings'}
+                  {activeTab === 'financial_dictionary' && 'Canonical Financial Data Dictionary'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -2753,6 +2763,7 @@ export default function App() {
                   {activeTab === 'ai_ops_analyst' && 'Modular operational optimization engine'}
                   {activeTab === 'data' && 'Ad-hoc data querying and reports builder'}
                   {activeTab === 'settings' && 'Manage operational baseline costs, roles, and integrations'}
+                  {activeTab === 'financial_dictionary' && 'Standardized healthcare financial definitions, deterministic formulas, and accounting governance'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -4345,6 +4356,13 @@ export default function App() {
                     }
                   }}
                 />
+              )}
+
+              {/* ==========================================
+              TAB: FINANCIAL DATA DICTIONARY (PHASE 70)
+              ========================================== */}
+              {activeTab === 'financial_dictionary' && (
+                <FinancialDictionaryView />
               )}
 
               {/* ==========================================

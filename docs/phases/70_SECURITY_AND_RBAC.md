@@ -76,3 +76,4 @@ The Multi-Agent AI Subsystem (`AgentOrchestrator`, `CostAgent`, `BillingAgent`) 
 2. **Permission Inheritance:** If a logged-in user lacks `financial.margins.view`, any AI query regarding surgeon profitability returns:
    $$\text{"Clearance Denied: Your account role does not have authorization to view contribution margin analytics."}$$
 3. **No Autonomous Approvals:** AI agents can propose variance explanations, but cannot autonomously post financial adjustments or approve formula versions.
+

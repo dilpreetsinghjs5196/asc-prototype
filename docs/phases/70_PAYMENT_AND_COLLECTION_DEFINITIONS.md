@@ -129,3 +129,4 @@ stateDiagram-v2
 ### Anti-Duplication Rule:
 To prevent double-counting across payer and patient totals:
 - If an insurance carrier pays the patient directly and the patient signs over the check, it must be recorded as a `patient_payment` with provenance note `THIRD_PARTY_DIRECT_REMITTANCE`, never as a direct payer deposit.
+

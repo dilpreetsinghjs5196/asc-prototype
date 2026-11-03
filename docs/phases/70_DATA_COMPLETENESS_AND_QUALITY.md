@@ -73,3 +73,4 @@ When computing facility-wide or surgeon-level average margins:
 
 ### Rule 4: Cash Collections vs. Estimates
 Pending insurance claims and expected contractual allowables must **never be counted as collected cash**. Cash collection reports must query only cleared `posted` and `reconciled` payment ledgers.
+

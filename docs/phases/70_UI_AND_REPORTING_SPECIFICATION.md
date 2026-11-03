@@ -88,3 +88,4 @@ In strict compliance with workspace rules:
   - Sky Blue (`#38bdf8`): Payer Payments, Reconciliations, Estimated Status.
   - Rose (`#f43f5e`): Dilutive Margins, Missing Invoices, Contract Not Found.
   - Neutral Slate (`#64748b` / `#0f172a`): Cards, borders, tables, dark backgrounds.
+
