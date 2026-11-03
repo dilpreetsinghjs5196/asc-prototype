@@ -835,3 +835,4 @@ export const caseCostModelService = {
     return DEFAULT_FACILITY_RATES;
   }
 };
+

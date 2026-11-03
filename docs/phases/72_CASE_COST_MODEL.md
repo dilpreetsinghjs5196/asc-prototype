@@ -357,3 +357,4 @@ The test suite [`tests/case-cost-model.test.js`](file:///e:/medicalAI/asc-protot
   4. `supabase/migrations/048_case_cost_model.sql` & down: Staged DDL for tables `facility_cost_rate_schedules`, `instrument_tray_cost_catalog`, `case_direct_cost_items`, views `vw_case_cost_breakdowns`, RLS, and indexes.
   5. `tests/case-cost-model.test.js`: Automated test suite covering 8-category math, labor formulas, zero-substitution rules, DDL integrity, and Maestro token validation.
 - **Verification Summary:** All unit tests pass; full repo tests pass; production build succeeds in ~4s.
+

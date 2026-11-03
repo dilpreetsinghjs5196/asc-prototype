@@ -118,3 +118,4 @@ CREATE POLICY cost_items_policy ON public.case_direct_cost_items
     FOR ALL TO authenticated
     USING (public.is_facility_accessible(facility_id))
     WITH CHECK (public.is_facility_accessible(facility_id));
+

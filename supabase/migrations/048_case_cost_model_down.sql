@@ -9,3 +9,4 @@ DROP VIEW IF EXISTS public.vw_case_cost_breakdowns CASCADE;
 DROP TABLE IF EXISTS public.case_direct_cost_items CASCADE;
 DROP TABLE IF EXISTS public.instrument_tray_cost_catalog CASCADE;
 DROP TABLE IF EXISTS public.facility_cost_rate_schedules CASCADE;
+
