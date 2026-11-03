@@ -39,6 +39,7 @@ import CaseImplantUsage from './components/CaseImplantUsage';
 import MedicareRateExplorer from './components/MedicareRateExplorer';
 import PayerMasterDirectory from './components/PayerMasterDirectory';
 import FinancialDictionaryView from './components/FinancialDictionaryView';
+import CaseFinancialLedgerView from './components/CaseFinancialLedgerView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2728,6 +2729,7 @@ export default function App() {
                   {activeTab === 'data' && 'Data Explorer'}
                   {activeTab === 'settings' && 'System Configuration Settings'}
                   {activeTab === 'financial_dictionary' && 'Canonical Financial Data Dictionary'}
+                  {activeTab === 'case_ledger' && 'Case Financial Ledger'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -2764,6 +2766,7 @@ export default function App() {
                   {activeTab === 'data' && 'Ad-hoc data querying and reports builder'}
                   {activeTab === 'settings' && 'Manage operational baseline costs, roles, and integrations'}
                   {activeTab === 'financial_dictionary' && 'Standardized healthcare financial definitions, deterministic formulas, and accounting governance'}
+                  {activeTab === 'case_ledger' && 'Event-sourced line-item journal, double-entry balances & deterministic contribution margin engine'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
