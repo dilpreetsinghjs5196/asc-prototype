@@ -42,6 +42,7 @@ import FinancialDictionaryView from './components/FinancialDictionaryView';
 import CaseFinancialLedgerView from './components/CaseFinancialLedgerView';
 import CaseCostModelView from './components/CaseCostModelView';
 import FacilityFinancialSettingsView from './components/FacilityFinancialSettingsView';
+import ContributionMarginEngineView from './components/ContributionMarginEngineView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2645,6 +2646,13 @@ export default function App() {
             <div className="menu-item-icon"><Building2 size={16} /></div>
             Facility Financial Settings
           </div>
+          <div
+            className={`menu-item ${activeTab === 'contribution_margin_engine' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('contribution_margin_engine'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><TrendingUp size={16} /></div>
+            Contribution Margin Engine
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -2755,6 +2763,7 @@ export default function App() {
                   {activeTab === 'case_ledger' && 'Case Financial Ledger'}
                   {activeTab === 'case_cost_model' && 'Activity-Based Case Cost Model'}
                   {activeTab === 'facility_financial_settings' && 'Facility Financial & Cost Settings'}
+                  {activeTab === 'contribution_margin_engine' && 'Contribution Margin Engine & Yield Analysis'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -2794,6 +2803,7 @@ export default function App() {
                   {activeTab === 'case_ledger' && 'Event-sourced line-item journal, double-entry balances & deterministic contribution margin engine'}
                   {activeTab === 'case_cost_model' && '8-category procedural cost accounting, time-driven labor, sterile tray reprocessing & direct cost breakdown'}
                   {activeTab === 'facility_financial_settings' && 'Effective-dated baseline operating cost schedules, clinical wage matrix, and indirect cost assumptions'}
+                  {activeTab === 'contribution_margin_engine' && 'Deterministic procedural profitability, margin yield percentages, leakage tracking & breakeven modeling'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -4414,6 +4424,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'facility_financial_settings' && (
                 <FacilityFinancialSettingsView />
+              )}
+
+              {/* ==========================================
+              TAB: CONTRIBUTION MARGIN ENGINE (PHASE 74)
+              ========================================== */}
+              {activeTab === 'contribution_margin_engine' && (
+                <ContributionMarginEngineView />
               )}
 
               {/* ==========================================

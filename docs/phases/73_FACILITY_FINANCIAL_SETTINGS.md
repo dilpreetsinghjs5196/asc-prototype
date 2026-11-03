@@ -231,3 +231,4 @@ Unit test suite `tests/facility-financial-settings.test.js` tests:
   - `src/App.jsx`
   - `tests/facility-financial-settings.test.js`
 - **Execution Rule:** Zero splitting of specification files. Single-file integrity maintained.
+

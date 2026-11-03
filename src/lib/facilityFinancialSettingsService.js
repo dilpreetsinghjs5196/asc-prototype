@@ -404,3 +404,4 @@ export const facilityFinancialSettingsService = {
     return `$${Math.abs(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 };
+

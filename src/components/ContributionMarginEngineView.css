@@ -1,0 +1,559 @@
+/* ==============================================================================
+   MAESTRO CLINICAL DESIGN SYSTEM: CONTRIBUTION MARGIN ENGINE
+   STRICT COMPLIANCE: Clinical emerald/amber/sky-blue/rose/slate palette only.
+   Primary palette: Slate, Emerald, Sky Blue, Amber, Rose.
+   PURPLE BAN: ZERO purple / violet / indigo tokens.
+   ============================================================================== */
+
+.margin-engine-container {
+  padding: 16px 24px 40px 24px;
+  background-color: #0b1120;
+  color: #f8fafc;
+  min-height: calc(100vh - 70px);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+/* Top Action & Case Selector Toolbar */
+.margin-engine-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.case-selector-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selector-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #94a3b8;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.case-dropdown {
+  background: #111c30;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  max-width: 420px;
+}
+
+.case-dropdown:focus {
+  border-color: #38bdf8;
+}
+
+.topbar-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge-standard {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  letter-spacing: 0.02em;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.btn-secondary {
+  background: #152238;
+  color: #cbd5e1;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.btn-secondary:hover {
+  background: #1c2e4c;
+  color: #ffffff;
+}
+
+/* Alert Banners */
+.alert-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.alert-success {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* Case Meta Banner Card */
+.case-meta-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #111c30;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.meta-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.patient-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #1e314f;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.patient-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.patient-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.patient-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.patient-mrn {
+  font-family: monospace;
+  font-size: 12px;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.case-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.procedure-sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #cbd5e1;
+}
+
+.meta-separator {
+  color: #64748b;
+}
+
+.meta-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.meta-attribute {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.attr-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #64748b;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.attr-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  letter-spacing: 0.02em;
+}
+
+/* KPI Summary Cards Grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.kpi-card {
+  background: #111c30;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.kpi-card:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.kpi-card.highlight-kpi {
+  background: linear-gradient(180deg, #12233c 0%, #111c30 100%);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.kpi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kpi-title {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.kpi-value {
+  font-size: 24px;
+  font-weight: 800;
+  font-family: monospace;
+  letter-spacing: -0.02em;
+}
+
+.kpi-subtext {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #64748b;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 6px;
+  margin-top: 2px;
+}
+
+/* Procedural Profitability Bridge Card */
+.bridge-card {
+  background: #111c30;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.bridge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.bridge-title-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bridge-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.bridge-steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.bridge-step {
+  background: #0d1626;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 170px;
+  flex: 1;
+}
+
+.step-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #94a3b8;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.step-value {
+  font-size: 18px;
+  font-weight: 800;
+  font-family: monospace;
+}
+
+.step-sub {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.bridge-operator {
+  font-size: 20px;
+  font-weight: 800;
+  color: #64748b;
+  padding: 0 4px;
+}
+
+/* Cross-Case Profitability Matrix Section */
+.matrix-section {
+  background: #111c30;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 16px 20px;
+  background: #0d1626;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.section-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.section-desc {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* ==============================================================================
+   RESPONSIVE TABLE CONTAINER
+   Ensures horizontal scrolling with min-width: 1100px so no columns are clipped
+   ============================================================================== */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #0b1120;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #1e314f;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #38bdf8;
+}
+
+.matrix-table {
+  width: 100%;
+  min-width: 1100px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.matrix-table thead th {
+  background: #0d1626;
+  padding: 12px 14px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+}
+
+.matrix-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+}
+
+.matrix-row:hover {
+  background-color: #152238;
+}
+
+.matrix-row.selected-row {
+  background-color: #152744;
+  border-left: 3px solid #38bdf8;
+}
+
+.matrix-table td {
+  padding: 12px 14px;
+  vertical-align: middle;
+}
+
+.cell-case {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.case-num {
+  font-family: monospace;
+  font-size: 11px;
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.patient-name-link {
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.cell-proc {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 280px;
+}
+
+.proc-text {
+  font-weight: 500;
+  color: #e2e8f0;
+  line-height: 1.3;
+}
+
+.specialty-sub {
+  font-size: 10px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.text-sky {
+  color: #38bdf8;
+}
+
+.text-emerald {
+  color: #10b981;
+}
+
+.text-amber {
+  color: #f59e0b;
+}
+
+.text-rose {
+  color: #f43f5e;
+}
+
+.text-slate {
+  color: #94a3b8;
+}

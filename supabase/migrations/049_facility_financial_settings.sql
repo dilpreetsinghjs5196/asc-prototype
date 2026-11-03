@@ -107,3 +107,4 @@ CREATE POLICY fac_roles_policy ON public.facility_role_wage_rates
     FOR ALL TO authenticated
     USING (public.is_facility_accessible(facility_id))
     WITH CHECK (public.is_facility_accessible(facility_id));
+

@@ -655,3 +655,4 @@ export default function FacilityFinancialSettingsView() {
     </div>
   );
 }
+
