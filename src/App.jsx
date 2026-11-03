@@ -40,6 +40,7 @@ import MedicareRateExplorer from './components/MedicareRateExplorer';
 import PayerMasterDirectory from './components/PayerMasterDirectory';
 import FinancialDictionaryView from './components/FinancialDictionaryView';
 import CaseFinancialLedgerView from './components/CaseFinancialLedgerView';
+import CaseCostModelView from './components/CaseCostModelView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2629,6 +2630,13 @@ export default function App() {
             <div className="menu-item-icon"><FileText size={16} /></div>
             Case Financial Ledger
           </div>
+          <div
+            className={`menu-item ${activeTab === 'case_cost_model' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('case_cost_model'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Layers size={16} /></div>
+            Case Cost Model
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -2737,6 +2745,7 @@ export default function App() {
                   {activeTab === 'settings' && 'System Configuration Settings'}
                   {activeTab === 'financial_dictionary' && 'Canonical Financial Data Dictionary'}
                   {activeTab === 'case_ledger' && 'Case Financial Ledger'}
+                  {activeTab === 'case_cost_model' && 'Activity-Based Case Cost Model'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -2774,6 +2783,7 @@ export default function App() {
                   {activeTab === 'settings' && 'Manage operational baseline costs, roles, and integrations'}
                   {activeTab === 'financial_dictionary' && 'Standardized healthcare financial definitions, deterministic formulas, and accounting governance'}
                   {activeTab === 'case_ledger' && 'Event-sourced line-item journal, double-entry balances & deterministic contribution margin engine'}
+                  {activeTab === 'case_cost_model' && '8-category procedural cost accounting, time-driven labor, sterile tray reprocessing & direct cost breakdown'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -4380,6 +4390,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'case_ledger' && (
                 <CaseFinancialLedgerView />
+              )}
+
+              {/* ==========================================
+              TAB: CASE COST MODEL (PHASE 72)
+              ========================================== */}
+              {activeTab === 'case_cost_model' && (
+                <CaseCostModelView />
               )}
 
               {/* ==========================================
