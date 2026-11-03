@@ -125,7 +125,7 @@ Staged in Migration `050_contribution_margin_engine.sql`:
 - `metadata JSONB NOT NULL DEFAULT '{}'::jsonb`
 
 ### 2. `public.vw_case_profitability_matrix`
-Aggregated rollup view by Surgeon, Specialty, and Payer displaying total cases, expected margin, actual margin, average yield percentage, negative margin case count, and verification integrity flag.
+Aggregated rollup view by Surgeon, Specialty, and Payer (using `su.firstname`, `su.lastname`, `s.doctor_name`, `su.specialty`, and `s.payment_model`) displaying total cases, expected margin, actual margin, average yield percentage, negative margin case count, and verification integrity flag.
 
 ---
 
@@ -245,3 +245,4 @@ Unit test suite `tests/contribution-margin-engine.test.js`:
   - `src/App.jsx`
   - `tests/contribution-margin-engine.test.js`
 - **Execution Rule:** Zero splitting of specification files. Single-file integrity maintained.
+

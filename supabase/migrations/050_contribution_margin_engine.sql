@@ -44,9 +44,9 @@ CREATE OR REPLACE VIEW public.vw_case_profitability_matrix AS
 SELECT
     m.facility_id,
     s.surgeon_id,
-    COALESCE(su.name, 'Unassigned Surgeon') AS surgeon_name,
-    COALESCE(s.specialty, 'General') AS specialty,
-    COALESCE(s.payer_name, 'Self-Pay / Other') AS payer_name,
+    COALESCE(NULLIF(TRIM(COALESCE(su.firstname, '') || ' ' || COALESCE(su.lastname, '')), ''), s.doctor_name, 'Unassigned Surgeon') AS surgeon_name,
+    COALESCE(su.specialty, 'General Surgery') AS specialty,
+    COALESCE(s.payment_model, 'Insurance') AS payer_name,
     COUNT(m.id) AS total_cases_evaluated,
     SUM(m.gross_billed_charges) AS total_gross_billed,
     SUM(m.expected_contract_allowable) AS total_expected_allowable,
@@ -65,7 +65,14 @@ SELECT
 FROM public.case_contribution_margin_snapshots m
 JOIN public.surgeries s ON s.id = m.surgery_id
 LEFT JOIN public.surgeons su ON su.id = s.surgeon_id
-GROUP BY m.facility_id, s.surgeon_id, su.name, s.specialty, s.payer_name;
+GROUP BY 
+    m.facility_id, 
+    s.surgeon_id, 
+    su.firstname, 
+    su.lastname, 
+    s.doctor_name, 
+    su.specialty, 
+    s.payment_model;
 
 -- 3. Row-Level Security (RLS)
 ALTER TABLE public.case_contribution_margin_snapshots ENABLE ROW LEVEL SECURITY;

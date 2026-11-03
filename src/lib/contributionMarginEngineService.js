@@ -239,3 +239,4 @@ export const contributionMarginEngineService = {
     return `${num >= 0 ? '+' : ''}${num.toFixed(2)}%`;
   }
 };
+
