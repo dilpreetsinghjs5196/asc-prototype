@@ -5,94 +5,95 @@
    ============================================================================== */
 
 .case-ledger-container {
-  padding: 24px;
+  padding: 16px 24px 40px 24px;
   background-color: #0b1120;
   color: #f8fafc;
   min-height: calc(100vh - 70px);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
 }
 
-/* Header */
-.case-ledger-header {
+/* Top Action & Selector Toolbar */
+.case-ledger-topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 20px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
-.header-left {
+.topbar-left {
   display: flex;
   align-items: center;
   gap: 16px;
-}
-
-.header-icon-box {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #38bdf8;
-}
-
-.header-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #f8fafc;
-  margin: 0 0 4px 0;
-  letter-spacing: -0.02em;
-}
-
-.header-subtitle {
-  font-size: 14px;
-  color: #94a3b8;
-  margin: 0;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+  flex-wrap: wrap;
 }
 
 .case-selector-box {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 8px;
 }
 
 .selector-label {
-  font-size: 11px;
+  font-size: 12px;
   text-transform: uppercase;
-  color: #64748b;
+  color: #94a3b8;
   font-weight: 600;
+  letter-spacing: 0.03em;
 }
 
 .case-dropdown {
   background: #111c30;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: #f8fafc;
   padding: 8px 12px;
   border-radius: 8px;
   font-size: 13px;
+  font-weight: 500;
   outline: none;
   cursor: pointer;
+  max-width: 380px;
 }
 
 .case-dropdown:focus {
   border-color: #38bdf8;
 }
 
+.topbar-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-standard {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  letter-spacing: 0.02em;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .action-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 9px 16px;
+  gap: 6px;
+  padding: 8px 16px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
@@ -113,24 +114,30 @@
 /* Case Meta Banner */
 .case-meta-banner {
   display: grid;
-  grid-template-columns: repeat(4, 1fr) auto;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
   background: #111c30;
   border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 16px 20px;
   border-radius: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   align-items: center;
 }
 
 .meta-col {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .meta-col-right {
-  align-items: flex-end;
+  align-items: flex-start;
+}
+
+@media (min-width: 1024px) {
+  .meta-col-right {
+    align-items: flex-end;
+  }
 }
 
 .meta-label {
@@ -142,9 +149,10 @@
 }
 
 .meta-val {
-  font-size: 14px;
+  font-size: 13.5px;
   color: #f8fafc;
   font-weight: 600;
+  line-height: 1.3;
 }
 
 .meta-sub {
@@ -156,10 +164,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 5px 12px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .badge-complete {
@@ -207,19 +217,19 @@
 /* KPI Balance Cards */
 .ledger-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 14px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
 }
 
 .kpi-card {
   background: #111c30;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
-  padding: 16px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .kpi-top {
@@ -229,21 +239,22 @@
 }
 
 .kpi-title {
-  font-size: 12px;
+  font-size: 11.5px;
   color: #94a3b8;
   font-weight: 500;
 }
 
 .kpi-value {
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: #f8fafc;
 }
 
 .kpi-caption {
-  font-size: 11px;
+  font-size: 10.5px;
   color: #64748b;
+  line-height: 1.25;
 }
 
 .card-margin-pos {
@@ -268,13 +279,14 @@
   display: flex;
   gap: 6px;
   margin-top: 4px;
+  flex-wrap: wrap;
 }
 
 .margin-pill {
-  font-size: 11px;
+  font-size: 10.5px;
   padding: 2px 6px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
   color: #cbd5e1;
   font-weight: 500;
 }
@@ -289,17 +301,19 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .filter-pills {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
 .filter-pill {
-  padding: 7px 12px;
+  padding: 6px 12px;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
@@ -328,7 +342,7 @@
   gap: 8px;
   background: #111c30;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: 6px;
 }
 
@@ -343,30 +357,57 @@
   color: #f8fafc;
 }
 
-/* Ledger Table Card */
+/* Ledger Table Card with Horizontal Scroll Container */
 .ledger-table-card {
   background: #111c30;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Custom Scrollbar for Table */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #0b1120;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #1e314f;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #38bdf8;
 }
 
 .ledger-table {
   width: 100%;
+  min-width: 1200px;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 12.5px;
   text-align: left;
 }
 
 .ledger-table thead th {
   background: #0d1626;
-  padding: 12px 14px;
+  padding: 12px 12px;
   color: #94a3b8;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
 }
 
 .ledger-row {
@@ -384,7 +425,7 @@
 }
 
 .ledger-table td {
-  padding: 12px 14px;
+  padding: 11px 12px;
   vertical-align: middle;
 }
 
@@ -397,6 +438,7 @@
 .entry-date {
   color: #cbd5e1;
   white-space: nowrap;
+  font-size: 12px;
 }
 
 .entry-type-cell {
@@ -408,18 +450,20 @@
 .type-label {
   font-weight: 600;
   color: #f8fafc;
+  line-height: 1.3;
 }
 
 .cat-sub {
   font-size: 10px;
   color: #64748b;
   text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .entry-desc {
-  max-width: 240px;
   color: #cbd5e1;
   line-height: 1.35;
+  font-size: 12px;
 }
 
 .source-ref {
@@ -436,6 +480,7 @@
   padding: 2px 6px;
   border-radius: 4px;
   align-self: flex-start;
+  white-space: nowrap;
 }
 
 .module-sub {
@@ -455,27 +500,31 @@
   color: #f43f5e;
   font-weight: 600;
   font-family: monospace;
+  white-space: nowrap;
 }
 
 .credit-col {
   color: #10b981;
   font-weight: 600;
   font-family: monospace;
+  white-space: nowrap;
 }
 
 .balance-col {
   color: #f8fafc;
   font-weight: 600;
   font-family: monospace;
+  white-space: nowrap;
 }
 
 .status-pill {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .status-posted {
@@ -502,6 +551,7 @@
   font-size: 11px;
   color: #64748b;
   cursor: help;
+  white-space: nowrap;
 }
 
 .reverse-btn {
@@ -511,11 +561,12 @@
   padding: 4px 8px;
   border-radius: 4px;
   background: rgba(244, 63, 94, 0.08);
-  border: 1px solid rgba(244, 63, 94, 0.2);
+  border: 1px solid rgba(244, 63, 94, 0.25);
   color: #f43f5e;
   font-size: 11px;
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .reverse-btn:hover {
@@ -526,6 +577,7 @@
   font-size: 11px;
   color: #64748b;
   font-style: italic;
+  white-space: nowrap;
 }
 
 /* Modals */
@@ -678,4 +730,3 @@
 .modal-reverse-confirm-btn:hover {
   background: #e11d48;
 }
-

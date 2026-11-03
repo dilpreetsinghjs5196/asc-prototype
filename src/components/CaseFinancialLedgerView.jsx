@@ -14,7 +14,8 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   Hash,
-  X
+  X,
+  Scale
 } from 'lucide-react';
 import {
   caseFinancialLedgerService,
@@ -129,23 +130,11 @@ export default function CaseFinancialLedgerView() {
 
   return (
     <div className="case-ledger-container">
-      {/* Header */}
-      <div className="case-ledger-header">
-        <div className="header-left">
-          <div className="header-icon-box">
-            <FileText size={24} />
-          </div>
-          <div>
-            <h1 className="header-title">Case Financial Ledger</h1>
-            <p className="header-subtitle">
-              Event-sourced line-item journal, double-entry balances & deterministic contribution margin engine
-            </p>
-          </div>
-        </div>
-
-        <div className="header-actions">
+      {/* Top Action & Selector Toolbar */}
+      <div className="case-ledger-topbar">
+        <div className="topbar-left">
           <div className="case-selector-box">
-            <label className="selector-label">Active Surgical Case:</label>
+            <label className="selector-label">Select Case:</label>
             <select
               className="case-dropdown"
               value={selectedCaseId}
@@ -153,12 +142,23 @@ export default function CaseFinancialLedgerView() {
             >
               {SAMPLE_CASES.map(c => (
                 <option key={c.id} value={c.id}>
-                  Case #{c.id} — {c.patient} ({c.procedure.substring(0, 32)}...)
+                  Case #{c.id} — {c.patient} ({c.procedure.substring(0, 30)}...)
                 </option>
               ))}
             </select>
           </div>
 
+          <div className="topbar-badges">
+            <span className="badge-standard">
+              <Scale size={13} /> GAAP / ASC 606 Aligned
+            </span>
+            <span className="badge-standard">
+              <ShieldCheck size={13} /> SHA-256 Chained
+            </span>
+          </div>
+        </div>
+
+        <div className="topbar-right">
           <button
             className="action-btn post-btn"
             onClick={() => setShowPostModal(true)}
@@ -264,7 +264,7 @@ export default function CaseFinancialLedgerView() {
         </div>
       </div>
 
-      {/* Filter Tabs */}
+      {/* Filter Tabs & Open AR */}
       <div className="ledger-controls-row">
         <div className="filter-pills">
           <button
@@ -311,86 +311,88 @@ export default function CaseFinancialLedgerView() {
         </div>
       </div>
 
-      {/* Ledger Table */}
+      {/* Ledger Table with Responsive Wrapper */}
       <div className="ledger-table-card">
-        <table className="ledger-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Date</th>
-              <th>Entry Type & Category</th>
-              <th>Description / Narrative</th>
-              <th>Source Reference</th>
-              <th className="text-right">Debit (-)</th>
-              <th className="text-right">Credit (+)</th>
-              <th className="text-right">AR Balance</th>
-              <th>Status</th>
-              <th>Audit Hash</th>
-              <th className="text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredEntries.map((e) => {
-              const isDebit = e.entry_sign === -1;
-              const isCredit = e.entry_sign === 1;
+        <div className="table-responsive">
+          <table className="ledger-table">
+            <thead>
+              <tr>
+                <th style={{ width: '45px' }}>#</th>
+                <th style={{ width: '100px' }}>Date</th>
+                <th style={{ width: '190px' }}>Entry Type & Category</th>
+                <th style={{ minWidth: '220px' }}>Description / Narrative</th>
+                <th style={{ width: '150px' }}>Source Reference</th>
+                <th style={{ width: '110px' }} className="text-right">Debit (-)</th>
+                <th style={{ width: '110px' }} className="text-right">Credit (+)</th>
+                <th style={{ width: '110px' }} className="text-right">AR Balance</th>
+                <th style={{ width: '90px' }} className="text-center">Status</th>
+                <th style={{ width: '110px' }}>Audit Hash</th>
+                <th style={{ width: '95px' }} className="text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredEntries.map((e) => {
+                const isDebit = e.entry_sign === -1;
+                const isCredit = e.entry_sign === 1;
 
-              return (
-                <tr key={e.id} className={`ledger-row ${e.status === LEDGER_STATUSES.REVERSED ? 'row-reversed' : ''}`}>
-                  <td className="entry-num">{e.entry_number}</td>
-                  <td className="entry-date">{e.effective_date}</td>
-                  <td>
-                    <div className="entry-type-cell">
-                      <span className="type-label">{e.label}</span>
-                      <span className="cat-sub">{e.category}</span>
-                    </div>
-                  </td>
-                  <td className="entry-desc">
-                    <span>{e.description}</span>
-                  </td>
-                  <td className="source-ref">
-                    <span className="ref-tag">{e.source_reference_id || 'N/A'}</span>
-                    <span className="module-sub">{e.source_module}</span>
-                  </td>
-                  <td className="text-right debit-col">
-                    {isDebit ? caseFinancialLedgerService.formatCurrency(e.amount) : '—'}
-                  </td>
-                  <td className="text-right credit-col">
-                    {isCredit ? caseFinancialLedgerService.formatCurrency(e.amount) : '—'}
-                  </td>
-                  <td className="text-right balance-col">
-                    {caseFinancialLedgerService.formatCurrency(e.running_patient_ar_balance)}
-                  </td>
-                  <td>
-                    <span className={`status-pill status-${e.status.toLowerCase()}`}>
-                      {e.status}
-                    </span>
-                  </td>
-                  <td>
-                    <span className="hash-code" title={e.audit_hash}>
-                      <Hash size={11} />
-                      {e.audit_hash.substring(0, 10)}...
-                    </span>
-                  </td>
-                  <td className="text-center">
-                    {e.status === LEDGER_STATUSES.POSTED && (
-                      <button
-                        className="reverse-btn"
-                        title="Post an offsetting reversal"
-                        onClick={() => handleOpenReverse(e)}
-                      >
-                        <RotateCcw size={13} />
-                        Reverse
-                      </button>
-                    )}
-                    {e.status === LEDGER_STATUSES.REVERSED && (
-                      <span className="reversed-lock-label">Reversed</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                return (
+                  <tr key={e.id} className={`ledger-row ${e.status === LEDGER_STATUSES.REVERSED ? 'row-reversed' : ''}`}>
+                    <td className="entry-num">{e.entry_number}</td>
+                    <td className="entry-date">{e.effective_date}</td>
+                    <td>
+                      <div className="entry-type-cell">
+                        <span className="type-label">{e.label}</span>
+                        <span className="cat-sub">{e.category}</span>
+                      </div>
+                    </td>
+                    <td className="entry-desc">
+                      <span>{e.description}</span>
+                    </td>
+                    <td className="source-ref">
+                      <span className="ref-tag">{e.source_reference_id || 'N/A'}</span>
+                      <span className="module-sub">{e.source_module}</span>
+                    </td>
+                    <td className="text-right debit-col">
+                      {isDebit ? caseFinancialLedgerService.formatCurrency(e.amount) : '—'}
+                    </td>
+                    <td className="text-right credit-col">
+                      {isCredit ? caseFinancialLedgerService.formatCurrency(e.amount) : '—'}
+                    </td>
+                    <td className="text-right balance-col">
+                      {caseFinancialLedgerService.formatCurrency(e.running_patient_ar_balance)}
+                    </td>
+                    <td className="text-center">
+                      <span className={`status-pill status-${e.status.toLowerCase()}`}>
+                        {e.status}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="hash-code" title={e.audit_hash}>
+                        <Hash size={11} />
+                        {e.audit_hash.substring(0, 8)}...
+                      </span>
+                    </td>
+                    <td className="text-center">
+                      {e.status === LEDGER_STATUSES.POSTED && (
+                        <button
+                          className="reverse-btn"
+                          title="Post an offsetting reversal"
+                          onClick={() => handleOpenReverse(e)}
+                        >
+                          <RotateCcw size={12} />
+                          Reverse
+                        </button>
+                      )}
+                      {e.status === LEDGER_STATUSES.REVERSED && (
+                        <span className="reversed-lock-label">Reversed</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Post Entry Modal */}
@@ -537,4 +539,3 @@ export default function CaseFinancialLedgerView() {
     </div>
   );
 }
-
