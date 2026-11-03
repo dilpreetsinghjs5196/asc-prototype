@@ -2622,6 +2622,13 @@ export default function App() {
             <div className="menu-item-icon"><BookOpen size={16} /></div>
             Financial Data Dictionary
           </div>
+          <div
+            className={`menu-item ${activeTab === 'case_ledger' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('case_ledger'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><FileText size={16} /></div>
+            Case Financial Ledger
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -4366,6 +4373,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'financial_dictionary' && (
                 <FinancialDictionaryView />
+              )}
+
+              {/* ==========================================
+              TAB: CASE FINANCIAL LEDGER (PHASE 71)
+              ========================================== */}
+              {activeTab === 'case_ledger' && (
+                <CaseFinancialLedgerView />
               )}
 
               {/* ==========================================

@@ -368,3 +368,4 @@ The test suite [`tests/case-financial-ledger.test.js`](file:///e:/medicalAI/asc-
   4. `supabase/migrations/047_case_financial_ledger.sql` & down: Staged DDL for tables `case_financial_ledger_entries`, views `vw_case_financial_summaries`, immutability triggers, RLS, and indexes.
   5. `tests/case-financial-ledger.test.js`: Automated test suite covering journal arithmetic, margins, completeness flags, DDL checks, and Maestro token validation.
 - **Verification Summary:** All unit tests pass; full repo tests pass; production build succeeds in ~12s.
+

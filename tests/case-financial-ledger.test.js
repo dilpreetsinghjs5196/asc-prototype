@@ -230,7 +230,10 @@ describe('Phase 71 — Case Financial Ledger Verification Suite', () => {
       const appContent = fs.readFileSync(path.join(rootDir, 'src/App.jsx'), 'utf8');
       assert.ok(appContent.includes('CaseFinancialLedgerView'), 'App.jsx must import CaseFinancialLedgerView');
       assert.ok(appContent.includes("activeTab === 'case_ledger'"), 'App.jsx must route case_ledger tab');
+      assert.ok(appContent.includes('Case Financial Ledger'), 'Sidebar must display Case Financial Ledger label');
+      assert.ok(appContent.includes('<CaseFinancialLedgerView />'), 'Tab content must render CaseFinancialLedgerView');
     });
   });
 
 });
+

@@ -98,3 +98,4 @@ SELECT
     - COALESCE(SUM(CASE WHEN entry_type IN ('IMPLANT_COST', 'SUPPLY_COST', 'LABOR_COST', 'OR_TIME_COST') AND status = 'POSTED' THEN amount ELSE 0 END), 0.00) AS actual_contribution_margin
 FROM public.case_financial_ledger_entries
 GROUP BY surgery_id, facility_id;
+
