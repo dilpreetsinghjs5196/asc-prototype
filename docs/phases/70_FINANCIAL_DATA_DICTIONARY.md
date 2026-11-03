@@ -124,7 +124,7 @@ flowchart TD
 | **13** | `administrative_write_off` | Deductions | `NUMERIC(12,2)` | Management Authorization | Non-Contractual | Timely filing / disputed write-offs | Prohibited without supervisor approval |
 | **14** | `payer_refund_recoupment` | Deductions | `NUMERIC(12,2)` | Payer Takeback Notice | Cash Reduction | Retroactive audit recoupment | Prohibited from hiding in net revenue |
 | **15** | `total_net_collections` | Collections | `NUMERIC(12,2)` | Net Payer + Net Patient | Cash Realization | Actual cash deposited in bank | Prohibited from including expected revenue |
-| **16** | `collection_rate` | Metric | `NUMERIC(6,4)` | Net Collections / Allowable | Efficiency KPI | Realized collections vs allowable | Prohibited from using charges as denominator |
+| **16** | `net_collection_rate` | Metric | `NUMERIC(6,4)` | Net Collections / Allowable | Efficiency KPI | Realized collections vs allowable | Prohibited from using charges as denominator |
 | **17** | `days_in_ar` | Metric | `NUMERIC(6,2)` | (Gross AR / Avg Daily Charges) | RCM Performance | Outstanding claim aging indicator | Prohibited from using net revenue in denominator |
 | **18** | `estimated_patient_liability` | Responsibility | `NUMERIC(12,2)` | Contract Deductible/Coins | Pre-Bill Estimate | Patient pre-collection estimate | Prohibited from guaranteeing as final balance |
 | **19** | `actual_patient_liability` | Responsibility | `NUMERIC(12,2)` | 835 PR Group | Post-Adjudication | Authoritative patient balance due | Prohibited from altering without EOB |
@@ -137,7 +137,7 @@ flowchart TD
 | **26** | `actual_contribution_margin` | Margin | `NUMERIC(12,2)` | Net Collections less Direct Cost | Post-Op Actual | True cash contribution margin | Prohibited from using billed charges |
 | **27** | `contribution_margin_pct` | Margin | `NUMERIC(6,4)` | Margin / Allowable × 100 | Financial Spread | Case margin percentage yield | Prohibited if denominator is zero or neg |
 | **28** | `margin_per_or_minute` | Efficiency | `NUMERIC(12,2)` | Contribution Margin / Minutes | Room Efficiency | Yield per minute of surgical OR time | Prohibited from using elapsed turnover |
-| **29** | `contractual_underpayment` | Variance | `NUMERIC(12,2)` | Allowable less Actual Payment | Audit Ledger | Underpayment variance > $50.00 | Prohibited if denial was valid clinical |
+| **29** | `contractual_underpayment_leakage` | Variance | `NUMERIC(12,2)` | Allowable less Actual Payment | Audit Ledger | Underpayment variance > $50.00 | Prohibited if denial was valid clinical |
 | **30** | `financial_completeness_code` | Quality | `VARCHAR(32)` | Completeness Engine | Quality Status | COMPLETE, ESTIMATED, etc. | Prohibited from hiding incomplete data |
 
 ---
