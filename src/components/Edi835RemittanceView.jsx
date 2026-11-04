@@ -811,3 +811,4 @@ export default function Edi835RemittanceView() {
     </div>
   );
 }
+

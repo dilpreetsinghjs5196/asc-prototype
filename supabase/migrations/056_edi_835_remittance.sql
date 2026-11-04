@@ -152,14 +152,19 @@ ALTER TABLE public.edi_835_claim_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.edi_835_line_adjudications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.edi_835_remittance_exceptions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS rls_835_batches_tenant ON public.edi_835_remittance_batches;
 CREATE POLICY rls_835_batches_tenant ON public.edi_835_remittance_batches
     FOR ALL USING (facility_id IN (SELECT public.get_auth_user_facilities()));
 
+DROP POLICY IF EXISTS rls_835_claim_pmts_tenant ON public.edi_835_claim_payments;
 CREATE POLICY rls_835_claim_pmts_tenant ON public.edi_835_claim_payments
     FOR ALL USING (facility_id IN (SELECT public.get_auth_user_facilities()));
 
+DROP POLICY IF EXISTS rls_835_lines_tenant ON public.edi_835_line_adjudications;
 CREATE POLICY rls_835_lines_tenant ON public.edi_835_line_adjudications
     FOR ALL USING (facility_id IN (SELECT public.get_auth_user_facilities()));
 
+DROP POLICY IF EXISTS rls_835_exc_tenant ON public.edi_835_remittance_exceptions;
 CREATE POLICY rls_835_exc_tenant ON public.edi_835_remittance_exceptions
     FOR ALL USING (facility_id IN (SELECT public.get_auth_user_facilities()));
+

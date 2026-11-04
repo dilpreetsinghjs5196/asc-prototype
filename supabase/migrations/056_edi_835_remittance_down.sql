@@ -14,3 +14,4 @@ DROP TABLE IF EXISTS public.edi_835_remittance_exceptions CASCADE;
 DROP TABLE IF EXISTS public.edi_835_line_adjudications CASCADE;
 DROP TABLE IF EXISTS public.edi_835_claim_payments CASCADE;
 DROP TABLE IF EXISTS public.edi_835_remittance_batches CASCADE;
+

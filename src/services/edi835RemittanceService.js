@@ -4,3 +4,4 @@
  */
 export * from '../lib/edi835RemittanceService';
 export { default } from '../lib/edi835RemittanceService';
+

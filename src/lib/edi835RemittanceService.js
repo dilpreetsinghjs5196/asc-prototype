@@ -666,3 +666,4 @@ export const edi835RemittanceService = {
 };
 
 export default edi835RemittanceService;
+
