@@ -79,12 +79,12 @@
   margin-bottom: 20px;
 }
 
-.search-box {
+.financial-dict-controls .search-box {
   position: relative;
   width: 100%;
 }
 
-.search-icon {
+.financial-dict-controls .search-icon {
   position: absolute;
   left: 14px;
   top: 50%;
@@ -92,7 +92,7 @@
   color: #64748b;
 }
 
-.search-input {
+.financial-dict-controls .search-input {
   width: 100%;
   padding: 12px 40px 12px 42px;
   border-radius: 10px;
@@ -104,12 +104,12 @@
   transition: all 0.2s ease;
 }
 
-.search-input:focus {
+.financial-dict-controls .search-input:focus {
   border-color: #10b981;
   box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
-.clear-search-btn {
+.financial-dict-controls .clear-search-btn {
   position: absolute;
   right: 14px;
   top: 50%;

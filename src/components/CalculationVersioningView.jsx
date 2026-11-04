@@ -231,56 +231,69 @@ export default function CalculationVersioningView() {
         </div>
       </div>
 
-      {/* Filter and Tab Navigation Bar */}
-      <div className="controls-container">
+      {/* Tab Navigation Strip */}
+      <div className="versioning-tabs-bar">
         <div className="tab-navigation">
           <button
             className={`tab-btn ${activeTab === 'period_freezes' ? 'active' : ''}`}
-            onClick={() => setActiveTab('period_freezes')}
+            onClick={() => { setActiveTab('period_freezes'); setSelectedStatus('ALL'); }}
           >
             <Calendar className="w-4 h-4" />
-            <span>Accounting Period Freezes ({filteredPeriods.length})</span>
+            <span>Accounting Period Freezes ({periods.length})</span>
           </button>
           <button
             className={`tab-btn ${activeTab === 'version_inventory' ? 'active' : ''}`}
-            onClick={() => setActiveTab('version_inventory')}
+            onClick={() => { setActiveTab('version_inventory'); setSelectedStatus('ALL'); }}
           >
             <Layers className="w-4 h-4" />
-            <span>Calculation Version Inventory ({filteredVersions.length})</span>
+            <span>Calculation Version Inventory ({versions.length})</span>
           </button>
           <button
             className={`tab-btn ${activeTab === 'audit_trail' ? 'active' : ''}`}
-            onClick={() => setActiveTab('audit_trail')}
+            onClick={() => { setActiveTab('audit_trail'); setSelectedStatus('ALL'); }}
           >
             <Clock className="w-4 h-4" />
             <span>Version Audit Trail ({auditHistory.length})</span>
           </button>
         </div>
+      </div>
 
-        {/* Filters */}
-        <div className="filters-wrapper">
-          <div className="search-box">
-            <Search className="w-4 h-4 text-slate-400 search-icon" />
+      {/* Dedicated Search & Filter Toolbar */}
+      <div className="versioning-toolbar">
+        <div className="toolbar-left-controls">
+          <div className="versioning-search-box">
+            <Search className="w-4 h-4 search-icon" />
             <input
               type="text"
-              placeholder="Search period, version, schedule..."
+              placeholder={
+                activeTab === 'period_freezes'
+                  ? 'Search periods by name, version, status, or notes...'
+                  : activeTab === 'version_inventory'
+                  ? 'Search versions by code, name, schedule...'
+                  : 'Search audit trail by run type, version, or user...'
+              }
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="search-input"
+              className="versioning-search-input"
             />
             {searchTerm && (
-              <button onClick={() => setSearchTerm('')} className="clear-search-btn">
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="versioning-clear-btn"
+                title="Clear search"
+              >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
 
-          <div className="dropdown-filter">
+          <div className="versioning-dropdown-filter">
             <label className="filter-label">Status:</label>
             <select
               value={selectedStatus}
               onChange={e => setSelectedStatus(e.target.value)}
-              className="filter-select"
+              className="versioning-select"
             >
               <option value="ALL">All Statuses</option>
               {activeTab === 'period_freezes' ? (
@@ -294,6 +307,27 @@ export default function CalculationVersioningView() {
               )}
             </select>
           </div>
+
+          {(searchTerm || selectedStatus !== 'ALL') && (
+            <button
+              type="button"
+              onClick={() => { setSearchTerm(''); setSelectedStatus('ALL'); }}
+              className="versioning-reset-btn"
+              title="Reset search and filters"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
+
+        <div className="toolbar-right-controls">
+          <span className="results-badge">
+            Showing <strong className="text-emerald-400 font-mono">{
+              activeTab === 'period_freezes' ? filteredPeriods.length :
+              activeTab === 'version_inventory' ? filteredVersions.length :
+              auditHistory.length
+            }</strong> records
+          </span>
         </div>
       </div>
 
@@ -696,3 +730,4 @@ export default function CalculationVersioningView() {
     </div>
   );
 }
+

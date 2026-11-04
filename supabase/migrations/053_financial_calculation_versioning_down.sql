@@ -21,3 +21,4 @@ DROP TABLE IF EXISTS public.accounting_period_freezes CASCADE;
 DROP POLICY IF EXISTS calc_versions_insert_policy ON public.financial_calculation_versions;
 DROP POLICY IF EXISTS calc_versions_select_policy ON public.financial_calculation_versions;
 DROP TABLE IF EXISTS public.financial_calculation_versions CASCADE;
+

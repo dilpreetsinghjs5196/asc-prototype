@@ -165,3 +165,4 @@ CREATE POLICY recalc_runs_select_policy ON public.financial_recalculation_runs
 CREATE POLICY recalc_runs_insert_policy ON public.financial_recalculation_runs
     FOR INSERT TO authenticated
     WITH CHECK (public.is_facility_accessible(facility_id));
+
