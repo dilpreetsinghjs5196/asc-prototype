@@ -80,6 +80,7 @@ import {
   UserCheck,
   Users,
   Shield,
+  ShieldCheck,
   ShieldAlert,
   CalendarDays,
   Bot,
