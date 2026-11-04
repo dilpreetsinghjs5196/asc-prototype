@@ -769,3 +769,4 @@ function roundToTwo(num) {
   if (num === null || num === undefined || isNaN(num)) return 0.00;
   return Math.round((Number(num) + Number.EPSILON) * 100) / 100;
 }
+

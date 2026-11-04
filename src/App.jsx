@@ -44,6 +44,7 @@ import CaseCostModelView from './components/CaseCostModelView';
 import FacilityFinancialSettingsView from './components/FacilityFinancialSettingsView';
 import ContributionMarginEngineView from './components/ContributionMarginEngineView';
 import ContributionPerOrHourView from './components/ContributionPerOrHourView';
+import FinancialCompletenessView from './components/FinancialCompletenessView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2661,6 +2662,13 @@ export default function App() {
             <div className="menu-item-icon"><Clock size={16} /></div>
             Contribution Per OR Hour
           </div>
+          <div
+            className={`menu-item ${activeTab === 'financial_completeness' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('financial_completeness'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><ShieldCheck size={16} /></div>
+            Financial Completeness Score
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -2773,6 +2781,7 @@ export default function App() {
                   {activeTab === 'facility_financial_settings' && 'Facility Financial & Cost Settings'}
                   {activeTab === 'contribution_margin_engine' && 'Contribution Margin Engine & Yield Analysis'}
                   {activeTab === 'contribution_per_or_hour' && 'Contribution Per OR Hour & Financial Yield'}
+                  {activeTab === 'financial_completeness' && 'Financial Completeness & Audit Readiness Score'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -2814,6 +2823,7 @@ export default function App() {
                   {activeTab === 'facility_financial_settings' && 'Effective-dated baseline operating cost schedules, clinical wage matrix, and indirect cost assumptions'}
                   {activeTab === 'contribution_margin_engine' && 'Deterministic procedural profitability, margin yield percentages, leakage tracking & breakeven modeling'}
                   {activeTab === 'contribution_per_or_hour' && 'Operating room capacity economics, procedural throughput density, surgeon benchmarks & turnover drag analytics'}
+                  {activeTab === 'financial_completeness' && 'Multi-dimensional data provenance integrity, audit readiness scoring, trust tiers & general ledger governance'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -4448,6 +4458,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'contribution_per_or_hour' && (
                 <ContributionPerOrHourView />
+              )}
+
+              {/* ==========================================
+              TAB: FINANCIAL COMPLETENESS SCORE (PHASE 76)
+              ========================================== */}
+              {activeTab === 'financial_completeness' && (
+                <FinancialCompletenessView />
               )}
 
               {/* ==========================================

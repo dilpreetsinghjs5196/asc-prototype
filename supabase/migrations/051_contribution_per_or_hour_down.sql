@@ -18,3 +18,4 @@ DROP FUNCTION IF EXISTS public.fn_calculate_case_or_yield();
 DROP POLICY IF EXISTS or_yield_metrics_insert_policy ON public.case_or_yield_metrics;
 DROP POLICY IF EXISTS or_yield_metrics_select_policy ON public.case_or_yield_metrics;
 DROP TABLE IF EXISTS public.case_or_yield_metrics CASCADE;
+

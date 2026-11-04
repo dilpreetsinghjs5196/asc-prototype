@@ -503,3 +503,4 @@ export const contributionPerOrHourService = {
 function GREATEST(val, minVal) {
   return Math.max(val, minVal);
 }
+

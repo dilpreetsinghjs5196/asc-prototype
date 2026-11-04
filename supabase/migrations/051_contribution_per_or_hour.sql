@@ -194,3 +194,4 @@ CREATE POLICY or_yield_metrics_select_policy ON public.case_or_yield_metrics
 CREATE POLICY or_yield_metrics_insert_policy ON public.case_or_yield_metrics
     FOR INSERT TO authenticated
     WITH CHECK (public.is_facility_accessible(facility_id));
+
