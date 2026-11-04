@@ -46,6 +46,7 @@ import ContributionMarginEngineView from './components/ContributionMarginEngineV
 import ContributionPerOrHourView from './components/ContributionPerOrHourView';
 import FinancialCompletenessView from './components/FinancialCompletenessView';
 import CalculationVersioningView from './components/CalculationVersioningView';
+import ClaimsModelView from './components/ClaimsModelView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2681,6 +2682,18 @@ export default function App() {
           </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
+          <div className="sidebar-section-header" style={{ padding: '4px 16px', fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Revenue Cycle (RCM)
+          </div>
+          <div
+            className={`menu-item ${activeTab === 'claims_model' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('claims_model'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><FileText size={16} /></div>
+            Claims Management & Lifecycle
+          </div>
+
+          <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
           {/* Theme Switcher inside Sidebar */}
           <div
@@ -2793,6 +2806,7 @@ export default function App() {
                   {activeTab === 'contribution_per_or_hour' && 'Contribution Per OR Hour & Financial Yield'}
                   {activeTab === 'financial_completeness' && 'Financial Completeness & Audit Readiness Score'}
                   {activeTab === 'calculation_versioning' && 'Financial Calculation Versioning & Freeze Engine'}
+                  {activeTab === 'claims_model' && 'Claims Management & RCM Lifecycle'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -2836,6 +2850,7 @@ export default function App() {
                   {activeTab === 'contribution_per_or_hour' && 'Operating room capacity economics, procedural throughput density, surgeon benchmarks & turnover drag analytics'}
                   {activeTab === 'financial_completeness' && 'Multi-dimensional data provenance integrity, audit readiness scoring, trust tiers & general ledger governance'}
                   {activeTab === 'calculation_versioning' && 'Closed-period immutability, simulation dry-runs, audit restatements & backward compatibility'}
+                  {activeTab === 'claims_model' && 'UB-04 Institutional & CMS-1500 Adjudication, Clearinghouse Provenance & AR Ledger'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -4484,6 +4499,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'calculation_versioning' && (
                 <CalculationVersioningView />
+              )}
+
+              {/* ==========================================
+              TAB: CLAIMS MODEL (PHASE 80 - REVENUE CYCLE)
+              ========================================== */}
+              {activeTab === 'claims_model' && (
+                <ClaimsModelView />
               )}
 
               {/* ==========================================
