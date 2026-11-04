@@ -49,6 +49,7 @@ import CalculationVersioningView from './components/CalculationVersioningView';
 import ClaimsModelView from './components/ClaimsModelView';
 import Edi837IngestionView from './components/Edi837IngestionView';
 import Edi835RemittanceView from './components/Edi835RemittanceView';
+import PaymentAdjustmentView from './components/PaymentAdjustmentView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2709,6 +2710,13 @@ export default function App() {
             <div className="menu-item-icon"><Receipt size={16} /></div>
             835 Remittance & Adjudication
           </div>
+          <div
+            className={`menu-item ${activeTab === 'payment_adjustments' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('payment_adjustments'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><CreditCard size={16} /></div>
+            Payments & Cash Posting
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -2826,6 +2834,7 @@ export default function App() {
                   {activeTab === 'claims_model' && 'Claims Management & RCM Lifecycle'}
                   {activeTab === 'edi_837_ingestion' && '837 Ingestion & Case Matching Engine'}
                   {activeTab === 'edi_835_remittance' && '835 Remittance Advice & Electronic Posting Engine'}
+                  {activeTab === 'payment_adjustments' && 'Payments, Contractual Adjustments & Cash Posting'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -2872,6 +2881,7 @@ export default function App() {
                   {activeTab === 'claims_model' && 'UB-04 Institutional & CMS-1500 Adjudication, Clearinghouse Provenance & AR Ledger'}
                   {activeTab === 'edi_837_ingestion' && 'ANSI ASC X12 837I/P Clearinghouse Ingestion, WEDI SNIP 1–4 Validation & Case Linking'}
                   {activeTab === 'edi_835_remittance' && 'ANSI ASC X12 835 ERA Ingestion, CLP Adjudication, CARC Balancing & Auto-Post'}
+                  {activeTab === 'payment_adjustments' && 'Double-entry cash ledger, batch balancing, refund approval separation of duties & suspense management'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -4541,6 +4551,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'edi_835_remittance' && (
                 <Edi835RemittanceView />
+              )}
+
+              {/* ==========================================
+              TAB: PAYMENTS & ADJUSTMENTS (PHASE 83 - REVENUE CYCLE)
+              ========================================== */}
+              {activeTab === 'payment_adjustments' && (
+                <PaymentAdjustmentView />
               )}
 
               {/* ==========================================
