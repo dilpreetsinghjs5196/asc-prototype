@@ -18,3 +18,4 @@ DROP FUNCTION IF EXISTS public.fn_calculate_case_completeness();
 DROP POLICY IF EXISTS case_completeness_insert_policy ON public.case_financial_completeness;
 DROP POLICY IF EXISTS case_completeness_select_policy ON public.case_financial_completeness;
 DROP TABLE IF EXISTS public.case_financial_completeness CASCADE;
+

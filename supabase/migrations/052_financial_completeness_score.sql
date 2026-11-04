@@ -149,3 +149,4 @@ CREATE POLICY case_completeness_select_policy ON public.case_financial_completen
 CREATE POLICY case_completeness_insert_policy ON public.case_financial_completeness
     FOR INSERT TO authenticated
     WITH CHECK (public.is_facility_accessible(facility_id));
+
