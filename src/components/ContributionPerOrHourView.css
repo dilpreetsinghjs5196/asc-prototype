@@ -513,7 +513,7 @@
   white-space: nowrap;
 }
 
-.inspect-btn {
+.or-yield-container .inspect-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -526,7 +526,7 @@
   transition: all 0.15s ease;
 }
 
-.inspect-btn:hover {
+.or-yield-container .inspect-btn:hover {
   background: rgba(56, 189, 248, 0.2);
   border-color: rgba(56, 189, 248, 0.4);
 }

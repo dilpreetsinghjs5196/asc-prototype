@@ -191,7 +191,7 @@ export default function ClaimsModelView() {
       <div className="claims-topbar">
         <div className="topbar-left">
           <div className="header-icon-badge">
-            <FileText className="w-5 h-5 text-emerald-400" />
+            <FileText size={22} className="text-emerald-400" />
           </div>
           <div>
             <h1 className="claims-title">Claims Management & RCM Lifecycle</h1>
@@ -203,7 +203,7 @@ export default function ClaimsModelView() {
 
         <div className="topbar-right">
           <button onClick={handleExportCsv} className="action-btn export-btn" title="Export Claims to CSV">
-            <Download className="w-4 h-4 text-emerald-400" />
+            <Download size={15} className="text-emerald-400" />
             <span>Export Claims CSV</span>
           </button>
         </div>
@@ -215,7 +215,7 @@ export default function ClaimsModelView() {
         <div className="kpi-card highlight-card">
           <div className="kpi-header">
             <span className="kpi-label">Active Outstanding AR</span>
-            <DollarSign className="w-4 h-4 text-sky-400" />
+            <DollarSign size={16} className="text-sky-400" />
           </div>
           <div className="kpi-value-row">
             <span className="kpi-value text-sky-400">
@@ -232,7 +232,7 @@ export default function ClaimsModelView() {
         <div className="kpi-card">
           <div className="kpi-header">
             <span className="kpi-label">Clean Claim Rate</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <CheckCircle2 size={16} className="text-emerald-400" />
           </div>
           <div className="kpi-value-row">
             <span className="kpi-value text-emerald-400">{kpis.cleanClaimRate}%</span>
@@ -247,7 +247,7 @@ export default function ClaimsModelView() {
         <div className="kpi-card">
           <div className="kpi-header">
             <span className="kpi-label">In Payer Adjudication</span>
-            <Clock className="w-4 h-4 text-amber-400" />
+            <Clock size={16} className="text-amber-400" />
           </div>
           <div className="kpi-value-row">
             <span className="kpi-value text-amber-400">
@@ -264,7 +264,7 @@ export default function ClaimsModelView() {
         <div className="kpi-card">
           <div className="kpi-header">
             <span className="kpi-label">Denied / At-Risk AR</span>
-            <AlertCircle className="w-4 h-4 text-rose-400" />
+            <AlertCircle size={16} className="text-rose-400" />
           </div>
           <div className="kpi-value-row">
             <span className="kpi-value text-rose-400">
@@ -339,28 +339,28 @@ export default function ClaimsModelView() {
             className={`tab-btn ${activeTab === 'all_claims' ? 'active' : ''}`}
             onClick={() => { setActiveTab('all_claims'); setSelectedStatus('ALL'); }}
           >
-            <FileText className="w-4 h-4" />
+            <FileText size={15} />
             <span>All Claims Master ({claims.length})</span>
           </button>
           <button
             className={`tab-btn ${activeTab === 'claim_lines' ? 'active' : ''}`}
             onClick={() => { setActiveTab('claim_lines'); setSelectedStatus('ALL'); }}
           >
-            <Layers className="w-4 h-4" />
+            <Layers size={15} />
             <span>Claim Lines & Charges ({allClaimLines.length})</span>
           </button>
           <button
             className={`tab-btn ${activeTab === 'adjudication' ? 'active' : ''}`}
             onClick={() => { setActiveTab('adjudication'); setSelectedStatus('ALL'); }}
           >
-            <Clock className="w-4 h-4" />
+            <Clock size={15} />
             <span>Adjudication & AR Pipeline</span>
           </button>
           <button
             className={`tab-btn ${activeTab === 'audit_logs' ? 'active' : ''}`}
             onClick={() => { setActiveTab('audit_logs'); setSelectedStatus('ALL'); }}
           >
-            <Receipt className="w-4 h-4" />
+            <Receipt size={15} />
             <span>Clearinghouse EDI Audit ({auditHistory.length})</span>
           </button>
         </div>
@@ -370,7 +370,7 @@ export default function ClaimsModelView() {
       <div className="claims-toolbar">
         <div className="toolbar-left-controls">
           <div className="claims-search-box">
-            <Search className="w-4 h-4 search-icon" />
+            <Search size={15} className="search-icon" />
             <input
               type="text"
               placeholder={
@@ -391,7 +391,7 @@ export default function ClaimsModelView() {
                 className="claims-clear-btn"
                 title="Clear search"
               >
-                <X className="w-3.5 h-3.5" />
+                <X size={14} />
               </button>
             )}
           </div>
@@ -519,11 +519,12 @@ export default function ClaimsModelView() {
                       </td>
                       <td style={{ textAlign: 'center' }}>
                         <button
+                          type="button"
                           onClick={(e) => { e.stopPropagation(); setSelectedClaim(c); }}
-                          className="inspect-btn"
+                          className="claims-inspect-btn"
                           title="Inspect Claim & Lines"
                         >
-                          <Eye className="w-3.5 h-3.5 text-sky-400" />
+                          <Eye size={13} style={{ color: '#38bdf8' }} />
                           <span>Inspect</span>
                         </button>
                       </td>
@@ -714,7 +715,7 @@ export default function ClaimsModelView() {
           <div className="claim-modal-card" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <div className="modal-title-left">
-                <FileText className="w-5 h-5 text-emerald-400" />
+                <FileText size={20} className="text-emerald-400" />
                 <div>
                   <h3 className="modal-title">
                     Claim Detail: <span className="font-mono text-sky-400">{selectedClaim.patientControlNumber}</span>
@@ -724,8 +725,8 @@ export default function ClaimsModelView() {
                   </p>
                 </div>
               </div>
-              <button onClick={() => setSelectedClaim(null)} className="modal-close-btn">
-                <X className="w-5 h-5" />
+              <button onClick={() => setSelectedClaim(null)} className="modal-close-btn" title="Close">
+                <X size={18} />
               </button>
             </div>
 
@@ -841,3 +842,4 @@ export default function ClaimsModelView() {
     </div>
   );
 }
+

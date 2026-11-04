@@ -319,7 +319,7 @@
   white-space: nowrap;
 }
 
-.inspect-btn {
+.financial-dict-container .inspect-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -334,7 +334,7 @@
   transition: all 0.15s ease;
 }
 
-.inspect-btn:hover {
+.financial-dict-container .inspect-btn:hover {
   background: #233b61;
   color: #f8fafc;
 }

@@ -569,7 +569,7 @@
   color: #f8fafc;
 }
 
-.inspect-btn {
+.completeness-container .inspect-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -582,7 +582,7 @@
   transition: all 0.15s ease;
 }
 
-.inspect-btn:hover {
+.completeness-container .inspect-btn:hover {
   background: rgba(56, 189, 248, 0.2);
   border-color: rgba(56, 189, 248, 0.4);
 }

@@ -47,3 +47,4 @@ ALTER TABLE public.claims
     DROP COLUMN IF EXISTS clearinghouse_claim_id,
     DROP COLUMN IF EXISTS billing_format,
     DROP COLUMN IF EXISTS rcm_status;
+

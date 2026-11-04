@@ -167,3 +167,4 @@ CREATE POLICY claim_life_hist_select_policy ON public.claim_lifecycle_history
 CREATE POLICY claim_life_hist_insert_policy ON public.claim_lifecycle_history
     FOR INSERT TO authenticated
     WITH CHECK (public.is_facility_accessible(facility_id));
+
