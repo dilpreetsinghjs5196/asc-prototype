@@ -13,3 +13,4 @@ DROP VIEW IF EXISTS public.vw_edi_837_batch_summary CASCADE;
 DROP TABLE IF EXISTS public.edi_837_ingestion_exceptions CASCADE;
 DROP TABLE IF EXISTS public.edi_837_staged_claims CASCADE;
 DROP TABLE IF EXISTS public.edi_837_ingestion_batches CASCADE;
+

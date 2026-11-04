@@ -155,3 +155,4 @@ CREATE POLICY exceptions_select_policy ON public.edi_837_ingestion_exceptions
 
 CREATE POLICY exceptions_insert_policy ON public.edi_837_ingestion_exceptions
     FOR INSERT TO authenticated WITH CHECK (public.is_facility_accessible(facility_id));
+
