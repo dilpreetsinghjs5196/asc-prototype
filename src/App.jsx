@@ -47,6 +47,7 @@ import ContributionPerOrHourView from './components/ContributionPerOrHourView';
 import FinancialCompletenessView from './components/FinancialCompletenessView';
 import CalculationVersioningView from './components/CalculationVersioningView';
 import ClaimsModelView from './components/ClaimsModelView';
+import Edi837IngestionView from './components/Edi837IngestionView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2692,6 +2693,13 @@ export default function App() {
             <div className="menu-item-icon"><FileText size={16} /></div>
             Claims Management & Lifecycle
           </div>
+          <div
+            className={`menu-item ${activeTab === 'edi_837_ingestion' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('edi_837_ingestion'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Upload size={16} /></div>
+            837 Ingestion & Case Matching
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -2807,6 +2815,7 @@ export default function App() {
                   {activeTab === 'financial_completeness' && 'Financial Completeness & Audit Readiness Score'}
                   {activeTab === 'calculation_versioning' && 'Financial Calculation Versioning & Freeze Engine'}
                   {activeTab === 'claims_model' && 'Claims Management & RCM Lifecycle'}
+                  {activeTab === 'edi_837_ingestion' && '837 Ingestion & Case Matching Engine'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -2851,6 +2860,7 @@ export default function App() {
                   {activeTab === 'financial_completeness' && 'Multi-dimensional data provenance integrity, audit readiness scoring, trust tiers & general ledger governance'}
                   {activeTab === 'calculation_versioning' && 'Closed-period immutability, simulation dry-runs, audit restatements & backward compatibility'}
                   {activeTab === 'claims_model' && 'UB-04 Institutional & CMS-1500 Adjudication, Clearinghouse Provenance & AR Ledger'}
+                  {activeTab === 'edi_837_ingestion' && 'ANSI ASC X12 837I/P Clearinghouse Ingestion, WEDI SNIP 1–4 Validation & Case Linking'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -4506,6 +4516,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'claims_model' && (
                 <ClaimsModelView />
+              )}
+
+              {/* ==========================================
+              TAB: EDI 837 INGESTION (PHASE 81 - REVENUE CYCLE)
+              ========================================== */}
+              {activeTab === 'edi_837_ingestion' && (
+                <Edi837IngestionView />
               )}
 
               {/* ==========================================
