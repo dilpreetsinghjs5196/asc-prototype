@@ -51,6 +51,7 @@ import Edi837IngestionView from './components/Edi837IngestionView';
 import Edi835RemittanceView from './components/Edi835RemittanceView';
 import PaymentAdjustmentView from './components/PaymentAdjustmentView';
 import CarcRarcModelView from './components/CarcRarcModelView';
+import DenialsModelView from './components/DenialsModelView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2725,6 +2726,13 @@ export default function App() {
             <div className="menu-item-icon"><Shield size={16} /></div>
             CARC/RARC Denial Intelligence
           </div>
+          <div
+            className={`menu-item ${activeTab === 'denials_model' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('denials_model'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><ShieldAlert size={16} /></div>
+            Denials & Appeals Engine
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -2844,6 +2852,7 @@ export default function App() {
                   {activeTab === 'edi_835_remittance' && '835 Remittance Advice & Electronic Posting Engine'}
                   {activeTab === 'payment_adjustments' && 'Payments, Contractual Adjustments & Cash Posting'}
                   {activeTab === 'carc_rarc_model' && 'CARC & RARC Denial Intelligence Matrix'}
+                  {activeTab === 'denials_model' && 'Denials Management & Appeals Workflow'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -2892,6 +2901,7 @@ export default function App() {
                   {activeTab === 'edi_835_remittance' && 'ANSI ASC X12 835 ERA Ingestion, CLP Adjudication, CARC Balancing & Auto-Post'}
                   {activeTab === 'payment_adjustments' && 'Double-entry cash ledger, batch balancing, refund approval separation of duties & suspense management'}
                   {activeTab === 'carc_rarc_model' && 'Deterministic WEDI/X12 reason code normalization, root-cause interpretation & recovery scoring'}
+                  {activeTab === 'denials_model' && 'Denial categories, financial exposure, recoverability scoring, payer filing deadlines & team ownership'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -4575,6 +4585,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'carc_rarc_model' && (
                 <CarcRarcModelView />
+              )}
+
+              {/* ==========================================
+              TAB: DENIALS MODEL (PHASE 85 - REVENUE CYCLE)
+              ========================================== */}
+              {activeTab === 'denials_model' && (
+                <DenialsModelView />
               )}
 
               {/* ==========================================
