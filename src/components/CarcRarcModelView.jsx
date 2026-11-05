@@ -167,10 +167,8 @@ export default function CarcRarcModelView() {
             <Shield size={22} className="text-sky" />
           </div>
           <div>
-            <h1 className="carc-title" style={{ color: '#ffffff', fontSize: '20px', fontWeight: 700, margin: '0 0 4px 0' }}>
-              CARC & RARC Denial Intelligence Matrix
-            </h1>
-            <p className="carc-subtitle" style={{ color: '#94a3b8', fontSize: '13px', margin: 0 }}>
+            <h1 className="carc-title">CARC & RARC Denial Intelligence Matrix</h1>
+            <p className="carc-subtitle">
               Deterministic WEDI/X12 combinatorial reason code normalization, root-cause interpretation & recovery scoring.
             </p>
           </div>
