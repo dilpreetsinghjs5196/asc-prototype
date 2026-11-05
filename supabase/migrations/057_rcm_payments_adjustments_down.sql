@@ -13,3 +13,4 @@ DROP VIEW IF EXISTS public.vw_rcm_cash_posting_summary CASCADE;
 DROP TABLE IF EXISTS public.rcm_refund_recoupment_ledger CASCADE;
 DROP TABLE IF EXISTS public.rcm_payment_transactions CASCADE;
 DROP TABLE IF EXISTS public.rcm_payment_batches CASCADE;
+

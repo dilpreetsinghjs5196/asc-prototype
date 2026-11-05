@@ -142,3 +142,4 @@ CREATE POLICY rls_rcm_pmt_tx_tenant ON public.rcm_payment_transactions
 DROP POLICY IF EXISTS rls_rcm_refunds_tenant ON public.rcm_refund_recoupment_ledger;
 CREATE POLICY rls_rcm_refunds_tenant ON public.rcm_refund_recoupment_ledger
     FOR ALL USING (facility_id IN (SELECT public.get_auth_user_facilities()));
+

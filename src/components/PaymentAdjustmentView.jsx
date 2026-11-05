@@ -1191,3 +1191,4 @@ export default function PaymentAdjustmentView() {
     </div>
   );
 }
+

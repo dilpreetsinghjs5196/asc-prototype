@@ -100,10 +100,10 @@ export default function ImplantProductSkuMaster({
   const loadFilterOptions = useCallback(async () => {
     try {
       const vRes = await vendorService.getVendors({ limit: 100 });
-      setVendorsList(vRes.vendors || []);
+      setVendorsList(vRes?.vendors || vRes?.items || (Array.isArray(vRes) ? vRes : []));
 
       const cRes = await implantService.getComponents();
-      setComponentsList(cRes || []);
+      setComponentsList(cRes?.components || cRes?.items || (Array.isArray(cRes) ? cRes : []));
     } catch {
       // Non-blocking fallback
     }
@@ -232,7 +232,7 @@ export default function ImplantProductSkuMaster({
       const maps = await skuService.getDistributorMappings(sku.id);
       setDistributorMappings(maps);
       setNewDistMapping({
-        distributor_id: vendorsList.find(v => v.vendor_type === 'DISTRIBUTOR')?.id || '',
+        distributor_id: (Array.isArray(vendorsList) ? vendorsList : []).find(v => v.vendor_type === 'DISTRIBUTOR')?.id || '',
         distributor_item_number: '',
         package_unit: 'EA',
         is_preferred_distributor: false
@@ -397,7 +397,7 @@ export default function ImplantProductSkuMaster({
             onChange={(e) => setSelectedVendorId(e.target.value)}
           >
             <option value="">All OEM Manufacturers</option>
-            {vendorsList.filter(v => v.vendor_type === 'MANUFACTURER' || v.vendor_type === 'TISSUE_BANK').map(v => (
+            {(Array.isArray(vendorsList) ? vendorsList : []).filter(v => v.vendor_type === 'MANUFACTURER' || v.vendor_type === 'TISSUE_BANK').map(v => (
               <option key={v.id} value={v.id}>{v.display_name} ({v.vendor_code})</option>
             ))}
           </select>
@@ -408,7 +408,7 @@ export default function ImplantProductSkuMaster({
             onChange={(e) => setSelectedComponentId(e.target.value)}
           >
             <option value="">All Clinical Components</option>
-            {componentsList.map(c => (
+            {(Array.isArray(componentsList) ? componentsList : []).map(c => (
               <option key={c.id} value={c.id}>{c.name} ({c.code})</option>
             ))}
           </select>
@@ -629,7 +629,7 @@ export default function ImplantProductSkuMaster({
                       required
                     >
                       <option value="">Select Manufacturer</option>
-                      {vendorsList.filter(v => v.vendor_type === 'MANUFACTURER' || v.vendor_type === 'TISSUE_BANK').map(v => (
+                      {(Array.isArray(vendorsList) ? vendorsList : []).filter(v => v.vendor_type === 'MANUFACTURER' || v.vendor_type === 'TISSUE_BANK').map(v => (
                         <option key={v.id} value={v.id}>{v.display_name} ({v.vendor_code})</option>
                       ))}
                     </select>
@@ -644,7 +644,7 @@ export default function ImplantProductSkuMaster({
                       required
                     >
                       <option value="">Select Component</option>
-                      {componentsList.map(c => (
+                      {(Array.isArray(componentsList) ? componentsList : []).map(c => (
                         <option key={c.id} value={c.id}>{c.name} ({c.code})</option>
                       ))}
                     </select>
@@ -812,7 +812,7 @@ export default function ImplantProductSkuMaster({
                         required
                       >
                         <option value="">Select Distributor</option>
-                        {vendorsList.filter(v => v.vendor_type === 'DISTRIBUTOR' || v.vendor_type === 'SALES_AGENCY').map(v => (
+                        {(Array.isArray(vendorsList) ? vendorsList : []).filter(v => v.vendor_type === 'DISTRIBUTOR' || v.vendor_type === 'SALES_AGENCY').map(v => (
                           <option key={v.id} value={v.id}>{v.display_name} ({v.vendor_code})</option>
                         ))}
                       </select>
