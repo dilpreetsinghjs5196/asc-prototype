@@ -572,7 +572,7 @@ export default function CaseCostModelView() {
                   };
 
                   return (
-                    <tr key={item.id} className="cost-row">
+                    <tr key={item.id} className="case-cost-row">
                       <td style={{ width: '130px' }}>
                         <span className={`cat-pill ${config.badgeClass}`}>
                           {config.shortLabel}

@@ -721,6 +721,15 @@
   font-size: 12px;
 }
 
+.cost-table tbody tr {
+  display: table-row !important;
+}
+
+.cost-table thead th,
+.cost-table tbody td {
+  display: table-cell !important;
+}
+
 .cost-table thead th {
   background: #0d1626;
   padding: 12px 14px;
@@ -736,12 +745,13 @@
   text-overflow: ellipsis;
 }
 
-.cost-row {
+.case-cost-row {
+  display: table-row !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   transition: background-color 0.15s ease;
 }
 
-.cost-row:hover {
+.case-cost-row:hover {
   background-color: #152238;
 }
 
