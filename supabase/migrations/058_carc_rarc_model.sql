@@ -98,10 +98,10 @@ SELECT
   d.id,
   d.facility_id,
   d.claim_id,
-  cl.claim_number,
-  cl.patient_name,
-  cl.patient_mrn,
-  cl.payer_name,
+  cl.patient_control_number AS claim_number,
+  COALESCE(pat.name, 'Patient Encounter') AS patient_name,
+  COALESCE(pat.mrn, 'MRN-UNAVAILABLE') AS patient_mrn,
+  COALESCE(pay.name, 'Commercial Payer') AS payer_name,
   d.group_code,
   d.carc_code,
   d.rarc_code,
@@ -113,6 +113,8 @@ SELECT
   d.created_at
 FROM public.rcm_claim_denial_interpretations d
 JOIN public.claims cl ON d.claim_id = cl.id
+LEFT JOIN public.patients pat ON cl.patient_id = pat.id
+LEFT JOIN public.payers pay ON cl.primary_payer_id = pay.id
 WHERE d.status IN ('PENDING_ACTION', 'APPEAL_INITIATED', 'REBILLED')
 ORDER BY d.adjustment_amount DESC;
 
@@ -151,3 +153,4 @@ CREATE POLICY "Facility isolation on claim denial interpretations"
       WHERE user_id = auth.uid()
     )
   );
+
