@@ -143,14 +143,11 @@ CREATE POLICY "Allow read access to mapping rules for authenticated users"
   TO authenticated
   USING (true);
 
-DROP POLICY IF EXISTS "Facility isolation on claim denial interpretations" ON public.rcm_claim_denial_interpretations;
-CREATE POLICY "Facility isolation on claim denial interpretations"
-  ON public.rcm_claim_denial_interpretations FOR ALL
+DROP POLICY IF EXISTS rls_rcm_denial_interp_tenant ON public.rcm_claim_denial_interpretations;
+CREATE POLICY rls_rcm_denial_interp_tenant ON public.rcm_claim_denial_interpretations
+  FOR ALL
   TO authenticated
   USING (
-    facility_id IN (
-      SELECT facility_id FROM public.user_facility_memberships
-      WHERE user_id = auth.uid()
-    )
+    facility_id IN (SELECT public.get_auth_user_facilities())
   );
 
