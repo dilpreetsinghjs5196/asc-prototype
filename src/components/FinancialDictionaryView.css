@@ -40,7 +40,7 @@
   color: #10b981;
 }
 
-.header-title {
+.fin-dictionary-container .header-title {
   font-size: 24px;
   font-weight: 700;
   color: #f8fafc;
@@ -48,7 +48,7 @@
   letter-spacing: -0.02em;
 }
 
-.header-subtitle {
+.fin-dictionary-container .header-subtitle {
   font-size: 14px;
   color: #94a3b8;
   margin: 0;

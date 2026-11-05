@@ -456,14 +456,14 @@ export default function CaseCostModelView() {
             <table className="tray-table">
               <thead>
                 <tr>
-                  <th>Tray Code</th>
-                  <th>Tray Description</th>
-                  <th>Specialty</th>
-                  <th>Sterilization Method</th>
-                  <th>Decon Minutes</th>
-                  <th>Cycle Minutes</th>
-                  <th>Per-Cycle Cost</th>
-                  <th>Status</th>
+                  <th style={{ width: '110px' }}>Tray Code</th>
+                  <th style={{ width: '260px' }}>Tray Description</th>
+                  <th style={{ width: '140px' }}>Specialty</th>
+                  <th style={{ width: '160px' }}>Sterilization Method</th>
+                  <th style={{ width: '110px' }}>Decon Minutes</th>
+                  <th style={{ width: '110px' }}>Cycle Minutes</th>
+                  <th style={{ width: '120px' }}>Per-Cycle Cost</th>
+                  <th style={{ width: '90px' }} className="text-center">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -542,15 +542,15 @@ export default function CaseCostModelView() {
           <table className="cost-table">
             <thead>
               <tr>
-                <th>Category</th>
-                <th>Item Code & Description</th>
-                <th>Source Module</th>
-                <th>Vendor Invoice #</th>
-                <th className="text-right">Qty</th>
-                <th className="text-right">Unit Cost</th>
-                <th className="text-right">Total Cost</th>
-                <th>Completeness</th>
-                <th className="text-center">Action</th>
+                <th style={{ width: '130px' }}>Category</th>
+                <th style={{ width: '280px' }}>Item Code & Description</th>
+                <th style={{ width: '170px' }}>Source Module</th>
+                <th style={{ width: '150px' }}>Vendor Invoice #</th>
+                <th style={{ width: '80px' }} className="text-right">Qty</th>
+                <th style={{ width: '110px' }} className="text-right">Unit Cost</th>
+                <th style={{ width: '110px' }} className="text-right">Total Cost</th>
+                <th style={{ width: '120px' }} className="text-center">Completeness</th>
+                <th style={{ width: '70px' }} className="text-center">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -573,24 +573,24 @@ export default function CaseCostModelView() {
 
                   return (
                     <tr key={item.id} className="cost-row">
-                      <td>
+                      <td style={{ width: '130px' }}>
                         <span className={`cat-pill ${config.badgeClass}`}>
                           {config.shortLabel}
                         </span>
                       </td>
-                      <td>
+                      <td style={{ width: '280px' }}>
                         <div className="item-desc-cell">
                           <span className="item-code-tag">{item.item_code || 'N/A'}</span>
                           <span className="item-title">{item.item_description}</span>
                         </div>
                       </td>
-                      <td>
+                      <td style={{ width: '170px' }}>
                         <div className="source-cell">
                           <span className="source-mod">{item.source_module}</span>
                           <span className="source-ref-id">{item.source_reference_id}</span>
                         </div>
                       </td>
-                      <td>
+                      <td style={{ width: '150px' }}>
                         {item.vendor_invoice_number ? (
                           <span className="font-mono text-sky font-medium text-xs">
                             {item.vendor_invoice_number}
@@ -599,16 +599,16 @@ export default function CaseCostModelView() {
                           <span className="text-slate-500 text-xs italic">Direct Staff/Facility</span>
                         )}
                       </td>
-                      <td className="text-right font-mono font-medium text-slate-200">
+                      <td style={{ width: '80px' }} className="text-right font-mono font-medium text-slate-200">
                         {Number(item.quantity).toFixed(item.quantity % 1 === 0 ? 0 : 2)}
                       </td>
-                      <td className="text-right font-mono text-slate-300">
+                      <td style={{ width: '110px' }} className="text-right font-mono text-slate-300">
                         {caseCostModelService.formatCurrency(item.unit_cost)}
                       </td>
-                      <td className="text-right font-mono font-semibold text-emerald">
+                      <td style={{ width: '110px' }} className="text-right font-mono font-semibold text-emerald">
                         {caseCostModelService.formatCurrency(item.total_cost)}
                       </td>
-                      <td>
+                      <td style={{ width: '120px' }} className="text-center">
                         <span
                           className={`status-pill ${
                             item.completeness_flag === 'VERIFIED'
@@ -621,7 +621,7 @@ export default function CaseCostModelView() {
                           {item.completeness_flag}
                         </span>
                       </td>
-                      <td className="text-center">
+                      <td style={{ width: '70px' }} className="text-center">
                         <button
                           className="row-action-btn delete-btn"
                           title="Remove cost item"
