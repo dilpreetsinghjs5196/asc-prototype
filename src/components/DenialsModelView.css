@@ -6,8 +6,8 @@
 
 .denials-container {
   padding: 16px 24px 40px 24px;
-  background-color: #0b1120;
-  color: #f8fafc;
+  background-color: #0b1120 !important;
+  color: #f8fafc !important;
   min-height: calc(100vh - 70px);
   border-radius: 12px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -19,9 +19,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  background: #0f172a !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   flex-wrap: wrap;
   gap: 16px;
 }
@@ -157,9 +160,12 @@
 /* 3. Navigation Tabs */
 .denials-tabs-header {
   display: flex;
-  gap: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 18px;
+  gap: 6px;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 4px 8px;
+  margin-bottom: 16px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -172,9 +178,10 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 8px 14px;
   background: transparent;
   border: none;
+  border-radius: 6px;
   border-bottom: 2px solid transparent;
   color: #94a3b8;
   font-size: 13px;
@@ -186,9 +193,11 @@
 
 .denials-nav-tab:hover {
   color: #f8fafc;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .denials-nav-tab.active {
+  background: rgba(56, 189, 248, 0.12);
   color: #38bdf8;
   border-bottom-color: #38bdf8;
 }
@@ -675,3 +684,4 @@
 .text-emerald { color: #10b981; }
 .text-sky { color: #38bdf8; }
 .text-amber { color: #f59e0b; }
+

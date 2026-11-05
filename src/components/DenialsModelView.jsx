@@ -188,16 +188,57 @@ export default function DenialsModelView() {
   };
 
   return (
-    <div className="denials-container">
+    <div
+      className="denials-container"
+      style={{
+        backgroundColor: '#0b1120',
+        color: '#f8fafc',
+        minHeight: 'calc(100vh - 70px)',
+        borderRadius: '12px',
+        padding: '16px 24px 40px 24px',
+        boxSizing: 'border-box'
+      }}
+    >
       {/* 1. Header Toolbar */}
-      <div className="denials-topbar">
+      <div
+        className="denials-topbar"
+        style={{
+          backgroundColor: '#0f172a',
+          padding: '16px 20px',
+          borderRadius: '12px',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          marginBottom: '16px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)'
+        }}
+      >
         <div className="denials-topbar-left">
           <div className="denials-header-icon-badge">
             <ShieldAlert size={22} className="text-rose" />
           </div>
           <div>
-            <h1 className="denials-title">Denials Management & Appeals Workflow</h1>
-            <p className="denials-subtitle">
+            <h1
+              className="denials-title"
+              style={{
+                color: '#ffffff',
+                fontSize: '20px',
+                fontWeight: 700,
+                margin: '0 0 4px 0',
+                display: 'block',
+                visibility: 'visible',
+                opacity: 1
+              }}
+            >
+              Denials Management & Appeals Workflow
+            </h1>
+            <p
+              className="denials-subtitle"
+              style={{
+                color: '#94a3b8',
+                fontSize: '13px',
+                margin: 0,
+                display: 'block'
+              }}
+            >
               Denial categories, financial exposure, recoverability scoring, payer filing deadlines & team ownership
             </p>
           </div>
@@ -262,7 +303,16 @@ export default function DenialsModelView() {
       </div>
 
       {/* 3. Navigation Tabs */}
-      <div className="denials-tabs-header">
+      <div
+        className="denials-tabs-header"
+        style={{
+          backgroundColor: '#0f172a',
+          padding: '4px 8px',
+          borderRadius: '8px',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          marginBottom: '16px'
+        }}
+      >
         <button
           className={`denials-nav-tab ${activeTab === 'queue' ? 'active' : ''}`}
           onClick={() => setActiveTab('queue')}
@@ -776,3 +826,4 @@ export default function DenialsModelView() {
     </div>
   );
 }
+

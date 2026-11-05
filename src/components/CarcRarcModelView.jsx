@@ -159,16 +159,57 @@ export default function CarcRarcModelView() {
   };
 
   return (
-    <div className="carc-rarc-container">
+    <div
+      className="carc-rarc-container"
+      style={{
+        backgroundColor: '#0b1120',
+        color: '#f8fafc',
+        minHeight: 'calc(100vh - 70px)',
+        borderRadius: '12px',
+        padding: '16px 24px 40px 24px',
+        boxSizing: 'border-box'
+      }}
+    >
       {/* 1. Header Toolbar */}
-      <div className="carc-topbar">
+      <div
+        className="carc-topbar"
+        style={{
+          backgroundColor: '#0f172a',
+          padding: '16px 20px',
+          borderRadius: '12px',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          marginBottom: '16px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)'
+        }}
+      >
         <div className="carc-topbar-left">
           <div className="carc-header-icon-badge">
             <Shield size={22} className="text-sky" />
           </div>
           <div>
-            <h1 className="carc-title">CARC & RARC Denial Intelligence Matrix</h1>
-            <p className="carc-subtitle">
+            <h1
+              className="carc-title"
+              style={{
+                color: '#ffffff',
+                fontSize: '20px',
+                fontWeight: 700,
+                margin: '0 0 4px 0',
+                display: 'block',
+                visibility: 'visible',
+                opacity: 1
+              }}
+            >
+              CARC & RARC Denial Intelligence Matrix
+            </h1>
+            <p
+              className="carc-subtitle"
+              style={{
+                color: '#94a3b8',
+                fontSize: '13px',
+                margin: 0,
+                display: 'block'
+              }}
+            >
               Deterministic WEDI/X12 combinatorial reason code normalization, root-cause interpretation & recovery scoring.
             </p>
           </div>
@@ -225,7 +266,16 @@ export default function CarcRarcModelView() {
       </div>
 
       {/* 3. Navigation Tabs */}
-      <div className="carc-tabs-header">
+      <div
+        className="carc-tabs-header"
+        style={{
+          backgroundColor: '#0f172a',
+          padding: '4px 8px',
+          borderRadius: '8px',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          marginBottom: '16px'
+        }}
+      >
         <button
           className={`carc-nav-tab ${activeTab === 'queue' ? 'active' : ''}`}
           onClick={() => setActiveTab('queue')}
@@ -437,13 +487,13 @@ export default function CarcRarcModelView() {
             <table className="carc-table">
               <thead>
                 <tr>
-                  <th style={{ width: '90px' }}>CARC Code</th>
-                  <th style={{ width: '80px' }}>Group</th>
-                  <th style={{ width: '220px' }}>Short Description</th>
-                  <th style={{ width: '300px' }}>Formal Official Definition</th>
+                  <th style={{ width: '85px' }}>CARC Code</th>
+                  <th style={{ width: '75px' }}>Group</th>
+                  <th style={{ width: '200px' }}>Short Description</th>
+                  <th style={{ width: '280px' }}>Formal Official Definition</th>
                   <th style={{ width: '130px' }}>Category</th>
-                  <th style={{ width: '110px' }} className="text-center">Recovery %</th>
-                  <th style={{ width: '170px' }}>Default Action</th>
+                  <th style={{ width: '100px' }} className="text-center">Recovery %</th>
+                  <th style={{ width: '160px' }}>Default Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -458,18 +508,18 @@ export default function CarcRarcModelView() {
                 ) : (
                   carcList.map(c => (
                     <tr key={c.code} className="carc-row">
-                      <td style={{ width: '90px' }}>
+                      <td style={{ width: '85px' }}>
                         <span className="font-mono font-bold text-amber">{c.code}</span>
                       </td>
-                      <td style={{ width: '80px' }}>
+                      <td style={{ width: '75px' }}>
                         <span className={`px-2 py-0.5 rounded text-xs font-mono font-semibold ${CARC_GROUP_CODES[c.groupCode]?.badgeClass || 'bg-slate-800 text-slate-300'}`}>
                           {c.groupCode}
                         </span>
                       </td>
-                      <td style={{ width: '220px' }}>
+                      <td style={{ width: '200px' }}>
                         <div className="font-medium text-slate-200">{c.shortDescription}</div>
                       </td>
-                      <td style={{ width: '300px' }}>
+                      <td style={{ width: '280px' }}>
                         <div className="text-xs text-slate-400">{c.formalTitle}</div>
                       </td>
                       <td style={{ width: '130px' }}>
@@ -477,12 +527,12 @@ export default function CarcRarcModelView() {
                           {c.category}
                         </span>
                       </td>
-                      <td style={{ width: '110px' }} className="text-center">
+                      <td style={{ width: '100px' }} className="text-center">
                         <span className={`font-mono font-bold text-xs ${c.recoveryLikelihoodPct >= 70 ? 'text-emerald' : c.recoveryLikelihoodPct >= 30 ? 'text-amber' : 'text-rose'}`}>
                           {c.recoveryLikelihoodPct}%
                         </span>
                       </td>
-                      <td style={{ width: '170px' }}>
+                      <td style={{ width: '160px' }}>
                         <span className={`status-pill ${ACTION_WORKFLOWS[c.defaultAction]?.badgeClass || 'bg-slate-800 text-slate-300'}`}>
                           {ACTION_WORKFLOWS[c.defaultAction]?.label || c.defaultAction}
                         </span>
@@ -498,7 +548,7 @@ export default function CarcRarcModelView() {
               Showing <strong className="text-slate-200">{carcList.length}</strong> of <strong className="text-slate-200">{Object.keys(CARC_CATALOG).length}</strong> official ASC CARC reason codes
             </span>
             <span className="text-xs text-sky font-medium">
-              Scroll table vertically to view all codes ↓
+              ↓ Scroll table vertically or use filters above to review all {carcList.length} codes
             </span>
           </div>
         </div>
