@@ -10,3 +10,4 @@ DROP VIEW IF EXISTS public.vw_rcm_denials_aging_and_deadlines CASCADE;
 
 DROP TABLE IF EXISTS public.rcm_denial_events CASCADE;
 DROP TABLE IF EXISTS public.rcm_denials CASCADE;
+

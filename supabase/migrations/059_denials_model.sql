@@ -195,3 +195,4 @@ CREATE POLICY rls_rcm_denial_events_tenant ON public.rcm_denial_events
   USING (
     facility_id IN (SELECT public.get_auth_user_facilities())
   );
+
