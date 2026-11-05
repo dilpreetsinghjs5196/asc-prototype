@@ -162,18 +162,20 @@ export default function CarcRarcModelView() {
     <div className="carc-rarc-container">
       {/* 1. Header Toolbar */}
       <div className="carc-topbar">
-        <div className="topbar-title-wrap">
-          <div className="title-icon-box">
-            <Shield size={20} className="text-sky" />
+        <div className="carc-topbar-left">
+          <div className="carc-header-icon-badge">
+            <Shield size={22} className="text-sky" />
           </div>
           <div>
-            <h2 className="topbar-heading">CARC & RARC Denial Intelligence Matrix</h2>
-            <p className="topbar-sub">
+            <h1 className="carc-title" style={{ color: '#ffffff', fontSize: '20px', fontWeight: 700, margin: '0 0 4px 0' }}>
+              CARC & RARC Denial Intelligence Matrix
+            </h1>
+            <p className="carc-subtitle" style={{ color: '#94a3b8', fontSize: '13px', margin: 0 }}>
               Deterministic WEDI/X12 combinatorial reason code normalization, root-cause interpretation & recovery scoring.
             </p>
           </div>
         </div>
-        <div className="topbar-action-btns">
+        <div className="carc-topbar-right">
           <button className="rcm-btn rcm-btn-secondary" onClick={() => setActiveTab('simulator')}>
             <Play size={14} />
             <span>Launch Code Simulator</span>
@@ -389,6 +391,14 @@ export default function CarcRarcModelView() {
               </tbody>
             </table>
           </div>
+          <div className="carc-table-footer">
+            <span className="text-xs text-slate-400">
+              Showing <strong className="text-slate-200">{filteredQueue.length}</strong> actionable claim denials
+            </span>
+            <span className="text-xs text-slate-400">
+              Scroll table vertically to review full queue
+            </span>
+          </div>
         </div>
       )}
 
@@ -439,41 +449,59 @@ export default function CarcRarcModelView() {
                 </tr>
               </thead>
               <tbody>
-                {carcList.map(c => (
-                  <tr key={c.code} className="carc-row">
-                    <td style={{ width: '90px' }}>
-                      <span className="font-mono font-bold text-amber">{c.code}</span>
-                    </td>
-                    <td style={{ width: '80px' }}>
-                      <span className={`px-2 py-0.5 rounded text-xs font-mono font-semibold ${CARC_GROUP_CODES[c.groupCode]?.badgeClass || 'bg-slate-800 text-slate-300'}`}>
-                        {c.groupCode}
-                      </span>
-                    </td>
-                    <td style={{ width: '220px' }}>
-                      <div className="font-medium text-slate-200">{c.shortDescription}</div>
-                    </td>
-                    <td style={{ width: '300px' }}>
-                      <div className="text-xs text-slate-400">{c.formalTitle}</div>
-                    </td>
-                    <td style={{ width: '130px' }}>
-                      <span className="status-pill bg-slate-800 text-slate-300 border-slate-700">
-                        {c.category}
-                      </span>
-                    </td>
-                    <td style={{ width: '110px' }} className="text-center">
-                      <span className={`font-mono font-bold text-xs ${c.recoveryLikelihoodPct >= 70 ? 'text-emerald' : c.recoveryLikelihoodPct >= 30 ? 'text-amber' : 'text-rose'}`}>
-                        {c.recoveryLikelihoodPct}%
-                      </span>
-                    </td>
-                    <td style={{ width: '170px' }}>
-                      <span className={`status-pill ${ACTION_WORKFLOWS[c.defaultAction]?.badgeClass || 'bg-slate-800 text-slate-300'}`}>
-                        {ACTION_WORKFLOWS[c.defaultAction]?.label || c.defaultAction}
-                      </span>
+                {carcList.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="empty-cell">
+                      <Search size={32} className="text-sky mb-2" />
+                      <div>No CARC reason codes found matching "{searchQuery}".</div>
+                      <span className="text-xs text-slate-400">Try selecting "All Group Codes" or clearing the search box.</span>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  carcList.map(c => (
+                    <tr key={c.code} className="carc-row">
+                      <td style={{ width: '90px' }}>
+                        <span className="font-mono font-bold text-amber">{c.code}</span>
+                      </td>
+                      <td style={{ width: '80px' }}>
+                        <span className={`px-2 py-0.5 rounded text-xs font-mono font-semibold ${CARC_GROUP_CODES[c.groupCode]?.badgeClass || 'bg-slate-800 text-slate-300'}`}>
+                          {c.groupCode}
+                        </span>
+                      </td>
+                      <td style={{ width: '220px' }}>
+                        <div className="font-medium text-slate-200">{c.shortDescription}</div>
+                      </td>
+                      <td style={{ width: '300px' }}>
+                        <div className="text-xs text-slate-400">{c.formalTitle}</div>
+                      </td>
+                      <td style={{ width: '130px' }}>
+                        <span className="status-pill bg-slate-800 text-slate-300 border-slate-700">
+                          {c.category}
+                        </span>
+                      </td>
+                      <td style={{ width: '110px' }} className="text-center">
+                        <span className={`font-mono font-bold text-xs ${c.recoveryLikelihoodPct >= 70 ? 'text-emerald' : c.recoveryLikelihoodPct >= 30 ? 'text-amber' : 'text-rose'}`}>
+                          {c.recoveryLikelihoodPct}%
+                        </span>
+                      </td>
+                      <td style={{ width: '170px' }}>
+                        <span className={`status-pill ${ACTION_WORKFLOWS[c.defaultAction]?.badgeClass || 'bg-slate-800 text-slate-300'}`}>
+                          {ACTION_WORKFLOWS[c.defaultAction]?.label || c.defaultAction}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
+          </div>
+          <div className="carc-table-footer">
+            <span className="text-xs text-slate-400">
+              Showing <strong className="text-slate-200">{carcList.length}</strong> of <strong className="text-slate-200">{Object.keys(CARC_CATALOG).length}</strong> official ASC CARC reason codes
+            </span>
+            <span className="text-xs text-sky font-medium">
+              Scroll table vertically to view all codes ↓
+            </span>
           </div>
         </div>
       )}
@@ -508,26 +536,44 @@ export default function CarcRarcModelView() {
                 </tr>
               </thead>
               <tbody>
-                {rarcList.map(r => (
-                  <tr key={r.code} className="carc-row">
-                    <td style={{ width: '90px' }}>
-                      <span className="font-mono font-bold text-sky">{r.code}</span>
-                    </td>
-                    <td style={{ width: '140px' }}>
-                      <span className={`status-pill ${r.codeType === 'SUPPLEMENTAL' ? 'bg-sky-950/40 text-sky-400 border-sky-800' : 'bg-slate-800 text-slate-300 border-slate-700'}`}>
-                        {r.codeType}
-                      </span>
-                    </td>
-                    <td style={{ width: '260px' }}>
-                      <div className="font-medium text-slate-200">{r.shortDescription}</div>
-                    </td>
-                    <td style={{ width: '450px' }}>
-                      <div className="text-xs text-slate-300">{r.fullText}</div>
+                {rarcList.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" className="empty-cell">
+                      <Search size={32} className="text-sky mb-2" />
+                      <div>No RARC remark codes found matching "{searchQuery}".</div>
+                      <span className="text-xs text-slate-400">Try adjusting your search query.</span>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  rarcList.map(r => (
+                    <tr key={r.code} className="carc-row">
+                      <td style={{ width: '90px' }}>
+                        <span className="font-mono font-bold text-sky">{r.code}</span>
+                      </td>
+                      <td style={{ width: '140px' }}>
+                        <span className={`status-pill ${r.codeType === 'SUPPLEMENTAL' ? 'bg-sky-950/40 text-sky-400 border-sky-800' : 'bg-slate-800 text-slate-300 border-slate-700'}`}>
+                          {r.codeType}
+                        </span>
+                      </td>
+                      <td style={{ width: '260px' }}>
+                        <div className="font-medium text-slate-200">{r.shortDescription}</div>
+                      </td>
+                      <td style={{ width: '450px' }}>
+                        <div className="text-xs text-slate-300">{r.fullText}</div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
+          </div>
+          <div className="carc-table-footer">
+            <span className="text-xs text-slate-400">
+              Showing <strong className="text-slate-200">{rarcList.length}</strong> of <strong className="text-slate-200">{Object.keys(RARC_CATALOG).length}</strong> official ASC RARC remark codes
+            </span>
+            <span className="text-xs text-sky font-medium">
+              Scroll table vertically to view all codes ↓
+            </span>
           </div>
         </div>
       )}

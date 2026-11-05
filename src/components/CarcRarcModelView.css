@@ -25,38 +25,49 @@
   gap: 16px;
 }
 
+.carc-topbar-left,
 .topbar-title-wrap {
   display: flex;
   align-items: center;
   gap: 14px;
 }
 
+.carc-header-icon-badge,
 .title-icon-box {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 10px;
   background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  border: 1px solid rgba(56, 189, 248, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  color: #38bdf8;
 }
 
+.carc-title,
 .topbar-heading {
-  font-size: 18px;
-  font-weight: 700;
-  color: #f8fafc;
-  margin: 0;
-  letter-spacing: -0.01em;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  margin: 0 0 4px 0 !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.25 !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
+.carc-subtitle,
 .topbar-sub {
-  font-size: 12px;
-  color: #94a3b8;
-  margin: 3px 0 0 0;
+  font-size: 13px !important;
+  color: #94a3b8 !important;
+  margin: 0 !important;
+  display: block !important;
 }
 
+.carc-topbar-right,
 .topbar-action-btns {
   display: flex;
   align-items: center;
@@ -296,14 +307,19 @@
   color: #f8fafc;
 }
 
-/* 5. Responsive Table */
+/* 5. Responsive Table with Sticky Header & Smooth Internal Scroll */
 .table-responsive {
   width: 100%;
+  max-height: 520px;
   overflow-x: auto;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  background: #0d1626;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .table-responsive::-webkit-scrollbar {
+  width: 8px;
   height: 8px;
 }
 
@@ -324,8 +340,9 @@
   width: 100%;
   min-width: 1100px;
   table-layout: fixed;
-  border-collapse: collapse;
-  font-size: 12px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12.5px;
 }
 
 .carc-table tbody tr {
@@ -338,35 +355,54 @@
 }
 
 .carc-table thead th {
-  background: #0d1626;
-  padding: 12px 14px;
-  color: #94a3b8;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  background: #0d1626 !important;
+  padding: 12px 14px !important;
+  color: #e2e8f0 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
   text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 2px solid rgba(56, 189, 248, 0.3) !important;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .carc-row {
   display: table-row !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   transition: background-color 0.15s ease;
 }
 
-.carc-row:hover {
-  background-color: #152238;
+.carc-row:hover,
+.carc-table tbody tr:hover {
+  background-color: #152238 !important;
 }
 
 .carc-table td {
-  padding: 12px 14px;
+  padding: 12px 14px !important;
   vertical-align: middle;
+  color: #cbd5e1 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 12.5px !important;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.carc-table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #09101d;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  color: #94a3b8;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .status-pill {
