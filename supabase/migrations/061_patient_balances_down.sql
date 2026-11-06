@@ -17,3 +17,4 @@ DROP VIEW IF EXISTS public.vw_rcm_patient_balances_aging;
 -- 3. Drop Tables in Reverse Dependency Order
 DROP TABLE IF EXISTS public.rcm_patient_balance_events CASCADE;
 DROP TABLE IF EXISTS public.rcm_patient_balances CASCADE;
+

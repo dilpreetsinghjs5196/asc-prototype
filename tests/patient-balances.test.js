@@ -176,6 +176,7 @@ describe('Phase 87 — Patient Balances, Aging & Collections Engine Suite', () =
       // Core tables
       assert.ok(sql.includes('CREATE TABLE IF NOT EXISTS public.rcm_patient_balances'), 'Must create rcm_patient_balances table');
       assert.ok(sql.includes('CREATE TABLE IF NOT EXISTS public.rcm_patient_balance_events'), 'Must create rcm_patient_balance_events table');
+      assert.ok(sql.includes('patient_id BIGINT NOT NULL REFERENCES public.patients(id)'), 'Must define patient_id as BIGINT matching patients.id primary key');
 
       // Stored generated column
       assert.ok(
@@ -294,3 +295,4 @@ describe('Phase 87 — Patient Balances, Aging & Collections Engine Suite', () =
   });
 
 });
+

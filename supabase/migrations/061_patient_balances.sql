@@ -11,7 +11,7 @@ SET search_path = public, pg_temp;
 CREATE TABLE IF NOT EXISTS public.rcm_patient_balances (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   facility_id UUID NOT NULL REFERENCES public.facilities(id) ON DELETE CASCADE,
-  patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE RESTRICT,
+  patient_id BIGINT NOT NULL REFERENCES public.patients(id) ON DELETE RESTRICT,
   claim_id UUID NOT NULL REFERENCES public.claims(id) ON DELETE RESTRICT,
   
   -- Identifiers & Responsibility Classification
@@ -169,3 +169,4 @@ CREATE POLICY rls_rcm_patient_balance_events_tenant ON public.rcm_patient_balanc
   USING (
     facility_id IN (SELECT public.get_auth_user_facilities())
   );
+
