@@ -54,6 +54,7 @@ import CarcRarcModelView from './components/CarcRarcModelView';
 import DenialsModelView from './components/DenialsModelView';
 import AppealsWorkflowView from './components/AppealsWorkflowView';
 import PatientBalancesView from './components/PatientBalancesView';
+import ArAgingView from './components/ArAgingView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2749,6 +2750,13 @@ export default function App() {
             <div className="menu-item-icon"><UserCheck size={16} /></div>
             Patient Balances & Collections
           </div>
+          <div
+            className={`menu-item ${activeTab === 'ar_aging' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('ar_aging'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><TrendingUp size={16} /></div>
+            AR Aging & Work Queues
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -2871,6 +2879,7 @@ export default function App() {
                   {activeTab === 'denials_model' && 'Denials Management & Appeals Workflow'}
                   {activeTab === 'appeals_workflow' && 'Appeals Workflow & Dispute Management Engine'}
                   {activeTab === 'patient_balances' && 'Patient Responsibility, Balances & Collections Engine'}
+                  {activeTab === 'ar_aging' && 'Accounts Receivable (AR) Aging & Collector Work Queues'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -2922,6 +2931,7 @@ export default function App() {
                   {activeTab === 'denials_model' && 'Denial categories, financial exposure, recoverability scoring, payer filing deadlines & team ownership'}
                   {activeTab === 'appeals_workflow' && 'Multi-tier payer dispute orchestration, clinical evidence compilation, statutory turnaround countdown & settlement reconciliation'}
                   {activeTab === 'patient_balances' && 'Post-adjudication patient liability, GAAP 5-tier aging schedules, structured installment plans & collection workflows'}
+                  {activeTab === 'ar_aging' && 'GAAP aging distribution, dual DOS & Bill Date schedules, Days Sales Outstanding (DSO) & priority work queues'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -4626,6 +4636,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'patient_balances' && (
                 <PatientBalancesView />
+              )}
+
+              {/* ==========================================
+              TAB: AR AGING (PHASE 88 - REVENUE CYCLE)
+              ========================================== */}
+              {activeTab === 'ar_aging' && (
+                <ArAgingView />
               )}
 
               {/* ==========================================
