@@ -55,6 +55,7 @@ import DenialsModelView from './components/DenialsModelView';
 import AppealsWorkflowView from './components/AppealsWorkflowView';
 import PatientBalancesView from './components/PatientBalancesView';
 import ArAgingView from './components/ArAgingView';
+import ReconciliationEngineView from './components/ReconciliationEngineView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2757,6 +2758,13 @@ export default function App() {
             <div className="menu-item-icon"><TrendingUp size={16} /></div>
             AR Aging & Work Queues
           </div>
+          <div
+            className={`menu-item ${activeTab === 'reconciliation_engine' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('reconciliation_engine'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><CheckCircle size={16} /></div>
+            Reconciliation & Variances
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -2880,6 +2888,7 @@ export default function App() {
                   {activeTab === 'appeals_workflow' && 'Appeals Workflow & Dispute Management Engine'}
                   {activeTab === 'patient_balances' && 'Patient Responsibility, Balances & Collections Engine'}
                   {activeTab === 'ar_aging' && 'Accounts Receivable (AR) Aging & Collector Work Queues'}
+                  {activeTab === 'reconciliation_engine' && 'Claim, Remittance & Payment Reconciliation Engine'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -2932,6 +2941,7 @@ export default function App() {
                   {activeTab === 'appeals_workflow' && 'Multi-tier payer dispute orchestration, clinical evidence compilation, statutory turnaround countdown & settlement reconciliation'}
                   {activeTab === 'patient_balances' && 'Post-adjudication patient liability, GAAP 5-tier aging schedules, structured installment plans & collection workflows'}
                   {activeTab === 'ar_aging' && 'GAAP aging distribution, dual DOS & Bill Date schedules, Days Sales Outstanding (DSO) & priority work queues'}
+                  {activeTab === 'reconciliation_engine' && 'Four-way financial matching, deterministic balancing invariants, contractual underpayment detection & discrepancy resolution'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -4643,6 +4653,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'ar_aging' && (
                 <ArAgingView />
+              )}
+
+              {/* ==========================================
+              TAB: RECONCILIATION ENGINE (PHASE 89 - REVENUE CYCLE)
+              ========================================== */}
+              {activeTab === 'reconciliation_engine' && (
+                <ReconciliationEngineView />
               )}
 
               {/* ==========================================

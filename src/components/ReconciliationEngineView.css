@@ -1,0 +1,401 @@
+/* ==============================================================================
+   ASC Maestro Clinical Design System — Reconciliation Engine Styles
+   Zero Purple/Violet/Indigo Tokens Policy Strictly Enforced
+   ============================================================================== */
+
+.recon-container {
+  padding: 16px 24px 40px 24px;
+  background-color: #0b1120 !important;
+  color: #f8fafc !important;
+  min-height: calc(100vh - 70px);
+  border-radius: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+/* 1. Header Toolbar */
+.recon-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  background: #0f172a !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.recon-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.recon-header-icon-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recon-title {
+  color: #ffffff !important;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  display: block;
+  letter-spacing: -0.01em;
+}
+
+.recon-subtitle {
+  color: #94a3b8;
+  font-size: 13px;
+  margin: 0;
+  display: block;
+}
+
+.recon-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Buttons */
+.recon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+  outline: none;
+}
+
+.recon-btn-primary {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+.recon-btn-primary:hover {
+  background: #0369a1;
+}
+
+.recon-btn-secondary {
+  background: #1e293b;
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.recon-btn-secondary:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+.recon-btn-emerald {
+  background: #059669;
+  color: #ffffff;
+}
+
+.recon-btn-emerald:hover {
+  background: #047857;
+}
+
+/* 2. Executive KPI Ribbon */
+.recon-kpi-ribbon {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 1024px) {
+  .recon-kpi-ribbon {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.recon-kpi-card {
+  background: #111c30;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.recon-kpi-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.recon-kpi-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.recon-kpi-number {
+  font-size: 20px;
+  font-weight: 800;
+  font-family: monospace;
+  margin-bottom: 4px;
+}
+
+.recon-kpi-subtext {
+  font-size: 11px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 3. Navigation Tabs */
+.recon-tabs-header {
+  display: flex;
+  gap: 6px;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 4px 8px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.recon-nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.recon-nav-tab:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.recon-nav-tab.active {
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+}
+
+/* 4. Filter Toolbar */
+.recon-filter-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.recon-search-box {
+  display: flex;
+  align-items: center;
+  background: #111c30;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 6px 12px;
+  gap: 8px;
+  min-width: 280px;
+}
+
+.recon-search-input {
+  background: transparent;
+  border: none;
+  color: #f8fafc;
+  font-size: 13px;
+  outline: none;
+  width: 100%;
+}
+
+.recon-select {
+  background: #111c30;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 7px 12px;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+}
+
+/* 5. Responsive Table */
+.recon-table-responsive {
+  width: 100%;
+  max-height: 480px;
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0f172a;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.recon-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1100px;
+  font-size: 13px;
+  text-align: left;
+}
+
+.recon-table th {
+  background: #111c30;
+  color: #94a3b8;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.recon-table td {
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #cbd5e1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+}
+
+.recon-table tbody tr:hover {
+  background: rgba(56, 189, 248, 0.05);
+}
+
+/* Status & Variance Badges */
+.recon-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+/* Modal Dialogs */
+.recon-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+.recon-modal-card {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  width: 95%;
+  max-width: 560px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.recon-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.recon-modal-title {
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.recon-modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.recon-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  background: #0b1120;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.recon-form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #cbd5e1;
+}
+
+.recon-form-input,
+.recon-form-select,
+.recon-form-textarea {
+  background: #111c30;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  color: #f8fafc;
+  padding: 8px 12px;
+  font-size: 13px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.recon-form-input:focus,
+.recon-form-select:focus,
+.recon-form-textarea:focus {
+  border-color: #38bdf8;
+}
+
+/* Palette utility text colors */
+.text-sky { color: #38bdf8; }
+.text-emerald { color: #10b981; }
+.text-amber { color: #f59e0b; }
+.text-rose { color: #f43f5e; }
+.text-slate-200 { color: #e2e8f0; }
+.text-slate-300 { color: #cbd5e1; }
+.text-slate-400 { color: #94a3b8; }
+.text-slate-500 { color: #64748b; }
