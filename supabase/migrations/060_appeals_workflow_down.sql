@@ -19,3 +19,4 @@ DROP VIEW IF EXISTS public.vw_rcm_active_appeals_queue;
 DROP TABLE IF EXISTS public.rcm_appeal_events CASCADE;
 DROP TABLE IF EXISTS public.rcm_appeal_evidence CASCADE;
 DROP TABLE IF EXISTS public.rcm_appeals CASCADE;
+
