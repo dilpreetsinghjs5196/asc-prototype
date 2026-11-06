@@ -19,3 +19,4 @@ DROP VIEW IF EXISTS public.vw_rcm_ar_aging_summary CASCADE;
 DROP TABLE IF EXISTS public.rcm_ar_touches CASCADE;
 DROP TABLE IF EXISTS public.rcm_ar_work_items CASCADE;
 DROP TABLE IF EXISTS public.rcm_ar_work_queues CASCADE;
+

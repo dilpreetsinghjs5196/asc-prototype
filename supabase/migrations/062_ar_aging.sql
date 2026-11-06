@@ -123,30 +123,30 @@ SELECT
   
   -- Surgery & Clinical Details (surgery_id is BIGINT)
   c.surgery_id,
-  s.surgery_date AS date_of_service,
+  s.date::DATE AS date_of_service,
   c.initial_submitted_at,
   
   -- Deterministic Dual Aging Days Calculations
-  GREATEST(0, (CURRENT_DATE - s.surgery_date)) AS aging_days_dos,
-  GREATEST(0, (CURRENT_DATE - COALESCE(c.initial_submitted_at::DATE, s.surgery_date))) AS aging_days_bill,
+  GREATEST(0, (CURRENT_DATE - s.date::DATE)) AS aging_days_dos,
+  GREATEST(0, (CURRENT_DATE - COALESCE(c.initial_submitted_at::DATE, s.date::DATE))) AS aging_days_bill,
   
   -- Standard GAAP Aging Buckets by DOS
   CASE 
-    WHEN (CURRENT_DATE - s.surgery_date) <= 30 THEN '0_30'
-    WHEN (CURRENT_DATE - s.surgery_date) <= 60 THEN '31_60'
-    WHEN (CURRENT_DATE - s.surgery_date) <= 90 THEN '61_90'
-    WHEN (CURRENT_DATE - s.surgery_date) <= 120 THEN '91_120'
-    WHEN (CURRENT_DATE - s.surgery_date) <= 150 THEN '121_150'
+    WHEN (CURRENT_DATE - s.date::DATE) <= 30 THEN '0_30'
+    WHEN (CURRENT_DATE - s.date::DATE) <= 60 THEN '31_60'
+    WHEN (CURRENT_DATE - s.date::DATE) <= 90 THEN '61_90'
+    WHEN (CURRENT_DATE - s.date::DATE) <= 120 THEN '91_120'
+    WHEN (CURRENT_DATE - s.date::DATE) <= 150 THEN '121_150'
     ELSE '150_PLUS'
   END AS aging_bucket_dos,
   
   -- Standard GAAP Aging Buckets by Bill Date
   CASE 
-    WHEN (CURRENT_DATE - COALESCE(c.initial_submitted_at::DATE, s.surgery_date)) <= 30 THEN '0_30'
-    WHEN (CURRENT_DATE - COALESCE(c.initial_submitted_at::DATE, s.surgery_date)) <= 60 THEN '31_60'
-    WHEN (CURRENT_DATE - COALESCE(c.initial_submitted_at::DATE, s.surgery_date)) <= 90 THEN '61_90'
-    WHEN (CURRENT_DATE - COALESCE(c.initial_submitted_at::DATE, s.surgery_date)) <= 120 THEN '91_120'
-    WHEN (CURRENT_DATE - COALESCE(c.initial_submitted_at::DATE, s.surgery_date)) <= 150 THEN '121_150'
+    WHEN (CURRENT_DATE - COALESCE(c.initial_submitted_at::DATE, s.date::DATE)) <= 30 THEN '0_30'
+    WHEN (CURRENT_DATE - COALESCE(c.initial_submitted_at::DATE, s.date::DATE)) <= 60 THEN '31_60'
+    WHEN (CURRENT_DATE - COALESCE(c.initial_submitted_at::DATE, s.date::DATE)) <= 90 THEN '61_90'
+    WHEN (CURRENT_DATE - COALESCE(c.initial_submitted_at::DATE, s.date::DATE)) <= 120 THEN '91_120'
+    WHEN (CURRENT_DATE - COALESCE(c.initial_submitted_at::DATE, s.date::DATE)) <= 150 THEN '121_150'
     ELSE '150_PLUS'
   END AS aging_bucket_bill
 
@@ -212,3 +212,4 @@ CREATE POLICY rls_rcm_ar_touches_tenant ON public.rcm_ar_touches
   USING (
     facility_id IN (SELECT public.get_auth_user_facilities())
   );
+
