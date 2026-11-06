@@ -53,6 +53,7 @@ import PaymentAdjustmentView from './components/PaymentAdjustmentView';
 import CarcRarcModelView from './components/CarcRarcModelView';
 import DenialsModelView from './components/DenialsModelView';
 import AppealsWorkflowView from './components/AppealsWorkflowView';
+import PatientBalancesView from './components/PatientBalancesView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2741,6 +2742,13 @@ export default function App() {
             <div className="menu-item-icon"><Scale size={16} /></div>
             Appeals & Dispute Workflow
           </div>
+          <div
+            className={`menu-item ${activeTab === 'patient_balances' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('patient_balances'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><UserCheck size={16} /></div>
+            Patient Balances & Collections
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -2862,6 +2870,7 @@ export default function App() {
                   {activeTab === 'carc_rarc_model' && 'CARC & RARC Denial Intelligence Matrix'}
                   {activeTab === 'denials_model' && 'Denials Management & Appeals Workflow'}
                   {activeTab === 'appeals_workflow' && 'Appeals Workflow & Dispute Management Engine'}
+                  {activeTab === 'patient_balances' && 'Patient Responsibility, Balances & Collections Engine'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -2912,6 +2921,7 @@ export default function App() {
                   {activeTab === 'carc_rarc_model' && 'Deterministic WEDI/X12 reason code normalization, root-cause interpretation & recovery scoring'}
                   {activeTab === 'denials_model' && 'Denial categories, financial exposure, recoverability scoring, payer filing deadlines & team ownership'}
                   {activeTab === 'appeals_workflow' && 'Multi-tier payer dispute orchestration, clinical evidence compilation, statutory turnaround countdown & settlement reconciliation'}
+                  {activeTab === 'patient_balances' && 'Post-adjudication patient liability, GAAP 5-tier aging schedules, structured installment plans & collection workflows'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -4609,6 +4619,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'appeals_workflow' && (
                 <AppealsWorkflowView />
+              )}
+
+              {/* ==========================================
+              TAB: PATIENT BALANCES (PHASE 87 - REVENUE CYCLE)
+              ========================================== */}
+              {activeTab === 'patient_balances' && (
+                <PatientBalancesView />
               )}
 
               {/* ==========================================
