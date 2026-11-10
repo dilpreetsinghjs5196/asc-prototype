@@ -19,3 +19,4 @@ DROP POLICY IF EXISTS payment_variances_facility_isolation ON public.payment_var
 DROP TABLE IF EXISTS public.payment_variance_rule_evaluations CASCADE;
 DROP TABLE IF EXISTS public.payment_variance_lines CASCADE;
 DROP TABLE IF EXISTS public.payment_variances CASCADE;
+

@@ -191,3 +191,4 @@ SELECT
   ROUND(AVG(data_completeness_score), 1) AS avg_completeness_score
 FROM public.payment_variances
 GROUP BY facility_id, validation_status, confidence_level;
+

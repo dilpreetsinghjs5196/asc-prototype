@@ -119,7 +119,8 @@ import {
   Cpu,
   Scale,
   CreditCard,
-  BookOpen
+  BookOpen,
+  FileCheck
 } from 'lucide-react';
 
 // ==========================================

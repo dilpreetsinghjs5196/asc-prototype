@@ -228,3 +228,4 @@ Every validation execution preserves:
 
 ## Definition of Done
 Complete only when data model, migrations, deterministic validation engine, UI workbenches, RLS policies, automated tests, and documentation are committed to git with a clean working tree.
+
