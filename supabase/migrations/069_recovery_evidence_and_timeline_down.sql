@@ -26,3 +26,4 @@ DROP TABLE IF EXISTS public.recovery_submissions CASCADE;
 DROP TABLE IF EXISTS public.recovery_evidence CASCADE;
 DROP TABLE IF EXISTS public.recovery_case_events CASCADE;
 DROP TABLE IF EXISTS public.recovery_cases CASCADE;
+

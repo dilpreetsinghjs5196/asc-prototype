@@ -1,9 +1,9 @@
-# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 93B)
+# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 93C)
 
 > **Document Type:** Authoritative Phase-by-Phase Reference Directory  
 > **Repository:** `asc-prototype/docs/phases/`  
-> **Current Revision:** Post-Phase 93B Production Integration  
-> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 93B.
+> **Current Revision:** Post-Phase 93C Production Integration  
+> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 93C.
 
 ---
 
@@ -17,7 +17,7 @@
 7. [Module 06: Medicare & Commercial Reimbursement Engine (Phases 60–69)](#module-06-medicare--commercial-reimbursement-engine)
 8. [Module 07: Financials, Procedural Economics & Versioning (Phases 70–77)](#module-07-financials-procedural-economics--versioning)
 9. [Module 08: Revenue Cycle Management (RCM) & Clearinghouse EDI (Phases 80–89)](#module-08-revenue-cycle-management-rcm--clearinghouse-edi)
-10. [Module 09: Master Revenue Leakage & Recovery Engine (Phases 90–93B)](#module-09-master-revenue-leakage-engine)
+10. [Module 09: Master Revenue Leakage & Recovery Engine (Phases 90–93C)](#module-09-master-revenue-leakage-engine)
 
 ---
 
@@ -588,17 +588,31 @@
   - **Operational Metrics:** Measures detection-to-validation, validation-to-submission, submission-to-response, and submission-to-cash cycle times, plus manual staff touches.
 - **Business Impact:** Transforms clinical billing disputes into legally defensible, automated evidence packets that accelerate payer turnaround, prevent lost cash from expired filing deadlines, and verify actual cash collected.
 
+### Phase 93C: Recurring Payer Underpayment Patterns Engine
+- **File:** `93C_RECURRING_PAYER_UNDERPAYMENT_PATTERNS.md`
+- **Objective:** Detect repeated underpayment patterns across payer, plan, contract rule, CPT/HCPCS, modifier, implant carve-out, and adjudication behavior, transforming isolated variances into higher-value systemic batch recovery opportunities.
+- **Operational Principle:** *"One claim short by \$840 is an isolated claim issue. Seventeen similar claims short for the same rule is a systemic payer pattern."*
+- **Key Deliverables:**
+  - **8 Pattern Root Causes:** `FEE_SCHEDULE_MISMATCH`, `IMPLANT_CARVEOUT_OMISSION`, `MPPR_OVER_DISCOUNT`, `MODIFIER_REDUCTION_ERROR`, `CASE_RATE_UNPACKAGING_ERROR`, `CONTRACT_VERSION_MISMATCH`, `SECONDARY_PROCEDURE_UNDERPAYMENT`, and `LINE_LEVEL_CARC_EXCLUSION`.
+  - **Multi-Dimensional Grouping Key (Rule 1):** $\text{Key} = \text{payer} + \text{plan} + \text{contract\_version} + \text{root\_cause} + \text{cpt} + \text{modifiers} + \text{rule\_sig}$. Prevents false grouping across different plans, contracts, or dates.
+  - **Qualification Thresholds (Rule 2):** Requires $\ge 3$ validated claims OR aggregate validated recoverable $\ge \$2,500.00$.
+  - **Quality-Capped Confidence (Rule 3):** Pattern confidence is bounded by constituent claim validation ratio ($<60\%$ LOW, $60-85\%$ MEDIUM, $\ge 85\%$ HIGH).
+  - **Earliest Filing Deadline (Rule 4):** Batch packet inherits earliest statutory deadline among included claims to prevent loss from elapsed windows.
+  - **Batch Recovery Opportunities:** Bundles validated cohorts into actionable multi-claim dispute packets with composite priority scoring ($0-100$).
+  - **Annual Exposure Projection:** Calculates average short-pay per encounter, monthly frequency, and annualized revenue leakage.
+- **Business Impact:** Empowers ASC leadership to negotiate systemic payer settlements, eliminates repetitive single-claim appeal labor, and forces health plans to correct erroneous automated adjudication engines.
+
 ---
 
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 95 | **95 / 95 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **152 total files** |
-| **Automated Tests** | 100% Pass | **181 / 181 passing across 67 suites** |
+| **Documented Phases** | 96 | **96 / 96 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **153 total files** |
+| **Automated Tests** | 100% Pass | **204 / 204 passing across 68 suites** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 9.1s)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **069 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 15.4s)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **070 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 

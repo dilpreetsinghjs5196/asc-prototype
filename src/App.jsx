@@ -62,6 +62,7 @@ import MissingChargeDetectionView from './components/MissingChargeDetectionView'
 import UnderpaymentDetectionView from './components/UnderpaymentDetectionView';
 import PaymentVarianceValidationView from './components/PaymentVarianceValidationView';
 import RecoveryEvidenceTimelineView from './components/RecoveryEvidenceTimelineView';
+import PayerUnderpaymentPatternsView from './components/PayerUnderpaymentPatternsView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2815,6 +2816,13 @@ export default function App() {
             <div className="menu-item-icon"><History size={16} /></div>
             Recovery Evidence & Timeline
           </div>
+          <div
+            className={`menu-item ${activeTab === 'payer_patterns' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('payer_patterns'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><GitFork size={16} /></div>
+            Payer Underpayment Patterns
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -2945,6 +2953,7 @@ export default function App() {
                   {activeTab === 'underpayments' && 'Contractual Underpayment Detection & Variance Recovery'}
                   {activeTab === 'variance_validation' && 'Payment Variance Validation & Contract Lineage'}
                   {activeTab === 'recovery_cases' && 'Recovery Evidence, Submission & Response Timeline'}
+                  {activeTab === 'payer_patterns' && 'Recurring Payer Underpayment Patterns & Batch Recovery'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -3004,6 +3013,7 @@ export default function App() {
                   {activeTab === 'underpayments' && 'Expected-vs-actual allowed fee reconciliation, MPPR audit & payer dispute management'}
                   {activeTab === 'variance_validation' && 'Deterministic proof of true recoverable underpayment, contractual adjustment verification & multi-line adjudication trace'}
                   {activeTab === 'recovery_cases' && 'Auditable recovery cases, deterministic evidence packages, human approval governance & verified cash reconciliation'}
+                  {activeTab === 'payer_patterns' && 'Systemic pattern detection across payers, plans, fee schedules, CPT codes & automated batch dispute opportunities'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -4764,6 +4774,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'recovery_cases' && (
                 <RecoveryEvidenceTimelineView />
+              )}
+
+              {/* ==========================================
+              TAB: PAYER UNDERPAYMENT PATTERNS (PHASE 93C - REVENUE CYCLE)
+              ========================================== */}
+              {activeTab === 'payer_patterns' && (
+                <PayerUnderpaymentPatternsView />
               )}
 
               {/* ==========================================

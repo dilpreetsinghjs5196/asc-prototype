@@ -311,3 +311,4 @@ CREATE POLICY recovery_outcomes_isolation ON public.recovery_outcomes
         AND rc.facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid
     )
   );
+

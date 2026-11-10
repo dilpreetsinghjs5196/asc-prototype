@@ -370,3 +370,4 @@ The automated test suite (`tests/recovery-evidence-timeline.test.js`) verifies:
 
 ## Definition of Done
 Complete only when validated underpayments can be transformed into auditable recovery cases, approved by humans, tracked through payer response, reconciled to incremental cash, and surfaced as verified realized value.
+
