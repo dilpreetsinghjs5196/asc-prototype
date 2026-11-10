@@ -205,3 +205,4 @@ SELECT
   ROUND(AVG(variance_percentage), 1) AS avg_variance_percentage
 FROM public.rcm_underpayments
 GROUP BY facility_id, payer_name, underpayment_category;
+

@@ -1,0 +1,471 @@
+/* ==============================================================================
+   PAYMENT VARIANCE VALIDATION VIEW STYLES
+   Phase 93A: Payment Variance Validation (Extends Phase 93)
+   Design System: Maestro Clinical High-Contrast Dark (#0b1120 canvas)
+   Strict Maestro Compliance: Zero Disallowed Palette Tokens
+   ============================================================================== */
+
+.variance-validation-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background-color: #0b1120 !important;
+  color: #f8fafc;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Executive Topbar Card */
+.variance-validation-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background-color: #0f172a !important;
+  border: 1px solid #334155;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.variance-validation-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.variance-validation-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.phase-pill-variance-validation {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  background: #0284c7;
+  color: #f0f9ff;
+  border: 1px solid #38bdf8;
+  text-transform: uppercase;
+}
+
+.facility-pill-variance-validation {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  background: #1e293b;
+  color: #94a3b8;
+  border: 1px solid #334155;
+}
+
+.variance-validation-heading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff !important;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.variance-validation-subheading {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.variance-validation-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn-secondary-variance-validation {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  background-color: #1e293b;
+  color: #e2e8f0;
+  font-size: 0.825rem;
+  font-weight: 600;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-secondary-variance-validation:hover {
+  background-color: #334155;
+  color: #ffffff;
+}
+
+.btn-primary-variance-validation {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #0284c7;
+  color: #ffffff;
+  font-size: 0.825rem;
+  font-weight: 600;
+  border: 1px solid #38bdf8;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-primary-variance-validation:hover {
+  background-color: #0369a1;
+}
+
+/* Executive KPI Ribbon */
+.variance-validation-kpi-ribbon {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1rem;
+}
+
+.variance-validation-kpi-card {
+  padding: 1.15rem;
+  background-color: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.variance-validation-kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: #334155;
+}
+
+.variance-validation-kpi-card.kpi-amber::before { background-color: #f59e0b; }
+.variance-validation-kpi-card.kpi-rose::before { background-color: #f43f5e; }
+.variance-validation-kpi-card.kpi-slate::before { background-color: #64748b; }
+.variance-validation-kpi-card.kpi-emerald::before { background-color: #10b981; }
+.variance-validation-kpi-card.kpi-sky::before { background-color: #0ea5e9; }
+
+.variance-validation-kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.variance-validation-kpi-value {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #ffffff;
+  font-feature-settings: 'tnum';
+}
+
+.variance-validation-kpi-subtext {
+  font-size: 0.725rem;
+  color: #64748b;
+}
+
+/* Navigation Tabs */
+.variance-validation-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid #1e293b;
+  padding-bottom: 0.25rem;
+}
+
+.variance-validation-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.15rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: transparent;
+  color: #94a3b8;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0.35rem 0.35rem 0 0;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.variance-validation-tab-btn:hover {
+  color: #e2e8f0;
+  background-color: rgba(30, 41, 59, 0.4);
+}
+
+.variance-validation-tab-btn.active {
+  color: #38bdf8;
+  border-bottom-color: #38bdf8;
+  background-color: rgba(14, 165, 233, 0.08);
+}
+
+.variance-validation-tab-badge {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 9999px;
+  background-color: #1e293b;
+  color: #cbd5e1;
+}
+
+/* Tab Content Canvas */
+.variance-validation-tab-canvas {
+  background-color: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Filter Toolbar */
+.variance-validation-filter-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background-color: #0b1120;
+  padding: 0.85rem 1rem;
+  border: 1px solid #1e293b;
+  border-radius: 0.5rem;
+}
+
+.variance-validation-search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 0.45rem;
+  padding: 0.4rem 0.75rem;
+  min-width: 280px;
+}
+
+.variance-validation-search-box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f8fafc;
+  font-size: 0.825rem;
+  width: 100%;
+}
+
+.variance-validation-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.variance-validation-filter-select {
+  background-color: #1e293b;
+  color: #f8fafc;
+  border: 1px solid #334155;
+  border-radius: 0.45rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.8rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.variance-validation-filter-select:focus {
+  border-color: #0ea5e9;
+}
+
+/* Data Table */
+.variance-validation-table-responsive {
+  overflow-x: auto;
+}
+
+.variance-validation-clinical-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.825rem;
+  text-align: left;
+}
+
+.variance-validation-clinical-table th {
+  background-color: #0b1120;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.725rem;
+  letter-spacing: 0.03em;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #334155;
+}
+
+.variance-validation-clinical-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #1e293b;
+  color: #e2e8f0;
+  vertical-align: middle;
+}
+
+.variance-validation-clinical-table tr:hover td {
+  background-color: rgba(30, 41, 59, 0.6);
+}
+
+/* Action Button Small */
+.btn-variance-validation-action {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 0.35rem;
+  border: 1px solid #334155;
+  background-color: #1e293b;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-variance-validation-action:hover {
+  background-color: #0284c7;
+  color: #ffffff;
+  border-color: #38bdf8;
+}
+
+/* Line-Level Evidence Box */
+.claim-line-evidence-card {
+  background-color: #0b1120;
+  border: 1px solid #1e293b;
+  border-radius: 0.65rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.claim-line-evidence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.claim-line-detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.35rem;
+  background-color: #0f172a;
+  font-size: 0.8rem;
+}
+
+/* Modal Overlay & Card */
+.variance-validation-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+}
+
+.variance-validation-modal-card {
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 0.75rem;
+  width: 100%;
+  max-width: 640px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.variance-validation-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.15rem 1.5rem;
+  border-bottom: 1px solid #1e293b;
+  background-color: #0b1120;
+}
+
+.variance-validation-modal-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.variance-validation-modal-close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.variance-validation-modal-close-btn:hover {
+  color: #ffffff;
+}
+
+.variance-validation-modal-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+.variance-validation-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.variance-validation-form-label {
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.variance-validation-form-input, .variance-validation-form-textarea, .variance-validation-form-select {
+  background-color: #0b1120;
+  border: 1px solid #334155;
+  border-radius: 0.45rem;
+  color: #f8fafc;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.variance-validation-form-input:focus, .variance-validation-form-textarea:focus, .variance-validation-form-select:focus {
+  border-color: #0ea5e9;
+}
+
+.variance-validation-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #1e293b;
+  background-color: #0b1120;
+}

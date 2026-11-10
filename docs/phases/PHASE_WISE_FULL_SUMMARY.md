@@ -1,9 +1,9 @@
-# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 93)
+# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 93A)
 
 > **Document Type:** Authoritative Phase-by-Phase Reference Directory  
 > **Repository:** `asc-prototype/docs/phases/`  
-> **Current Revision:** Post-Phase 93 Production Integration  
-> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 93.
+> **Current Revision:** Post-Phase 93A Production Integration  
+> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 93A.
 
 ---
 
@@ -17,7 +17,7 @@
 7. [Module 06: Medicare & Commercial Reimbursement Engine (Phases 60–69)](#module-06-medicare--commercial-reimbursement-engine)
 8. [Module 07: Financials, Procedural Economics & Versioning (Phases 70–77)](#module-07-financials-procedural-economics--versioning)
 9. [Module 08: Revenue Cycle Management (RCM) & Clearinghouse EDI (Phases 80–89)](#module-08-revenue-cycle-management-rcm--clearinghouse-edi)
-10. [Module 09: Master Revenue Leakage & Recovery Engine (Phases 90–93)](#module-09-master-revenue-leakage-engine)
+10. [Module 09: Master Revenue Leakage & Recovery Engine (Phases 90–93A)](#module-09-master-revenue-leakage-engine)
 
 ---
 
@@ -562,17 +562,29 @@
   - **Payer Underpayment Scorecard:** Tracks payment compliance rates and dispute resolution performance across commercial and government health plans.
 - **Business Impact:** Prevents silent revenue leakage from payer down-coding and contractual short-pays, directly recovering earned allowable dollars.
 
+### Phase 93A: Payment Variance Validation Engine
+- **File:** `93A_PAYMENT_VARIANCE_VALIDATION.md`
+- **Objective:** Extend Phase 93 by validating whether an expected-vs-actual payment difference represents a true recoverable underpayment, a legitimate contractual adjustment, a secondary-payer issue, a patient-responsibility allocation, or an unresolved discrepancy requiring human review.
+- **Design Principle:** *"Detection is not proof. Validation must establish the governing contract, adjudication context, calculation lineage, and confidence before recovery action is recommended."*
+- **Key Deliverables:**
+  - **Deterministic 12-State Outcome Taxonomy:** `VALID_UNDERPAYMENT`, `VALID_CONTRACTUAL_ADJUSTMENT`, `PATIENT_RESPONSIBILITY`, `SECONDARY_PAYER_PENDING`, `CASE_RATE_OR_BUNDLED`, `MPPR_OR_MULTIPLE_PROCEDURE_REDUCTION`, `CODING_OR_MODIFIER_REVIEW`, `IMPLANT_CARVEOUT_REVIEW`, `COB_OR_OTHER_PAYER_REVIEW`, `PAYMENT_POSTING_OR_RECONCILIATION_ISSUE`, `INSUFFICIENT_DATA`, `NEEDS_MANUAL_REVIEW`.
+  - **10-Step Deterministic Rule Engine:** Evaluates contract version effective on DOS, line-level CPTs, modifiers, statutory MPPR reductions, case-rate packaging, patient responsibility (CARC PR-1/PR-2), and 835 line adjudication trace.
+  - **Confidence & Completeness Framework:** Statutory tiers (`HIGH`, `MEDIUM`, `LOW`, `UNKNOWN`) based on data completeness without fabricated numeric probabilities.
+  - **Claim-Line Evidence Trace:** Full multi-line relational model (`payment_variance_lines`) capturing exact line variance, CARC/RARC codes, and rule paths.
+  - **Governance Safeguard:** Only `VALID_UNDERPAYMENT` and validated carve-out exceptions are permitted to advance to recovery queues.
+- **Business Impact:** Eliminates costly false-positive underpayment disputes, isolates true patient liability, and ensures 100% legal enforceability of payer recovery letters.
+
 ---
 
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 93 | **93 / 93 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **150 total files** |
-| **Automated Tests** | 100% Pass | **133 / 133 passing across 58 suites** |
+| **Documented Phases** | 94 | **94 / 94 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **151 total files** |
+| **Automated Tests** | 100% Pass | **156 / 156 passing across 66 suites** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
 | **Production Build** | Clean Vite Compilation | **0 errors (Verified)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **067 migrations deployed** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **068 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 

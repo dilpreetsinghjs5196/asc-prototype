@@ -19,3 +19,4 @@ DROP POLICY IF EXISTS rcm_underpayment_rules_facility_isolation ON public.rcm_un
 DROP TABLE IF EXISTS public.rcm_underpayment_actions CASCADE;
 DROP TABLE IF EXISTS public.rcm_underpayments CASCADE;
 DROP TABLE IF EXISTS public.rcm_underpayment_rules CASCADE;
+
