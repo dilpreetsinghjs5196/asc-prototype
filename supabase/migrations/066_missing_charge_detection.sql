@@ -201,3 +201,4 @@ SELECT
   ROUND(AVG(detection_confidence), 1) AS avg_confidence_score
 FROM public.rcm_missing_charges
 GROUP BY facility_id, charge_category;
+

@@ -1,9 +1,9 @@
-# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 92)
+# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 93)
 
 > **Document Type:** Authoritative Phase-by-Phase Reference Directory  
 > **Repository:** `asc-prototype/docs/phases/`  
-> **Current Revision:** Post-Phase 92 Production Integration  
-> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 92.
+> **Current Revision:** Post-Phase 93 Production Integration  
+> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 93.
 
 ---
 
@@ -17,7 +17,7 @@
 7. [Module 06: Medicare & Commercial Reimbursement Engine (Phases 60–69)](#module-06-medicare--commercial-reimbursement-engine)
 8. [Module 07: Financials, Procedural Economics & Versioning (Phases 70–77)](#module-07-financials-procedural-economics--versioning)
 9. [Module 08: Revenue Cycle Management (RCM) & Clearinghouse EDI (Phases 80–89)](#module-08-revenue-cycle-management-rcm--clearinghouse-edi)
-10. [Module 09: Master Revenue Leakage & Recovery Engine (Phases 90–92)](#module-09-master-revenue-leakage-engine)
+10. [Module 09: Master Revenue Leakage & Recovery Engine (Phases 90–93)](#module-09-master-revenue-leakage-engine)
 
 ---
 
@@ -543,17 +543,36 @@
   - **Surgeon Scorecard:** Provider-specific documentation accuracy and high-cost omission rates for targeted Clinical Documentation Improvement (CDI).
 - **Business Impact:** Recovers thousands in unbilled implants, drugs, and secondary CPT codes through automated cross-system auditing and seamless replacement 837 claim submission.
 
+### Phase 93: Underpayment Detection Engine
+- **File:** `93_UNDERPAYMENT_DETECTION.md`
+- **Objective:** Algorithmic cross-auditing of expected contracted fee schedules against 835 remittance actual allowed and paid amounts to detect, prioritize, and dispute short-paid surgical claims.
+- **Key Deliverables:**
+  - **Underpayment Category Taxonomy:** 6 core discrepancy categories:
+    1. `FEE_SCHEDULE_MISMATCH`: Payer allowed amount lower than contracted baseline fee schedule.
+    2. `IMPLANT_CARVEOUT_UNPAID`: Contractual implant reimbursement (invoice cost + markup) unpaid or short-paid on Rev 0278 lines.
+    3. `MPPR_OVER_DISCOUNT`: Payer applied excessive discounts to multiple procedures (>50% reduction or primary procedure discounted).
+    4. `DEVICE_INTENSIVE_OFFSET_ERROR`: Erroneous device offset credit deduction applied on OPPS device-intensive procedures.
+    5. `CONTRACT_RATE_EXPIRED`: Payer adjudicated claim using obsolete prior-year fee schedule rates.
+    6. `BILATERAL_DISCOUNT_ERROR`: Improper unbundling or discount calculation applied to bilateral modifier -50 procedures.
+  - **Deterministic Variance Invariants:**
+    - Dollar variance: $\text{variance} = \max(0.00,\, \text{expected\_allowed} - \text{actual\_allowed})$.
+    - Percentage variance: $\text{percentage} = ((\text{expected\_allowed} - \text{actual\_allowed}) / \text{expected\_allowed}) \times 100.0$.
+    - Priority score ($0.0 - 100.0$): dollar weight ($50\%$), confidence ($30\%$), and timeliness ($20\%$).
+  - **Lifecycle State Machine:** `DETECTED` $\rightarrow$ `AUDIT_CONFIRMED` $\rightarrow$ `DISPUTE_SUBMITTED` $\rightarrow$ `RECOVERED` (or `DISMISSED_VALID_ADJUSTMENT`).
+  - **Payer Underpayment Scorecard:** Tracks payment compliance rates and dispute resolution performance across commercial and government health plans.
+- **Business Impact:** Prevents silent revenue leakage from payer down-coding and contractual short-pays, directly recovering earned allowable dollars.
+
 ---
 
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 92 | **92 / 92 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **149 total files** |
-| **Automated Tests** | 100% Pass | **114 / 114 passing across 50 suites** |
+| **Documented Phases** | 93 | **93 / 93 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **150 total files** |
+| **Automated Tests** | 100% Pass | **133 / 133 passing across 58 suites** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
 | **Production Build** | Clean Vite Compilation | **0 errors (Verified)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **066 migrations deployed** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **067 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 

@@ -232,3 +232,4 @@ A feature is complete only when:
 - Stored generated column `estimated_net_recovery GENERATED ALWAYS AS (ROUND(estimated_lost_charge * expected_reimbursement_rate / 100.0, 2)) STORED` ensures database arithmetic integrity.
 - Foreign keys correctly match existing schema types: `surgery_id BIGINT`, `patient_id BIGINT`, `claim_id UUID`, `facility_id UUID`.
 - Zero purple tokens enforced in `MissingChargeDetectionView.css` and `MissingChargeDetectionView.jsx`.
+

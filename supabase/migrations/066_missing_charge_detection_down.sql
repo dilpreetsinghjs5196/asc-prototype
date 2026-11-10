@@ -19,3 +19,4 @@ DROP POLICY IF EXISTS rcm_missing_charge_rules_facility_isolation ON public.rcm_
 DROP TABLE IF EXISTS public.rcm_missing_charge_actions CASCADE;
 DROP TABLE IF EXISTS public.rcm_missing_charges CASCADE;
 DROP TABLE IF EXISTS public.rcm_missing_charge_rules CASCADE;
+

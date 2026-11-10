@@ -59,6 +59,7 @@ import ReconciliationEngineView from './components/ReconciliationEngineView';
 import RevenueLeakageView from './components/RevenueLeakageView';
 import UnbilledCaseDetectionView from './components/UnbilledCaseDetectionView';
 import MissingChargeDetectionView from './components/MissingChargeDetectionView';
+import UnderpaymentDetectionView from './components/UnderpaymentDetectionView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2789,6 +2790,13 @@ export default function App() {
             <div className="menu-item-icon"><Search size={16} /></div>
             Missing Charge Detection
           </div>
+          <div
+            className={`menu-item ${activeTab === 'underpayments' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('underpayments'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><DollarSign size={16} /></div>
+            Underpayment Detection
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -2916,6 +2924,7 @@ export default function App() {
                   {activeTab === 'revenue_leakage' && 'Master Revenue Leakage Engine & Recovery'}
                   {activeTab === 'unbilled_cases' && 'Completed/Coded Unbilled Case Detection Engine'}
                   {activeTab === 'missing_charges' && 'Missing CPT, Implant & Supply Charge Detection'}
+                  {activeTab === 'underpayments' && 'Contractual Underpayment Detection & Variance Recovery'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -2972,6 +2981,7 @@ export default function App() {
                   {activeTab === 'revenue_leakage' && 'Algorithmic unbilled detection, implant carve-outs, modifier omission audits & recovery pipeline'}
                   {activeTab === 'unbilled_cases' && 'Completed surgical encounter audit, hold diagnosis, aging buckets, and timely filing risk mitigation'}
                   {activeTab === 'missing_charges' && 'Algorithmic clinical documentation cross-audits, unbilled implant recovery & claim amendment'}
+                  {activeTab === 'underpayments' && 'Expected-vs-actual allowed fee reconciliation, MPPR audit & payer dispute management'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -4711,6 +4721,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'missing_charges' && (
                 <MissingChargeDetectionView />
+              )}
+
+              {/* ==========================================
+              TAB: UNDERPAYMENT DETECTION (PHASE 93 - REVENUE CYCLE)
+              ========================================== */}
+              {activeTab === 'underpayments' && (
+                <UnderpaymentDetectionView />
               )}
 
               {/* ==========================================
