@@ -1,9 +1,9 @@
-# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 93C)
+# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 94)
 
 > **Document Type:** Authoritative Phase-by-Phase Reference Directory  
 > **Repository:** `asc-prototype/docs/phases/`  
-> **Current Revision:** Post-Phase 93C Production Integration  
-> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 93C.
+> **Current Revision:** Post-Phase 94 Production Integration  
+> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 94.
 
 ---
 
@@ -602,17 +602,35 @@
   - **Annual Exposure Projection:** Calculates average short-pay per encounter, monthly frequency, and annualized revenue leakage.
 - **Business Impact:** Empowers ASC leadership to negotiate systemic payer settlements, eliminates repetitive single-claim appeal labor, and forces health plans to correct erroneous automated adjudication engines.
 
+### Phase 94: Denial Recovery Prioritization Engine
+- **File:** `94_DENIAL_RECOVERY_PRIORITIZATION.md`
+- **Objective:** Deterministic ranking of clinical and administrative denials by expected recoverable value, overturn probability, filing deadline urgency, and administrative effort-to-yield ratio ($/hr).
+- **Operational Principle:** *"Denials should not be worked first-in, first-out. A $12,000 surgical implant denial with a 90% overturn rate and 5 days left must be worked before a $150 technical short-pay with 120 days remaining."*
+- **Key Deliverables:**
+  - **4-Factor Priority Score Formula ($0.00 - 100.00$):**
+    $\text{PriorityScore} = (\text{ValueScore} \times 0.35) + (\text{ProbabilityScore} \times 0.30) + (\text{UrgencyScore} \times 0.20) + (\text{EffortScore} \times 0.15)$
+  - **Effort-to-Yield Ratio ($\/\text{hr}$):**
+    $\text{ExpectedRecovery} = \text{denied\_amount} \times \left(\frac{\text{overturn\_probability\_pct}}{100.0}\right)$
+    $\text{YieldPerHour} = \frac{\text{ExpectedRecovery}}{\text{estimated\_effort\_hours}}$
+  - **5 Actionable Priority Tiers:** `CRITICAL_URGENT` ($\ge 80.00$), `HIGH_PRIORITY` ($65.00 - 79.99$), `MEDIUM_PRIORITY` ($45.00 - 64.99$), `LOW_PRIORITY` ($25.00 - 44.99$), `UNRECOVERABLE_HOLD` ($< 25.00$ or expired).
+  - **Automatic Timely Filing Expiration (Rule 2):** When `days_until_deadline < 0`, `urgency_score = 0.00`, tier is forced to `UNRECOVERABLE_HOLD`, and queue status transitions to `EXPIRED` to prevent unrecoverable administrative effort.
+  - **Work Queue Sorting Invariant (Rule 3):** Sorted by `priority_tier DESC`, `yield_per_hour DESC`, and `days_until_deadline ASC`.
+  - **Specialist Team Routing (Rule 4):** Automated routing to `CLINICAL_APPEALS` (CARC 50/96/97), `BILLING_AND_CODING` (timely filing, modifier 59/50), `PATIENT_ACCESS` (eligibility CARC 27, COB CARC 22), and `CONTRACTING` (fee schedule short-pays).
+  - **Clinical Maestro UI:** 5-Card KPI ribbon, prioritized denial queue data grid, scoring inspector with subscore progress bars, specialist work queues, 2x2 executive yield quadrant matrix, and AI appeal strategy drafter.
+  - **Database Migration (071):** Tables `denial_recovery_priorities`, `denial_prioritization_rules`, views `vw_denial_recovery_priorities_active`, `vw_denial_recovery_priorities_summary`, and 1:1 RLS policies with clean down rollback.
+- **Business Impact:** Replaces arbitrary FIFO denial queues with an ROI-maximizing dispatch engine that prevents elapsed filing limit write-offs and dramatically increases recovered surgical cash per staff work hour.
+
 ---
 
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 96 | **96 / 96 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **153 total files** |
-| **Automated Tests** | 100% Pass | **204 / 204 passing across 68 suites** |
+| **Documented Phases** | 97 | **97 / 97 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **154 total files** |
+| **Automated Tests** | 100% Pass | **226 / 226 passing across 69 suites** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
 | **Production Build** | Clean Vite Compilation | **0 errors (Verified in 15.4s)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **070 migrations deployed** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **071 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 

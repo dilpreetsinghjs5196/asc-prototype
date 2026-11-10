@@ -63,6 +63,7 @@ import UnderpaymentDetectionView from './components/UnderpaymentDetectionView';
 import PaymentVarianceValidationView from './components/PaymentVarianceValidationView';
 import RecoveryEvidenceTimelineView from './components/RecoveryEvidenceTimelineView';
 import PayerUnderpaymentPatternsView from './components/PayerUnderpaymentPatternsView';
+import DenialRecoveryPrioritizationView from './components/DenialRecoveryPrioritizationView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2823,6 +2824,13 @@ export default function App() {
             <div className="menu-item-icon"><GitFork size={16} /></div>
             Payer Underpayment Patterns
           </div>
+          <div
+            className={`menu-item ${activeTab === 'denial_prioritization' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('denial_prioritization'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Scale size={16} /></div>
+            Denial Prioritization
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -2954,6 +2962,7 @@ export default function App() {
                   {activeTab === 'variance_validation' && 'Payment Variance Validation & Contract Lineage'}
                   {activeTab === 'recovery_cases' && 'Recovery Evidence, Submission & Response Timeline'}
                   {activeTab === 'payer_patterns' && 'Recurring Payer Underpayment Patterns & Batch Recovery'}
+                  {activeTab === 'denial_prioritization' && 'Denial Recovery Prioritization & Yield Queue'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -3014,6 +3023,7 @@ export default function App() {
                   {activeTab === 'variance_validation' && 'Deterministic proof of true recoverable underpayment, contractual adjustment verification & multi-line adjudication trace'}
                   {activeTab === 'recovery_cases' && 'Auditable recovery cases, deterministic evidence packages, human approval governance & verified cash reconciliation'}
                   {activeTab === 'payer_patterns' && 'Systemic pattern detection across payers, plans, fee schedules, CPT codes & automated batch dispute opportunities'}
+                  {activeTab === 'denial_prioritization' && 'Authoritative multi-factor ranking by recoverable yield, overturn probability, filing deadline urgency & staff effort'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -4781,6 +4791,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'payer_patterns' && (
                 <PayerUnderpaymentPatternsView />
+              )}
+
+              {/* ==========================================
+              TAB: DENIAL RECOVERY PRIORITIZATION (PHASE 94 - REVENUE CYCLE)
+              ========================================== */}
+              {activeTab === 'denial_prioritization' && (
+                <DenialRecoveryPrioritizationView />
               )}
 
               {/* ==========================================

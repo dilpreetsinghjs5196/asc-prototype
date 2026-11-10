@@ -163,3 +163,4 @@ DROP POLICY IF EXISTS batch_recovery_opportunities_isolation ON public.batch_rec
 CREATE POLICY batch_recovery_opportunities_isolation ON public.batch_recovery_opportunities
   FOR ALL
   USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
+

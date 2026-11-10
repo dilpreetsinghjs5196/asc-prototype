@@ -970,3 +970,4 @@ In accordance with commercial contract terms and prompt-payment regulations:
 
 export const payerPatternService = new PayerPatternStore();
 export default payerPatternService;
+

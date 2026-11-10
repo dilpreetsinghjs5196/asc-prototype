@@ -246,3 +246,4 @@ The automated test suite (`tests/payer-underpayment-patterns.test.js`) verifies:
 
 ## Definition of Done
 Complete only when ASCANALYST can reliably identify systemic payer payment-variance patterns, explain why claims are grouped, quantify validated aggregate exposure, and create auditable batch recovery opportunities without double counting.
+

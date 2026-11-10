@@ -20,3 +20,4 @@ DROP POLICY IF EXISTS payer_underpayment_patterns_isolation ON public.payer_unde
 DROP TABLE IF EXISTS public.batch_recovery_opportunities CASCADE;
 DROP TABLE IF EXISTS public.payer_underpayment_pattern_claims CASCADE;
 DROP TABLE IF EXISTS public.payer_underpayment_patterns CASCADE;
+
