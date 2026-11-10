@@ -163,3 +163,4 @@ CREATE POLICY rls_rcm_reconciliation_discrepancies_tenant ON public.rcm_reconcil
   USING (
     facility_id IN (SELECT public.get_auth_user_facilities())
   );
+

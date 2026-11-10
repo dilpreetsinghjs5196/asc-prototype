@@ -17,3 +17,4 @@ DROP VIEW IF EXISTS public.vw_rcm_reconciliation_summary CASCADE;
 -- 3. Drop Tables
 DROP TABLE IF EXISTS public.rcm_reconciliation_discrepancies CASCADE;
 DROP TABLE IF EXISTS public.rcm_reconciliation_records CASCADE;
+
