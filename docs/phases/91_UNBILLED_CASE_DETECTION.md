@@ -218,3 +218,4 @@ A feature is complete only when:
 - Dynamic aging logic uses view-based calculation rather than stored generated columns since `CURRENT_DATE` is non-immutable in PostgreSQL.
 - Foreign keys correctly match existing schema types: `surgery_id BIGINT`, `patient_id BIGINT`, `released_claim_id UUID`, `facility_id UUID`.
 - Zero purple tokens enforced in `UnbilledCaseDetectionView.css` and `UnbilledCaseDetectionView.jsx`.
+

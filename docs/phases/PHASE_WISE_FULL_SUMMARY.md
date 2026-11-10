@@ -1,9 +1,9 @@
-# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 90)
+# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 92)
 
 > **Document Type:** Authoritative Phase-by-Phase Reference Directory  
 > **Repository:** `asc-prototype/docs/phases/`  
-> **Current Revision:** Post-Phase 90 Production Integration  
-> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 90.
+> **Current Revision:** Post-Phase 92 Production Integration  
+> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 92.
 
 ---
 
@@ -17,7 +17,7 @@
 7. [Module 06: Medicare & Commercial Reimbursement Engine (Phases 60–69)](#module-06-medicare--commercial-reimbursement-engine)
 8. [Module 07: Financials, Procedural Economics & Versioning (Phases 70–77)](#module-07-financials-procedural-economics--versioning)
 9. [Module 08: Revenue Cycle Management (RCM) & Clearinghouse EDI (Phases 80–89)](#module-08-revenue-cycle-management-rcm--clearinghouse-edi)
-10. [Module 09: Master Revenue Leakage Engine (Phase 90)](#module-09-master-revenue-leakage-engine)
+10. [Module 09: Master Revenue Leakage & Recovery Engine (Phases 90–92)](#module-09-master-revenue-leakage-engine)
 
 ---
 
@@ -525,17 +525,35 @@
   - **Resolution State Machine:** `HELD` $\rightarrow$ `UNDER_INVESTIGATION` $\rightarrow$ `HOLD_RESOLVED` $\rightarrow$ `CLAIM_RELEASED` (or `WRITTEN_OFF_TIMELY_FILING`).
 - **Business Impact:** Prevents completed surgeries from languishing unbilled and eliminates costly timely filing forfeitures.
 
+### Phase 92: Missing Charge Detection Engine
+- **File:** `92_MISSING_CHARGE_DETECTION.md`
+- **Objective:** Algorithmic cross-system charge audits comparing intraoperative clinical documentation, OR logs, MAR pharmacy, and anesthesia records against billed claims to capture unbilled surgical revenue.
+- **Key Deliverables:**
+  - **Charge Category Taxonomy:** 6 surgical ASC omission categories:
+    1. `SECONDARY_CPT`: Documented surgical debridement, chondroplasty, or secondary procedures omitted from claim.
+    2. `IMPLANT_HARDWARE`: High-cost anchors, bio-absorbable screws, or joint prosthetics consumed in OR but omitted from Revenue Code 0278.
+    3. `HIGH_COST_DRUG`: Specialty pharmaceuticals documented on anesthesia MAR (e.g., Exparel J0665) omitted from billing.
+    4. `SURGICAL_SUPPLY`: Specialized high-cost single-use consumables (radiofrequency wands, ultrasonic blades, biological matrices) unbilled.
+    5. `ANESTHESIA_UNITS`: Anesthesia time minutes logged in OR milestones where base units + time units were underbilled.
+    6. `PATHOLOGY_SPECIMEN`: Tissue specimens sent to histology where facility technical grossing handling (CPT 88305) was omitted.
+  - **Deterministic Opportunity & Priority Model:**
+    - Net recovery formula: $\text{net} = \text{lost\_charge} \times (\text{reimbursement\_rate} / 100.0)$.
+    - Priority score ($0.0 - 100.0$): dollar weight ($45\%$), detection confidence ($35\%$), and encounter age ($20\%$).
+  - **Lifecycle State Machine:** `DETECTED` $\rightarrow$ `UNDER_AUDIT` $\rightarrow$ `CHARGE_CONFIRMED` $\rightarrow$ `CLAIM_AMENDED` (or `DISMISSED_NOT_BILLABLE`).
+  - **Surgeon Scorecard:** Provider-specific documentation accuracy and high-cost omission rates for targeted Clinical Documentation Improvement (CDI).
+- **Business Impact:** Recovers thousands in unbilled implants, drugs, and secondary CPT codes through automated cross-system auditing and seamless replacement 837 claim submission.
+
 ---
 
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 91 | **91 / 91 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **148 total files** |
-| **Automated Tests** | 100% Pass | **97 / 97 passing across 49 suites** |
+| **Documented Phases** | 92 | **92 / 92 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **149 total files** |
+| **Automated Tests** | 100% Pass | **114 / 114 passing across 50 suites** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **7.28s (0 errors)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **065 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **0 errors (Verified)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **066 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 

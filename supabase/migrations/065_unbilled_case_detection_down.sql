@@ -17,3 +17,4 @@ DROP POLICY IF EXISTS rcm_unbilled_cases_facility_isolation ON public.rcm_unbill
 -- 3. Drop Tables in Reverse Dependency Order
 DROP TABLE IF EXISTS public.rcm_unbilled_case_actions CASCADE;
 DROP TABLE IF EXISTS public.rcm_unbilled_cases CASCADE;
+

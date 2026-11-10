@@ -193,3 +193,4 @@ GROUP BY
     WHEN (CURRENT_DATE - date_of_service) <= 60 THEN '31_60_DAYS'
     ELSE '61_PLUS_DAYS'
   END;
+
