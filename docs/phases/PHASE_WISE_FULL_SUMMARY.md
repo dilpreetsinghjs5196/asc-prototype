@@ -515,16 +515,27 @@
   - **Surgeon & Specialty Scorecards:** Identifies root-cause clinical documentation and coding gaps by individual surgeon.
 - **Business Impact:** Directly generates net bottom-line cash by capturing revenue that was legitimately earned but left unbilled or underpaid.
 
+### Phase 91: Unbilled Case Detection Engine
+- **File:** `91_UNBILLED_CASE_DETECTION.md`
+- **Objective:** Completed/coded but unbilled surgical case detection, root-cause hold diagnosis, aging bucket classification, and timely filing risk mitigation.
+- **Key Deliverables:**
+  - **Hold Reason Taxonomy:** 7 root-cause hold categories: `IMPLANT_INVOICE_LAG`, `PHYSICIAN_QUERY_PENDING`, `PATHOLOGY_PENDING`, `AUTH_RETRO_PENDING`, `COB_VALIDATION`, `BILLING_SCRUB_ERROR`, `READY_TO_RELEASE`.
+  - **Aging & Timely Filing Risk:** 4 aging buckets ($0-15$d, $16-30$d, $31-60$d, $61+$d) and 4 risk tiers (`CRITICAL` $\le 15$d, `URGENT` $16-30$d, `WARNING` $31-60$d, `NORMAL`).
+  - **Priority Scoring:** Deterministic $0.0 - 100.0$ composite score weighting dollar size ($40\%$), lag days ($35\%$), and filing urgency ($25\%$).
+  - **Resolution State Machine:** `HELD` $\rightarrow$ `UNDER_INVESTIGATION` $\rightarrow$ `HOLD_RESOLVED` $\rightarrow$ `CLAIM_RELEASED` (or `WRITTEN_OFF_TIMELY_FILING`).
+- **Business Impact:** Prevents completed surgeries from languishing unbilled and eliminates costly timely filing forfeitures.
+
 ---
 
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 90 | **90 / 90 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **147 total files** |
-| **Automated Tests** | 100% Pass | **77 / 77 passing across 41 suites** |
+| **Documented Phases** | 91 | **91 / 91 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **148 total files** |
+| **Automated Tests** | 100% Pass | **97 / 97 passing across 49 suites** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **10.65s (0 errors)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **064 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **7.28s (0 errors)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **065 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
+

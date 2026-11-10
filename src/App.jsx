@@ -57,6 +57,7 @@ import PatientBalancesView from './components/PatientBalancesView';
 import ArAgingView from './components/ArAgingView';
 import ReconciliationEngineView from './components/ReconciliationEngineView';
 import RevenueLeakageView from './components/RevenueLeakageView';
+import UnbilledCaseDetectionView from './components/UnbilledCaseDetectionView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2773,6 +2774,13 @@ export default function App() {
             <div className="menu-item-icon"><AlertTriangle size={16} /></div>
             Revenue Leakage Engine
           </div>
+          <div
+            className={`menu-item ${activeTab === 'unbilled_cases' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('unbilled_cases'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Clock size={16} /></div>
+            Unbilled Case Detection
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -2898,6 +2906,7 @@ export default function App() {
                   {activeTab === 'ar_aging' && 'Accounts Receivable (AR) Aging & Collector Work Queues'}
                   {activeTab === 'reconciliation_engine' && 'Claim, Remittance & Payment Reconciliation Engine'}
                   {activeTab === 'revenue_leakage' && 'Master Revenue Leakage Engine & Recovery'}
+                  {activeTab === 'unbilled_cases' && 'Completed/Coded Unbilled Case Detection Engine'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -2952,6 +2961,7 @@ export default function App() {
                   {activeTab === 'ar_aging' && 'GAAP aging distribution, dual DOS & Bill Date schedules, Days Sales Outstanding (DSO) & priority work queues'}
                   {activeTab === 'reconciliation_engine' && 'Four-way financial matching, deterministic balancing invariants, contractual underpayment detection & discrepancy resolution'}
                   {activeTab === 'revenue_leakage' && 'Algorithmic unbilled detection, implant carve-outs, modifier omission audits & recovery pipeline'}
+                  {activeTab === 'unbilled_cases' && 'Completed surgical encounter audit, hold diagnosis, aging buckets, and timely filing risk mitigation'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -4677,6 +4687,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'revenue_leakage' && (
                 <RevenueLeakageView />
+              )}
+
+              {/* ==========================================
+              TAB: UNBILLED CASE DETECTION (PHASE 91 - REVENUE CYCLE)
+              ========================================== */}
+              {activeTab === 'unbilled_cases' && (
+                <UnbilledCaseDetectionView />
               )}
 
               {/* ==========================================
