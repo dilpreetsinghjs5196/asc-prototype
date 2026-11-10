@@ -19,3 +19,4 @@ DROP POLICY IF EXISTS rcm_leakage_rules_facility_isolation ON public.rcm_leakage
 DROP TABLE IF EXISTS public.rcm_leakage_evidence CASCADE;
 DROP TABLE IF EXISTS public.rcm_leakage_opportunities CASCADE;
 DROP TABLE IF EXISTS public.rcm_leakage_rules CASCADE;
+

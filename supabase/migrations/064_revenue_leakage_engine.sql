@@ -175,3 +175,4 @@ SELECT
   COUNT(CASE WHEN category = 'DOCUMENTATION_DEFICIENCY' THEN 1 END) AS doc_deficiency_cases
 FROM public.rcm_leakage_opportunities
 GROUP BY facility_id, surgeon_name, specialty;
+
