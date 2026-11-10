@@ -1,9 +1,9 @@
-# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 93A)
+# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 93B)
 
 > **Document Type:** Authoritative Phase-by-Phase Reference Directory  
 > **Repository:** `asc-prototype/docs/phases/`  
-> **Current Revision:** Post-Phase 93A Production Integration  
-> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 93A.
+> **Current Revision:** Post-Phase 93B Production Integration  
+> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 93B.
 
 ---
 
@@ -17,7 +17,7 @@
 7. [Module 06: Medicare & Commercial Reimbursement Engine (Phases 60–69)](#module-06-medicare--commercial-reimbursement-engine)
 8. [Module 07: Financials, Procedural Economics & Versioning (Phases 70–77)](#module-07-financials-procedural-economics--versioning)
 9. [Module 08: Revenue Cycle Management (RCM) & Clearinghouse EDI (Phases 80–89)](#module-08-revenue-cycle-management-rcm--clearinghouse-edi)
-10. [Module 09: Master Revenue Leakage & Recovery Engine (Phases 90–93A)](#module-09-master-revenue-leakage-engine)
+10. [Module 09: Master Revenue Leakage & Recovery Engine (Phases 90–93B)](#module-09-master-revenue-leakage-engine)
 
 ---
 
@@ -574,17 +574,31 @@
   - **Governance Safeguard:** Only `VALID_UNDERPAYMENT` and validated carve-out exceptions are permitted to advance to recovery queues.
 - **Business Impact:** Eliminates costly false-positive underpayment disputes, isolates true patient liability, and ensures 100% legal enforceability of payer recovery letters.
 
+### Phase 93B: Recovery Evidence and Timeline Engine
+- **File:** `93B_RECOVERY_EVIDENCE_AND_TIMELINE.md`
+- **Objective:** Transform validated payment variances from Phase 93A into auditable recovery cases containing calculation evidence, contract evidence, filing deadlines, human approval, multi-channel submission tracking, payer-response events, and verified incremental recovered cash.
+- **Design Principle:** *"ASCANALYST proved it, supported the recovery workflow, tracked the payer response, and verified the recovered cash."*
+- **Key Deliverables:**
+  - **15-State Recovery Case Lifecycle:** `DRAFT` $\rightarrow$ `EVIDENCE_INCOMPLETE` $\rightarrow$ `READY_FOR_REVIEW` $\rightarrow$ `APPROVED` $\rightarrow$ `SUBMITTED` $\rightarrow$ `ACKNOWLEDGED` $\rightarrow$ `PAYER_INFO_REQUESTED` $\rightarrow$ `UNDER_PAYER_REVIEW` $\rightarrow$ `REPROCESSING` $\rightarrow$ `PARTIALLY_RECOVERED` $\rightarrow$ `FULLY_RECOVERED` (plus terminal states: `REJECTED`, `WITHDRAWN`, `CLOSED_NO_RECOVERY`, `EXPIRED`).
+  - **Mandatory Human Approval Gate (P0 Safeguard):** No external action, appeal, or reconsideration submission may occur without an explicit human sign-off (`approved_by`, `approved_at`, `package_hash`).
+  - **13-Type Evidence Package & Cryptographic Content Hashing:** Aggregates contract clauses, fee schedules, calculation lineage traces, 837 claims, 835 remittances, CARC/RARC analyses, implant purchase invoices, and operative reports into an immutable SHA-256 package.
+  - **8 Operational Submission Channels:** Tracks dispatch across `WAYSTAR`, `CLEARINGHOUSE`, `PAYER_PORTAL`, `SFTP`, `SECURE_EMAIL`, `MAIL`, `MANUAL`, and `OTHER`.
+  - **Chronological Recovery Audit Timeline:** Tracks every lifecycle event, actor user, source system, external reference, and before/after states.
+  - **Strict Incremental Cash Accounting (Rule 3):** Realized recovery counts only true post-submission incremental payments, strictly excluding duplicate postings, patient responsibility (`PR-1/2/3`), and secondary COB payments.
+  - **Operational Metrics:** Measures detection-to-validation, validation-to-submission, submission-to-response, and submission-to-cash cycle times, plus manual staff touches.
+- **Business Impact:** Transforms clinical billing disputes into legally defensible, automated evidence packets that accelerate payer turnaround, prevent lost cash from expired filing deadlines, and verify actual cash collected.
+
 ---
 
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 94 | **94 / 94 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **151 total files** |
-| **Automated Tests** | 100% Pass | **156 / 156 passing across 66 suites** |
+| **Documented Phases** | 95 | **95 / 95 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **152 total files** |
+| **Automated Tests** | 100% Pass | **181 / 181 passing across 67 suites** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **0 errors (Verified)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **068 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 9.1s)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **069 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 

@@ -61,6 +61,7 @@ import UnbilledCaseDetectionView from './components/UnbilledCaseDetectionView';
 import MissingChargeDetectionView from './components/MissingChargeDetectionView';
 import UnderpaymentDetectionView from './components/UnderpaymentDetectionView';
 import PaymentVarianceValidationView from './components/PaymentVarianceValidationView';
+import RecoveryEvidenceTimelineView from './components/RecoveryEvidenceTimelineView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -120,7 +121,8 @@ import {
   Scale,
   CreditCard,
   BookOpen,
-  FileCheck
+  FileCheck,
+  History
 } from 'lucide-react';
 
 // ==========================================
@@ -2806,6 +2808,13 @@ export default function App() {
             <div className="menu-item-icon"><FileCheck size={16} /></div>
             Variance Validation
           </div>
+          <div
+            className={`menu-item ${activeTab === 'recovery_cases' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('recovery_cases'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><History size={16} /></div>
+            Recovery Evidence & Timeline
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -2935,6 +2944,7 @@ export default function App() {
                   {activeTab === 'missing_charges' && 'Missing CPT, Implant & Supply Charge Detection'}
                   {activeTab === 'underpayments' && 'Contractual Underpayment Detection & Variance Recovery'}
                   {activeTab === 'variance_validation' && 'Payment Variance Validation & Contract Lineage'}
+                  {activeTab === 'recovery_cases' && 'Recovery Evidence, Submission & Response Timeline'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -2993,6 +3003,7 @@ export default function App() {
                   {activeTab === 'missing_charges' && 'Algorithmic clinical documentation cross-audits, unbilled implant recovery & claim amendment'}
                   {activeTab === 'underpayments' && 'Expected-vs-actual allowed fee reconciliation, MPPR audit & payer dispute management'}
                   {activeTab === 'variance_validation' && 'Deterministic proof of true recoverable underpayment, contractual adjustment verification & multi-line adjudication trace'}
+                  {activeTab === 'recovery_cases' && 'Auditable recovery cases, deterministic evidence packages, human approval governance & verified cash reconciliation'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -4746,6 +4757,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'variance_validation' && (
                 <PaymentVarianceValidationView />
+              )}
+
+              {/* ==========================================
+              TAB: RECOVERY EVIDENCE & TIMELINE (PHASE 93B - REVENUE CYCLE)
+              ========================================== */}
+              {activeTab === 'recovery_cases' && (
+                <RecoveryEvidenceTimelineView />
               )}
 
               {/* ==========================================
