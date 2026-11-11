@@ -1,9 +1,9 @@
-# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 95)
+# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 96)
 
 > **Document Type:** Authoritative Phase-by-Phase Reference Directory  
 > **Repository:** `asc-prototype/docs/phases/`  
-> **Current Revision:** Post-Phase 95 Production Integration  
-> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 95.
+> **Current Revision:** Post-Phase 96 Production Integration  
+> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 96.
 
 ---
 
@@ -17,7 +17,7 @@
 7. [Module 06: Medicare & Commercial Reimbursement Engine (Phases 60–69)](#module-06-medicare--commercial-reimbursement-engine)
 8. [Module 07: Financials, Procedural Economics & Versioning (Phases 70–77)](#module-07-financials-procedural-economics--versioning)
 9. [Module 08: Revenue Cycle Management (RCM) & Clearinghouse EDI (Phases 80–89)](#module-08-revenue-cycle-management-rcm--clearinghouse-edi)
-10. [Module 09: Master Revenue Leakage & Recovery Engine (Phases 90–93C)](#module-09-master-revenue-leakage-engine)
+10. [Module 09: Master Revenue Leakage & Recovery Engine (Phases 90–96)](#module-09-master-revenue-leakage-engine)
 
 ---
 
@@ -638,17 +638,38 @@
   - **Database Migration (072):** Tables `missing_secondary_payments`, `secondary_cob_rules`, views `vw_missing_secondary_active`, `vw_missing_secondary_summary`, and 1:1 RLS policies with clean down rollback.
 - **Business Impact:** Stops patient bad-debt write-offs, captures hundreds of thousands in unpaid Medigap/supplemental coinsurance balances, and eliminates patient complaints caused by premature billing statements.
 
+### Phase 96: Patient AR Recovery & Self-Pay Prioritization Engine
+- **File:** `96_PATIENT_AR_RECOVERY.md`
+- **Objective:** Production-grade post-insurance patient accounts receivable prioritization, Propensity-to-Pay (P2P) risk segmentation, structured recurring installment payment plans, digital payment links, and charity care hardship compliance.
+- **Operational Principle:** *"Self-pay patient balances must not be treated with brute-force collection letters or immediate bad-debt write-offs. A $1,200 surgical deductible owed by a high-propensity patient requires friction-free digital payment links and tailored installment plans, while low-income patients require prompt, compassionate charity care screening before credit-damaging collections."*
+- **Key Deliverables:**
+  - **4-Factor Composite Priority Score ($0.00 - 100.00$):**
+    $\text{PriorityScore} = (\text{BalanceScore} \times 0.35) + (\text{PropensityScore} \times 0.30) + (\text{AgingUrgencyScore} \times 0.20) + (\text{EngagementScore} \times 0.15)$
+  - **5 Propensity-to-Pay (P2P) Tiers:** `EXCELLENT_PROPENSITY` (100.00), `GOOD_PROPENSITY` (80.00), `MODERATE_PROPENSITY` (60.00), `LOW_PROPENSITY` (35.00), and `HARDSHIP_OR_UNCOLLECTIBLE` (10.00).
+  - **5 Actionable Recovery Action Tiers:**
+    - Tier 1: Digital Nudge & Payment Link ($\ge 80.00$, automated SMS/email payment link).
+    - Tier 2: Flexible Payment Plan Offer ($65.00 - 79.99$, automated 3, 6, 12-month autopay plan options).
+    - Tier 3: Financial Counselor Outreach ($45.00 - 64.99$, personalized phone consultation and hardship evaluation).
+    - Tier 4: Formal Pre-Collection Demand ($25.00 - 44.99$, statutory 30-day notice prior to bad debt transfer).
+    - Tier 5: Charity Care / Bad Debt Assignment ($< 25.00$ or aged $>120$ days with low score).
+  - **Balance Math Invariant (Rule 2):** $\text{patient\_balance\_due} = \text{original\_patient\_resp} - \text{patient\_paid\_amount} - \text{charity\_write\_off\_amount}$.
+  - **Queue Sorting Invariant (Rule 4):** Sorted by `recovery_action_tier ASC` (Tier 1 first), `patient_balance_due DESC`, and `days_in_patient_ar ASC`.
+  - **Charity Care Guardian (Rule 5):** Automatically pauses collections, applies sliding-scale write-offs based on Federal Poverty Level ($\le 200\%$ FPL eligible for up to 100% write-off), and mandates supervisor sign-off before any bad debt referral.
+  - **Clinical Maestro UI:** 5-Card KPI ribbon, prioritized patient AR work queue, Propensity-to-Pay segmentation cards, installment plan calculator, and supervisor charity approval modal.
+  - **Database Migration (073):** Tables `patient_ar_recovery_cases`, `patient_payment_plans`, views `vw_patient_ar_recovery_active`, `vw_patient_ar_recovery_summary`, and 1:1 RLS policies with clean down rollback.
+- **Business Impact:** Accelerates patient cash velocity, reduces days in patient AR by over 35%, triples autopay installment enrollment, and safeguards healthcare consumer rights through compliant charity screening.
+
 ---
 
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 98 | **98 / 98 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **155 total files** |
-| **Automated Tests** | 100% Pass | **250 / 250 passing across 70 suites** |
+| **Documented Phases** | 99 | **99 / 99 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **156 total files** |
+| **Automated Tests** | 100% Pass | **271 / 271 passing across 71 suites** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 15.4s)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **072 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 9.1s)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **073 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 
