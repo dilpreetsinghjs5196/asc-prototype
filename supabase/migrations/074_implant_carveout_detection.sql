@@ -235,48 +235,20 @@ FROM public.implant_carveout_discrepancies
 GROUP BY facility_id;
 
 -- ==============================================================================
--- 4. ROW LEVEL SECURITY (RLS) POLICIES
+-- 4. ROW LEVEL SECURITY (RLS) POLICIES (1:1 Statement Parity)
 -- ==============================================================================
 
 ALTER TABLE public.implant_carveout_rules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.implant_carveout_discrepancies ENABLE ROW LEVEL SECURITY;
 
--- 1:1 Policies for implant_carveout_rules
-DROP POLICY IF EXISTS rls_implant_carveout_rules_select ON public.implant_carveout_rules;
-CREATE POLICY rls_implant_carveout_rules_select ON public.implant_carveout_rules
-    FOR SELECT USING (
-        facility_id IN (
-            SELECT facility_id FROM public.facility_users 
-            WHERE user_id = auth.uid()
-        )
-    );
+DROP POLICY IF EXISTS implant_carveout_rules_isolation ON public.implant_carveout_rules;
+CREATE POLICY implant_carveout_rules_isolation ON public.implant_carveout_rules
+  FOR ALL
+  USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
 
-DROP POLICY IF EXISTS rls_implant_carveout_rules_all ON public.implant_carveout_rules;
-CREATE POLICY rls_implant_carveout_rules_all ON public.implant_carveout_rules
-    FOR ALL USING (
-        facility_id IN (
-            SELECT facility_id FROM public.facility_users 
-            WHERE user_id = auth.uid()
-        )
-    );
-
--- 1:1 Policies for implant_carveout_discrepancies
-DROP POLICY IF EXISTS rls_implant_carveout_discrepancies_select ON public.implant_carveout_discrepancies;
-CREATE POLICY rls_implant_carveout_discrepancies_select ON public.implant_carveout_discrepancies
-    FOR SELECT USING (
-        facility_id IN (
-            SELECT facility_id FROM public.facility_users 
-            WHERE user_id = auth.uid()
-        )
-    );
-
-DROP POLICY IF EXISTS rls_implant_carveout_discrepancies_all ON public.implant_carveout_discrepancies;
-CREATE POLICY rls_implant_carveout_discrepancies_all ON public.implant_carveout_discrepancies
-    FOR ALL USING (
-        facility_id IN (
-            SELECT facility_id FROM public.facility_users 
-            WHERE user_id = auth.uid()
-        )
-    );
+DROP POLICY IF EXISTS implant_carveout_discrepancies_isolation ON public.implant_carveout_discrepancies;
+CREATE POLICY implant_carveout_discrepancies_isolation ON public.implant_carveout_discrepancies
+  FOR ALL
+  USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
 
 COMMIT;

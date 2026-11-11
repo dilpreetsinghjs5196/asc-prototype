@@ -312,10 +312,10 @@ describe('Phase 97 — Implant Carveout Detection Test Suite', () => {
       assert.ok(sql.includes('vw_implant_carveout_summary'), 'Must create summary analytics view');
 
       // RLS 1:1 Policies
-      assert.ok(sql.includes('DROP POLICY IF EXISTS rls_implant_carveout_rules_select'), 'Must drop select policy if exists');
-      assert.ok(sql.includes('CREATE POLICY rls_implant_carveout_rules_select'), 'Must create select policy');
-      assert.ok(sql.includes('DROP POLICY IF EXISTS rls_implant_carveout_discrepancies_select'), 'Must drop select policy if exists');
-      assert.ok(sql.includes('CREATE POLICY rls_implant_carveout_discrepancies_select'), 'Must create select policy');
+      assert.ok(sql.includes('DROP POLICY IF EXISTS implant_carveout_rules_isolation'), 'Must drop select policy if exists');
+      assert.ok(sql.includes('CREATE POLICY implant_carveout_rules_isolation'), 'Must create select policy');
+      assert.ok(sql.includes('DROP POLICY IF EXISTS implant_carveout_discrepancies_isolation'), 'Must drop select policy if exists');
+      assert.ok(sql.includes('CREATE POLICY implant_carveout_discrepancies_isolation'), 'Must create select policy');
     });
 
     test('down migration 074 exists and cleanly rolls back schema objects with CASCADE', () => {
@@ -369,3 +369,4 @@ describe('Phase 97 — Implant Carveout Detection Test Suite', () => {
     });
   });
 });
+

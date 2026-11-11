@@ -9,10 +9,8 @@ BEGIN;
 DROP VIEW IF EXISTS public.vw_implant_carveout_summary CASCADE;
 DROP VIEW IF EXISTS public.vw_implant_carveout_active CASCADE;
 
-DROP POLICY IF EXISTS rls_implant_carveout_discrepancies_all ON public.implant_carveout_discrepancies;
-DROP POLICY IF EXISTS rls_implant_carveout_discrepancies_select ON public.implant_carveout_discrepancies;
-DROP POLICY IF EXISTS rls_implant_carveout_rules_all ON public.implant_carveout_rules;
-DROP POLICY IF EXISTS rls_implant_carveout_rules_select ON public.implant_carveout_rules;
+DROP POLICY IF EXISTS implant_carveout_discrepancies_isolation ON public.implant_carveout_discrepancies;
+DROP POLICY IF EXISTS implant_carveout_rules_isolation ON public.implant_carveout_rules;
 
 DROP TABLE IF EXISTS public.implant_carveout_discrepancies CASCADE;
 DROP TABLE IF EXISTS public.implant_carveout_rules CASCADE;
