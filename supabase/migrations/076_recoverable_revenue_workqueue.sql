@@ -191,3 +191,4 @@ CREATE POLICY rls_rrw_audit_facility ON public.recoverable_revenue_audit_log
   FOR ALL
   USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid)
   WITH CHECK (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
+

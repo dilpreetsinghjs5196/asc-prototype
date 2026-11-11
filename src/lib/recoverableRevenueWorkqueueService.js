@@ -680,3 +680,4 @@ class RecoverableRevenueWorkqueueStore {
 
 export const recoverableRevenueWorkqueueService = new RecoverableRevenueWorkqueueStore();
 export default recoverableRevenueWorkqueueService;
+

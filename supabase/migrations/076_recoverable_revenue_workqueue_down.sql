@@ -17,3 +17,4 @@ DROP VIEW IF EXISTS public.vw_recoverable_revenue_workqueue_active CASCADE;
 DROP TABLE IF EXISTS public.recoverable_revenue_audit_log CASCADE;
 DROP TABLE IF EXISTS public.recoverable_revenue_work_items CASCADE;
 DROP TABLE IF EXISTS public.revenue_recovery_workqueues CASCADE;
+
