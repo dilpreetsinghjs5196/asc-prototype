@@ -1,9 +1,9 @@
-# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 97)
+# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 98)
 
 > **Document Type:** Authoritative Phase-by-Phase Reference Directory  
 > **Repository:** `asc-prototype/docs/phases/`  
-> **Current Revision:** Post-Phase 97 Production Integration  
-> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 97.
+> **Current Revision:** Post-Phase 98 Production Integration  
+> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 98.
 
 ---
 
@@ -17,7 +17,7 @@
 7. [Module 06: Medicare & Commercial Reimbursement Engine (Phases 60–69)](#module-06-medicare--commercial-reimbursement-engine)
 8. [Module 07: Financials, Procedural Economics & Versioning (Phases 70–77)](#module-07-financials-procedural-economics--versioning)
 9. [Module 08: Revenue Cycle Management (RCM) & Clearinghouse EDI (Phases 80–89)](#module-08-revenue-cycle-management-rcm--clearinghouse-edi)
-10. [Module 09: Master Revenue Leakage & Recovery Engine (Phases 90–97)](#module-09-master-revenue-leakage-engine)
+10. [Module 09: Master Revenue Leakage & Recovery Engine (Phases 90–98)](#module-09-master-revenue-leakage-engine)
 
 ---
 
@@ -680,17 +680,35 @@
   - **Database Migration (074):** Tables `implant_carveout_rules`, `implant_carveout_discrepancies`, views `vw_implant_carveout_active`, `vw_implant_carveout_summary`, and 1:1 RLS policies with clean down rollback.
 - **Business Impact:** Recovers hundreds of thousands in unbilled and zero-paid high-cost surgical implants, eliminates administrative invoice denials, and enforces commercial payer contractual compliance.
 
+### Phase 98: Revenue Opportunity Priority Score (ROPS) Engine
+- **File:** `98_REVENUE_OPPORTUNITY_PRIORITY_SCORE.md`
+- **Objective:** Cross-module synthesis, normalization, and ranking of revenue opportunities across all 7 upstream leakage domains into a single authoritative priority index ($0.00 - 100.00$).
+- **Operational Principle:** *"A revenue cycle team cannot work seven disconnected workbenches simultaneously. The Revenue Opportunity Priority Score (ROPS) provides a unified, transparent, and authoritative ranking that answers: Which exact dollar should our team pursue next to maximize net realized surgical cash per hour of staff labor?"*
+- **Key Deliverables:**
+  - **7 Ingested Upstream Modules:** `IMPLANT_CARVEOUT` (Phase 97), `DENIAL_APPEAL` (Phase 94), `SECONDARY_COB` (Phase 95), `PAYER_UNDERPAYMENT` (Phases 93/93A), `RECURRING_PATTERN` (Phase 93C), `UNBILLED_CASE` (Phase 91), and `MISSING_CHARGE` (Phase 92).
+  - **4-Factor Composite ROPS Formula ($0.00 - 100.00$):**
+    $\text{ROPS} = (\text{ValueScore} \times 0.35) + (\text{ConfidenceScore} \times 0.25) + (\text{RecoverabilityScore} \times 0.25) + (\text{UrgencyScore} \times 0.15)$
+  - **Expected Realizable Yield ($\$$) & Velocity ($\$/\text{hr}$):**
+    $\text{ExpectedYield} = \text{recoverable\_amount} \times \left(\frac{\text{confidence}}{100}\right) \times \left(\frac{\text{recoverability}}{100}\right)$
+    $\text{YieldPerHour} = \frac{\text{ExpectedYield}}{\max(0.25, \text{estimated\_effort\_hours})}$
+  - **5 Actionable Priority Tiers:** `TIER_1_CRITICAL_DISPATCH` ($\ge 80.00$), `TIER_2_HIGH_YIELD_RECOVERY` ($65.00 - 79.99$), `TIER_3_STANDARD_WORKBENCH` ($45.00 - 64.99$), `TIER_4_LOW_YIELD_BATCH` ($25.00 - 44.99$), `TIER_5_EXPIRED_OR_SUPPRESSED` ($< 25.00$ or expired).
+  - **Timely Filing Expiration Invariant (Rule 3):** Expired deadline ($<0$ days) forces `urgency_score = 0.00`, Tier 5, and status `EXPIRED_UNCOLLECTIBLE`.
+  - **Master Queue Sorting Invariant (Rule 4):** Sorted by `priority_tier_rank ASC`, `rops_priority_score DESC`, `yield_per_hour DESC`, and `days_until_deadline ASC`.
+  - **Clinical Maestro UI:** 5-Card KPI ribbon, cross-module domain tabs, ROPS subscore breakdown bars, yield velocity indicator, specialist dispatch modal, and facility scoring weight config dialog.
+  - **Database Migration (075):** Tables `revenue_opportunity_score_rules`, `revenue_opportunity_priority_items`, views `vw_revenue_opportunities_active`, `vw_revenue_opportunities_summary`, and 1:1 RLS policies with clean down rollback.
+- **Business Impact:** Eliminates fragmented RCM queues, focuses specialist effort on highest-velocity surgical cash recoveries, and prevents tens of thousands in deadline expiration write-offs.
+
 ---
 
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 100 | **100 / 100 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **157 total files** |
-| **Automated Tests** | 100% Pass | **300 / 300 passing across 72 suites** |
+| **Documented Phases** | 101 | **101 / 101 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **158 total files** |
+| **Automated Tests** | 100% Pass | **324 / 324 passing across 73 suites (247 passing across 11 RCM suites)** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 9.1s)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **074 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 8.4s)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **075 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 
