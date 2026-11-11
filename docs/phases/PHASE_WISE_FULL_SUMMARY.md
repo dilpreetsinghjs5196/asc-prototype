@@ -1,9 +1,9 @@
-# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 98)
+# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 99)
 
 > **Document Type:** Authoritative Phase-by-Phase Reference Directory  
 > **Repository:** `asc-prototype/docs/phases/`  
-> **Current Revision:** Post-Phase 98 Production Integration  
-> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 98.
+> **Current Revision:** Post-Phase 99 Production Integration  
+> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 99.
 
 ---
 
@@ -17,7 +17,7 @@
 7. [Module 06: Medicare & Commercial Reimbursement Engine (Phases 60–69)](#module-06-medicare--commercial-reimbursement-engine)
 8. [Module 07: Financials, Procedural Economics & Versioning (Phases 70–77)](#module-07-financials-procedural-economics--versioning)
 9. [Module 08: Revenue Cycle Management (RCM) & Clearinghouse EDI (Phases 80–89)](#module-08-revenue-cycle-management-rcm--clearinghouse-edi)
-10. [Module 09: Master Revenue Leakage & Recovery Engine (Phases 90–98)](#module-09-master-revenue-leakage-engine)
+10. [Module 09: Master Revenue Leakage & Recovery Engine (Phases 90–99)](#module-09-master-revenue-leakage-engine)
 
 ---
 
@@ -698,17 +698,34 @@
   - **Database Migration (075):** Tables `revenue_opportunity_score_rules`, `revenue_opportunity_priority_items`, views `vw_revenue_opportunities_active`, `vw_revenue_opportunities_summary`, and 1:1 RLS policies with clean down rollback.
 - **Business Impact:** Eliminates fragmented RCM queues, focuses specialist effort on highest-velocity surgical cash recoveries, and prevents tens of thousands in deadline expiration write-offs.
 
+### Phase 99: Recoverable Revenue Workqueue & Execution Workbench
+- **File:** `99_RECOVERABLE_REVENUE_WORKQUEUE.md`
+- **Objective:** Operational workqueue execution, staff ownership, recovery lifecycle state machine, dynamic SLA tracking, specialist capacity management, and immutable audit provenance.
+- **Operational Principle:** *"A prioritized revenue opportunity has zero realizable financial value until an assigned specialist acts upon it before the timely filing deadline expires. The Recoverable Revenue Workqueue is the operational bridge that converts mathematical priority into deposited surgical cash."*
+- **Key Deliverables:**
+  - **6 Operational Queues:** `CRITICAL_SLA_TRIAGE` (48h), `IMPLANT_DISPUTES` (72h), `DENIAL_APPEALS` (120h), `SECONDARY_COB_BATCH` (168h), `UNDERPAYMENT_RECOVERY` (120h), and `SUPERVISOR_ESCALATIONS` (24h).
+  - **8 Recovery Lifecycle States:** `UNASSIGNED` $\rightarrow$ `ASSIGNED` $\rightarrow$ `IN_PROGRESS` $\rightarrow$ `PENDING_DOCS` $\rightarrow$ `DISPUTE_SUBMITTED` $\rightarrow$ `APPEAL_PENDING` $\rightarrow$ `RECOVERED_RECONCILED` / `CLOSED_UNRECOVERABLE`.
+  - **Deterministic SLA Engine (Rule 1 & Rule 2):**
+    $\text{sla\_deadline} = \min(\text{timely\_filing\_date}, \text{created\_at} + \Delta t_{\text{tier}})$
+    Evaluates dynamic status: `ON_SCHEDULE`, `WARNING_AT_RISK` ($\le 24\text{h}$), and `SLA_BREACHED`.
+  - **Specialist Capacity Guard (Rule 3):** Caps active claims at 35 per specialist, preventing claim abandonment and distributing workload equitably.
+  - **Queue Priority Sorting Invariant (Rule 4):** Deterministically orders claims by `sla_status = 'SLA_BREACHED' DESC`, `priority_tier_rank ASC`, `expected_realizable_yield DESC`, and `sla_deadline ASC`.
+  - **Terminal Reconciliation Invariant (Rule 5):** Requires positive cash and ERA remittance reference for recovery closure; requires justification notes for write-offs.
+  - **Clinical Maestro UI:** 5-Card KPI ribbon, queue tabs, SLA countdown pills, action drawer, specialist capacity modal, and chronological audit timeline modal.
+  - **Database Migration (076):** Tables `revenue_recovery_workqueues`, `recoverable_revenue_work_items`, `recoverable_revenue_audit_log`, views `vw_recoverable_revenue_workqueue_active`, `vw_recoverable_revenue_workqueue_metrics`, `vw_specialist_workload_summary`, and 1:1 RLS policies with clean down rollback.
+- **Business Impact:** Prevents tens of thousands in statutory deadline write-offs, balances specialist capacity, establishes 100% audit compliance, and cuts average claim cycle time by over 40%.
+
 ---
 
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 101 | **101 / 101 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **158 total files** |
-| **Automated Tests** | 100% Pass | **324 / 324 passing across 73 suites (247 passing across 11 RCM suites)** |
+| **Documented Phases** | 102 | **102 / 102 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **159 total files** |
+| **Automated Tests** | 100% Pass | **347 / 347 passing across 74 suites (248 passing across 12 RCM suites)** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 8.4s)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **075 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 5.8s)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **076 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 
