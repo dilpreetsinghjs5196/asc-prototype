@@ -66,6 +66,7 @@ import PayerUnderpaymentPatternsView from './components/PayerUnderpaymentPattern
 import DenialRecoveryPrioritizationView from './components/DenialRecoveryPrioritizationView';
 import MissingSecondaryPaymentView from './components/MissingSecondaryPaymentView';
 import PatientArRecoveryView from './components/PatientArRecoveryView';
+import ImplantCarveoutDetectionView from './components/ImplantCarveoutDetectionView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2847,6 +2848,13 @@ export default function App() {
             <div className="menu-item-icon"><Users size={16} /></div>
             Patient AR Recovery
           </div>
+          <div
+            className={`menu-item ${activeTab === 'implant_carveout' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('implant_carveout'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Cpu size={16} /></div>
+            Implant Carveouts
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -2981,6 +2989,7 @@ export default function App() {
                   {activeTab === 'denial_prioritization' && 'Denial Recovery Prioritization & Yield Queue'}
                   {activeTab === 'missing_secondary' && 'Missing Secondary Payment & COB Leakage'}
                   {activeTab === 'patient_ar_recovery' && 'Patient AR Prioritization & Self-Pay Recovery'}
+                  {activeTab === 'implant_carveout' && 'Implant Carveout Detection & Recovery'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -3044,6 +3053,7 @@ export default function App() {
                   {activeTab === 'denial_prioritization' && 'Authoritative multi-factor ranking by recoverable yield, overturn probability, filing deadline urgency & staff effort'}
                   {activeTab === 'missing_secondary' && 'Secondary reimbursement recovery, Medigap coordination & patient statement suppression guardian'}
                   {activeTab === 'patient_ar_recovery' && 'Post-insurance patient AR prioritization, Propensity-to-Pay segmentation & structured payment plans'}
+                  {activeTab === 'implant_carveout' && 'Deterministic detection of unbilled, zero-paid, or underpaid surgical implants & device carve-outs'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -4832,6 +4842,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'patient_ar_recovery' && (
                 <PatientArRecoveryView />
+              )}
+
+              {/* ==========================================
+              TAB: IMPLANT CARVEOUT DETECTION (PHASE 97 - REVENUE CYCLE)
+              ========================================== */}
+              {activeTab === 'implant_carveout' && (
+                <ImplantCarveoutDetectionView />
               )}
 
               {/* ==========================================

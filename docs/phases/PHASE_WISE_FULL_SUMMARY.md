@@ -1,9 +1,9 @@
-# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 96)
+# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 97)
 
 > **Document Type:** Authoritative Phase-by-Phase Reference Directory  
 > **Repository:** `asc-prototype/docs/phases/`  
-> **Current Revision:** Post-Phase 96 Production Integration  
-> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 96.
+> **Current Revision:** Post-Phase 97 Production Integration  
+> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 97.
 
 ---
 
@@ -17,7 +17,7 @@
 7. [Module 06: Medicare & Commercial Reimbursement Engine (Phases 60–69)](#module-06-medicare--commercial-reimbursement-engine)
 8. [Module 07: Financials, Procedural Economics & Versioning (Phases 70–77)](#module-07-financials-procedural-economics--versioning)
 9. [Module 08: Revenue Cycle Management (RCM) & Clearinghouse EDI (Phases 80–89)](#module-08-revenue-cycle-management-rcm--clearinghouse-edi)
-10. [Module 09: Master Revenue Leakage & Recovery Engine (Phases 90–96)](#module-09-master-revenue-leakage-engine)
+10. [Module 09: Master Revenue Leakage & Recovery Engine (Phases 90–97)](#module-09-master-revenue-leakage-engine)
 
 ---
 
@@ -659,17 +659,38 @@
   - **Database Migration (073):** Tables `patient_ar_recovery_cases`, `patient_payment_plans`, views `vw_patient_ar_recovery_active`, `vw_patient_ar_recovery_summary`, and 1:1 RLS policies with clean down rollback.
 - **Business Impact:** Accelerates patient cash velocity, reduces days in patient AR by over 35%, triples autopay installment enrollment, and safeguards healthcare consumer rights through compliant charity screening.
 
+### Phase 97: Implant Carveout Detection & Recovery Engine
+- **File:** `97_IMPLANT_CARVEOUT_DETECTION.md`
+- **Objective:** Automated detection, contractual validation, priority ranking, and dispute generation of surgical implant and medical device carve-outs in Ambulatory Surgery Centers (ASCs).
+- **Operational Principle:** *"Implant acquisition costs must never be absorbed as routine surgical facility overhead when the commercial payer contract guarantees a carve-out. An orthopedic total knee prosthesis or spinal fusion cage costing $5,200 that is erroneously paid at $0.00 as 'bundled' or omitted from the initial 837 claim converts a profitable procedure into an immediate catastrophic financial loss for the ASC."*
+- **Key Deliverables:**
+  - **5 Contractual Carve-Out Models:**
+    - `INVOICE_COST_PLUS_PERCENT`: $\text{Expected} = \text{InvoiceCost} \times (1 + \text{MarkupPct})$
+    - `PASS_THROUGH_AT_COST`: $\text{Expected} = \text{InvoiceCost}$
+    - `INVOICE_PLUS_FIXED_FEE`: $\text{Expected} = \text{InvoiceCost} + \text{FixedFee}$
+    - `THRESHOLD_OVERAGE_PLUS_MARKUP`: $\text{Expected} = \max(0, \text{InvoiceCost} - \text{Threshold}) \times (1 + \text{MarkupPct})$
+    - `FEE_SCHEDULE_FIXED`: $\text{Expected} = \text{DeviceFeeRate} \times \text{Quantity}$
+  - **5 Carve-Out Leakage Types:** `UNBILLED_IMPLANT`, `ZERO_PAID_BUNDLED`, `MISSING_INVOICE_DENIAL`, `MARKUP_UNDERPAID`, and `THRESHOLD_CALCULATION_ERROR`.
+  - **4-Factor Priority Score Formula ($0.00 - 100.00$):**
+    $\text{PriorityScore} = (\text{VarianceScore} \times 0.40) + (\text{DocumentationScore} \times 0.25) + (\text{OverturnLikelihoodScore} \times 0.20) + (\text{FilingUrgencyScore} \times 0.15)$
+  - **Invoice Attachment Gate (Rule 3):** Strictly blocks external dispute filing or corrected claim dispatch until manufacturer invoice is verified and attached.
+  - **Timely Filing Expiration Invariant (Rule 4):** Expired deadline ($<0$ days) forces `urgency_score = 0.00`, Tier 5, and status `EXPIRED_UNRECOVERABLE`.
+  - **Work Queue Sorting Invariant (Rule 5):** Sorted by `recovery_action_tier ASC`, `carveout_variance DESC`, and `days_until_deadline ASC`.
+  - **Clinical Maestro UI:** 5-Card KPI ribbon, prioritized carve-out workbench, manufacturer invoice attacher modal, dispute/corrected claim packet generator, and remittance recovery recorder.
+  - **Database Migration (074):** Tables `implant_carveout_rules`, `implant_carveout_discrepancies`, views `vw_implant_carveout_active`, `vw_implant_carveout_summary`, and 1:1 RLS policies with clean down rollback.
+- **Business Impact:** Recovers hundreds of thousands in unbilled and zero-paid high-cost surgical implants, eliminates administrative invoice denials, and enforces commercial payer contractual compliance.
+
 ---
 
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 99 | **99 / 99 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **156 total files** |
-| **Automated Tests** | 100% Pass | **271 / 271 passing across 71 suites** |
+| **Documented Phases** | 100 | **100 / 100 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **157 total files** |
+| **Automated Tests** | 100% Pass | **300 / 300 passing across 72 suites** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
 | **Production Build** | Clean Vite Compilation | **0 errors (Verified in 9.1s)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **073 migrations deployed** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **074 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 
