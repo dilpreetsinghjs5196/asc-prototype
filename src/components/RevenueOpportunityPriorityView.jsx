@@ -558,17 +558,17 @@ export default function RevenueOpportunityPriorityView() {
 
       {/* Modal: Dispatch to Queue */}
       {showDispatchModal && selectedItem && (
-        <div className="modal-backdrop">
-          <div className="modal-container">
-            <div className="modal-header">
-              <div className="modal-title-group">
+        <div className="rops-modal-backdrop modal-backdrop">
+          <div className="rops-modal-container modal-container">
+            <div className="rops-modal-header modal-header">
+              <div className="rops-modal-title-group modal-title-group">
                 <Send size={18} className="text-blue" />
-                <h3>Dispatch Revenue Opportunity</h3>
+                <h3 className="rops-modal-title">Dispatch Revenue Opportunity</h3>
               </div>
-              <button className="close-btn" onClick={() => setShowDispatchModal(false)}>✕</button>
+              <button className="rops-modal-close-btn close-btn" onClick={() => setShowDispatchModal(false)}>✕</button>
             </div>
             <form onSubmit={handleSaveDispatch}>
-              <div className="modal-body">
+              <div className="rops-modal-body modal-body">
                 <div className="summary-spec-card">
                   <div><strong>Source:</strong> {SOURCE_MODULES[selectedItem.source_module]?.label}</div>
                   <div><strong>Patient:</strong> {selectedItem.patient_name} • <strong>Payer:</strong> {selectedItem.payer_name}</div>
@@ -583,7 +583,7 @@ export default function RevenueOpportunityPriorityView() {
                     value={dispatchAnalystInput}
                     onChange={(e) => setDispatchAnalystInput(e.target.value)}
                     placeholder="e.g. Senior Denial Specialist"
-                    className="form-control"
+                    className="rops-form-control form-control"
                   />
                 </div>
 
@@ -594,11 +594,11 @@ export default function RevenueOpportunityPriorityView() {
                     value={dispatchNotesInput}
                     onChange={(e) => setDispatchNotesInput(e.target.value)}
                     placeholder="e.g. Priority filing per statutory 14-day appeal limit."
-                    className="form-control"
+                    className="rops-form-control form-control"
                   />
                 </div>
               </div>
-              <div className="modal-footer">
+              <div className="rops-modal-footer modal-footer">
                 <button type="button" className="btn-secondary" onClick={() => setShowDispatchModal(false)}>Cancel</button>
                 <button type="submit" className="btn-primary">Confirm & Dispatch</button>
               </div>
@@ -609,17 +609,17 @@ export default function RevenueOpportunityPriorityView() {
 
       {/* Modal: Record Recovery */}
       {showRecoveryModal && selectedItem && (
-        <div className="modal-backdrop">
-          <div className="modal-container">
-            <div className="modal-header">
-              <div className="modal-title-group">
+        <div className="rops-modal-backdrop modal-backdrop">
+          <div className="rops-modal-container modal-container">
+            <div className="rops-modal-header modal-header">
+              <div className="rops-modal-title-group modal-title-group">
                 <DollarSign size={18} className="text-emerald" />
-                <h3>Record Realized Cash Recovery</h3>
+                <h3 className="rops-modal-title">Record Realized Cash Recovery</h3>
               </div>
-              <button className="close-btn" onClick={() => setShowRecoveryModal(false)}>✕</button>
+              <button className="rops-modal-close-btn close-btn" onClick={() => setShowRecoveryModal(false)}>✕</button>
             </div>
             <form onSubmit={handleSaveRecovery}>
-              <div className="modal-body">
+              <div className="rops-modal-body modal-body">
                 <div className="summary-spec-card">
                   <div><strong>Opportunity:</strong> {selectedItem.procedure_name} ({selectedItem.claim_number})</div>
                   <div><strong>Gross Recoverable:</strong> <span className="text-blue font-bold">${selectedItem.recoverable_amount.toFixed(2)}</span></div>
@@ -633,7 +633,7 @@ export default function RevenueOpportunityPriorityView() {
                     required
                     value={recoveryAmountInput}
                     onChange={(e) => setRecoveryAmountInput(e.target.value)}
-                    className="form-control"
+                    className="rops-form-control form-control"
                   />
                 </div>
 
@@ -644,11 +644,11 @@ export default function RevenueOpportunityPriorityView() {
                     value={recoveryNotesInput}
                     onChange={(e) => setRecoveryNotesInput(e.target.value)}
                     placeholder="e.g. 835 Remittance ERA-2026-BCBS-912"
-                    className="form-control"
+                    className="rops-form-control form-control"
                   />
                 </div>
               </div>
-              <div className="modal-footer">
+              <div className="rops-modal-footer modal-footer">
                 <button type="button" className="btn-secondary" onClick={() => setShowRecoveryModal(false)}>Cancel</button>
                 <button type="submit" className="btn-primary">Confirm & Close Opportunity</button>
               </div>
@@ -659,17 +659,17 @@ export default function RevenueOpportunityPriorityView() {
 
       {/* Modal: Configure Facility ROPS Weights */}
       {showConfigModal && (
-        <div className="modal-backdrop">
-          <div className="modal-container">
-            <div className="modal-header">
-              <div className="modal-title-group">
+        <div className="rops-modal-backdrop modal-backdrop">
+          <div className="rops-modal-container modal-container">
+            <div className="rops-modal-header modal-header">
+              <div className="rops-modal-title-group modal-title-group">
                 <Sliders size={18} className="text-teal" />
-                <h3>Facility ROPS Scoring Configuration</h3>
+                <h3 className="rops-modal-title">Facility ROPS Scoring Configuration</h3>
               </div>
-              <button className="close-btn" onClick={() => setShowConfigModal(false)}>✕</button>
+              <button className="rops-modal-close-btn close-btn" onClick={() => setShowConfigModal(false)}>✕</button>
             </div>
             <form onSubmit={handleSaveConfig}>
-              <div className="modal-body">
+              <div className="rops-modal-body modal-body">
                 <div className="config-info-box">
                   <Info size={16} className="text-teal inline-icon" />
                   <span>Configures facility-wide priority weights. Weights must sum to exactly 1.00 (100%).</span>
@@ -683,7 +683,7 @@ export default function RevenueOpportunityPriorityView() {
                     required
                     value={benchmarkInput}
                     onChange={(e) => setBenchmarkInput(e.target.value)}
-                    className="form-control"
+                    className="rops-form-control form-control"
                   />
                   <span className="field-hint">Maximum dollar variance for 100% Value Subscore (default: $5,000.00).</span>
                 </div>
@@ -699,7 +699,7 @@ export default function RevenueOpportunityPriorityView() {
                       required
                       value={weightValueInput}
                       onChange={(e) => setWeightValueInput(e.target.value)}
-                      className="form-control"
+                      className="rops-form-control form-control"
                     />
                   </div>
 
@@ -713,7 +713,7 @@ export default function RevenueOpportunityPriorityView() {
                       required
                       value={weightConfInput}
                       onChange={(e) => setWeightConfInput(e.target.value)}
-                      className="form-control"
+                      className="rops-form-control form-control"
                     />
                   </div>
 
@@ -727,7 +727,7 @@ export default function RevenueOpportunityPriorityView() {
                       required
                       value={weightRecInput}
                       onChange={(e) => setWeightRecInput(e.target.value)}
-                      className="form-control"
+                      className="rops-form-control form-control"
                     />
                   </div>
 
@@ -741,12 +741,12 @@ export default function RevenueOpportunityPriorityView() {
                       required
                       value={weightUrgInput}
                       onChange={(e) => setWeightUrgInput(e.target.value)}
-                      className="form-control"
+                      className="rops-form-control form-control"
                     />
                   </div>
                 </div>
               </div>
-              <div className="modal-footer">
+              <div className="rops-modal-footer modal-footer">
                 <button type="button" className="btn-secondary" onClick={() => setShowConfigModal(false)}>Cancel</button>
                 <button type="submit" className="btn-primary">Apply & Recalculate</button>
               </div>

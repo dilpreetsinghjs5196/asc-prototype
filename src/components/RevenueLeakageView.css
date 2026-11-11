@@ -551,7 +551,8 @@
   overflow: hidden;
 }
 
-.modal-header {
+.modal-card .modal-header,
+.revenue-leakage-container .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
