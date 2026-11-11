@@ -1,9 +1,9 @@
-# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 94)
+# ASCANALYST: Phase-by-Phase Complete Master Summary (Phases 01 – 95)
 
 > **Document Type:** Authoritative Phase-by-Phase Reference Directory  
 > **Repository:** `asc-prototype/docs/phases/`  
-> **Current Revision:** Post-Phase 94 Production Integration  
-> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 94.
+> **Current Revision:** Post-Phase 95 Production Integration  
+> **Scope:** Detailed summary for every individual phase from Phase 01 to Phase 95.
 
 ---
 
@@ -620,17 +620,35 @@
   - **Database Migration (071):** Tables `denial_recovery_priorities`, `denial_prioritization_rules`, views `vw_denial_recovery_priorities_active`, `vw_denial_recovery_priorities_summary`, and 1:1 RLS policies with clean down rollback.
 - **Business Impact:** Replaces arbitrary FIFO denial queues with an ROI-maximizing dispatch engine that prevents elapsed filing limit write-offs and dramatically increases recovered surgical cash per staff work hour.
 
+### Phase 95: Missing Secondary Payment & COB Leakage Engine
+- **File:** `95_MISSING_SECONDARY_PAYMENT.md`
+- **Objective:** Automated detection, validation, prioritization, and recovery of uncollected secondary and supplemental payer reimbursements (Medigap Part B coinsurance, commercial COB, Medicaid crossover).
+- **Operational Principle:** *"Secondary insurance is not patient debt. A $1,400 surgical coinsurance balance after Medicare Part B must be systematically billed to the verified Medigap/commercial secondary payer with primary EOB evidence before any statement is delivered to a patient or written off."*
+- **Key Deliverables:**
+  - **3 Secondary COB Models:**
+    - Medigap Supplement: $\text{Expected} = \text{MedicarePartBCoinsurance} = \text{PrimaryAllowed} \times 0.20$
+    - Standard Coordination: $\text{Expected} = \min(\text{PrimaryPR},\, \max(0, \text{SecondaryAllowed} - \text{PrimaryPaid}))$
+    - Non-Duplication Carve-Out: $\text{Expected} = \max(0, \text{SecondaryAllowed} - \text{PrimaryPaid})$
+  - **4-Factor Priority Score Formula ($0.00 - 100.00$):**
+    $\text{PriorityScore} = (\text{BalanceScore} \times 0.35) + (\text{FilingUrgencyScore} \times 0.30) + (\text{CoverageCertaintyScore} \times 0.20) + (\text{FilingReadinessScore} \times 0.15)$
+  - **Patient Statement Suppression Guardian (Rule 1):** Automatically locks `patient_statement_held = true` whenever verified secondary coverage exists, protecting patient credit scores and preventing premature balance-billing harassment.
+  - **Secondary Filing Limit Invariant (Rule 2):** Measured strictly from primary 835 ERA date (`primary_eob_date`). If `days < 0`, forced to `UNCOLLECTIBLE_HOLD` with `0.00` urgency score.
+  - **Crossover Audit (Rule 3):** Automatically inspects primary 835 for Remark Code `MA18`. If absent, flags as `FAILED_CROSSOVER` and generates an electronic 837P Loop 2320/2330 secondary claim packet.
+  - **Clinical Maestro UI:** 5-Card KPI ribbon, prioritized secondary queue data grid, 4-factor scoring inspector, COB model comparison table, payer crossover hub, and patient statement suppression guardian.
+  - **Database Migration (072):** Tables `missing_secondary_payments`, `secondary_cob_rules`, views `vw_missing_secondary_active`, `vw_missing_secondary_summary`, and 1:1 RLS policies with clean down rollback.
+- **Business Impact:** Stops patient bad-debt write-offs, captures hundreds of thousands in unpaid Medigap/supplemental coinsurance balances, and eliminates patient complaints caused by premature billing statements.
+
 ---
 
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 97 | **97 / 97 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **154 total files** |
-| **Automated Tests** | 100% Pass | **226 / 226 passing across 69 suites** |
+| **Documented Phases** | 98 | **98 / 98 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **155 total files** |
+| **Automated Tests** | 100% Pass | **250 / 250 passing across 70 suites** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
 | **Production Build** | Clean Vite Compilation | **0 errors (Verified in 15.4s)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **071 migrations deployed** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **072 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 

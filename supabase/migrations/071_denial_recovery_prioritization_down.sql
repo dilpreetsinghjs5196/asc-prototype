@@ -17,3 +17,4 @@ DROP VIEW IF EXISTS public.vw_denial_recovery_priorities_active CASCADE;
 -- 3. Drop Prioritization Tables
 DROP TABLE IF EXISTS public.denial_prioritization_rules CASCADE;
 DROP TABLE IF EXISTS public.denial_recovery_priorities CASCADE;
+

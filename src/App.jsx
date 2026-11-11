@@ -64,6 +64,7 @@ import PaymentVarianceValidationView from './components/PaymentVarianceValidatio
 import RecoveryEvidenceTimelineView from './components/RecoveryEvidenceTimelineView';
 import PayerUnderpaymentPatternsView from './components/PayerUnderpaymentPatternsView';
 import DenialRecoveryPrioritizationView from './components/DenialRecoveryPrioritizationView';
+import MissingSecondaryPaymentView from './components/MissingSecondaryPaymentView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2831,6 +2832,13 @@ export default function App() {
             <div className="menu-item-icon"><Scale size={16} /></div>
             Denial Prioritization
           </div>
+          <div
+            className={`menu-item ${activeTab === 'missing_secondary' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('missing_secondary'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><ShieldCheck size={16} /></div>
+            Missing Secondary Payment
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -2963,6 +2971,7 @@ export default function App() {
                   {activeTab === 'recovery_cases' && 'Recovery Evidence, Submission & Response Timeline'}
                   {activeTab === 'payer_patterns' && 'Recurring Payer Underpayment Patterns & Batch Recovery'}
                   {activeTab === 'denial_prioritization' && 'Denial Recovery Prioritization & Yield Queue'}
+                  {activeTab === 'missing_secondary' && 'Missing Secondary Payment & COB Leakage'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -3024,6 +3033,7 @@ export default function App() {
                   {activeTab === 'recovery_cases' && 'Auditable recovery cases, deterministic evidence packages, human approval governance & verified cash reconciliation'}
                   {activeTab === 'payer_patterns' && 'Systemic pattern detection across payers, plans, fee schedules, CPT codes & automated batch dispute opportunities'}
                   {activeTab === 'denial_prioritization' && 'Authoritative multi-factor ranking by recoverable yield, overturn probability, filing deadline urgency & staff effort'}
+                  {activeTab === 'missing_secondary' && 'Secondary reimbursement recovery, Medigap coordination & patient statement suppression guardian'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -4798,6 +4808,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'denial_prioritization' && (
                 <DenialRecoveryPrioritizationView />
+              )}
+
+              {/* ==========================================
+              TAB: MISSING SECONDARY PAYMENT (PHASE 95 - REVENUE CYCLE)
+              ========================================== */}
+              {activeTab === 'missing_secondary' && (
+                <MissingSecondaryPaymentView />
               )}
 
               {/* ==========================================
