@@ -350,9 +350,9 @@ export const SEED_OR_BLOCKS = [
   {
     id: 'b1010000-0000-4000-8000-000000000001',
     facility_id: DEFAULT_FACILITY_ID,
-    operating_room_id: '11111111-1111-4111-8111-111111111111', // OR-1
-    room_number: '1',
-    room_name: 'OR 1 - Orthopedic & Robotic Suite',
+    operating_room_id: 'room-or-1', // OR-1: Main Orthopedic & Joint Suite
+    room_number: 'OR-1',
+    room_name: 'Main Orthopedic & Joint Suite',
     block_name: 'Dr. Marcus Vance — Total Joints & Robotics',
     owner_type: 'INDIVIDUAL_SURGEON',
     surgeon_id: 101,
@@ -373,9 +373,9 @@ export const SEED_OR_BLOCKS = [
   {
     id: 'b1010000-0000-4000-8000-000000000002',
     facility_id: DEFAULT_FACILITY_ID,
-    operating_room_id: '11111111-1111-4111-8111-111111111111', // OR-1
-    room_number: '1',
-    room_name: 'OR 1 - Orthopedic & Robotic Suite',
+    operating_room_id: 'room-or-1', // OR-1: Main Orthopedic & Joint Suite
+    room_number: 'OR-1',
+    room_name: 'Main Orthopedic & Joint Suite',
     block_name: 'Austin Sports Medicine — Arthroscopy Block',
     owner_type: 'SURGICAL_GROUP',
     surgeon_id: null,
@@ -396,9 +396,9 @@ export const SEED_OR_BLOCKS = [
   {
     id: 'b1010000-0000-4000-8000-000000000003',
     facility_id: DEFAULT_FACILITY_ID,
-    operating_room_id: '55555555-5555-4555-8555-555555555555', // OR-5 Spine
-    room_number: '5',
-    room_name: 'OR 5 - Minimally Invasive Spine Suite',
+    operating_room_id: 'room-or-2', // OR-2: Spine & Advanced Neuro Suite
+    room_number: 'OR-2',
+    room_name: 'Spine & Advanced Neuro Suite',
     block_name: 'Capital Spine Institute — Decompressions & Fusions',
     owner_type: 'SURGICAL_GROUP',
     surgeon_id: null,
@@ -419,9 +419,9 @@ export const SEED_OR_BLOCKS = [
   {
     id: 'b1010000-0000-4000-8000-000000000004',
     facility_id: DEFAULT_FACILITY_ID,
-    operating_room_id: '55555555-5555-4555-8555-555555555555', // OR-5 Spine
-    room_number: '5',
-    room_name: 'OR 5 - Minimally Invasive Spine Suite',
+    operating_room_id: 'room-or-2', // OR-2: Spine & Advanced Neuro Suite
+    room_number: 'OR-2',
+    room_name: 'Spine & Advanced Neuro Suite',
     block_name: 'Dr. Kevin Zhao — Cervical & Lumbar Discectomies',
     owner_type: 'INDIVIDUAL_SURGEON',
     surgeon_id: 105,
@@ -442,9 +442,9 @@ export const SEED_OR_BLOCKS = [
   {
     id: 'b1010000-0000-4000-8000-000000000005',
     facility_id: DEFAULT_FACILITY_ID,
-    operating_room_id: '33333333-3333-4333-8333-333333333333', // OR-3 Eye
-    room_number: '3',
-    room_name: 'OR 3 - Microsurgery & Ophthalmology Suite',
+    operating_room_id: 'room-or-4', // OR-4: Ophthalmology & ENT Clean Suite
+    room_number: 'OR-4',
+    room_name: 'Ophthalmology & ENT Clean Suite',
     block_name: 'Dr. Elena Rostova — Cataract & Vitreoretinal',
     owner_type: 'INDIVIDUAL_SURGEON',
     surgeon_id: 103,
@@ -465,9 +465,9 @@ export const SEED_OR_BLOCKS = [
   {
     id: 'b1010000-0000-4000-8000-000000000006',
     facility_id: DEFAULT_FACILITY_ID,
-    operating_room_id: '44444444-4444-4444-8444-444444444444', // OR-4 Pain
-    room_number: '4',
-    room_name: 'OR 4 - Fluoroscopy & Pain Management Suite',
+    operating_room_id: 'room-proc-1', // PROC-1: Fluoroscopy & Interventional Pain Suite
+    room_number: 'PROC-1',
+    room_name: 'Fluoroscopy & Interventional Pain Suite',
     block_name: 'Austin Interventional Pain Service Line',
     owner_type: 'SERVICE_LINE',
     surgeon_id: null,
@@ -488,9 +488,9 @@ export const SEED_OR_BLOCKS = [
   {
     id: 'b1010000-0000-4000-8000-000000000007',
     facility_id: DEFAULT_FACILITY_ID,
-    operating_room_id: '22222222-2222-4222-8222-222222222222', // OR-2 General
-    room_number: '2',
-    room_name: 'OR 2 - General & Laparoscopic Suite',
+    operating_room_id: 'room-or-3', // OR-3: Robotic & Minimally Invasive Suite
+    room_number: 'OR-3',
+    room_name: 'Robotic & Minimally Invasive Suite',
     block_name: 'Dr. Sarah Jenkins — Advanced Laparoscopy & Hernia',
     owner_type: 'INDIVIDUAL_SURGEON',
     surgeon_id: 102,
@@ -511,9 +511,9 @@ export const SEED_OR_BLOCKS = [
   {
     id: 'b1010000-0000-4000-8000-000000000008',
     facility_id: DEFAULT_FACILITY_ID,
-    operating_room_id: '66666666-6666-4666-8666-666666666666', // OR-6 Multi
-    room_number: '6',
-    room_name: 'OR 6 - Multi-Specialty Outpatient Suite',
+    operating_room_id: 'room-endo-1', // ENDO-1: Endoscopy & GI Procedure Suite
+    room_number: 'ENDO-1',
+    room_name: 'Endoscopy & GI Procedure Suite',
     block_name: 'Open Urgent Scheduling & Released Block Pool',
     owner_type: 'OPEN_TIME',
     surgeon_id: null,

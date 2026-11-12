@@ -175,7 +175,7 @@ export default function BlockScheduleModelView() {
           ...modalFormData,
           day_of_week: Number(modalFormData.day_of_week),
           room_number: selectedRoom?.room_number || b.room_number,
-          room_name: selectedRoom?.name || b.room_name,
+          room_name: selectedRoom?.room_name || selectedRoom?.name || b.room_name,
           allocated_minutes: duration,
           auto_release_lead_hours: Number(modalFormData.auto_release_lead_days) * 24
         };
@@ -188,7 +188,7 @@ export default function BlockScheduleModelView() {
         ...modalFormData,
         day_of_week: Number(modalFormData.day_of_week),
         room_number: selectedRoom?.room_number || '1',
-        room_name: selectedRoom?.name || 'OR 1',
+        room_name: selectedRoom?.room_name || selectedRoom?.name || 'OR 1',
         allocated_minutes: duration,
         auto_release_lead_hours: Number(modalFormData.auto_release_lead_days) * 24,
         is_active: true,
@@ -327,7 +327,7 @@ export default function BlockScheduleModelView() {
           <select value={roomFilter} onChange={(e) => setRoomFilter(e.target.value)}>
             <option value="ALL">All Operating Rooms</option>
             {SEED_OPERATING_ROOMS.map(r => (
-              <option key={r.id} value={r.id}>{r.name || `OR ${r.room_number}`}</option>
+              <option key={r.id} value={r.id}>{r.room_name || r.name || r.room_number}</option>
             ))}
           </select>
 
@@ -385,7 +385,7 @@ export default function BlockScheduleModelView() {
           </div>
 
           <div className="matrix-table-wrapper">
-            <table className="matrix-table">
+            <table className="or-block-matrix-table">
               <thead>
                 <tr>
                   <th className="room-column-th">Operating Suite</th>
@@ -403,14 +403,16 @@ export default function BlockScheduleModelView() {
                     <tr key={room.id}>
                       <td className="room-cell">
                         <div className="room-cell-box">
-                          <span className="room-badge">OR {room.room_number}</span>
-                          <span className="room-name-label">{room.name}</span>
-                          <span className="room-type-label">{room.suite_type || 'General Suite'}</span>
+                          <span className="room-badge">
+                            {room.room_number ? (room.room_number.startsWith('OR') ? room.room_number : `OR ${room.room_number}`) : 'OR'}
+                          </span>
+                          <span className="room-name-label">{room.room_name || room.name || `OR ${room.room_number}`}</span>
+                          <span className="room-type-label">{room.suite_designation || room.room_type || 'Surgical Suite'}</span>
                         </div>
                       </td>
                       {operatingDays.map(d => {
                         const cellBlocks = filteredBlocks.filter(
-                          b => b.operating_room_id === room.id && b.day_of_week === d.day
+                          b => (b.operating_room_id === room.id || b.room_number === room.room_number || b.room_number === room.room_number?.replace('OR-', '')) && b.day_of_week === d.day
                         );
 
                         return (
@@ -651,7 +653,7 @@ export default function BlockScheduleModelView() {
                       className="block-form-control"
                     >
                       {SEED_OPERATING_ROOMS.map(r => (
-                        <option key={r.id} value={r.id}>{r.name || `OR ${r.room_number}`}</option>
+                        <option key={r.id} value={r.id}>{r.room_name || r.name || r.room_number}</option>
                       ))}
                     </select>
                   </div>
@@ -813,3 +815,4 @@ export default function BlockScheduleModelView() {
     </div>
   );
 }
+

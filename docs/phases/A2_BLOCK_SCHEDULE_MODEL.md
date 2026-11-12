@@ -279,3 +279,4 @@ Service module: `src/services/blockScheduleModelService.js` (and `src/lib/blockS
 - [x] Service layer provides authoritative conflict detection and staffing containment checks.
 - [x] React component renders weekly matrix, table view, and add/edit modal.
 - [x] Registered in `src/App.jsx` under Scheduling navigation.
+

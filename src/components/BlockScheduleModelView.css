@@ -343,16 +343,17 @@
   overflow-x: auto;
 }
 
-.matrix-table {
+.or-block-matrix-table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
   min-width: 980px;
 }
 
-.matrix-table th {
+.or-block-matrix-table th {
   padding: 0.75rem 0.65rem;
-  background-color: #f1f5f9;
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
   border-bottom: 1px solid #cbd5e1;
   border-right: 1px solid #e2e8f0;
   text-align: left;
@@ -377,11 +378,20 @@
   color: #64748b;
 }
 
-.matrix-table td {
+.or-block-matrix-table td {
   padding: 0.75rem 0.5rem;
+  background-color: #ffffff !important;
   border-bottom: 1px solid #e2e8f0;
   border-right: 1px solid #e2e8f0;
   vertical-align: top;
+}
+
+.or-block-matrix-table tr:hover td {
+  background-color: #f8fafc !important;
+}
+
+.or-block-matrix-table tr:hover .room-cell {
+  background-color: #f1f5f9 !important;
 }
 
 .room-cell {
@@ -912,3 +922,4 @@
 .text-slate { color: #64748b; }
 .text-crimson { color: #dc2626; }
 .inline-icon { display: inline-block; vertical-align: middle; }
+

@@ -98,3 +98,4 @@ CREATE POLICY rls_or_block_definitions_facility ON public.or_block_definitions
   FOR ALL
   USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid)
   WITH CHECK (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
+

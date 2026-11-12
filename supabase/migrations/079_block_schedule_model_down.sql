@@ -20,3 +20,4 @@ DROP INDEX IF EXISTS public.idx_obd_facility_specialty;
 
 -- 4. Drop Master Block Table
 DROP TABLE IF EXISTS public.or_block_definitions CASCADE;
+
