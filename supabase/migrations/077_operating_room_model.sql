@@ -8,26 +8,23 @@
 --              HVAC cleanroom ratings, turnover targets, and audit status events.
 -- ==============================================================================
 
--- 1. Table: operating_rooms
+-- 1. Table: operating_rooms (Creates table if fresh or ensures baseline exists)
 CREATE TABLE IF NOT EXISTS public.operating_rooms (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   facility_id UUID NOT NULL,
   room_number VARCHAR(64) NOT NULL,
-  room_name VARCHAR(128) NOT NULL,
+  room_name VARCHAR(150),
   suite_designation VARCHAR(128) NOT NULL DEFAULT 'Main Surgical Suite',
-  room_type VARCHAR(64) NOT NULL DEFAULT 'STANDARD_OR'
-    CHECK (room_type IN ('STANDARD_OR', 'HYBRID_OR', 'PROCEDURE_ROOM', 'ENDOSCOPY_SUITE', 'MINIMAL_INVASIVE_SUITE', 'ROBOTIC_SUITE')),
-  square_footage NUMERIC(8, 2) NOT NULL DEFAULT 450.00 CHECK (square_footage > 0),
-  table_weight_capacity_lbs INTEGER NOT NULL DEFAULT 500 CHECK (table_weight_capacity_lbs >= 300),
-  hvac_cleanroom_class VARCHAR(64) NOT NULL DEFAULT 'ISO_CLASS_7'
-    CHECK (hvac_cleanroom_class IN ('ISO_CLASS_5', 'ISO_CLASS_6', 'ISO_CLASS_7', 'ISO_CLASS_8', 'STANDARD_VENTILATED')),
-  positive_pressure_pa NUMERIC(6, 2) NOT NULL DEFAULT 2.50 CHECK (positive_pressure_pa >= 0),
-  air_changes_per_hour INTEGER NOT NULL DEFAULT 20 CHECK (air_changes_per_hour >= 15),
+  room_type VARCHAR(64) NOT NULL DEFAULT 'STANDARD_OR',
+  square_footage NUMERIC(8, 2) NOT NULL DEFAULT 450.00,
+  table_weight_capacity_lbs INTEGER NOT NULL DEFAULT 500,
+  hvac_cleanroom_class VARCHAR(64) NOT NULL DEFAULT 'ISO_CLASS_7',
+  positive_pressure_pa NUMERIC(6, 2) NOT NULL DEFAULT 2.50,
+  air_changes_per_hour INTEGER NOT NULL DEFAULT 20,
   laminar_flow_enabled BOOLEAN NOT NULL DEFAULT TRUE,
-  hourly_cost_rate NUMERIC(10, 2) NOT NULL DEFAULT 1450.00 CHECK (hourly_cost_rate >= 0),
-  standard_turnover_minutes INTEGER NOT NULL DEFAULT 25 CHECK (standard_turnover_minutes > 0),
-  operating_status VARCHAR(64) NOT NULL DEFAULT 'OPERATIONAL'
-    CHECK (operating_status IN ('OPERATIONAL', 'MAINTENANCE', 'RENOVATION', 'DECOMMISSIONED')),
+  hourly_cost_rate NUMERIC(10, 2) NOT NULL DEFAULT 1450.00,
+  standard_turnover_minutes INTEGER NOT NULL DEFAULT 25,
+  operating_status VARCHAR(64) NOT NULL DEFAULT 'OPERATIONAL',
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   effective_start_date DATE NOT NULL DEFAULT CURRENT_DATE,
   effective_end_date DATE,
@@ -35,9 +32,132 @@ CREATE TABLE IF NOT EXISTS public.operating_rooms (
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
   created_by UUID,
-  updated_by UUID,
-  CONSTRAINT uq_operating_rooms_facility_room UNIQUE (facility_id, room_number)
+  updated_by UUID
 );
+
+-- 1.1 Upgrade / Add missing columns if operating_rooms was created by earlier migrations (e.g. 002)
+DO $$
+BEGIN
+  -- Convert room_number from INTEGER to VARCHAR(64) if needed
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+      AND table_name = 'operating_rooms' 
+      AND column_name = 'room_number' 
+      AND data_type = 'integer'
+  ) THEN
+    ALTER TABLE public.operating_rooms ALTER COLUMN room_number TYPE VARCHAR(64) USING room_number::text;
+  END IF;
+END $$;
+
+ALTER TABLE public.operating_rooms ADD COLUMN IF NOT EXISTS room_name VARCHAR(150);
+ALTER TABLE public.operating_rooms ADD COLUMN IF NOT EXISTS suite_designation VARCHAR(128) NOT NULL DEFAULT 'Main Surgical Suite';
+ALTER TABLE public.operating_rooms ADD COLUMN IF NOT EXISTS room_type VARCHAR(64) NOT NULL DEFAULT 'STANDARD_OR';
+ALTER TABLE public.operating_rooms ADD COLUMN IF NOT EXISTS square_footage NUMERIC(8, 2) NOT NULL DEFAULT 450.00;
+ALTER TABLE public.operating_rooms ADD COLUMN IF NOT EXISTS table_weight_capacity_lbs INTEGER NOT NULL DEFAULT 500;
+ALTER TABLE public.operating_rooms ADD COLUMN IF NOT EXISTS hvac_cleanroom_class VARCHAR(64) NOT NULL DEFAULT 'ISO_CLASS_7';
+ALTER TABLE public.operating_rooms ADD COLUMN IF NOT EXISTS positive_pressure_pa NUMERIC(6, 2) NOT NULL DEFAULT 2.50;
+ALTER TABLE public.operating_rooms ADD COLUMN IF NOT EXISTS air_changes_per_hour INTEGER NOT NULL DEFAULT 20;
+ALTER TABLE public.operating_rooms ADD COLUMN IF NOT EXISTS laminar_flow_enabled BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE public.operating_rooms ADD COLUMN IF NOT EXISTS hourly_cost_rate NUMERIC(10, 2) NOT NULL DEFAULT 1450.00;
+ALTER TABLE public.operating_rooms ADD COLUMN IF NOT EXISTS standard_turnover_minutes INTEGER NOT NULL DEFAULT 25;
+ALTER TABLE public.operating_rooms ADD COLUMN IF NOT EXISTS operating_status VARCHAR(64) NOT NULL DEFAULT 'OPERATIONAL';
+ALTER TABLE public.operating_rooms ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE public.operating_rooms ADD COLUMN IF NOT EXISTS effective_start_date DATE NOT NULL DEFAULT CURRENT_DATE;
+ALTER TABLE public.operating_rooms ADD COLUMN IF NOT EXISTS effective_end_date DATE;
+ALTER TABLE public.operating_rooms ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE public.operating_rooms ADD COLUMN IF NOT EXISTS created_by UUID;
+ALTER TABLE public.operating_rooms ADD COLUMN IF NOT EXISTS updated_by UUID;
+
+-- Backfill room_name from legacy name column if present
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+      AND table_name = 'operating_rooms' 
+      AND column_name = 'name'
+  ) THEN
+    UPDATE public.operating_rooms 
+    SET room_name = COALESCE(room_name, name, 'OR ' || room_number)
+    WHERE room_name IS NULL;
+  ELSE
+    UPDATE public.operating_rooms 
+    SET room_name = COALESCE(room_name, 'OR ' || room_number)
+    WHERE room_name IS NULL;
+  END IF;
+END $$;
+
+ALTER TABLE public.operating_rooms ALTER COLUMN room_name SET DEFAULT 'Surgical Suite';
+
+-- Add check constraints idempotently
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'chk_or_room_type'
+  ) THEN
+    ALTER TABLE public.operating_rooms 
+      ADD CONSTRAINT chk_or_room_type 
+      CHECK (room_type IN ('STANDARD_OR', 'HYBRID_OR', 'PROCEDURE_ROOM', 'ENDOSCOPY_SUITE', 'MINIMAL_INVASIVE_SUITE', 'ROBOTIC_SUITE'));
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'chk_or_operating_status'
+  ) THEN
+    ALTER TABLE public.operating_rooms 
+      ADD CONSTRAINT chk_or_operating_status 
+      CHECK (operating_status IN ('OPERATIONAL', 'MAINTENANCE', 'RENOVATION', 'DECOMMISSIONED'));
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'chk_or_hvac_class'
+  ) THEN
+    ALTER TABLE public.operating_rooms 
+      ADD CONSTRAINT chk_or_hvac_class 
+      CHECK (hvac_cleanroom_class IN ('ISO_CLASS_5', 'ISO_CLASS_6', 'ISO_CLASS_7', 'ISO_CLASS_8', 'STANDARD_VENTILATED'));
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'chk_or_square_footage'
+  ) THEN
+    ALTER TABLE public.operating_rooms 
+      ADD CONSTRAINT chk_or_square_footage 
+      CHECK (square_footage > 0);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'chk_or_weight_capacity'
+  ) THEN
+    ALTER TABLE public.operating_rooms 
+      ADD CONSTRAINT chk_or_weight_capacity 
+      CHECK (table_weight_capacity_lbs >= 300);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'chk_or_air_changes'
+  ) THEN
+    ALTER TABLE public.operating_rooms 
+      ADD CONSTRAINT chk_or_air_changes 
+      CHECK (air_changes_per_hour >= 15);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'chk_or_turnover_minutes'
+  ) THEN
+    ALTER TABLE public.operating_rooms 
+      ADD CONSTRAINT chk_or_turnover_minutes 
+      CHECK (standard_turnover_minutes > 0);
+  END IF;
+
+  -- Ensure unique constraint exists on (facility_id, room_number)
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname IN ('uq_operating_rooms_facility_room', 'uq_facility_room_number')
+  ) THEN
+    ALTER TABLE public.operating_rooms 
+      ADD CONSTRAINT uq_operating_rooms_facility_room 
+      UNIQUE (facility_id, room_number);
+  END IF;
+END $$;
 
 -- 2. Table: operating_room_specialties
 CREATE TABLE IF NOT EXISTS public.operating_room_specialties (
@@ -107,7 +227,7 @@ SELECT
   r.id,
   r.facility_id,
   r.room_number,
-  r.room_name,
+  COALESCE(r.room_name, 'OR ' || r.room_number) AS room_name,
   r.suite_designation,
   r.room_type,
   r.square_footage,
@@ -126,7 +246,11 @@ FROM public.operating_rooms r
 LEFT JOIN public.operating_room_specialties s ON s.operating_room_id = r.id
 LEFT JOIN public.operating_room_equipment e ON e.operating_room_id = r.id
 WHERE r.is_active = TRUE
-GROUP BY r.id;
+GROUP BY r.id, r.facility_id, r.room_number, r.room_name, r.suite_designation, 
+         r.room_type, r.square_footage, r.table_weight_capacity_lbs, 
+         r.hvac_cleanroom_class, r.positive_pressure_pa, r.air_changes_per_hour, 
+         r.laminar_flow_enabled, r.hourly_cost_rate, r.standard_turnover_minutes, 
+         r.operating_status, r.is_active;
 
 -- View 2: Facility Level OR Capacity Summary
 CREATE OR REPLACE VIEW public.vw_operating_room_facility_summary AS
