@@ -421,7 +421,7 @@ export default function OrUtilizationMetricsView() {
               <ShieldCheck size={18} className="text-teal" />
               <h3>90-Day Surgeon Block Utilization & Rightsizing Scorecards</h3>
               <span className="table-hint">
-                Statutory denominator rule: On-time surrenders deduct from allocated time ($\Delta M = M_{alloc} - M_{rel}$); late releases remain in denominator.
+                Statutory denominator rule: On-time surrenders deduct from allocated time (Net Denominator = Allocated - On-Time Released); late releases remain in denominator.
               </span>
             </div>
 
@@ -708,3 +708,4 @@ export default function OrUtilizationMetricsView() {
     </div>
   );
 }
+
