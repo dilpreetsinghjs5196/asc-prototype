@@ -305,3 +305,4 @@ A feature is complete only when the data model, deterministic logic, permissions
 - UI: `src/components/BlockReleaseEventsView.jsx` and `src/components/BlockReleaseEventsView.css`.
 - Test suite: `tests/block-release-events.test.js`.
 - App wiring: `src/App.jsx` (`activeTab === 'block_releases'`).
+

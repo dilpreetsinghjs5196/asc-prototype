@@ -23,3 +23,4 @@ DROP INDEX IF EXISTS public.idx_obre_facility_date;
 -- 4. Drop Tables (CASCADE removes child foreign key dependencies)
 DROP TABLE IF EXISTS public.or_block_reallocations CASCADE;
 DROP TABLE IF EXISTS public.or_block_release_events CASCADE;
+

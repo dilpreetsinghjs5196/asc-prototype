@@ -155,3 +155,4 @@ CREATE POLICY rls_or_block_reallocations_facility ON public.or_block_reallocatio
   FOR ALL
   USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid)
   WITH CHECK (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
+

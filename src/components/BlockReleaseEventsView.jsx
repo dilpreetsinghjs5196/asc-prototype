@@ -567,7 +567,7 @@ export default function BlockReleaseEventsView() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveRelease}>
+            <form className="or-release-modal-form" onSubmit={handleSaveRelease}>
               <div className="or-release-modal-body">
                 {/* Live Lead-Time Calculation Preview */}
                 {releaseLeadPreview && (
@@ -684,7 +684,7 @@ export default function BlockReleaseEventsView() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveReallocation}>
+            <form className="or-release-modal-form" onSubmit={handleSaveReallocation}>
               <div className="or-release-modal-body">
                 <div className="summary-spec-box">
                   <div><strong>Surgery Date:</strong> {selectedRelease.surgery_date} in {selectedRelease.room_name}</div>
@@ -871,3 +871,4 @@ export default function BlockReleaseEventsView() {
     </div>
   );
 }
+
