@@ -787,17 +787,31 @@
   - **Clinical Maestro UI:** 5-Card Operational Ribbon (Gross Staffed Util %, Prime-Time Util %, Turnover Occupancy %, Block Compliance Rate %, Margin per Staffed Hour), 3 interactive sub-views (Suite Utilization Matrix, Surgeon Block Governance Ledger, Financial Yield Scorecard), and an Executive Rightsizing Modal with pinned headers and footers.
 - **Business Impact:** Solves block hoarding, aligns surgical access with proven clinical demand, protects ASC margins by exposing low-yield room utilization, and provides an authoritative audit trail for Medical Executive Committee block reviews.
 
+### Phase A5: Block Utilization Metrics, Release Efficiency & Rightsizing Engine
+- **File:** `A5_BLOCK_UTILIZATION_METRICS.md`
+- **Module:** Module 10: OR Scheduling & Utilization Optimization
+- **Objective:** Deterministic block utilization modeling, idle block wastage tracking, financial opportunity cost calculation ($1,250.00/hr facility margin), release efficiency, Surgeon Block Performance Index (SBPI 0–100), and Medical Executive Committee (MEC) rightsizing actions.
+- **Operational Principle:** *"Surgeon block allocations are the most contested operational asset in any surgery center. While high-utilization blocks generate predictable outpatient margin, hoarded and abandoned block time strangles surgical capacity and forces backlog leakage. By pairing adjusted denominator deductions with the Surgeon Block Performance Index (SBPI) and automated MEC rightsizing workflows, the facility creates a fair, auditable meritocracy where surgical time is earned through proven utilization and responsible release discipline."*
+- **Key Deliverables:**
+  - **2 Master Tables & 2 Analytical Views (Migration 082):** `or_block_utilization_period_ledgers`, `or_block_governance_actions`, `vw_or_block_utilization_summary`, and `vw_or_block_wastage_leaderboard` with 1:1 multi-tenant RLS via `app.current_facility_id`.
+  - **Adjusted Block Denominator Rule (Rule 1):** Accurately deducts on-time surrendered block minutes ($\Delta M = M_{\text{alloc}} - M_{\text{rel\_ontime}}$) while holding late-released and idle time against the surgeon's denominator.
+  - **Block Wastage & Opportunity Cost Engine (Rule 2):** Calculates unutilized abandoned block minutes and financial margin loss ($\text{Unused Hours} \times \$1,250.00/\text{hr}$).
+  - **Surgeon Block Performance Index (Rule 4):** Deterministic composite score: $\text{SBPI} = (0.50 \times \text{Adjusted Util \%}) + (0.30 \times \text{Release Compliance \%}) + (0.20 \times \text{Out-of-Block Absorption Ratio})$.
+  - **MEC Rightsizing Committee Protocols (Rule 5):** Automated classification into `EXPAND_ALLOCATION` ($\ge 85$), `MAINTAIN` ($75 - 84.9$), `PROBATIONARY_NOTICE` ($60 - 74.9$), and `RIGHTSIZE_DOWNGRADE` ($< 60$).
+  - **Clinical Maestro UI:** 5-Card Operational Ribbon (Avg Adjusted Util %, Release Compliance %, Total Abandoned Wastage Hours, Total Opportunity Cost $, Rightsizing Queue), 3 interactive sub-views (Block Performance Ledgers, Wastage Leaderboard, MEC Governance Actions Log), and an Executive Rightsizing Modal with pinned header/footer.
+- **Business Impact:** Recovers tens of thousands of dollars in hoarded block opportunity cost, aligns prime morning access with top-performing surgical groups, and establishes an auditable foundation for Medical Executive Committee governance.
+
 ---
 
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 107 | **107 / 107 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **164 total files** |
-| **Automated Tests** | 100% Pass | **440 / 440 passing across 89 suites (341 passing across 17 RCM & Scheduling suites)** |
+| **Documented Phases** | 108 | **108 / 108 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **165 total files** |
+| **Automated Tests** | 100% Pass | **456 / 456 passing across 95 suites (357 passing across 18 RCM & Scheduling suites)** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 9.12s)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **081 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 8.14s)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **082 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 

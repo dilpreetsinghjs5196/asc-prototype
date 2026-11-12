@@ -74,6 +74,7 @@ import RoomStaffingWindowsView from './components/RoomStaffingWindowsView';
 import BlockScheduleModelView from './components/BlockScheduleModelView';
 import BlockReleaseEventsView from './components/BlockReleaseEventsView';
 import OrUtilizationMetricsView from './components/OrUtilizationMetricsView';
+import BlockUtilizationMetricsView from './components/BlockUtilizationMetricsView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -135,7 +136,8 @@ import {
   BookOpen,
   FileCheck,
   History,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Award
 } from 'lucide-react';
 
 // ==========================================
@@ -2443,6 +2445,13 @@ export default function App() {
             <div className="menu-item-icon"><Activity size={16} /></div>
             OR Utilization & Benchmarking
           </div>
+          <div
+            className={`menu-item ${activeTab === 'block_utilization' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('block_utilization'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Award size={16} /></div>
+            Block Utilization & Rightsizing
+          </div>
 
           <div className="sidebar-section-divider"></div>
 
@@ -3054,6 +3063,7 @@ export default function App() {
                   {activeTab === 'block_schedule' && 'Operating Room Block Schedule Master'}
                   {activeTab === 'block_releases' && 'Operating Room Block Release & Open Pool Engine'}
                   {activeTab === 'or_utilization' && 'Operating Room Utilization Metrics & Governance'}
+                  {activeTab === 'block_utilization' && 'Block Utilization Metrics, Wastage & Rightsizing'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -3125,6 +3135,7 @@ export default function App() {
                   {activeTab === 'block_schedule' && 'Block schedule allocations, multi-tier ownership, recurrence patterns, auto-release lead times, and staffing containment'}
                   {activeTab === 'block_releases' && 'Deterministic block surrender tracking, statutory lead-time calculation, open-pool reallocation, and downstaffing labor cost recovery'}
                   {activeTab === 'or_utilization' && 'Deterministic gross staffed, prime-time, and turnover-inclusive room occupancy paired with surgeon block rightsizing governance and financial yield per OR hour'}
+                  {activeTab === 'block_utilization' && 'Deterministic block utilization modeling, idle block wastage tracking, surgeon block performance index (SBPI), and automated Medical Executive Committee rightsizing actions'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -3234,7 +3245,7 @@ export default function App() {
             </div>
 
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -4969,6 +4980,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'or_utilization' && (
                 <OrUtilizationMetricsView />
+              )}
+
+              {/* ==========================================
+              TAB: BLOCK UTILIZATION METRICS (PHASE A5 - MODULE 10 OR SCHEDULING)
+              ========================================== */}
+              {activeTab === 'block_utilization' && (
+                <BlockUtilizationMetricsView />
               )}
 
               {/* ==========================================
