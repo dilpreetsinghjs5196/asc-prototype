@@ -665,3 +665,4 @@ export default function BlockUtilizationMetricsView() {
     </div>
   );
 }
+

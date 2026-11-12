@@ -113,3 +113,4 @@ CREATE POLICY rls_or_block_utilization_period_ledgers_facility ON public.or_bloc
 CREATE POLICY rls_or_block_governance_actions_facility ON public.or_block_governance_actions
     FOR ALL
     USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
+

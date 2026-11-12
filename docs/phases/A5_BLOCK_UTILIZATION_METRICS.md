@@ -162,3 +162,4 @@ Complete data model, migration UP/DOWN scripts, deterministic service layer, Rea
 - View: `src/components/BlockUtilizationMetricsView.jsx` and `src/components/BlockUtilizationMetricsView.css`
 - Test: `tests/block-utilization-metrics.test.js`
 - Wiring: `src/App.jsx`
+

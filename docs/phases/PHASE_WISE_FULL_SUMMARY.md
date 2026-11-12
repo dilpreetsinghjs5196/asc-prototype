@@ -801,6 +801,20 @@
   - **Clinical Maestro UI:** 5-Card Operational Ribbon (Avg Adjusted Util %, Release Compliance %, Total Abandoned Wastage Hours, Total Opportunity Cost $, Rightsizing Queue), 3 interactive sub-views (Block Performance Ledgers, Wastage Leaderboard, MEC Governance Actions Log), and an Executive Rightsizing Modal with pinned header/footer.
 - **Business Impact:** Recovers tens of thousands of dollars in hoarded block opportunity cost, aligns prime morning access with top-performing surgical groups, and establishes an auditable foundation for Medical Executive Committee governance.
 
+### Phase A6: Booking Accuracy & Duration Calibration Engine
+- **File:** `A6_BOOKING_ACCURACY.md`
+- **Module:** Module 10: OR Scheduling & Utilization Optimization
+- **Objective:** Deterministic booked vs actual surgical duration variance tracking ($\Delta D = \text{Actual} - \text{Scheduled}$), operational accuracy classification (`ACCURATE`, `UNDER_ESTIMATED`, `OVER_ESTIMATED`), Mean Duration Bias (MDB) & surgeon scheduling tendency (`CHRONIC_UNDER_BOOKER`, `CALIBRATED`, `CHRONIC_PADDER`), CPT duration calibration against 20-case median actuals, and downstream delay / overtime labor cost impact ($450.00/hr).
+- **Operational Principle:** *"Accurate case booking is the bedrock of predictable operating room throughput. When surgeons chronically under-book procedure durations (optimism bias), downstream surgical starts are delayed, patient satisfaction deteriorates, and expensive clinical nursing overtime is triggered. Conversely, defensive duration padding strangles room utilization by leaving unfillable prime-time gaps. By pairing case-by-case tolerance classification (±15m) with surgeon Mean Duration Bias (MDB) and 20-case historical CPT median duration benchmarks, the facility achieves tight schedule calibration, prevents cascading delays, and eliminates avoidable labor overtime."*
+- **Key Deliverables:**
+  - **2 Master Tables & 2 Analytical Views (Migration 083):** `or_case_booking_accuracy_logs`, `or_surgeon_booking_profiles`, `vw_or_booking_accuracy_facility_summary`, and `vw_or_surgeon_scheduling_bias` with 1:1 multi-tenant RLS via `app.current_facility_id`.
+  - **Case Duration Tolerance Classification (Rule 1):** Classifies every surgical case into `ACCURATE` ($|\Delta D| \le 15\text{m}$), `UNDER_ESTIMATED` ($\Delta D > +15\text{m}$ overrun), or `OVER_ESTIMATED` ($\Delta D < -15\text{m}$ underrun).
+  - **Surgeon Mean Duration Bias (Rule 2):** Deterministic formula: $\text{MDB} = \frac{1}{N} \sum (\text{Actual} - \text{Scheduled})$. Classifies tendencies into `CHRONIC_UNDER_BOOKER` ($\text{MDB} > +10.0\text{m}$), `CHRONIC_PADDER` ($\text{MDB} < -10.0\text{m}$), and `CALIBRATED` ($-10.0 \le \text{MDB} \le +10.0\text{m}$).
+  - **Overtime Labor Cost Impact Engine (Rule 3):** Calculates overtime labor infractions generated past staffed room shift boundaries ($(\text{Overtime Mins} / 60) \times \$450.00/\text{hr}$).
+  - **Historical 20-Case CPT Median Calibration (Rule 4):** Compares booked durations against the surgeon's 20-case median actual duration for that CPT code, triggering intake warnings when $|\Delta| > 20\text{ minutes}$.
+  - **Clinical Maestro UI:** 5-Card Operational Ribbon (Overall Booking Accuracy %, Mean Duration Bias mins, Downstream Schedule Delays, Defensive Padding Wastage hrs, Overtime Labor Impact $), 3 interactive sub-views (Case Booking Accuracy Ledger, Surgeon Booking Tendency Matrix, CPT Duration Calibration Benchmarks), and a Surgeon Calibration Review Modal with pinned header and footer.
+- **Business Impact:** Mitigates cascading patient delays, prevents thousands of dollars in nursing overtime infractions, and reclaims stranded prime-time OR capacity created by defensive booking padding.
+
 ---
 
 ## Architectural & Verification Summary
@@ -808,10 +822,10 @@
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
 | **Documented Phases** | 108 | **108 / 108 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **165 total files** |
-| **Automated Tests** | 100% Pass | **456 / 456 passing across 95 suites (357 passing across 18 RCM & Scheduling suites)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **166 total files** |
+| **Automated Tests** | 100% Pass | **471 / 471 passing across 96 suites (124 / 124 passing across Module 10 OR Scheduling suites)** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 8.14s)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **082 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 6.92s)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **083 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 

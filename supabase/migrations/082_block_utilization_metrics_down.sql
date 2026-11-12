@@ -24,3 +24,4 @@ DROP INDEX IF EXISTS public.idx_obupl_facility_block_period;
 -- 4. Drop Tables (CASCADE removes foreign key constraints)
 DROP TABLE IF EXISTS public.or_block_governance_actions CASCADE;
 DROP TABLE IF EXISTS public.or_block_utilization_period_ledgers CASCADE;
+
