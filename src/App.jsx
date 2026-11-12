@@ -71,6 +71,7 @@ import RevenueOpportunityPriorityView from './components/RevenueOpportunityPrior
 import RecoverableRevenueWorkqueueView from './components/RecoverableRevenueWorkqueueView';
 import OperatingRoomModelView from './components/OperatingRoomModelView';
 import RoomStaffingWindowsView from './components/RoomStaffingWindowsView';
+import BlockScheduleModelView from './components/BlockScheduleModelView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2418,6 +2419,13 @@ export default function App() {
             <div className="menu-item-icon"><Clock size={16} /></div>
             Room Staffing Windows
           </div>
+          <div
+            className={`menu-item ${activeTab === 'block_schedule' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('block_schedule'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><CalendarDays size={16} /></div>
+            Block Schedule Master
+          </div>
 
           <div className="sidebar-section-divider"></div>
 
@@ -3026,6 +3034,7 @@ export default function App() {
                   {activeTab === 'recovery_workqueue' && 'Recoverable Revenue Workqueue'}
                   {activeTab === 'or_model' && 'Operating Room Master Model'}
                   {activeTab === 'room_staffing' && 'Room Staffing Windows & Utilization Denominators'}
+                  {activeTab === 'block_schedule' && 'Operating Room Block Schedule Master'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -3094,6 +3103,7 @@ export default function App() {
                   {activeTab === 'recovery_workqueue' && 'Dynamic specialist queue routing, timely filing SLA compliance, recovery action lifecycle & immutable audit trail'}
                   {activeTab === 'or_model' && 'Physical suites, specialty compatibility, equipment dependencies, and turnover standards'}
                   {activeTab === 'room_staffing' && 'Operational shifts, planned room closures, ad-hoc exceptions, and net denominator hours'}
+                  {activeTab === 'block_schedule' && 'Block schedule allocations, multi-tier ownership, recurrence patterns, auto-release lead times, and staffing containment'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -3203,7 +3213,7 @@ export default function App() {
             </div>
 
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -4917,6 +4927,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'room_staffing' && (
                 <RoomStaffingWindowsView />
+              )}
+
+              {/* ==========================================
+              TAB: BLOCK SCHEDULE MODEL (PHASE A2 - MODULE 10 OR SCHEDULING)
+              ========================================== */}
+              {activeTab === 'block_schedule' && (
+                <BlockScheduleModelView />
               )}
 
               {/* ==========================================

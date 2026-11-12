@@ -707,9 +707,7 @@
   backdrop-filter: blur(2px);
 }
 
-.rops-modal-container,
-.rops-container .modal-container,
-.modal-container {
+.rops-modal-container {
   background-color: #ffffff !important;
   background: #ffffff !important;
   border-radius: 0.5rem;
@@ -726,9 +724,7 @@
   to { opacity: 1; transform: scale(1); }
 }
 
-.rops-modal-header,
-.rops-container .modal-header,
-.rops-modal-container .modal-header {
+.rops-modal-header {
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
@@ -738,17 +734,13 @@
   border-bottom: 1px solid #e2e8f0 !important;
 }
 
-.rops-modal-title-group,
-.rops-container .modal-title-group {
+.rops-modal-title-group {
   display: flex !important;
   align-items: center !important;
   gap: 0.625rem !important;
 }
 
-.rops-modal-title,
-.rops-modal-title-group h3,
-.rops-container .modal-title-group h3,
-.rops-modal-container .modal-header h3 {
+.rops-modal-title {
   margin: 0 !important;
   font-size: 1.125rem !important;
   font-weight: 700 !important;
@@ -760,9 +752,7 @@
   visibility: visible !important;
 }
 
-.rops-modal-close-btn,
-.rops-container .close-btn,
-.rops-modal-container .close-btn {
+.rops-modal-close-btn {
   background: transparent !important;
   border: none !important;
   font-size: 1.25rem !important;
@@ -776,16 +766,12 @@
   transition: all 0.15s ease !important;
 }
 
-.rops-modal-close-btn:hover,
-.rops-container .close-btn:hover,
-.rops-modal-container .close-btn:hover {
+.rops-modal-close-btn:hover {
   background-color: #f1f5f9 !important;
   color: #0f172a !important;
 }
 
-.rops-modal-body,
-.rops-container .modal-body,
-.rops-modal-container .modal-body {
+.rops-modal-body {
   padding: 1.25rem 1.35rem !important;
   display: flex !important;
   flex-direction: column !important;
@@ -869,9 +855,7 @@
   color: #64748b !important;
 }
 
-.rops-modal-footer,
-.rops-container .modal-footer,
-.rops-modal-container .modal-footer {
+.rops-modal-footer {
   display: flex !important;
   justify-content: flex-end !important;
   gap: 0.5rem !important;

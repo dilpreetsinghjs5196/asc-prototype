@@ -140,3 +140,4 @@ CREATE POLICY rls_rse_facility ON public.room_staffing_exceptions
   FOR ALL
   USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid)
   WITH CHECK (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
+

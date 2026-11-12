@@ -745,17 +745,31 @@
   - **Clinical Maestro UI:** 5-Card Operational Ribbon (Weekly Staffed Capacity, Active Staffed Rooms, Avg Daily Shift Length, Scheduled Downtime this Month, Peak Day Capacity), interactive Weekly Schedule Matrix (Mon–Sat timeline grid), Closures & Downtime Log, and an interactive Denominator Simulation Workbench with room-by-room breakdown.
 - **Business Impact:** Eliminates artificial utilization distortions, guarantees that facility holidays and maintenance downtime are not penalized against surgical specialties, and provides the mathematical denominator foundation for Phase A2 block scheduling and Phase A4 utilization metrics.
 
+### Phase A2: Block Schedule Model & Allocation Architecture
+- **File:** `A2_BLOCK_SCHEDULE_MODEL.md`
+- **Module:** Module 10: OR Scheduling & Utilization Optimization
+- **Objective:** Authoritative Operating Room block schedule definitions, multi-tier ownership hierarchy (`INDIVIDUAL_SURGEON`, `SURGICAL_GROUP`, `SERVICE_LINE`, `OPEN_TIME`), recurrence patterns (`WEEKLY`, `EVERY_OTHER_WEEK_A/B`, `MONTHLY_1ST-4TH`, `ONE_TIME`), clinical specialty alignment, auto-release lead times (default 5 days / 120 hours), target utilization benchmarks (default 75.0%), schedule collision detection, and staffing window containment.
+- **Operational Principle:** *"Block scheduling is the primary contractual agreement governing surgeon access to the Operating Room. Without deterministic recurrence rules, automated release lead times, and staffing containment checks, prime surgical hours are hoarded, OR suites sit empty while outpatient backlogs grow, and late-running unstaffed cases drive catastrophic clinical overtime."*
+- **Key Deliverables:**
+  - **1 Master Table & 2 Analytical Views (Migration 079):** `or_block_definitions`, `vw_or_block_definitions_active`, and `vw_or_block_capacity_summary` with 1:1 tenant isolation via `app.current_facility_id`.
+  - **Schedule Collision Engine (Rule 1):** Prohibits overlapping block time windows in the same operating room on the same day-of-week across conflicting recurrence cycles (`ERR_BLOCK_COLLISION`).
+  - **Staffing Window Containment Guard (Rule 2):** Validates candidate blocks against Phase A1 `room_staffing_windows` (e.g., 07:00–17:00). Blocks extending beyond staffed hours trigger `EXCEEDS_STAFFED_WINDOW` warnings with exact unbudgeted overtime minutes.
+  - **Auto-Release Lead Time Parameter (Rule 3):** Enforces statutory notice thresholds (3 to 7 days; default 5 days / 120h) before unbooked block time is automatically returned to the open scheduling pool.
+  - **Target Utilization Benchmark (Rule 4):** Establishes explicit utilization thresholds (default 75.0%) for governance reviews and block right-sizing.
+  - **Clinical Maestro UI:** 5-Card Metric Ribbon (Active Block Allocations, Total Blocked Hours, Block vs Staffed Ratio %, Unique Block Owners, Avg Release Lead Time), multi-criteria filter bar, interactive Weekly Grid Matrix (OR Suites vs Mon–Sat columns with color-coded block cards), Master Block Inventory Table, and scoped Add/Edit modal with real-time collision detection.
+- **Business Impact:** Prevents block hoarding, eliminates prime-time room collisions, ensures blocks align with staffed nursing hours, and sets the operational stage for Phase A3 automated release mechanics and Phase A4 block utilization reporting.
+
 ---
 
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 104 | **104 / 104 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **161 total files** |
-| **Automated Tests** | 100% Pass | **393 / 393 passing across 76 suites (294 passing across 14 RCM & Scheduling suites)** |
+| **Documented Phases** | 105 | **105 / 105 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **162 total files** |
+| **Automated Tests** | 100% Pass | **409 / 409 passing across 77 suites (310 passing across 15 RCM & Scheduling suites)** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 7.40s)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **078 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **0 errors (Verified)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **079 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 

@@ -306,3 +306,4 @@ Service module: `src/services/roomStaffingWindowService.js` (and `src/lib/roomSt
 - [x] Service layer provides authoritative net denominator math.
 - [x] React component renders weekly matrix, closures ledger, and denominator calculator.
 - [x] Registered in `src/App.jsx` under Scheduling navigation.
+
