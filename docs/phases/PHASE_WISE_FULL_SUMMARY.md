@@ -759,17 +759,30 @@
   - **Clinical Maestro UI:** 5-Card Metric Ribbon (Active Block Allocations, Total Blocked Hours, Block vs Staffed Ratio %, Unique Block Owners, Avg Release Lead Time), multi-criteria filter bar, interactive Weekly Grid Matrix (OR Suites vs Mon–Sat columns with color-coded block cards), Master Block Inventory Table, and scoped Add/Edit modal with real-time collision detection.
 - **Business Impact:** Prevents block hoarding, eliminates prime-time room collisions, ensures blocks align with staffed nursing hours, and sets the operational stage for Phase A3 automated release mechanics and Phase A4 block utilization reporting.
 
+### Phase A3: Block Release Events & Open-Pool Reallocation Engine
+- **File:** `A3_BLOCK_RELEASE_EVENTS.md`
+- **Module:** Module 10: OR Scheduling & Utilization Optimization
+- **Objective:** Deterministic single-date block surrender tracking, statutory auto-release lead-time calculation, timeliness rating (`ON_TIME`, `LATE_RELEASE`, `SAME_DAY_RELEASE`), open-pool reallocation to add-on surgical cases, and room downstaffing labor cost recovery ($450.00/hr).
+- **Operational Principle:** *"Unutilized operating room block time is a perishable financial asset. When a surgeon cannot utilize their allocated block, immediate surrender into the open pool allows other surgical specialties to book backlog cases. If surrendered time remains unclaimed within 48 hours of surgery, authorizing room downstaffing directly claws back nursing and technician labor costs, protecting ASC contribution margin."*
+- **Key Deliverables:**
+  - **2 Master Tables & 2 Analytical Views (Migration 080):** `or_block_release_events`, `or_block_reallocations`, `vw_or_block_releases_active`, and `vw_or_block_release_kpis` with multi-tenant row-level security (`app.current_facility_id`).
+  - **Deterministic Lead-Time & Timeliness Engine (Rule 1):** Computes $\Delta t_{\text{lead}} = (\text{surgery\_time} - \text{release\_time}) / 3600$ and classifies into `ON_TIME` ($\ge \text{lead\_hours}$), `LATE_RELEASE` ($24\text{h} \le \Delta t < \text{lead\_hours}$), or `SAME_DAY_RELEASE` ($< 24\text{h}$).
+  - **Reallocation Capacity Engine (Rule 2):** Tracks add-on case consumption of open-pool hours, updating status dynamically from `OPEN_POOL` $\to$ `PARTIALLY_REALLOCATED` $\to$ `FULLY_REALLOCATED` without allowing capacity overflow.
+  - **Downstaffing Labor Cost Recovery (Rule 3):** Computes direct labor savings $\text{Savings} = (\text{unallocated\_minutes} / 60) \times \text{hourly\_crew\_rate}$ (default \$450.00/hr) upon administrative room closure.
+  - **Clinical Maestro UI:** 5-Card Operational Ribbon (Total Released Hours, On-Time Release Rate %, Open Pool Reallocation %, Downstaffed Savings $, Pending Open Pool slots), multi-criteria filter bar, Chronological Block Surrender Ledger with visual reallocation progress bars, and 3 scoped modals (Surrender/Release Block with live lead preview, Reallocate Open-Pool Time, Authorize Downstaffing).
+- **Business Impact:** Recovers thousands of dollars in clinical labor costs on unbooked rooms, provides full transparency into physician block surrender timeliness, prevents surgeon block hoarding, and empowers cross-specialty open scheduling.
+
 ---
 
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 105 | **105 / 105 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **162 total files** |
-| **Automated Tests** | 100% Pass | **409 / 409 passing across 77 suites (310 passing across 15 RCM & Scheduling suites)** |
+| **Documented Phases** | 106 | **106 / 106 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **163 total files** |
+| **Automated Tests** | 100% Pass | **423 / 423 passing across 83 suites (324 passing across 16 RCM & Scheduling suites)** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **0 errors (Verified)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **079 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 5.68s)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **080 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 
