@@ -772,17 +772,32 @@
   - **Clinical Maestro UI:** 5-Card Operational Ribbon (Total Released Hours, On-Time Release Rate %, Open Pool Reallocation %, Downstaffed Savings $, Pending Open Pool slots), multi-criteria filter bar, Chronological Block Surrender Ledger with visual reallocation progress bars, and 3 scoped modals (Surrender/Release Block with live lead preview, Reallocate Open-Pool Time, Authorize Downstaffing).
 - **Business Impact:** Recovers thousands of dollars in clinical labor costs on unbooked rooms, provides full transparency into physician block surrender timeliness, prevents surgeon block hoarding, and empowers cross-specialty open scheduling.
 
+### Phase A4: OR Utilization Metrics & Benchmarking Engine
+- **File:** `A4_OR_UTILIZATION_METRICS.md`
+- **Module:** Module 10: OR Scheduling & Utilization Optimization
+- **Objective:** Deterministic Operating Room utilization formulas, prime-time containment (07:00–15:00), turnover-inclusive occupancy (with 45m changeover caps), surgeon block rightsizing governance (with statutory on-time surrender denominator deductions), and financial yield ($) per staffed and utilized OR hour.
+- **Operational Principle:** *"OR utilization without deterministic denominators is fiction. Evaluating raw in-room hours against calendar shift hours without adjusting for planned closures distorts reality, while penalizing surgeons who surrender blocks early creates an incentive to hoard unutilized prime-time capacity. Real surgical yield measures revenue and contribution margin per staffed hour, aligning clinical capacity directly with outpatient profitability."*
+- **Key Deliverables:**
+  - **2 Master Tables & 2 Analytical Views (Migration 081):** `or_utilization_daily_snapshots`, `or_surgeon_block_utilization_snapshots`, `vw_or_utilization_facility_summary`, and `vw_or_surgeon_block_compliance` with 1:1 multi-tenant RLS via `app.current_facility_id`.
+  - **Gross Staffed & Prime-Time Math (Rule 1 & 3):** Computes exact ratio of patient wheels-in to wheels-out minutes against net staffed shift minutes, isolating prime-time hours (07:00–15:00).
+  - **Turnover-Inclusive Occupancy (Rule 2):** Credits room turnover capped at 45 minutes per changeover, preventing artificial penalties for rapid case turns while disallowing unworked idle downtime credits.
+  - **Surgeon Block Denominator Rule (Rule 4):** Deducts on-time surrendered minutes ($\ge 120\text{h}$) from the surgeon's block denominator ($\text{Net Denom} = M_{\text{alloc}} - M_{\text{rel}}$), while retaining late releases and idle hours in the denominator to expose block hoarding.
+  - **4-Tier Benchmark Governance (Rule 5):** Classifies block utilization into `EXCEEDS_BENCHMARK` ($\ge 85\% \to$ Expand), `MEETS_BENCHMARK` ($75\% - 84.9\% \to$ Maintain), `UNDERUTILIZED_WARNING` ($60\% - 74.9\% \to$ 60-day notice), and `CRITICAL_UNDERUTILIZATION` ($< 60\% \to$ Rightsize/Forfeit).
+  - **Financial Yield Integration:** Calculates Revenue and Contribution Margin generated per utilized OR hour and per staffed available OR hour.
+  - **Clinical Maestro UI:** 5-Card Operational Ribbon (Gross Staffed Util %, Prime-Time Util %, Turnover Occupancy %, Block Compliance Rate %, Margin per Staffed Hour), 3 interactive sub-views (Suite Utilization Matrix, Surgeon Block Governance Ledger, Financial Yield Scorecard), and an Executive Rightsizing Modal with pinned headers and footers.
+- **Business Impact:** Solves block hoarding, aligns surgical access with proven clinical demand, protects ASC margins by exposing low-yield room utilization, and provides an authoritative audit trail for Medical Executive Committee block reviews.
+
 ---
 
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 106 | **106 / 106 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **163 total files** |
-| **Automated Tests** | 100% Pass | **423 / 423 passing across 83 suites (324 passing across 16 RCM & Scheduling suites)** |
+| **Documented Phases** | 107 | **107 / 107 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **164 total files** |
+| **Automated Tests** | 100% Pass | **440 / 440 passing across 89 suites (341 passing across 17 RCM & Scheduling suites)** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 5.68s)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **080 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 9.12s)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **081 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 

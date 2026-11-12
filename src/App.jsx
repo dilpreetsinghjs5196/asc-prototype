@@ -73,6 +73,7 @@ import OperatingRoomModelView from './components/OperatingRoomModelView';
 import RoomStaffingWindowsView from './components/RoomStaffingWindowsView';
 import BlockScheduleModelView from './components/BlockScheduleModelView';
 import BlockReleaseEventsView from './components/BlockReleaseEventsView';
+import OrUtilizationMetricsView from './components/OrUtilizationMetricsView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2435,6 +2436,13 @@ export default function App() {
             <div className="menu-item-icon"><ArrowRightLeft size={16} /></div>
             Block Releases & Open Pool
           </div>
+          <div
+            className={`menu-item ${activeTab === 'or_utilization' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('or_utilization'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Activity size={16} /></div>
+            OR Utilization & Benchmarking
+          </div>
 
           <div className="sidebar-section-divider"></div>
 
@@ -3045,6 +3053,7 @@ export default function App() {
                   {activeTab === 'room_staffing' && 'Room Staffing Windows & Utilization Denominators'}
                   {activeTab === 'block_schedule' && 'Operating Room Block Schedule Master'}
                   {activeTab === 'block_releases' && 'Operating Room Block Release & Open Pool Engine'}
+                  {activeTab === 'or_utilization' && 'Operating Room Utilization Metrics & Governance'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -3115,6 +3124,7 @@ export default function App() {
                   {activeTab === 'room_staffing' && 'Operational shifts, planned room closures, ad-hoc exceptions, and net denominator hours'}
                   {activeTab === 'block_schedule' && 'Block schedule allocations, multi-tier ownership, recurrence patterns, auto-release lead times, and staffing containment'}
                   {activeTab === 'block_releases' && 'Deterministic block surrender tracking, statutory lead-time calculation, open-pool reallocation, and downstaffing labor cost recovery'}
+                  {activeTab === 'or_utilization' && 'Deterministic gross staffed, prime-time, and turnover-inclusive room occupancy paired with surgeon block rightsizing governance and financial yield per OR hour'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -3224,7 +3234,7 @@ export default function App() {
             </div>
 
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -4952,6 +4962,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'block_releases' && (
                 <BlockReleaseEventsView />
+              )}
+
+              {/* ==========================================
+              TAB: OR UTILIZATION METRICS (PHASE A4 - MODULE 10 OR SCHEDULING)
+              ========================================== */}
+              {activeTab === 'or_utilization' && (
+                <OrUtilizationMetricsView />
               )}
 
               {/* ==========================================
