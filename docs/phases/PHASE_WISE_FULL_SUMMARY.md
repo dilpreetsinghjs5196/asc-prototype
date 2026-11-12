@@ -732,17 +732,30 @@
   - **Clinical Maestro UI:** 5-card KPI ribbon (Total Rooms, Operational Rate %, Avg Turnover Target, Active Suites, High-Tech Rooms), multi-criteria filter bar, interactive room card grid & table view, scoped Add/Edit modal, and an interactive Case Compatibility Simulator.
 - **Business Impact:** Eliminates day-of-surgery cancellations caused by equipment or room incompatibility, enforces strict infection control compliance for orthopedic and spine implants, and establishes the physical foundation for surgical block scheduling and CP-SAT duration optimization.
 
+### Phase A1: Room Staffing Windows, Closures & Denominator Rules
+- **File:** `A1_ROOM_STAFFING_WINDOWS.md`
+- **Module:** Module 10: OR Scheduling & Utilization Optimization
+- **Objective:** Authoritative Operating Room recurring weekly staffing shifts, planned room closures (holidays, maintenance, training), ad-hoc staffing exceptions, and the deterministic Net Staffed Denominator Engine for surgical utilization analytics.
+- **Operational Principle:** *"Operating Room Utilization equals Case Minutes divided by Available Staffed Capacity (The Denominator). If the denominator is miscalculated—by counting unstaffed rooms or failing to deduct facility holidays—utilization metrics are corrupted, misleading leadership on capital investments, block allocations, and staffing expansions."*
+- **Key Deliverables:**
+  - **3 Database Tables & 2 Analytical Views (Migration 078):** `room_staffing_windows`, `room_closure_events`, `room_staffing_exceptions`, `vw_room_staffing_weekly_matrix`, and `vw_room_staffed_capacity_summary` with 1:1 tenant isolation via `app.current_facility_id`.
+  - **Deterministic Net Staffed Denominator Formula:**
+    $\text{Net Staffed Minutes} = \sum \text{Gross Shift Minutes} - \sum \text{Closure Minutes} + \sum \text{Exception Minutes}$
+  - **Shift Boundary Validation Engine:** Enforces minimum shift length ($\ge 120$ min), maximum standard shift ($\le 720$ min), positive duration, and core clinical staffing minimums ($\ge 1$ Circulating RN and $\ge 1$ Scrub Technologist).
+  - **Clinical Maestro UI:** 5-Card Operational Ribbon (Weekly Staffed Capacity, Active Staffed Rooms, Avg Daily Shift Length, Scheduled Downtime this Month, Peak Day Capacity), interactive Weekly Schedule Matrix (Mon–Sat timeline grid), Closures & Downtime Log, and an interactive Denominator Simulation Workbench with room-by-room breakdown.
+- **Business Impact:** Eliminates artificial utilization distortions, guarantees that facility holidays and maintenance downtime are not penalized against surgical specialties, and provides the mathematical denominator foundation for Phase A2 block scheduling and Phase A4 utilization metrics.
+
 ---
 
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 103 | **103 / 103 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **160 total files** |
-| **Automated Tests** | 100% Pass | **373 / 373 passing across 75 suites (274 passing across 13 RCM & Scheduling suites)** |
+| **Documented Phases** | 104 | **104 / 104 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **161 total files** |
+| **Automated Tests** | 100% Pass | **393 / 393 passing across 76 suites (294 passing across 14 RCM & Scheduling suites)** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 9.24s)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **077 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 7.40s)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **078 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 

@@ -1,0 +1,687 @@
+/* ==============================================================================
+   Room Staffing Windows & Denominator Engine Styles (Phase A1)
+   Clinical Maestro Design System (Strictly Compliant Palette - Zero Prohibited Tokens)
+   ============================================================================== */
+
+.staffing-view-container {
+  padding: 24px;
+  max-width: 1440px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #0f172a;
+}
+
+/* 1. Header */
+.staffing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.staffing-header-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.staffing-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background-color: #e0f2fe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #bae6fd;
+}
+
+.staffing-icon-primary {
+  color: #0284c7;
+}
+
+.staffing-header-title h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.02em;
+}
+
+.staffing-header-title p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.staffing-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Buttons */
+.staffing-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  border: 1px solid transparent;
+}
+
+.staffing-btn-primary {
+  background-color: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+}
+
+.staffing-btn-primary:hover {
+  background-color: #0369a1;
+  border-color: #0369a1;
+}
+
+.staffing-btn-secondary {
+  background-color: #f1f5f9;
+  color: #1e293b;
+  border-color: #cbd5e1;
+}
+
+.staffing-btn-secondary:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+/* 2. Operational Ribbon (5 Cards) */
+.staffing-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.staffing-kpi-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.staffing-kpi-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.staffing-kpi-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.staffing-kpi-unit {
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.staffing-kpi-subtext {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.staffing-text-emerald {
+  color: #059669 !important;
+}
+
+.staffing-text-amber {
+  color: #d97706 !important;
+}
+
+.staffing-text-sky {
+  color: #0284c7 !important;
+}
+
+/* 3. Sub-Tab Navigation */
+.staffing-nav-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+
+.staffing-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.staffing-tab-btn:hover {
+  color: #0f172a;
+  background-color: #f1f5f9;
+}
+
+.staffing-tab-btn.active {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+/* 4. Weekly Staffing Matrix Table */
+.staffing-matrix-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  margin-bottom: 24px;
+}
+
+.staffing-matrix-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.staffing-matrix-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.staffing-matrix-header p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.staffing-table-wrapper {
+  overflow-x: auto;
+}
+
+.staffing-matrix-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+
+.staffing-matrix-table th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 10px;
+  border-bottom: 2px solid #e2e8f0;
+  text-align: center;
+}
+
+.staffing-matrix-table th:first-child {
+  text-align: left;
+}
+
+.staffing-matrix-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+
+.staffing-room-cell {
+  background-color: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  padding-right: 12px !important;
+}
+
+.staffing-room-num {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.staffing-room-name {
+  font-size: 12px;
+  color: #475569;
+  margin: 2px 0 4px 0;
+}
+
+.staffing-suite-badge {
+  font-size: 10px;
+  font-weight: 600;
+  background-color: #f1f5f9;
+  color: #64748b;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+/* Shift Cell Card */
+.staffing-shift-cell {
+  min-width: 160px;
+}
+
+.staffing-shift-card {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  position: relative;
+  transition: all 0.15s;
+}
+
+.staffing-shift-card:hover {
+  border-color: #86efac;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.staffing-shift-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.staffing-shift-hours {
+  font-size: 12px;
+  font-weight: 700;
+  color: #166534;
+}
+
+.staffing-shift-duration {
+  font-size: 11px;
+  font-weight: 600;
+  color: #15803d;
+  background-color: #dcfce7;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.staffing-shift-name {
+  font-size: 11px;
+  color: #374151;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.staffing-crew-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.staffing-crew-chip {
+  font-size: 10px;
+  font-weight: 600;
+  background-color: #ffffff;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.staffing-shift-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  opacity: 0.6;
+}
+
+.staffing-shift-card:hover .staffing-shift-actions {
+  opacity: 1;
+}
+
+.staffing-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  padding: 2px;
+  border-radius: 3px;
+}
+
+.staffing-icon-btn:hover {
+  color: #0f172a;
+}
+
+.staffing-icon-btn.delete:hover {
+  color: #dc2626;
+}
+
+/* Unstaffed Empty State */
+.staffing-unstaffed-btn {
+  width: 100%;
+  height: 60px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.staffing-unstaffed-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #475569;
+}
+
+/* 5. Data Tables (Closures & Exceptions) */
+.staffing-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.staffing-data-table th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.staffing-data-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+.staffing-data-table tr:hover td {
+  background-color: #f8fafc;
+}
+
+.staffing-date-pill {
+  font-family: monospace;
+  font-weight: 700;
+  color: #0f172a;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.staffing-closure-type-badge {
+  font-size: 11px;
+  font-weight: 600;
+  background-color: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.staffing-badge-all {
+  font-size: 11px;
+  font-weight: 600;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.staffing-badge-warning {
+  font-size: 11px;
+  font-weight: 600;
+  background-color: #fef2f2;
+  color: #dc2626;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* 6. MODALS (NAMESPACED & ZERO CSS BLEED) */
+.or-staffing-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.or-staffing-modal-content {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  max-width: 620px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.or-staffing-modal-content.staffing-modal-lg {
+  max-width: 860px;
+}
+
+/* Modal Header: Strictly Isolated White Background */
+.or-staffing-modal-header {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  padding: 18px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.or-staffing-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a !important;
+}
+
+.staffing-modal-icon {
+  color: #0284c7;
+}
+
+.staffing-modal-icon-amber {
+  color: #f59e0b;
+}
+
+.staffing-modal-icon-sky {
+  color: #0284c7;
+}
+
+.staffing-modal-close {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.staffing-modal-close:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.or-staffing-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  background-color: #ffffff;
+}
+
+.staffing-modal-desc {
+  font-size: 13px;
+  color: #475569;
+  margin: 0 0 18px 0;
+  line-height: 1.5;
+}
+
+.or-staffing-modal-footer {
+  padding: 16px 24px;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Modal Form Controls */
+.staffing-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.staffing-form-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.staffing-form-group {
+  margin-bottom: 14px;
+}
+
+.staffing-form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.staffing-form-control {
+  font-size: 13px;
+  color: #0f172a;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 8px 12px;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.staffing-form-control:focus {
+  outline: none;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.staffing-input {
+  width: 100%;
+}
+
+.staffing-select {
+  width: 100%;
+  cursor: pointer;
+}
+
+.staffing-textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+/* 7. Denominator Simulator Elements */
+.staffing-sim-controls {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.staffing-sim-summary-box {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 20px;
+}
+
+.staffing-sim-sum-item {
+  border-right: 1px solid #e2e8f0;
+  padding-right: 8px;
+}
+
+.staffing-sim-sum-item:last-child {
+  border-right: none;
+}
+
+.staffing-sim-sum-item.primary {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.staffing-sum-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.staffing-sum-val {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.staffing-text-primary {
+  color: #15803d !important;
+}
+
+.staffing-sum-sub {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+}
