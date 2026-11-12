@@ -459,3 +459,4 @@ export function filterOperatingRooms(rooms, filters = {}) {
     return true;
   });
 }
+

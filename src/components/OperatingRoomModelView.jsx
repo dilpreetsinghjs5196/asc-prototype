@@ -991,3 +991,4 @@ export default function OperatingRoomModelView() {
     </div>
   );
 }
+

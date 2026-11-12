@@ -362,3 +362,4 @@ Phase A0 is complete only when:
 - **UI Components:** `src/components/OperatingRoomModelView.jsx` and `src/components/OperatingRoomModelView.css`.
 - **Test File:** `tests/operating-room-model.test.js`.
 - **Navigation Integration:** Registered in `src/App.jsx` as tab `or_model` under Scheduling.
+
