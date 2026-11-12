@@ -715,17 +715,34 @@
   - **Database Migration (076):** Tables `revenue_recovery_workqueues`, `recoverable_revenue_work_items`, `recoverable_revenue_audit_log`, views `vw_recoverable_revenue_workqueue_active`, `vw_recoverable_revenue_workqueue_metrics`, `vw_specialist_workload_summary`, and 1:1 RLS policies with clean down rollback.
 - **Business Impact:** Prevents tens of thousands in statutory deadline write-offs, balances specialist capacity, establishes 100% audit compliance, and cuts average claim cycle time by over 40%.
 
+### Phase A0: Operating Room Model & Physical Asset Architecture
+- **File:** `A0_OPERATING_ROOM_MODEL.md`
+- **Module:** Module 10: OR Scheduling & Utilization Optimization
+- **Objective:** Authoritative Operating Room (OR) master model, surgical suites, clinical specialty compatibility, fixed/boom equipment inventory, HVAC cleanroom standards, bariatric weight safety limits, and standard turnover targets.
+- **Operational Principle:** *"The Operating Room is the primary revenue-generating asset and the most constrained clinical resource in an ASC (\$20 - \$50/minute overhead). Scheduling errors that mismatch room capabilities, table weight limits, equipment dependencies, or laminar airflow standards cause catastrophic day-of-surgery cancellations, infection risks, and financial leakage."*
+- **Key Deliverables:**
+  - **4 Database Tables & 2 Analytical Views (Migration 077):** `operating_rooms`, `operating_room_specialties`, `operating_room_equipment`, `operating_room_status_events`, `vw_operating_rooms_active`, and `vw_operating_room_facility_summary` with 1:1 tenant isolation via `app.current_facility_id`.
+  - **Deterministic Case Compatibility Engine:** Evaluates candidate cases across 5 sequential gates:
+    1. *Operating Status Gate:* Rejects offline/maintenance rooms (`ERR_ROOM_NOT_OPERATIONAL`).
+    2. *Specialty Match Gate:* Distinguishes `PRIMARY` (100% fit), `SECONDARY` (warning + setup adjustments), and `RESTRICTED` (prohibited).
+    3. *Equipment Gate:* Verifies all required tools are present and certified (`ERR_REQUIRED_EQUIPMENT_UNAVAILABLE`).
+    4. *Bariatric Safety Gate:* Enforces patient weight + 50 lb surgical prep buffer $\le$ table certified limit (`ERR_BARIATRIC_LIMIT_EXCEEDED`).
+    5. *Cleanroom Infection Prevention Gate:* Joint and spine hardware implants mandate ISO Class 7+ with Laminar Flow and $\ge 20$ ACH (`ERR_HVAC_STERILE_STANDARDS_UNMET`).
+  - **Operating Status State Machine:** Governs transitions (`OPERATIONAL`, `MAINTENANCE`, `RENOVATION`, `DECOMMISSIONED`) with required audit logs and downtime windows in `operating_room_status_events`.
+  - **Clinical Maestro UI:** 5-card KPI ribbon (Total Rooms, Operational Rate %, Avg Turnover Target, Active Suites, High-Tech Rooms), multi-criteria filter bar, interactive room card grid & table view, scoped Add/Edit modal, and an interactive Case Compatibility Simulator.
+- **Business Impact:** Eliminates day-of-surgery cancellations caused by equipment or room incompatibility, enforces strict infection control compliance for orthopedic and spine implants, and establishes the physical foundation for surgical block scheduling and CP-SAT duration optimization.
+
 ---
 
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 102 | **102 / 102 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **159 total files** |
-| **Automated Tests** | 100% Pass | **347 / 347 passing across 74 suites (248 passing across 12 RCM suites)** |
+| **Documented Phases** | 103 | **103 / 103 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **160 total files** |
+| **Automated Tests** | 100% Pass | **373 / 373 passing across 75 suites (274 passing across 13 RCM & Scheduling suites)** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 5.8s)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **076 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 9.24s)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **077 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 

@@ -69,6 +69,7 @@ import PatientArRecoveryView from './components/PatientArRecoveryView';
 import ImplantCarveoutDetectionView from './components/ImplantCarveoutDetectionView';
 import RevenueOpportunityPriorityView from './components/RevenueOpportunityPriorityView';
 import RecoverableRevenueWorkqueueView from './components/RecoverableRevenueWorkqueueView';
+import OperatingRoomModelView from './components/OperatingRoomModelView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2402,6 +2403,13 @@ export default function App() {
             <div className="menu-item-icon"><XCircle size={16} /></div>
             Case Cancellations
           </div>
+          <div
+            className={`menu-item ${activeTab === 'or_model' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('or_model'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Building2 size={16} /></div>
+            Operating Room Master
+          </div>
 
           <div className="sidebar-section-divider"></div>
 
@@ -3008,6 +3016,7 @@ export default function App() {
                   {activeTab === 'implant_carveout' && 'Implant Carveout Detection & Recovery'}
                   {activeTab === 'opportunity_priority' && 'Revenue Opportunity Priority Score (ROPS)'}
                   {activeTab === 'recovery_workqueue' && 'Recoverable Revenue Workqueue'}
+                  {activeTab === 'or_model' && 'Operating Room Master Model'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -3074,6 +3083,7 @@ export default function App() {
                   {activeTab === 'implant_carveout' && 'Deterministic detection of unbilled, zero-paid, or underpaid surgical implants & device carve-outs'}
                   {activeTab === 'opportunity_priority' && 'Unified cross-module ranking combining value, confidence, recoverability & deadline urgency'}
                   {activeTab === 'recovery_workqueue' && 'Dynamic specialist queue routing, timely filing SLA compliance, recovery action lifecycle & immutable audit trail'}
+                  {activeTab === 'or_model' && 'Physical suites, specialty compatibility, equipment dependencies, and turnover standards'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -3183,7 +3193,7 @@ export default function App() {
             </div>
 
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'or_model', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -4883,6 +4893,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'recovery_workqueue' && (
                 <RecoverableRevenueWorkqueueView />
+              )}
+
+              {/* ==========================================
+              TAB: OPERATING ROOM MODEL (PHASE A0 - MODULE 10 OR SCHEDULING)
+              ========================================== */}
+              {activeTab === 'or_model' && (
+                <OperatingRoomModelView />
               )}
 
               {/* ==========================================
