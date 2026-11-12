@@ -23,3 +23,4 @@ DROP INDEX IF EXISTS public.idx_ouds_facility_room_date;
 -- 4. Drop Tables (CASCADE removes any dependent constraints)
 DROP TABLE IF EXISTS public.or_surgeon_block_utilization_snapshots CASCADE;
 DROP TABLE IF EXISTS public.or_utilization_daily_snapshots CASCADE;
+

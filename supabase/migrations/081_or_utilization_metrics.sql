@@ -136,3 +136,4 @@ CREATE POLICY rls_or_utilization_daily_snapshots_facility ON public.or_utilizati
 CREATE POLICY rls_or_surgeon_block_utilization_facility ON public.or_surgeon_block_utilization_snapshots
     FOR ALL
     USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
+
