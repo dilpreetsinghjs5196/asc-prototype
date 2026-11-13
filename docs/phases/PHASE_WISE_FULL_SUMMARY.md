@@ -815,6 +815,20 @@
   - **Clinical Maestro UI:** 5-Card Operational Ribbon (Overall Booking Accuracy %, Mean Duration Bias mins, Downstream Schedule Delays, Defensive Padding Wastage hrs, Overtime Labor Impact $), 3 interactive sub-views (Case Booking Accuracy Ledger, Surgeon Booking Tendency Matrix, CPT Duration Calibration Benchmarks), and a Surgeon Calibration Review Modal with pinned header and footer.
 - **Business Impact:** Mitigates cascading patient delays, prevents thousands of dollars in nursing overtime infractions, and reclaims stranded prime-time OR capacity created by defensive booking padding.
 
+### Phase A7: Turnover Metrics & Benchmark Engine
+- **File:** `A7_TURNOVER_METRICS.md`
+- **Module:** Module 10: OR Scheduling & Utilization Optimization
+- **Objective:** Deterministic Wheels Out (Case $N$) to Wheels In (Case $N+1$) turnover duration tracking, dynamic Same-Surgeon (20m) vs Different-Surgeon (35m) benchmark standards, compliance status classification (`COMPLIANT`, `MINOR_DELAY`, `PROLONGED_TURNOVER`), 8-code delay root-cause attribution Pareto analysis, and staffed OR room idle run-rate cost modeling ($650.00/hr).
+- **Operational Principle:** *"Operating room turnover time is the non-revenue-generating bridge between surgical encounters. While a rapid, well-orchestrated turnover preserves surgical momentum and keeps the facility on schedule, prolonged room transitions consume valuable staffed hours, delay subsequent patients, and generate substantial idle labor costs. By distinguishing between consecutive same-surgeon cases and complex cross-specialty reconfigurations, attributing root-cause operational bottlenecks (EVS, SPD sterile processing, surgeon delay, anesthesia blocks, nursing shortages), and quantifying excess downtime run-rate costs, leadership gains the clarity needed to optimize room turnover and eliminate preventable schedule drift."*
+- **Key Deliverables:**
+  - **2 Master Tables & 2 Analytical Views (Migration 084):** `or_turnover_events`, `or_turnover_benchmarks`, `vw_or_turnover_facility_summary`, and `vw_or_turnover_delay_attribution` with 1:1 multi-tenant RLS via `app.current_facility_id`.
+  - **Dynamic Benchmark Target Rule (Rule 2):** Automatically differentiates Same-Surgeon transitions (standard 20m benchmark; Ophthalmology 15m) from Different-Surgeon cross-specialty changeovers (standard 35m benchmark).
+  - **Turnover Compliance & Variance Classification (Rule 3):** Classifies transitions into `COMPLIANT` ($\Delta T \le 0\text{m}$), `MINOR_DELAY` ($1 - 10\text{m}$), and `PROLONGED_TURNOVER` ($> 10\text{m}$).
+  - **8-Category Delay Root-Cause Attribution (Rule 4):** Standardized clinical root-cause coding (`EVS_CLEANING_DELAY`, `INSTRUMENT_STERILIZATION_DELAY`, `SURGEON_UNAVAILABLE`, `ANESTHESIA_PREOP_DELAY`, `NURSING_STAFF_SHORTAGE`, `EQUIPMENT_MALFUNCTION_SETUP`, `PATIENT_ADMISSION_DELAY`, `OTHER_CLINICAL_HOLD`).
+  - **Financial Idle Room Run-Rate Engine (Rule 5):** Calculates staffed room idle downtime cost ($(\text{Turnover Mins} / 60) \times \$650.00/\text{hr}$) and excess delay labor penalties.
+  - **Clinical Maestro UI:** 5-Card Operational Ribbon (Facility Avg Turnover, Same-Surgeon Avg, Different-Surgeon Avg, Prolonged Turnover Rate %, Excess Idle Labor Cost $), 3 interactive sub-views (Turnover Events Ledger, Delay Root-Cause Pareto Analysis, Specialty Benchmark Standards), and an Interactive Delay Attribution Modal with pinned header and footer.
+- **Business Impact:** Uncovers the primary drivers of non-operative OR downtime, eliminates inter-case friction, saves thousands of dollars in idle room labor costs, and protects surgical throughput.
+
 ---
 
 ## Architectural & Verification Summary
@@ -822,10 +836,10 @@
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
 | **Documented Phases** | 108 | **108 / 108 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **166 total files** |
-| **Automated Tests** | 100% Pass | **471 / 471 passing across 96 suites (124 / 124 passing across Module 10 OR Scheduling suites)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **167 total files** |
+| **Automated Tests** | 100% Pass | **488 / 488 passing across 97 suites (141 / 141 passing across Module 10 OR Scheduling suites)** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 6.92s)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **083 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 13.21s)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **084 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 

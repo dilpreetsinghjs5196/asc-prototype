@@ -110,3 +110,4 @@ CREATE POLICY rls_or_case_booking_accuracy_logs_facility ON public.or_case_booki
 CREATE POLICY rls_or_surgeon_booking_profiles_facility ON public.or_surgeon_booking_profiles
     FOR ALL
     USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
+

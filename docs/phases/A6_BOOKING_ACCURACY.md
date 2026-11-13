@@ -165,3 +165,4 @@ Complete data model, migration UP/DOWN scripts, deterministic service layer, Rea
 - View: `src/components/BookingAccuracyView.jsx` and `src/components/BookingAccuracyView.css`
 - Test: `tests/booking-accuracy.test.js`
 - Wiring: `src/App.jsx`
+
