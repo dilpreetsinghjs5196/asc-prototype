@@ -181,3 +181,4 @@ Complete data model, migration UP/DOWN scripts, deterministic service layer, Rea
 - UI: `src/components/RecoverableCapacityView.jsx` and `src/components/RecoverableCapacityView.css`.
 - Tests: `tests/recoverable-capacity.test.js`.
 - App Wiring: `src/App.jsx`.
+

@@ -862,15 +862,31 @@
 
 ---
 
+### Phase AA / A10: Next Best Case Matching & Capacity Allocation Engine
+- **File:** `AA_NEXT_BEST_CASE.md`
+- **Module:** Module 10: OR Scheduling & Utilization Optimization
+- **Objective:** Deterministic multi-pillar candidate ranking of surgical waitlist backlogs for open capacity slots using pre-op clinical readiness ($S_{\text{readiness}}$, 30%), surgeon booking probability ($S_{\text{probability}}$, 25%), financial contribution margin ($S_{\text{financial}}$, 25%), and physical time/equipment slot fit ($S_{\text{time\_fit}}$, 20%), reinforced by hard clinical safety gates and structured capacity offer workflows.
+- **Operational Principle:** *"When open surgical suite time becomes available, surgery centers cannot afford subjective guesswork or ad-hoc favoritism. Every open slot represents perishable revenue and staffing overhead. Schedulers need an automated, mathematically rigorous engine that scores the entire candidate backlog across clinical clearance (prior authorization, H&P, consents), historical surgeon acceptance probability, financial margin yield, and physical slot utilization fit (aiming for the 75% to 95% utilization sweet spot). Hard constraints immediately disqualify unready or overfilling cases, ensuring only viable, high-yield cases are offered and booked."*
+- **Key Deliverables:**
+  - **4 Master Tables & 2 Analytical Views (Migration 087):** `or_next_best_case_backlog`, `or_next_best_case_ranking_runs`, `or_next_best_case_recommendations`, `or_nbc_scoring_weights`, `vw_or_next_best_case_top_rankings`, and `vw_or_nbc_backlog_readiness_summary` with strict PostgreSQL Row Level Security enforced via `app.current_facility_id`.
+  - **Four-Pillar Deterministic Scoring Model (Rule 1):** Exact composite formulation:
+    $$\text{Composite Fit Score} = 0.30 \cdot S_{\text{readiness}} + 0.25 \cdot S_{\text{probability}} + 0.25 \cdot S_{\text{financial}} + 0.20 \cdot S_{\text{time\_fit}}$$
+  - **Four Hard Disqualification Safety Gates (Rule 2):** Automatic disqualification for Prior Auth Denied/Expired (`READINESS_GATE_FAILED`), Case Duration Overfill $T_{\text{case}} > T_{\text{slot}}$ (`DURATION_EXCEEDS_SLOT`), Suite Equipment Mismatch (`SPECIALTY_EQUIPMENT_MISMATCH`), and Implant Lead-Time Breach (`IMPLANT_SLA_BREACH`).
+  - **Candidate Sorting & Lifecycle State Transitions (Rule 3):** Strict sorting with qualified cases prioritized by composite score descending, followed by disqualified cases (score 0), with transitions: `RANKED` $\to$ `OFFERED_TO_SURGEON` $\to$ `ACCEPTED` $\to$ `BOOKED_IN_OR`.
+  - **Clinical Maestro UI:** 5-Card Operational Ribbon (Active Waitlist Backlog, Top Recommendation Score, Potential Realized Margin $, Average Clinical Readiness %, Slot Duration Fit Ratio %), Interactive Open Slot Target Selector, 3 tab views (Ranked Candidate Cases Ledger, Multi-Pillar Scoring Weights & Radar, Backlog Clinical Readiness Queue), and Pinned-Layout Modals for Offer Dispatch and Direct Case Booking.
+- **Business Impact:** Replaces subjective scheduling calls with an auditable ranking algorithm, accelerates waitlist backlog conversion, maximizes surgical suite utilization, and ensures prior-auth-cleared, high-margin cases fill surrendered OR time.
+
+---
+
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 109 | **109 / 109 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **169 total files** |
-| **Automated Tests** | 100% Pass | **524 / 524 passing across 99 suites (177 / 177 passing across Module 10 OR Scheduling suites)** |
+| **Documented Phases** | 110 | **110 / 110 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **170 total files** |
+| **Automated Tests** | 100% Pass | **544 / 544 passing across 100 suites (197 / 197 passing across Module 10 OR Scheduling suites)** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 5.42s)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **086 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 4.57s)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **087 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 

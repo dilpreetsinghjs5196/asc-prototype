@@ -1038,3 +1038,4 @@ export default function RecoverableCapacityView() {
     </div>
   );
 }
+

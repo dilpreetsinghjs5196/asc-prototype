@@ -24,3 +24,4 @@ DROP INDEX IF EXISTS public.idx_orcs_facility_date;
 -- 4. Drop Tables (CASCADE removes foreign key constraints)
 DROP TABLE IF EXISTS public.or_capacity_actionability_thresholds CASCADE;
 DROP TABLE IF EXISTS public.or_recoverable_capacity_slots CASCADE;
+

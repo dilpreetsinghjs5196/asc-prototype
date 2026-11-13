@@ -110,3 +110,4 @@ CREATE POLICY rls_or_recoverable_capacity_slots_facility ON public.or_recoverabl
 CREATE POLICY rls_or_capacity_actionability_thresholds_facility ON public.or_capacity_actionability_thresholds
     FOR ALL
     USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
+
