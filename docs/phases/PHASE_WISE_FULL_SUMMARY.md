@@ -829,6 +829,19 @@
   - **Clinical Maestro UI:** 5-Card Operational Ribbon (Facility Avg Turnover, Same-Surgeon Avg, Different-Surgeon Avg, Prolonged Turnover Rate %, Excess Idle Labor Cost $), 3 interactive sub-views (Turnover Events Ledger, Delay Root-Cause Pareto Analysis, Specialty Benchmark Standards), and an Interactive Delay Attribution Modal with pinned header and footer.
 - **Business Impact:** Uncovers the primary drivers of non-operative OR downtime, eliminates inter-case friction, saves thousands of dollars in idle room labor costs, and protects surgical throughput.
 
+### Phase A8: Duration Prediction Models (P50/P75/P80/P90)
+- **File:** `A8_DURATION_PREDICTION.md`
+- **Module:** Module 10: OR Scheduling & Utilization Optimization
+- **Objective:** Deterministic multi-percentile surgical duration distribution modeling (P50 Median, P75 Quartile, P80 Operational Target, P90 Overtime Shield), 4-tier sample size hierarchical fallback architecture ($N \ge 20 \to$ `HIGH`), dispersion tracking via Coefficient of Variation ($CV = \frac{\sigma}{\mu}$), patient clinical complexity adjustments (BMI $\ge 35$, prior scarring revision, dual procedure), and predictive case intake scheduling sandboxes.
+- **Operational Principle:** *"Static surgical booking durations are fundamentally flawed because surgical cases follow skewed, non-normal duration distributions. Relying solely on average or median times leaves half of cases prone to overrunning scheduled room time, sparking downstream delays and nursing overtime. By mathematically deriving multi-percentile benchmarks (P50 for rapid morning turnover, P80 for routine balanced scheduling, and P90 for complex cases and overtime protection) paired with patient risk modifiers (BMI, revisions, dual procedures), schedulers can accurately predict operative duration, maximize suite utilization, and protect shift end-times."*
+- **Key Deliverables:**
+  - **2 Master Tables & 2 Analytical Views (Migration 085):** `or_case_duration_prediction_models`, `or_case_duration_predictions_log`, `vw_or_duration_prediction_accuracy`, and `vw_or_duration_models_by_cpt` with 1:1 multi-tenant RLS via `app.current_facility_id`.
+  - **Multi-Percentile Distribution Engine (Rule 1):** Computes linear rank percentiles: $\text{Rank } R = \frac{P}{100} \times (N - 1) + 1$, generating P50, P75, P80, and P90 baseline durations from historical case in-room actuals.
+  - **4-Tier Hierarchical Fallback Governance (Rule 2):** Dynamically assigns confidence tiers based on sample size and dispersion ($N \ge 20, CV \le 0.25 \to$ `HIGH`; $10 \le N < 20 \to$ `MODERATE`; $5 \le N < 10 \to$ `LOW`; $N < 5 \to$ `INSUFFICIENT`).
+  - **Clinical Patient Complexity Modifiers (Rule 3):** Standardized additive risk buffers: High BMI $\ge 35$ (+10%), Prior Scarring / Revision (+15%), and Dual / Bilateral procedures (+30%), capped at +50% total baseline duration buffer.
+  - **Clinical Maestro UI:** 5-Card Operational Ribbon (High Confidence Coverage %, Mean Prediction Error mins, P80 Window Completion %, Calibrated CPT Models Count, Overtime Shields Active), 3 interactive sub-views (CPT Duration Prediction Models, Case Intake Duration Calculator sandbox, Historical Prediction vs Actuals Ledger), and a Percentile Curve Calibration Modal with pinned header and footer.
+- **Business Impact:** Eliminates subjective scheduling guesswork, provides an authoritative foundation for next-best case fit algorithms, reduces case duration prediction error, and prevents costly nursing overtime.
+
 ---
 
 ## Architectural & Verification Summary
@@ -836,10 +849,10 @@
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
 | **Documented Phases** | 108 | **108 / 108 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **167 total files** |
-| **Automated Tests** | 100% Pass | **488 / 488 passing across 97 suites (141 / 141 passing across Module 10 OR Scheduling suites)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **168 total files** |
+| **Automated Tests** | 100% Pass | **503 / 503 passing across 98 suites (156 / 156 passing across Module 10 OR Scheduling suites)** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 13.21s)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **084 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 13.26s)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **085 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 

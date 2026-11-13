@@ -109,3 +109,4 @@ CREATE POLICY rls_or_turnover_events_facility ON public.or_turnover_events
 CREATE POLICY rls_or_turnover_benchmarks_facility ON public.or_turnover_benchmarks
     FOR ALL
     USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
+

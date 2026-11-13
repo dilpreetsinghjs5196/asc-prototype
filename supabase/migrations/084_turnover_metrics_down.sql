@@ -24,3 +24,4 @@ DROP INDEX IF EXISTS public.idx_ote_facility_date;
 -- 4. Drop Tables (CASCADE removes foreign key constraints)
 DROP TABLE IF EXISTS public.or_turnover_benchmarks CASCADE;
 DROP TABLE IF EXISTS public.or_turnover_events CASCADE;
+

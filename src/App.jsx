@@ -77,6 +77,7 @@ import OrUtilizationMetricsView from './components/OrUtilizationMetricsView';
 import BlockUtilizationMetricsView from './components/BlockUtilizationMetricsView';
 import BookingAccuracyView from './components/BookingAccuracyView';
 import TurnoverMetricsView from './components/TurnoverMetricsView';
+import DurationPredictionView from './components/DurationPredictionView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2468,6 +2469,13 @@ export default function App() {
             <div className="menu-item-icon"><Clock size={16} /></div>
             Turnover Metrics & Delays
           </div>
+          <div
+            className={`menu-item ${activeTab === 'duration_prediction' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('duration_prediction'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Activity size={16} /></div>
+            Duration Prediction Models
+          </div>
 
           <div className="sidebar-section-divider"></div>
 
@@ -3082,6 +3090,7 @@ export default function App() {
                   {activeTab === 'block_utilization' && 'Block Utilization Metrics, Wastage & Rightsizing'}
                   {activeTab === 'booking_accuracy' && 'Case Booking Accuracy & Duration Calibration'}
                   {activeTab === 'turnover_metrics' && 'Operating Room Turnover Metrics & Benchmarks'}
+                  {activeTab === 'duration_prediction' && 'Surgical Duration Prediction Engine (P50/P75/P80/P90)'}
                   {activeTab === 'help' && 'Help & Support'}
                   {activeTab === 'scheduler' && 'Surgery Log & OR Schedule'}
                   {activeTab === 'caselog_scheduling' && 'Case Log Scheduling Optimization'}
@@ -3156,6 +3165,7 @@ export default function App() {
                   {activeTab === 'block_utilization' && 'Deterministic block utilization modeling, idle block wastage tracking, surgeon block performance index (SBPI), and automated Medical Executive Committee rightsizing actions'}
                   {activeTab === 'booking_accuracy' && 'Deterministic duration variance tracking, surgeon scheduling bias classification, cascading downstream delay mitigation, and 20-case CPT median calibration'}
                   {activeTab === 'turnover_metrics' && 'Deterministic Wheels Out to Wheels In duration tracking, same-surgeon vs different-surgeon standards, delay root cause attribution, and idle run-rate cost impact'}
+                  {activeTab === 'duration_prediction' && 'Statistical percentile distributions, hierarchical sample size tiers, clinical complexity risk adjustments, and overtime mitigation modeling'}
                   {activeTab === 'help' && 'Support desk and user guides'}
                   {activeTab === 'scheduler' && 'Schedule, track, and analyze surgical cases with full cost and OR time data'}
                   {activeTab === 'caselog_scheduling' && 'AI-powered optimization of historical case logs to generate ideal OR schedules'}
@@ -3265,7 +3275,7 @@ export default function App() {
             </div>
 
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -5021,6 +5031,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'turnover_metrics' && (
                 <TurnoverMetricsView />
+              )}
+
+              {/* ==========================================
+              TAB: DURATION PREDICTION MODELS (PHASE A8 - MODULE 10 OR SCHEDULING)
+              ========================================== */}
+              {activeTab === 'duration_prediction' && (
+                <DurationPredictionView />
               )}
 
               {/* ==========================================

@@ -180,3 +180,4 @@ Complete data model, migration UP/DOWN scripts, deterministic service layer, Rea
 - UI: `src/components/TurnoverMetricsView.jsx` and `src/components/TurnoverMetricsView.css`.
 - Tests: `tests/turnover-metrics.test.js`.
 - App Wiring: `src/App.jsx`.
+
