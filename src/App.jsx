@@ -141,7 +141,8 @@ import {
   FileCheck,
   History,
   ArrowRightLeft,
-  Award
+  Award,
+  Zap
 } from 'lucide-react';
 
 // ==========================================
