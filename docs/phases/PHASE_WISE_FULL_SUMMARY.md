@@ -844,15 +844,33 @@
 
 ---
 
+### Phase A9: Recoverable Capacity & Opportunity Value Engine
+- **File:** `A9_RECOVERABLE_CAPACITY.md`
+- **Module:** Module 10: OR Scheduling & Utilization Optimization
+- **Objective:** Deterministic mathematical decomposition of gross unused operating room hours into actionable booking capacity vs. stranded unbookable friction gaps, quantification of recoverable financial value through surgical case backfilling ($1,250.00/hr contribution margin) and clinical crew downstaffing ($175.00/hr labor avoidance), capacity actionability ratio metrics, advance lead-time SLA governance, and interactive opportunity redemption workflows.
+- **Operational Principle:** *"Unused operating room capacity is not homogeneous. A 4-hour block surrendered 5 days in advance represents high-yield actionable capacity that can be backfilled with high-margin surgical cases or downstaffed to eliminate idle nursing payroll. Conversely, a 30-minute transition gap or a block released 3 hours before surgery is stranded friction wastage that cannot be booked. Treating all unused OR time as recoverable distorts executive expectations and misleads surgical center leadership. ASC Analyst systematically distinguishes actionable capacity from friction and models dual financial recovery pathways to monetize open OR time."*
+- **Key Deliverables:**
+  - **2 Master Tables & 2 Analytical Views (Migration 086):** `or_recoverable_capacity_slots`, `or_capacity_actionability_thresholds`, `vw_or_recoverable_capacity_facility_summary`, and `vw_or_actionable_slots_horizon` with strict PostgreSQL Row Level Security enforced via `app.current_facility_id`.
+  - **Actionability Classification Engine (Rule 1):** Classifies slots into `PRIME_ACTIONABLE_BLOCK` ($\ge 90\text{m}, \ge 48\text{h}$ notice), `MARGINAL_SLOT` ($60\text{--}89\text{m}$ or $24\text{--}47\text{h}$ notice), and `FRAGMENTED_STRANDED` ($< 60\text{m}$ or $< 24\text{h}$ notice), with specialty-specific duration thresholds.
+  - **Dual Financial Recovery Valuation (Rule 2):** Deterministic dual recovery formulas:
+    - Pathway 1: Surgical Case Backfill Yield $= (\text{Slot Hours}) \times \$1,250.00/\text{hr}$ (Specialty Contribution Margin)
+    - Pathway 2: Clinical Crew Downstaffing $= (\text{Slot Hours}) \times \$175.00/\text{hr}$ (Avoided Clinical Labor)
+  - **Capacity Actionability Ratio (Rule 3):** $\text{Actionability Ratio (\%)} = \frac{\sum \text{Actionable Slot Minutes}}{\sum \text{Total Unused Slot Minutes}} \times 100\%$, establishing an operational target of $\ge 65.0\%$.
+  - **Advance Lead-Time SLA Horizon Governance (Rule 4):** Four operational notification windows ($> 72\text{h}$ Strategic Horizon, $48\text{--}72\text{h}$ Downstaffing Contractual Window, $24\text{--}48\text{h}$ Tactical Add-On Window, $< 24\text{h}$ Critical Lock / Stranded Friction).
+  - **Clinical Maestro UI:** 5-Card Operational Ribbon (Actionable Recoverable Capacity hrs, Capacity Actionability Ratio %, Potential Case Backfill Margin $, Avoidable Crew Labor Expense $, Stranded Friction Wastage hrs), 3 interactive sub-views (Actionable Capacity Slots Ledger, Gross Unused Capacity Decomposition & Horizon Distribution, Specialty Viability Thresholds & Economic Simulator), and interactive modals for Surgical Case Backfill and Clinical Crew Downstaffing with pinned header and footer layout.
+- **Business Impact:** Eliminates phantom capacity assumptions, unlocks measurable top-line margin through prioritized waitlist backfilling, prevents tens of thousands in idle clinical crew payroll expenses through timely downstaffing, and provides perioperative leadership with actionable visibility into unbooked operating room time.
+
+---
+
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 108 | **108 / 108 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **168 total files** |
-| **Automated Tests** | 100% Pass | **503 / 503 passing across 98 suites (156 / 156 passing across Module 10 OR Scheduling suites)** |
+| **Documented Phases** | 109 | **109 / 109 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **169 total files** |
+| **Automated Tests** | 100% Pass | **524 / 524 passing across 99 suites (177 / 177 passing across Module 10 OR Scheduling suites)** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 13.26s)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **085 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 5.42s)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **086 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 

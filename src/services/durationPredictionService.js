@@ -697,3 +697,4 @@ export const SEED_PREDICTION_LOGS = [
     confidenceLevel: 'HIGH'
   }
 ];
+

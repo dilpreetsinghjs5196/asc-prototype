@@ -191,3 +191,4 @@ Complete data model, migration UP/DOWN scripts, deterministic service layer, Rea
 - UI: `src/components/DurationPredictionView.jsx` and `src/components/DurationPredictionView.css`.
 - Tests: `tests/duration-prediction.test.js`.
 - App Wiring: `src/App.jsx`.
+

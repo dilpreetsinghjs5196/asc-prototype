@@ -108,3 +108,4 @@ CREATE POLICY rls_or_case_duration_prediction_models_facility ON public.or_case_
 CREATE POLICY rls_or_case_duration_predictions_log_facility ON public.or_case_duration_predictions_log
     FOR ALL
     USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
+

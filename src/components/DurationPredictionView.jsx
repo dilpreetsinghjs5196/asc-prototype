@@ -879,3 +879,4 @@ export default function DurationPredictionView() {
     </div>
   );
 }
+

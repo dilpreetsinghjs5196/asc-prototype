@@ -24,3 +24,4 @@ DROP INDEX IF EXISTS public.idx_ocdpm_facility_surgeon;
 -- 4. Drop Tables (CASCADE removes foreign key constraints)
 DROP TABLE IF EXISTS public.or_case_duration_predictions_log CASCADE;
 DROP TABLE IF EXISTS public.or_case_duration_prediction_models CASCADE;
+
