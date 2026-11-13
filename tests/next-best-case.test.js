@@ -248,6 +248,7 @@ describe('Phase AA / A10 — Next Best Case Matching Engine Test Suite', () => {
       assert.ok(sql.includes('or_next_best_case_ranking_runs'));
       assert.ok(sql.includes('or_next_best_case_recommendations'));
       assert.ok(sql.includes('or_nbc_scoring_weights'));
+      assert.ok(sql.includes('surgeon_id BIGINT REFERENCES public.surgeons(id)'), 'surgeon_id must be BIGINT matching surgeons.id primary key');
 
       // Views
       assert.ok(sql.includes('vw_or_next_best_case_top_rankings'));
@@ -323,3 +324,4 @@ describe('Phase AA / A10 — Next Best Case Matching Engine Test Suite', () => {
   });
 
 });
+

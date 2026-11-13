@@ -28,3 +28,4 @@ DROP TABLE IF EXISTS public.or_nbc_scoring_weights CASCADE;
 DROP TABLE IF EXISTS public.or_next_best_case_recommendations CASCADE;
 DROP TABLE IF EXISTS public.or_next_best_case_ranking_runs CASCADE;
 DROP TABLE IF EXISTS public.or_next_best_case_backlog CASCADE;
+

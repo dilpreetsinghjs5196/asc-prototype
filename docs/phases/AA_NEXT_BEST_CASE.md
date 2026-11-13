@@ -49,7 +49,7 @@ Master registry of pending surgical cases eligible for open-capacity matching:
 - `facility_id` UUID NOT NULL REFERENCES `public.facilities(id)` ON DELETE CASCADE
 - `patient_name` VARCHAR(128) NOT NULL
 - `patient_mrn` VARCHAR(64) NOT NULL
-- `surgeon_id` UUID REFERENCES `public.surgeons(id)` ON DELETE SET NULL
+- `surgeon_id` BIGINT REFERENCES `public.surgeons(id)` ON DELETE SET NULL
 - `surgeon_name` VARCHAR(128) NOT NULL
 - `specialty_code` VARCHAR(64) NOT NULL
 - `procedure_name` VARCHAR(256) NOT NULL
@@ -205,3 +205,4 @@ All ranking executions, score weights, user actions, offers dispatched, and surg
 - All automated tests pass with 100% success.
 - Clean idempotent database migration and rollback SQL.
 - Working tree clean and committed to git branch `feature/phase-80-claims-model`.
+

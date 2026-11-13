@@ -997,3 +997,4 @@ export default function NextBestCaseView() {
     </div>
   );
 }
+

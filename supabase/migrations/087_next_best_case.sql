@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.or_next_best_case_backlog (
     facility_id UUID NOT NULL REFERENCES public.facilities(id) ON DELETE CASCADE,
     patient_name VARCHAR(128) NOT NULL,
     patient_mrn VARCHAR(64) NOT NULL,
-    surgeon_id UUID REFERENCES public.surgeons(id) ON DELETE SET NULL,
+    surgeon_id BIGINT REFERENCES public.surgeons(id) ON DELETE SET NULL,
     surgeon_name VARCHAR(128) NOT NULL,
     specialty_code VARCHAR(64) NOT NULL,
     procedure_name VARCHAR(256) NOT NULL,
@@ -157,3 +157,4 @@ CREATE POLICY rls_or_nbc_scoring_weights_facility ON public.or_nbc_scoring_weigh
     FOR ALL
     USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid)
     WITH CHECK (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
+
