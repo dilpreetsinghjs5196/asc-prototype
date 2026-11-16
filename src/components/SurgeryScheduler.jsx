@@ -1714,17 +1714,59 @@ const SurgeryScheduler = ({
 
     return (
         <div className="management-container fade-in">
-            <div className="management-header" style={{ justifyContent: 'flex-end', borderBottom: 'none' }}>
-                <div style={{ display: 'flex', gap: '8px' }}>
+            <div className="management-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary, #64748b)', fontSize: '0.85rem' }}>
+                        <span style={{ fontWeight: '700', color: 'var(--text-primary, #0f172a)', fontSize: '1.1rem' }}>
+                            {surgeries.length}
+                        </span>
+                        <span>Total Cases</span>
+                    </div>
+                    <div style={{ width: '1px', height: '16px', backgroundColor: 'var(--border-color, #e2e8f0)' }}></div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary, #64748b)', fontSize: '0.85rem' }}>
+                        <span style={{ fontWeight: '700', color: '#059669', fontSize: '1.1rem' }}>
+                            {surgeries.filter(s => String(s.status || '').toLowerCase() === 'completed').length}
+                        </span>
+                        <span>Completed</span>
+                    </div>
+                    <div style={{ width: '1px', height: '16px', backgroundColor: 'var(--border-color, #e2e8f0)' }}></div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary, #64748b)', fontSize: '0.85rem' }}>
+                        <span style={{ fontWeight: '700', color: '#2563eb', fontSize: '1.1rem' }}>
+                            {surgeries.filter(s => String(s.status || '').toLowerCase() === 'scheduled').length}
+                        </span>
+                        <span>Scheduled</span>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <button
                         className="btn-add"
                         onClick={() => setShowSchedule(!showSchedule)}
-                        style={{ backgroundColor: 'rgba(99, 102, 241, 0.1)', color: 'var(--color-purple)', borderColor: 'rgba(99, 102, 241, 0.2)' }}
+                        style={{
+                            backgroundColor: showSchedule ? 'rgba(59, 130, 246, 0.12)' : 'var(--bg-card, #ffffff)',
+                            color: showSchedule ? '#2563eb' : 'var(--text-secondary, #475569)',
+                            borderColor: showSchedule ? 'rgba(59, 130, 246, 0.35)' : 'var(--border-color, #e2e8f0)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontWeight: '600'
+                        }}
                     >
-                        {showSchedule ? 'Hide Calendar' : 'View OR Calendar'}
+                        <Clock size={15} />
+                        <span>{showSchedule ? 'Hide Calendar' : 'View OR Calendar'}</span>
                     </button>
-                    <button className="btn-add btn-primary" onClick={toggleForm}>
-                        {isFormOpen ? 'Close Form' : '+ Schedule Surgery'}
+                    <button
+                        className="btn-save"
+                        onClick={toggleForm}
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontWeight: '600',
+                            padding: '8px 16px'
+                        }}
+                    >
+                        <span>{isFormOpen ? 'Close Form' : '+ Schedule Surgery'}</span>
                     </button>
                 </div>
             </div>
@@ -3325,51 +3367,52 @@ const SurgeryScheduler = ({
                                 );
 
                                 return (
-                                    <div key={monthKey} style={{ marginBottom: '12px', border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden' }}>
+                                    <div key={monthKey} style={{ marginBottom: '16px', border: '1px solid var(--border-color)', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', background: 'var(--bg-card)' }}>
                                         {/* Month Header Accordion */}
                                         <div
                                             onClick={() => toggleMonth(monthKey)}
                                             style={{
-                                                padding: '12px 16px',
-                                                background: 'var(--bg-card)',
-                                                borderLeft: '4px solid var(--color-blue)',
+                                                padding: '14px 18px',
+                                                background: 'var(--bg-subtab, #f8fafc)',
+                                                borderLeft: '4px solid #2563eb',
                                                 cursor: 'pointer',
                                                 display: 'flex',
                                                 justifyContent: 'space-between',
                                                 alignItems: 'center',
-                                                transition: 'all 0.2s ease'
+                                                transition: 'all 0.2s ease',
+                                                borderBottom: isExpanded ? '1px solid var(--border-color)' : 'none'
                                             }}
                                         >
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-primary)' }}>
-                                                {isExpanded ? <ChevronUp size={18} style={{ color: 'var(--color-blue)' }} /> : <ChevronDown size={18} style={{ color: 'var(--text-secondary)' }} />}
+                                                {isExpanded ? <ChevronUp size={18} style={{ color: '#2563eb' }} /> : <ChevronDown size={18} style={{ color: 'var(--text-secondary)' }} />}
                                                 <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '700', color: 'var(--text-primary)' }}>
                                                     {formatMonthDisplay(monthKey)}
                                                 </h4>
-                                                <span style={{ fontSize: '0.75rem', padding: '2px 10px', background: 'var(--bg-subtab)', borderRadius: '12px', color: 'var(--text-secondary)', fontWeight: '600', border: '1px solid var(--border-light)' }}>
-                                                    {filteredMonthSurgeries.length} cases
+                                                <span style={{ fontSize: '0.75rem', padding: '2px 10px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '12px', color: '#2563eb', fontWeight: '700', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                                                    {filteredMonthSurgeries.length} {filteredMonthSurgeries.length === 1 ? 'case' : 'cases'}
                                                 </span>
                                             </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
                                                 {/* Month Search Bar */}
                                                 <div
                                                     onClick={(e) => e.stopPropagation()}
-                                                    style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '4px 10px' }}
+                                                    style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-card, #ffffff)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '5px 10px', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}
                                                 >
                                                     <Search size={14} color="var(--text-secondary)" style={{ marginRight: '6px' }} />
                                                     <input
                                                         type="text"
-                                                        placeholder="Search MRN, Surgeon..."
+                                                        placeholder="Search MRN, Surgeon, CPT..."
                                                         value={monthSearchQueries[monthKey] || ''}
                                                         onChange={(e) => setMonthSearchQueries(prev => ({ ...prev, [monthKey]: e.target.value }))}
-                                                        style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: '0.85rem', color: 'var(--text-primary)', width: '180px' }}
+                                                        style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: '0.82rem', color: 'var(--text-primary)', width: '190px' }}
                                                     />
                                                 </div>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={(e) => e.stopPropagation()}>
-                                                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Show:</label>
+                                                    <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Show:</label>
                                                     <select
                                                         value={monthSurgeriesPerPage[monthKey] || 10}
                                                         onChange={(e) => setMonthSurgeriesPerPage(prev => ({ ...prev, [monthKey]: Number(e.target.value) }))}
-                                                        style={{ padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none' }}
+                                                        style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-card, #ffffff)', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none', fontWeight: '600' }}
                                                     >
                                                         <option value={5}>5</option>
                                                         <option value={10}>10</option>
@@ -3377,7 +3420,7 @@ const SurgeryScheduler = ({
                                                         <option value={50}>50</option>
                                                     </select>
                                                 </div>
-                                                <span style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--color-green)' }}>
+                                                <span style={{ fontSize: '0.95rem', fontWeight: '700', color: '#059669', fontFamily: 'monospace', padding: '4px 10px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
                                                     {formatCurrency(monthTotalPrice)}
                                                 </span>
                                             </div>
@@ -3388,16 +3431,16 @@ const SurgeryScheduler = ({
                                                 <table className="data-table">
                                                     <thead>
                                                         <tr>
-                                                            <th>Patient MRN</th>
-                                                            <th>Date</th>
-                                                            <th>Time</th>
-                                                            <th>Surgeon</th>
-                                                            <th>CPT Code(s)</th>
-                                                            <th>Occupancy</th>
-                                                            <th>Tray Cost</th>
-                                                            <th>Total Price</th>
-                                                            <th>Status</th>
-                                                            <th>Actions</th>
+                                                            <th style={{ width: '100px' }}>Patient MRN</th>
+                                                            <th style={{ width: '110px' }}>Date</th>
+                                                            <th style={{ width: '85px' }}>Time</th>
+                                                            <th style={{ minWidth: '160px' }}>Surgeon</th>
+                                                            <th style={{ minWidth: '130px' }}>CPT Code(s)</th>
+                                                            <th style={{ width: '140px' }}>Occupancy</th>
+                                                            <th style={{ width: '100px', textAlign: 'right' }}>Tray Cost</th>
+                                                            <th style={{ width: '110px', textAlign: 'right' }}>Total Price</th>
+                                                            <th style={{ width: '120px', textAlign: 'center' }}>Status</th>
+                                                            <th style={{ width: '220px', textAlign: 'right', paddingRight: '16px' }}>Actions</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -3428,10 +3471,10 @@ const SurgeryScheduler = ({
 
                                                             return (
                                                                 <tr key={s.id}>
-                                                                    <td style={{ color: 'var(--color-blue)', fontWeight: '600' }}>{patientMrn}</td>
-                                                                    <td>{s.date}</td>
-                                                                    <td>{formatTimeForInput(s.start_time)}</td>
-                                                                    <td style={{ fontWeight: '500' }}>{s.doctor_name}</td>
+                                                                    <td style={{ color: '#2563eb', fontWeight: '700', fontFamily: 'monospace', fontSize: '0.85rem' }}>{patientMrn}</td>
+                                                                    <td style={{ fontWeight: '500' }}>{s.date}</td>
+                                                                    <td style={{ color: 'var(--text-secondary)', fontWeight: '500' }}>{formatTimeForInput(s.start_time)}</td>
+                                                                    <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{s.doctor_name}</td>
                                                                     <td>
                                                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center' }}>
                                                                             {isCosmetic && (
@@ -3450,30 +3493,30 @@ const SurgeryScheduler = ({
                                                                         </div>
                                                                     </td>
                                                                     <td>
-                                                                        <div>{s.duration_minutes || 0}m + <span style={{ color: 'var(--color-orange)' }}>{s.turnover_time || 0}m</span></div>
-                                                                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>turnover</div>
+                                                                        <div><span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{s.duration_minutes || 0}m</span> + <span style={{ color: '#d97706', fontWeight: '600' }}>{s.turnover_time || 0}m</span></div>
+                                                                        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>turnover</div>
                                                                     </td>
-                                                                    <td style={{ fontFamily: 'monospace' }}>{formatCurrency(trayCost)}</td>
-                                                                    <td style={{ fontWeight: '700', color: 'var(--color-green)' }}>
+                                                                    <td style={{ fontFamily: 'monospace', textAlign: 'right', fontWeight: '500', color: 'var(--text-secondary)' }}>{formatCurrency(trayCost)}</td>
+                                                                    <td style={{ fontWeight: '700', color: '#059669', fontFamily: 'monospace', textAlign: 'right' }}>
                                                                         {s.is_probono ? (
                                                                             <span style={{ backgroundColor: '#db2777', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold' }}>Pro-Bono</span>
                                                                         ) : formatCurrency(fullTotal)}
                                                                     </td>
-                                                                    <td>
+                                                                    <td style={{ textAlign: 'center' }}>
                                                                         <span className={`status-badge status-${s.status}`}>
                                                                             {s.status}
                                                                         </span>
                                                                     </td>
-                                                                    <td>
+                                                                    <td style={{ textAlign: 'right', paddingRight: '16px' }}>
                                                                         <div className="actions-cell">
-                                                                            <button className="btn-icon btn-edit" title="Edit" onClick={() => handleEdit(s)}>
-                                                                                <Edit size={16} />
+                                                                            <button className="btn-icon btn-edit" title="Edit Case" onClick={() => handleEdit(s)}>
+                                                                                <Edit size={14} />
                                                                             </button>
-                                                                            <button className="btn-icon btn-notes" title="Notes" onClick={() => handleNotes(s)}>
-                                                                                <MessageSquare size={16} />
+                                                                            <button className="btn-icon btn-notes" title="Case Notes" onClick={() => handleNotes(s)}>
+                                                                                <MessageSquare size={14} />
                                                                             </button>
                                                                             <button className="btn-icon btn-timeline" title="View Case Timeline" onClick={() => setTimelineSurgery(s)}>
-                                                                                <Clock size={16} />
+                                                                                <Clock size={14} />
                                                                             </button>
                                                                             <button
                                                                                 className="btn-icon btn-prebill"
@@ -3483,20 +3526,20 @@ const SurgeryScheduler = ({
                                                                                     setPrebillSurgery(s);
                                                                                 }}
                                                                             >
-                                                                                <ShieldCheck size={16} />
+                                                                                <ShieldCheck size={14} />
                                                                             </button>
                                                                             {String(s.status || '').toLowerCase() !== 'completed' && String(s.status || '').toLowerCase() !== 'cancelled' && String(s.status || '').toLowerCase() !== 'billed' && String(s.status || '').toLowerCase() !== 'void' && (
                                                                                 <>
-                                                                                    <button className="btn-icon btn-reschedule" title="Complete" onClick={() => handleCompleteSurgery(s.id)}>
-                                                                                        <Check size={12} />
+                                                                                    <button className="btn-icon btn-reschedule" title="Mark Completed" onClick={() => handleCompleteSurgery(s.id)}>
+                                                                                        <Check size={14} />
                                                                                     </button>
-                                                                                    <button className="btn-icon btn-action-cancel" title="Cancel" onClick={() => handleCancelSurgery(s.id)}>
-                                                                                        <AlertCircle size={12} />
+                                                                                    <button className="btn-icon btn-action-cancel" title="Cancel Surgery" onClick={() => handleCancelSurgery(s.id)}>
+                                                                                        <AlertCircle size={14} />
                                                                                     </button>
                                                                                 </>
                                                                             )}
-                                                                            <button className="btn-icon btn-delete" title="Delete" onClick={() => handleDeleteSurgery(s.id)}>
-                                                                                <Trash2 size={12} />
+                                                                            <button className="btn-icon btn-delete" title="Delete Case" onClick={() => handleDeleteSurgery(s.id)}>
+                                                                                <Trash2 size={14} />
                                                                             </button>
                                                                         </div>
                                                                     </td>

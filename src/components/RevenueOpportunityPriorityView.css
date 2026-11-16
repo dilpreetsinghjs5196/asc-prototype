@@ -598,7 +598,7 @@
 }
 
 /* Actions Cell */
-.actions-cell {
+.rops-table .actions-cell {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
