@@ -786,3 +786,85 @@
   border-top: 1px solid #e2e8f0;
   background: #f8fafc;
 }
+
+/* ==============================================================================
+   DARK MODE ENHANCEMENTS — MAESTRO CLINICAL OBSIDIAN/SLATE PALETTE
+   Scoped strictly under [data-theme="dark"]
+   ============================================================================== */
+[data-theme="dark"] .bacc-container {
+  background-color: #0b1120 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .bacc-header-card,
+[data-theme="dark"] .bacc-kpi-card,
+[data-theme="dark"] .bacc-controls-card,
+[data-theme="dark"] .bacc-table-card,
+[data-theme="dark"] .bacc-analytics-card,
+[data-theme="dark"] .bacc-audit-card {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .bacc-header-title h1 {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .bacc-header-subtitle {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .bacc-kpi-label {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .bacc-kpi-value {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .bacc-table {
+  background-color: #0f172a !important;
+}
+
+[data-theme="dark"] .bacc-table thead th {
+  background-color: #0d1527 !important;
+  color: #94a3b8 !important;
+  border-bottom-color: #1e293b !important;
+}
+
+[data-theme="dark"] .bacc-table tbody td {
+  background-color: #0f172a !important;
+  border-bottom-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .bacc-table tbody tr:hover td {
+  background-color: rgba(255, 255, 255, 0.035) !important;
+}
+
+[data-theme="dark"] .bacc-modal-card {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
+}
+
+[data-theme="dark"] .bacc-modal-header {
+  background-color: #0f172a !important;
+  border-bottom-color: #1e293b !important;
+}
+
+[data-theme="dark"] .bacc-modal-title {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .bacc-modal-body {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .bacc-modal-footer {
+  background-color: #0d1527 !important;
+  border-top-color: #1e293b !important;
+}
+
