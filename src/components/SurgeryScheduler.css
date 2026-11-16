@@ -163,6 +163,11 @@
     border-spacing: 0;
     font-size: 0.8125rem;
     text-align: left;
+    background-color: var(--bg-card, #ffffff);
+}
+
+[data-theme="dark"] .data-table {
+    background-color: #1e293b !important;
 }
 
 .data-table thead {
@@ -196,12 +201,14 @@
     padding: 12px 14px;
     border-bottom: 1px solid var(--border-light, #f1f5f9);
     color: var(--text-primary, #0f172a);
+    background-color: var(--bg-card, #ffffff);
     vertical-align: middle;
 }
 
 [data-theme="dark"] .data-table td {
     border-bottom-color: #1e293b !important;
     color: #f1f5f9 !important;
+    background-color: #1e293b !important;
 }
 
 .data-table tbody tr:hover td {

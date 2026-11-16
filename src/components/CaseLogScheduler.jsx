@@ -2,6 +2,7 @@ import React, { useState, Fragment } from 'react';
 import { Upload, Settings, Play, CheckCircle, FileSpreadsheet, Bot, ChevronRight, BarChart, CalendarDays, ChevronDown, ChevronUp } from 'lucide-react';
 import { parseCaseLogExcel } from '../utils/excelParser';
 import { generateOptimizationModels } from '../services/OptimizationEngine';
+import './CaseLogScheduler.css';
 
 export default function CaseLogScheduler({ surgeonsList = [] }) {
   const [initialSavedState] = useState(() => {
@@ -261,8 +262,8 @@ export default function CaseLogScheduler({ surgeonsList = [] }) {
         </div>
         
         {/* Validation / Debug Summary */}
-        <div className="dashboard-card" style={{ padding: '24px', border: '1px solid var(--border-light)', backgroundColor: 'var(--bg-input)' }}>
-          <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', borderBottom: '1px solid var(--border-light)', paddingBottom: '8px' }}>
+        <div className="caselog-validation-card">
+          <h3 style={{ fontSize: '1.05rem', fontWeight: '700', marginBottom: '16px', borderBottom: '1px solid var(--border-light, #e2e8f0)', paddingBottom: '8px' }}>
             System Validation & Constraint Summary
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', fontSize: '0.85rem' }}>
@@ -277,15 +278,15 @@ export default function CaseLogScheduler({ surgeonsList = [] }) {
             <div style={{ gridColumn: '1 / -1', marginTop: '8px' }}>
               <strong>Constraint Status:</strong>{' '}
               {recommendedModel?.valid ? (
-                <span style={{ color: 'var(--color-green)' }}>✓ All Hard Constraints Satisfied</span>
+                <span style={{ color: 'var(--color-green, #059669)', fontWeight: '600' }}>✓ All Hard Constraints Satisfied</span>
               ) : (
-                <span style={{ color: 'var(--color-red)', fontWeight: 'bold' }}>
+                <span style={{ color: 'var(--color-red, #dc2626)', fontWeight: 'bold' }}>
                   HARD CONSTRAINT VIOLATION DETECTED
                 </span>
               )}
             </div>
             {!recommendedModel?.valid && recommendedModel?.validationErrors && (
-              <div style={{ gridColumn: '1 / -1', color: 'var(--color-red)', marginTop: '8px', padding: '8px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: '4px' }}>
+              <div style={{ gridColumn: '1 / -1', color: 'var(--color-red, #dc2626)', marginTop: '8px', padding: '10px 14px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: '6px' }}>
                 <ul style={{ margin: 0, paddingLeft: '20px' }}>
                   {recommendedModel.validationErrors.map((err, i) => (
                     <li key={i}>{err}</li>
@@ -297,19 +298,19 @@ export default function CaseLogScheduler({ surgeonsList = [] }) {
         </div>
         
         {/* Recommendation Header */}
-        <div className="dashboard-card" style={{ padding: '24px', border: '2px solid var(--color-blue)', backgroundColor: 'rgba(59, 130, 246, 0.03)' }}>
+        <div className="caselog-recommendation-hero">
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-            <div style={{ backgroundColor: 'var(--color-blue)', padding: '12px', borderRadius: '12px', color: 'white' }}>
+            <div className="caselog-recommendation-icon">
               <Bot size={32} />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.4rem', marginBottom: '8px' }}>AI Recommended Schedule</h2>
-              <div style={{ display: 'flex', gap: '24px', fontSize: '0.9rem', marginBottom: '16px' }}>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: '700', marginBottom: '8px' }}>AI Recommended Schedule</h2>
+              <div style={{ display: 'flex', gap: '24px', fontSize: '0.875rem', marginBottom: '14px', flexWrap: 'wrap' }}>
                 <div>Recommended Model: <strong>{recommendedModel.name}</strong></div>
                 <div>Overall Score: <strong>{recommendedModel.score} / 100</strong></div>
                 <div>Projected OR Utilization: <strong>{recommendedModel.utilization}%</strong></div>
               </div>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary, #475569)', lineHeight: '1.5' }}>
                 "{recommendedModel.name} is recommended because it achieves the highest overall score ({recommendedModel.score}) while maintaining the target OR utilization ({config.targetUtilization}%) and respecting surgeon availability and OR capacity. It also aligns well with historical surgeon case patterns while maintaining reasonable unused capacity."
               </p>
             </div>
@@ -338,7 +339,7 @@ export default function CaseLogScheduler({ surgeonsList = [] }) {
               <tbody>
                 {recommendedModel.schedule.map((row, idx) => (
                   <Fragment key={idx}>
-                    <tr onClick={() => toggleRow(idx)} style={{ cursor: 'pointer', backgroundColor: expandedRows[idx] ? 'rgba(255,255,255,0.05)' : 'transparent' }}>
+                    <tr onClick={() => toggleRow(idx)} className={`caselog-schedule-row ${expandedRows[idx] ? 'expanded' : ''}`}>
                       <td style={{ fontWeight: 'bold' }}>{row.futureDate}</td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -353,19 +354,22 @@ export default function CaseLogScheduler({ surgeonsList = [] }) {
                       <td>{row.minutes}</td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '60px', height: '6px', backgroundColor: 'var(--bg-input)', borderRadius: '3px', overflow: 'hidden' }}>
-                            <div style={{ height: '100%', width: `${row.utilization}%`, backgroundColor: row.utilization >= config.targetUtilization ? 'var(--color-green)' : 'var(--color-blue)' }}></div>
+                          <div className="caselog-utilization-track">
+                            <div
+                              className={`caselog-utilization-fill ${row.utilization >= config.targetUtilization ? 'target-met' : 'target-below'}`}
+                              style={{ width: `${row.utilization}%` }}
+                            ></div>
                           </div>
-                          <span style={{ fontSize: '0.75rem' }}>{row.utilization}%</span>
+                          <span style={{ fontSize: '0.75rem', fontWeight: '600' }}>{row.utilization}%</span>
                         </div>
                       </td>
                     </tr>
                     {expandedRows[idx] && (
                       <tr>
                         <td colSpan="8" style={{ padding: 0, border: 'none' }}>
-                          <div style={{ padding: '16px 24px', backgroundColor: 'var(--bg-card)', borderLeft: '3px solid var(--color-blue)' }}>
-                            <h4 style={{ fontSize: '0.9rem', marginBottom: '12px', color: 'var(--text-secondary)' }}>Assigned Cases</h4>
-                            <table className="data-table" style={{ fontSize: '0.85rem' }}>
+                          <div className="caselog-assigned-cases-wrapper">
+                            <h4 style={{ fontSize: '0.85rem', fontWeight: '700', marginBottom: '12px', color: 'var(--text-secondary)' }}>Assigned Cases</h4>
+                            <table className="data-table" style={{ fontSize: '0.825rem' }}>
                               <thead>
                                 <tr>
                                   <th>Time</th>
@@ -380,9 +384,9 @@ export default function CaseLogScheduler({ surgeonsList = [] }) {
                                 {row.casesList && row.casesList.map(c => (
                                   <tr key={c.futureScheduleCaseId}>
                                     <td style={{ fontWeight: '600' }}>{c.startTime} - {c.endTime}</td>
-                                    <td><span className="badge" style={{ backgroundColor: 'var(--color-blue)', color: 'white' }}>{c.futureScheduleCaseId}</span></td>
-                                    <td><span className="badge" style={{ backgroundColor: 'var(--bg-input)' }}>{c.sourceCaseId}</span></td>
-                                    <td>{c.cptCode}</td>
+                                    <td><span className="badge badge-info">{c.futureScheduleCaseId}</span></td>
+                                    <td><span className="badge badge-subtle">{c.sourceCaseId}</span></td>
+                                    <td><strong>{c.cptCode}</strong></td>
                                     <td>{c.procedureName}</td>
                                     <td>{c.duration}m</td>
                                   </tr>
@@ -397,7 +401,7 @@ export default function CaseLogScheduler({ surgeonsList = [] }) {
                 ))}
                 {recommendedModel.schedule.length === 0 && (
                   <tr>
-                    <td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
+                    <td colSpan="8" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
                       No schedules could be generated within the constraints.
                     </td>
                   </tr>
@@ -503,23 +507,23 @@ export default function CaseLogScheduler({ surgeonsList = [] }) {
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="caselog-scheduler-container">
       
       {/* Stepper */}
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '32px', padding: '0 20px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: step >= 1 ? 'var(--color-blue)' : 'var(--bg-input)', color: step >= 1 ? 'white' : 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', marginBottom: '8px' }}>1</div>
-          <span style={{ fontSize: '0.8rem', fontWeight: step >= 1 ? '600' : 'normal', color: step >= 1 ? 'var(--text-primary)' : 'var(--text-muted)' }}>Upload</span>
+      <div className="caselog-stepper">
+        <div className="caselog-step-node">
+          <div className={`caselog-step-circle ${step >= 1 ? 'active' : 'inactive'}`}>1</div>
+          <span className={`caselog-step-label ${step >= 1 ? 'active' : 'inactive'}`}>Upload</span>
         </div>
-        <div style={{ flex: 1, height: '2px', backgroundColor: step >= 2 ? 'var(--color-blue)' : 'var(--border-light)' }}></div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: step >= 2 ? 'var(--color-blue)' : 'var(--bg-input)', color: step >= 2 ? 'white' : 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', marginBottom: '8px' }}>2</div>
-          <span style={{ fontSize: '0.8rem', fontWeight: step >= 2 ? '600' : 'normal', color: step >= 2 ? 'var(--text-primary)' : 'var(--text-muted)' }}>Configure</span>
+        <div className={`caselog-step-divider ${step >= 2 ? 'active' : ''}`}></div>
+        <div className="caselog-step-node">
+          <div className={`caselog-step-circle ${step >= 2 ? 'active' : 'inactive'}`}>2</div>
+          <span className={`caselog-step-label ${step >= 2 ? 'active' : 'inactive'}`}>Configure</span>
         </div>
-        <div style={{ flex: 1, height: '2px', backgroundColor: step >= 3 ? 'var(--color-blue)' : 'var(--border-light)' }}></div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: step >= 3 ? 'var(--color-blue)' : 'var(--bg-input)', color: step >= 3 ? 'white' : 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', marginBottom: '8px' }}>3</div>
-          <span style={{ fontSize: '0.8rem', fontWeight: step >= 3 ? '600' : 'normal', color: step >= 3 ? 'var(--text-primary)' : 'var(--text-muted)' }}>Results</span>
+        <div className={`caselog-step-divider ${step >= 3 ? 'active' : ''}`}></div>
+        <div className="caselog-step-node">
+          <div className={`caselog-step-circle ${step >= 3 ? 'active' : 'inactive'}`}>3</div>
+          <span className={`caselog-step-label ${step >= 3 ? 'active' : 'inactive'}`}>Results</span>
         </div>
       </div>
 

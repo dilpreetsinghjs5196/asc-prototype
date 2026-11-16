@@ -1,0 +1,395 @@
+/* ==============================================================================
+   CASE LOG SCHEDULER (AI-Powered Weekly Timetable & Operating Footprint)
+   Scoped to .caselog-scheduler-container
+   Supports Light & Dark Themes (Zero Purple Compliant)
+   ============================================================================== */
+
+.caselog-scheduler-container {
+  padding: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+  color: var(--text-primary, #0f172a);
+}
+
+/* Stepper Bar */
+.caselog-stepper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 32px;
+  padding: 0 16px;
+}
+
+.caselog-step-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.caselog-step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+}
+
+.caselog-step-circle.active {
+  background-color: var(--color-blue, #0284c7);
+  color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+}
+
+.caselog-step-circle.inactive {
+  background-color: var(--bg-input, #e2e8f0);
+  color: var(--text-muted, #64748b);
+}
+
+[data-theme="dark"] .caselog-step-circle.inactive {
+  background-color: #334155;
+  color: #94a3b8;
+}
+
+.caselog-step-label {
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+}
+
+.caselog-step-label.active {
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+}
+
+[data-theme="dark"] .caselog-step-label.active {
+  color: #f1f5f9;
+}
+
+.caselog-step-label.inactive {
+  font-weight: normal;
+  color: var(--text-muted, #64748b);
+}
+
+.caselog-step-divider {
+  flex: 1;
+  height: 2px;
+  background-color: var(--border-light, #e2e8f0);
+  transition: background-color 0.2s ease;
+}
+
+.caselog-step-divider.active {
+  background-color: var(--color-blue, #0284c7);
+}
+
+[data-theme="dark"] .caselog-step-divider {
+  background-color: #334155;
+}
+
+[data-theme="dark"] .caselog-step-divider.active {
+  background-color: #38bdf8;
+}
+
+/* AI Recommendation Hero Banner */
+.caselog-recommendation-hero {
+  padding: 24px;
+  border-radius: 12px;
+  border: 2px solid #0284c7;
+  background-color: #f0f9ff;
+  color: #0f172a;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.08);
+}
+
+[data-theme="dark"] .caselog-recommendation-hero {
+  background-color: rgba(2, 132, 199, 0.08);
+  border-color: #38bdf8;
+  color: #f1f5f9;
+  box-shadow: none;
+}
+
+.caselog-recommendation-icon {
+  background-color: #0284c7;
+  padding: 12px;
+  border-radius: 12px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-theme="dark"] .caselog-recommendation-icon {
+  background-color: #0369a1;
+}
+
+/* Validation Summary Card */
+.caselog-validation-card {
+  padding: 20px 24px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background-color: var(--bg-subtab, #f8fafc);
+  color: var(--text-primary, #0f172a);
+}
+
+[data-theme="dark"] .caselog-validation-card {
+  background-color: #0f172a;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+/* Responsive Table Container */
+.caselog-scheduler-container .table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .caselog-scheduler-container .table-responsive {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: none;
+}
+
+/* Data Table Structure */
+.caselog-scheduler-container .data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.8125rem;
+  text-align: left;
+  background-color: var(--bg-card, #ffffff);
+}
+
+[data-theme="dark"] .caselog-scheduler-container .data-table {
+  background-color: #1e293b;
+}
+
+/* Table Header */
+.caselog-scheduler-container .data-table thead {
+  background-color: var(--bg-subtab, #f8fafc) !important;
+}
+
+.caselog-scheduler-container .data-table th {
+  padding: 12px 14px;
+  background-color: var(--bg-subtab, #f8fafc) !important;
+  color: #475569 !important;
+  font-weight: 700;
+  border-bottom: 2px solid var(--border-color, #e2e8f0) !important;
+  border-top: none;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+[data-theme="dark"] .caselog-scheduler-container .data-table thead,
+[data-theme="dark"] .caselog-scheduler-container .data-table th {
+  background-color: #0f172a !important;
+  color: #94a3b8 !important;
+  border-bottom-color: #334155 !important;
+}
+
+/* Table Cells */
+.caselog-scheduler-container .data-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-light, #f1f5f9);
+  color: var(--text-primary, #0f172a) !important;
+  background-color: var(--bg-card, #ffffff) !important;
+  vertical-align: middle;
+  font-size: 0.8125rem;
+}
+
+[data-theme="dark"] .caselog-scheduler-container .data-table td {
+  border-bottom-color: #334155 !important;
+  color: #f1f5f9 !important;
+  background-color: #1e293b !important;
+}
+
+/* Row states & interactive hover */
+.caselog-scheduler-container .data-table tbody tr.caselog-schedule-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.caselog-scheduler-container .data-table tbody tr.caselog-schedule-row:hover td {
+  background-color: #f8fafc !important;
+}
+
+[data-theme="dark"] .caselog-scheduler-container .data-table tbody tr.caselog-schedule-row:hover td {
+  background-color: #27354a !important;
+}
+
+.caselog-scheduler-container .data-table tbody tr.caselog-schedule-row.expanded td {
+  background-color: #f1f5f9 !important;
+  border-bottom-color: transparent !important;
+}
+
+[data-theme="dark"] .caselog-scheduler-container .data-table tbody tr.caselog-schedule-row.expanded td {
+  background-color: #172338 !important;
+  border-bottom-color: transparent !important;
+}
+
+/* Expanded Assigned Cases Subtable */
+.caselog-assigned-cases-wrapper {
+  padding: 16px 20px;
+  background-color: var(--bg-subtab, #f8fafc);
+  border-left: 4px solid var(--color-blue, #0284c7);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+[data-theme="dark"] .caselog-assigned-cases-wrapper {
+  background-color: #0f172a;
+  border-left-color: #38bdf8;
+  border-bottom-color: #334155;
+}
+
+.caselog-assigned-cases-wrapper .data-table {
+  background-color: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .caselog-assigned-cases-wrapper .data-table {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+
+.caselog-assigned-cases-wrapper .data-table th {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  font-size: 0.7rem;
+  padding: 8px 12px;
+}
+
+[data-theme="dark"] .caselog-assigned-cases-wrapper .data-table th {
+  background-color: #131d2e !important;
+  color: #94a3b8 !important;
+  border-bottom-color: #334155 !important;
+}
+
+.caselog-assigned-cases-wrapper .data-table td {
+  background-color: var(--bg-card, #ffffff) !important;
+  padding: 8px 12px;
+  font-size: 0.775rem;
+}
+
+[data-theme="dark"] .caselog-assigned-cases-wrapper .data-table td {
+  background-color: #1e293b !important;
+}
+
+/* Badges */
+.caselog-scheduler-container .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.caselog-scheduler-container .badge-info {
+  background-color: rgba(2, 132, 199, 0.12) !important;
+  color: #0284c7 !important;
+  border: 1px solid rgba(2, 132, 199, 0.25) !important;
+}
+
+[data-theme="dark"] .caselog-scheduler-container .badge-info {
+  background-color: rgba(56, 189, 248, 0.15) !important;
+  color: #38bdf8 !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+}
+
+.caselog-scheduler-container .badge-success {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+  color: #059669 !important;
+  border: 1px solid rgba(16, 185, 129, 0.25) !important;
+}
+
+[data-theme="dark"] .caselog-scheduler-container .badge-success {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  color: #34d399 !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+.caselog-scheduler-container .badge-warning {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+  color: #d97706 !important;
+  border: 1px solid rgba(245, 158, 11, 0.25) !important;
+}
+
+[data-theme="dark"] .caselog-scheduler-container .badge-warning {
+  background-color: rgba(245, 158, 11, 0.2) !important;
+  color: #fbbf24 !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+
+.caselog-scheduler-container .badge-danger {
+  background-color: rgba(239, 68, 68, 0.12) !important;
+  color: #dc2626 !important;
+  border: 1px solid rgba(239, 68, 68, 0.25) !important;
+}
+
+[data-theme="dark"] .caselog-scheduler-container .badge-danger {
+  background-color: rgba(239, 68, 68, 0.2) !important;
+  color: #f87171 !important;
+  border-color: rgba(239, 68, 68, 0.35) !important;
+}
+
+.caselog-scheduler-container .badge-subtle {
+  background-color: var(--bg-input, #e2e8f0) !important;
+  color: var(--text-secondary, #475569) !important;
+  border: 1px solid var(--border-light, #cbd5e1) !important;
+}
+
+[data-theme="dark"] .caselog-scheduler-container .badge-subtle {
+  background-color: #334155 !important;
+  color: #cbd5e1 !important;
+  border-color: #475569 !important;
+}
+
+/* Utilization Track & Fill */
+.caselog-utilization-track {
+  width: 60px;
+  height: 6px;
+  background-color: var(--border-light, #e2e8f0);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .caselog-utilization-track {
+  background-color: #334155;
+}
+
+.caselog-utilization-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.caselog-utilization-fill.target-met {
+  background-color: #059669;
+}
+
+.caselog-utilization-fill.target-below {
+  background-color: #0284c7;
+}
+
+[data-theme="dark"] .caselog-utilization-fill.target-met {
+  background-color: #10b981;
+}
+
+[data-theme="dark"] .caselog-utilization-fill.target-below {
+  background-color: #38bdf8;
+}

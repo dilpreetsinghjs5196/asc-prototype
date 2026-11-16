@@ -300,7 +300,7 @@
 }
 
 /* 5. Responsive Table with Sticky Header & Smooth Internal Scroll */
-.table-responsive {
+.appeals-container .table-responsive {
   width: 100%;
   max-height: 480px;
   overflow-x: auto;
@@ -310,21 +310,21 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.table-responsive::-webkit-scrollbar {
+.appeals-container .table-responsive::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-.table-responsive::-webkit-scrollbar-track {
+.appeals-container .table-responsive::-webkit-scrollbar-track {
   background: #0b1120;
 }
 
-.table-responsive::-webkit-scrollbar-thumb {
+.appeals-container .table-responsive::-webkit-scrollbar-thumb {
   background: #334155;
   border-radius: 4px;
 }
 
-.table-responsive::-webkit-scrollbar-thumb:hover {
+.appeals-container .table-responsive::-webkit-scrollbar-thumb:hover {
   background: #38bdf8;
 }
 

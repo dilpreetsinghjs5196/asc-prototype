@@ -366,27 +366,27 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-.table-responsive {
+.case-ledger-container .table-responsive {
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
 
 /* Custom Scrollbar for Table */
-.table-responsive::-webkit-scrollbar {
+.case-ledger-container .table-responsive::-webkit-scrollbar {
   height: 8px;
 }
 
-.table-responsive::-webkit-scrollbar-track {
+.case-ledger-container .table-responsive::-webkit-scrollbar-track {
   background: #0b1120;
 }
 
-.table-responsive::-webkit-scrollbar-thumb {
+.case-ledger-container .table-responsive::-webkit-scrollbar-thumb {
   background: #1e314f;
   border-radius: 4px;
 }
 
-.table-responsive::-webkit-scrollbar-thumb:hover {
+.case-ledger-container .table-responsive::-webkit-scrollbar-thumb:hover {
   background: #38bdf8;
 }
 

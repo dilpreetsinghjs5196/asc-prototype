@@ -853,6 +853,13 @@ body {
   border-radius: 3px;
 }
 
+/* Base responsive table container */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Custom Table for profit summary MTD */
 .custom-table-container {
   overflow-x: auto;
