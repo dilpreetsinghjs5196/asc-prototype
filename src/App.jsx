@@ -3707,8 +3707,8 @@ export default function App() {
               {activeTab === 'overview' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-                  {/* 4 KPI Cards Row */}
-                  <div className="kpi-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                  {/* 3 KPI Cards Row */}
+                  <div className="kpi-row" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
                     <div className="kpi-card">
                       <div className="kpi-card-header">
                         <span className="kpi-label">Net Revenue</span>
@@ -3753,22 +3753,6 @@ export default function App() {
                       <div className="sparkline-container">
                         <svg viewBox="0 0 100 30" width="100%" height="100%" preserveAspectRatio="none">
                           <path d="M0,28 L35,20 L70,10 L100,5" fill="none" stroke="var(--color-green)" strokeWidth="2" />
-                        </svg>
-                      </div>
-                    </div>
-
-                    <div className="kpi-card">
-                      <div className="kpi-card-header">
-                        <span className="kpi-label">EBITDA Margin</span>
-                        <div className="kpi-icon-container orange"><DollarSign size={12} /></div>
-                      </div>
-                      <span className="kpi-value">{executiveOverviewMetrics.ebitdaPct}%</span>
-                      <div className="kpi-trend positive">
-                        Operating Cost Ratio <span className="kpi-trend-change">{executiveOverviewMetrics.costRatioPct}%</span>
-                      </div>
-                      <div className="sparkline-container">
-                        <svg viewBox="0 0 100 30" width="100%" height="100%" preserveAspectRatio="none">
-                          <path d="M0,25 Q15,10 40,22 T80,8 T100,5" fill="none" stroke="var(--color-blue)" strokeWidth="2" />
                         </svg>
                       </div>
                     </div>

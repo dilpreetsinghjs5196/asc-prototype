@@ -209,26 +209,8 @@ export default function CommandCenter({ surgeries = [], onTabChange, timeframe =
 
   return (
     <div className="dashboard-content">
-      {/* 6 KPI Cards Row */}
-      <div className="kpi-row">
-        <div className="kpi-card">
-          <div className="kpi-card-header">
-            <span className="kpi-label">EBITDA Margin</span>
-            <div className="kpi-icon-container blue"><DollarSign size={12} /></div>
-          </div>
-          <span className="kpi-value" style={{ color: parseFloat(kpis.ebitdaPercent) >= 0 ? 'var(--color-green)' : 'var(--color-red)' }}>
-            {kpis.ebitdaPercent}%
-          </span>
-          <div className="kpi-trend positive" style={{ visibility: 'hidden' }}>
-            Trend
-          </div>
-          <div className="sparkline-container">
-            <svg viewBox="0 0 100 30" width="100%" height="100%" preserveAspectRatio="none">
-              <path d="M0,25 L20,20 L40,15 L60,22 L80,18 L100,12" fill="none" stroke="var(--color-blue)" strokeWidth="2" />
-            </svg>
-          </div>
-        </div>
-
+      {/* 5 KPI Cards Row */}
+      <div className="kpi-row" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))' }}>
         <div className="kpi-card">
           <div className="kpi-card-header">
             <span className="kpi-label">Operating Room Utilization</span>
