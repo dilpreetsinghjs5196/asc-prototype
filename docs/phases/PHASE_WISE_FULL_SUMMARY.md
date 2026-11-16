@@ -878,15 +878,37 @@
 
 ---
 
+### Phase AB / A11: Scheduling Optimizer CP-SAT Engine
+- **File:** `AB_SCHEDULING_OPTIMIZER_CP_SAT.md`
+- **Module:** Module 10: OR Scheduling & Utilization Optimization
+- **Objective:** Deterministic Constraint Programming - Satisfiability (CP-SAT) multi-suite schedule synthesis engine enforcing hard physical/clinical invariants (No-Overlap with dynamic turnovers, Surgeon Single-Location Invariant, Operating Suite Specialty & Equipment Capabilities, and Staffed Shift Boundaries) while optimizing a multi-objective utility function across surgical contribution margins, room utilization, and overtime penalty mitigation.
+- **Operational Principle:** *"Scheduling multiple operating suites manually or through naive greedy algorithms inevitably leads to double-booked surgeons, inadequate turnover windows, equipment conflicts, or catastrophic nursing overtime. The CP-SAT engine models multi-suite surgical scheduling as a rigorous Constraint Satisfaction and Optimization Problem (COP). It enforces hard, non-negotiable physical constraints while searching the combinatorial solution space to maximize surgical margin yield, minimize room transfers ('room hops') for surgeons, cluster procedures for fast 25-minute turnovers, and eliminate nursing shifts past 17:00."*
+- **Key Deliverables:**
+  - **3 Master Tables & 2 Analytical Views (Migration 088):** `or_cp_sat_optimizer_runs`, `or_cp_sat_scheduled_cases` (with `surgeon_id BIGINT`), `or_cp_sat_solver_constraints`, `vw_or_cp_sat_run_summary`, and `vw_or_cp_sat_daily_room_schedules` with strict PostgreSQL Row Level Security enforced via `app.current_facility_id`.
+  - **Hard Invariant 1: Operating Room No-Overlap & Turnover Enclosure (Rule 1):** Guarantees zero overlapping operative intervals in each suite and enforces dynamic turnovers:
+    $$\text{Earliest Start}_{i+1} \ge \text{End}_i + \begin{cases} 25\text{m} & \text{if } s_i = s_{i+1} \text{ (Same Surgeon)} \\ 40\text{m} & \text{if } s_i \ne s_{i+1} \text{ (Different Surgeon)} \end{cases}$$
+  - **Hard Invariant 2: Surgeon Single-Location Invariant (Rule 2):** Guarantees that no surgeon is scheduled for concurrent operative intervals across different operating rooms: $[\text{Start}_i, \text{End}_i] \cap [\text{Start}_j, \text{End}_j] = \emptyset$ whenever $s_i = s_j$ and $r_i \ne r_j$.
+  - **Multi-Objective Scoring Function $Z$ (Rule 3):**
+    $$Z = w_m \cdot \frac{M}{100} + w_u \cdot T_{\text{sched}} - w_{ot} \cdot T_{\text{ot}} - w_{to} \cdot T_{\text{turnover}} - w_{hop} \cdot H_{\text{surgeon}}$$
+  - **4 Optimization Strategy Presets (Rule 4):**
+    - `BALANCED`: Balances margin, utilization, and overtime protection.
+    - `MAX_MARGIN`: Prioritizes top-line surgical margin yield.
+    - `MIN_OVERTIME`: Heavily penalizes cases exceeding staffed shift end (17:00), safeguarding nursing hours.
+    - `MIN_TURNOVER`: Clusters cases by surgeon to capture 25-minute fast turnovers and eliminate room hopping.
+  - **Clinical Maestro UI:** 5-Card Operational Ribbon (Total Scheduled Cases, Projected Daily Margin $, Room Utilization %, Overtime Minutes, Solver Execution Status), Optimization Strategy Preset Selector, Multi-Suite Interactive Timeline (OR 1 through OR 4), Constraint Satisfaction Audit Matrix, Unscheduled Backlog Exceptions, and Pinned-Layout Schedule Commitment Modal.
+- **Business Impact:** Automates complex multi-suite scheduling, guarantees physical and surgeon feasibility without double-booking errors, protects nursing shifts against unscheduled overtime, and maximizes center profitability through intelligent surgical clustering.
+
+---
+
 ## Architectural & Verification Summary
 
 | Metric | Target | Realized Status |
 | :--- | :---: | :---: |
-| **Documented Phases** | 110 | **110 / 110 (100%)** |
-| **Phase Markdown Files** | All present in `docs/phases/` | **170 total files** |
-| **Automated Tests** | 100% Pass | **544 / 544 passing across 100 suites (197 / 197 passing across Module 10 OR Scheduling suites)** |
+| **Documented Phases** | 111 | **111 / 111 (100%)** |
+| **Phase Markdown Files** | All present in `docs/phases/` | **171 total files** |
+| **Automated Tests** | 100% Pass | **567 / 567 passing across 101 suites (220 / 220 passing across Module 10 OR Scheduling suites)** |
 | **Design System Tokens** | Zero Purple/Violet/Indigo | **0 forbidden tokens (Verified)** |
-| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 4.57s)** |
-| **Database Migrations** | Idempotent RLS & Down Rollbacks | **087 migrations deployed** |
+| **Production Build** | Clean Vite Compilation | **0 errors (Verified in 8.44s)** |
+| **Database Migrations** | Idempotent RLS & Down Rollbacks | **088 migrations deployed** |
 | **Git Working Tree** | Clean & Committed | **Branch: `feature/phase-80-claims-model`** |
 
