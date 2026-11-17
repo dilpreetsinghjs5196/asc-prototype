@@ -84,6 +84,7 @@ import CpSatSchedulerView from './components/CpSatSchedulerView';
 import SurgeonIntelligenceView from './components/SurgeonIntelligenceView';
 import SurgeonFinancialScorecardView from './components/SurgeonFinancialScorecardView';
 import SurgeonImplantVarianceView from './components/SurgeonImplantVarianceView';
+import PayerIntelligenceView from './components/PayerIntelligenceView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2613,6 +2614,13 @@ export default function App() {
             Payer & Plan Master
           </div>
           <div
+            className={`menu-item ${activeTab === 'payer_intelligence' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('payer_intelligence'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><TrendingUp size={16} /></div>
+            Payer Intelligence
+          </div>
+          <div
             className={`menu-item ${activeTab === 'implant_taxonomy' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('implant_taxonomy'); setSelectedSurgeon(null); }}
           >
@@ -3097,6 +3105,7 @@ export default function App() {
                   {activeTab === 'claim_scrubber' && 'Pre-Bill Claim Scrubbing Rules & Edits'}
                   {activeTab === 'upload_code_files' && 'Upload new Code Files'}
                   {(activeTab === 'payer' || activeTab === 'payer_master') && 'Payer Master & Health Plan Directory'}
+                  {activeTab === 'payer_intelligence' && 'Payer Intelligence & Portfolio Economics'}
                   {activeTab === 'supply' && 'Supply Chain'}
                   {activeTab === 'cancellations' && 'Cancellations'}
                   {activeTab === 'reports' && 'Reports & Analytics'}
@@ -3178,6 +3187,7 @@ export default function App() {
                   {activeTab === 'implant_taxonomy' && 'Deterministic medical device hierarchy, clinical component roles, and FDA/ISO duration governance'}
                   {activeTab === 'cpt_implant_matrix' && 'Deterministic procedural-to-hardware mapping, clinical requirement rules, and pre-bill completeness validation'}
                   {(activeTab === 'payer' || activeTab === 'payer_master') && 'Enterprise health plan hierarchies, statutory HIPAA 5010 EDI 837 Loop 2010BB routing, and facility enablement'}
+                  {activeTab === 'payer_intelligence' && 'Payer yield realization, adjudication velocity (days to pay), first-pass denial friction, contractual underpayment leakage, and aged AR exposure'}
                   {activeTab === 'supply' && 'Supply variance tracking and preference card standardization tools'}
                   {activeTab === 'cancellations' && 'Cancellations tracking, revenue leak analysis, and predictive risk analysis'}
                   {activeTab === 'reports' && 'Standard financial and operational reports export'}
@@ -3336,7 +3346,7 @@ export default function App() {
             </div>
 
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'surgeon_implant_variance', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'surgeon_implant_variance', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'payer_intelligence', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -5125,6 +5135,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'surgeon_implant_variance' && (
                 <SurgeonImplantVarianceView />
+              )}
+
+              {/* ==========================================
+              TAB: PAYER INTELLIGENCE (PHASE B3 - MODULE 11 INTELLIGENCE)
+              ========================================== */}
+              {activeTab === 'payer_intelligence' && (
+                <PayerIntelligenceView />
               )}
 
               {/* ==========================================
