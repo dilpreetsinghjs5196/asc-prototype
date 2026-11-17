@@ -86,6 +86,7 @@ import SurgeonFinancialScorecardView from './components/SurgeonFinancialScorecar
 import SurgeonImplantVarianceView from './components/SurgeonImplantVarianceView';
 import PayerIntelligenceView from './components/PayerIntelligenceView';
 import PayerContractPerformanceView from './components/PayerContractPerformanceView';
+import CptIntelligenceView from './components/CptIntelligenceView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2629,6 +2630,13 @@ export default function App() {
             Contract Performance
           </div>
           <div
+            className={`menu-item ${activeTab === 'cpt_intelligence' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('cpt_intelligence'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Activity size={16} /></div>
+            CPT Intelligence
+          </div>
+          <div
             className={`menu-item ${activeTab === 'implant_taxonomy' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('implant_taxonomy'); setSelectedSurgeon(null); }}
           >
@@ -3115,6 +3123,7 @@ export default function App() {
                   {(activeTab === 'payer' || activeTab === 'payer_master') && 'Payer Master & Health Plan Directory'}
                   {activeTab === 'payer_intelligence' && 'Payer Intelligence & Portfolio Economics'}
                   {activeTab === 'payer_contract_performance' && 'Payer Contract Performance & Negotiation Radar'}
+                  {activeTab === 'cpt_intelligence' && 'CPT Intelligence & Procedural Economics'}
                   {activeTab === 'supply' && 'Supply Chain'}
                   {activeTab === 'cancellations' && 'Cancellations'}
                   {activeTab === 'reports' && 'Reports & Analytics'}
@@ -3198,6 +3207,7 @@ export default function App() {
                   {(activeTab === 'payer' || activeTab === 'payer_master') && 'Enterprise health plan hierarchies, statutory HIPAA 5010 EDI 837 Loop 2010BB routing, and facility enablement'}
                   {activeTab === 'payer_intelligence' && 'Payer yield realization, adjudication velocity (days to pay), first-pass denial friction, contractual underpayment leakage, and aged AR exposure'}
                   {activeTab === 'payer_contract_performance' && 'Contracted vs actual reimbursement yield, fee schedule leakage, renewal notice countdowns, and actionable negotiation leverage'}
+                  {activeTab === 'cpt_intelligence' && 'Procedural contribution margins, skin-to-skin duration variance, OR-hour yield velocity, Medicare parity spread, and denial friction'}
                   {activeTab === 'supply' && 'Supply variance tracking and preference card standardization tools'}
                   {activeTab === 'cancellations' && 'Cancellations tracking, revenue leak analysis, and predictive risk analysis'}
                   {activeTab === 'reports' && 'Standard financial and operational reports export'}
@@ -3356,7 +3366,7 @@ export default function App() {
             </div>
 
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'surgeon_implant_variance', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'payer_intelligence', 'payer_contract_performance', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'surgeon_implant_variance', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'payer_intelligence', 'payer_contract_performance', 'cpt_intelligence', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -5159,6 +5169,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'payer_contract_performance' && (
                 <PayerContractPerformanceView />
+              )}
+
+              {/* ==========================================
+              TAB: CPT INTELLIGENCE (PHASE B5 - MODULE 11 INTELLIGENCE)
+              ========================================== */}
+              {activeTab === 'cpt_intelligence' && (
+                <CptIntelligenceView />
               )}
 
               {/* ==========================================
