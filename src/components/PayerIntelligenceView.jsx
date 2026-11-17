@@ -104,9 +104,9 @@ export default function PayerIntelligenceView() {
           </div>
           <div className="card-metric">{formatCurrency(facilityKpis.totalBilled)}</div>
           <div className="card-footer-info">
-            <span>Net Collections: <strong>{formatCurrency(facilityKpis.totalCollections)}</strong></span>
+            <span>Collections: <strong>{formatCurrency(facilityKpis.totalCollections)}</strong></span>
             <span className="rate-badge">
-              {facilityKpis.portfolioRealizationRate}% Realization
+              {facilityKpis.portfolioRealizationRate}% Realized
             </span>
           </div>
         </div>
@@ -121,7 +121,7 @@ export default function PayerIntelligenceView() {
           </div>
           <div className="card-metric">{facilityKpis.avgDaysToPay} <span className="metric-unit">days</span></div>
           <div className="card-footer-info">
-            <span>Benchmark: ≤ {PAYER_BENCHMARKS.MAX_DAYS_TO_PAY} days</span>
+            <span>Target: ≤ {PAYER_BENCHMARKS.MAX_DAYS_TO_PAY}d</span>
             <span className={`status-pill ${facilityKpis.avgDaysToPay <= PAYER_BENCHMARKS.MAX_DAYS_TO_PAY ? 'pill-good' : 'pill-warn'}`}>
               {facilityKpis.avgDaysToPay <= PAYER_BENCHMARKS.MAX_DAYS_TO_PAY ? 'On Target' : 'Lagging'}
             </span>
@@ -138,9 +138,9 @@ export default function PayerIntelligenceView() {
           </div>
           <div className="card-metric">{facilityKpis.avgDenialRate}%</div>
           <div className="card-footer-info">
-            <span>Benchmark: ≤ {PAYER_BENCHMARKS.MAX_DENIAL_RATE_PCT}%</span>
-            <span className={`status-pill ${facilityKpis.avgDenialRate <= PAYER_BENCHMARKS.MAX_DENIAL_RATE_PCT ? 'pill-good' : 'pill-warn'}`}>
-              Portfolio Overturn: 68.4%
+            <span>Target: ≤ {PAYER_BENCHMARKS.MAX_DENIAL_RATE_PCT}%</span>
+            <span className="status-pill pill-good">
+              Overturn: 68.4%
             </span>
           </div>
         </div>
@@ -155,7 +155,7 @@ export default function PayerIntelligenceView() {
           </div>
           <div className="card-metric">{formatCurrency(facilityKpis.totalUnderpayment)}</div>
           <div className="card-footer-info">
-            <span>Contractual fee leakage</span>
+            <span>Fee leakage</span>
             <span className="status-pill pill-warn">Actionable</span>
           </div>
         </div>
@@ -170,7 +170,7 @@ export default function PayerIntelligenceView() {
           </div>
           <div className="card-metric">{formatCurrency(facilityKpis.totalAgedArOver90)}</div>
           <div className="card-footer-info">
-            <span>Total AR: {formatCurrency(facilityKpis.totalAr)}</span>
+            <span>Total: {formatCurrency(facilityKpis.totalAr)}</span>
             <span className={`status-pill ${facilityKpis.agedArOver90Pct <= PAYER_BENCHMARKS.MAX_AGED_AR_OVER_90_PCT ? 'pill-good' : 'pill-alert'}`}>
               {facilityKpis.agedArOver90Pct}% Exposure
             </span>
@@ -266,14 +266,14 @@ export default function PayerIntelligenceView() {
       {/* TAB 1: Payer Scorecard & Economics Matrix */}
       {activeTab === 'scorecard' && (
         <div className="payer-intel-table-card">
-          <div className="table-header">
+          <div className="pi-table-header">
             <div>
               <h3>Payer Portfolio Economics &amp; Friction Scorecard</h3>
               <p>Comparative analysis of billed charges, cash realization rate, days to pay, denial rate, and friction index</p>
             </div>
           </div>
 
-          <div className="table-responsive">
+          <div className="pi-table-responsive">
             <table className="payer-table">
               <thead>
                 <tr>
@@ -396,13 +396,13 @@ export default function PayerIntelligenceView() {
       {activeTab === 'denials_underpayments' && (
         <div className="payer-intel-grid">
           {/* Denial Reasons & Root Causes */}
-          <div className="dashboard-card">
-            <div className="card-header">
-              <h3 className="card-title">
+          <div className="pi-dashboard-card">
+            <div className="pi-card-header">
+              <h3 className="pi-card-title">
                 <ShieldAlert size={18} />
                 Payer Denial Profiles &amp; Primary CARC Codes
               </h3>
-              <span className="card-sub">Top operational friction drivers impacting first-pass cash realization</span>
+              <span className="pi-card-sub">Top operational friction drivers impacting first-pass cash realization</span>
             </div>
 
             <div className="denial-reasons-list">
@@ -442,13 +442,13 @@ export default function PayerIntelligenceView() {
           </div>
 
           {/* Underpayment Opportunities */}
-          <div className="dashboard-card">
-            <div className="card-header">
-              <h3 className="card-title">
+          <div className="pi-dashboard-card">
+            <div className="pi-card-header">
+              <h3 className="pi-card-title">
                 <Scale size={18} />
                 Contractual Underpayment &amp; Fee Leakage Analysis
               </h3>
-              <span className="card-sub">Systemic underpayments vs. negotiated fee schedules</span>
+              <span className="pi-card-sub">Systemic underpayments vs. negotiated fee schedules</span>
             </div>
 
             <div className="underpayment-summary-table">
@@ -480,14 +480,14 @@ export default function PayerIntelligenceView() {
       {/* TAB 3: AR Aging & Exposure Distribution */}
       {activeTab === 'ar_aging' && (
         <div className="payer-intel-table-card">
-          <div className="table-header">
+          <div className="pi-table-header">
             <div>
               <h3>Accounts Receivable (AR) Aging Distribution by Payer</h3>
               <p>Chronological distribution across 0-30, 31-60, 61-90, 91-120, and &gt;120 day aging buckets</p>
             </div>
           </div>
 
-          <div className="table-responsive">
+          <div className="pi-table-responsive">
             <table className="payer-table">
               <thead>
                 <tr>
