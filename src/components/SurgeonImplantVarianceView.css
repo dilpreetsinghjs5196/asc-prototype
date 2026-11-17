@@ -1,0 +1,1091 @@
+/* ==============================================================================
+   Phase B2: Surgeon Implant Variance Scoped Styles
+   Module 11: Surgeon & Clinical Intelligence
+   Design System: Maestro Clinical Design System (Blue/Slate/Emerald/Amber/Crimson)
+   Strict Standard: ZERO prohibited palette tokens.
+   ============================================================================== */
+
+.siv-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  background-color: #f8fafc;
+  color: #0f172a;
+  min-height: calc(100vh - 80px);
+  box-sizing: border-box;
+}
+
+/* Toast Notification */
+.siv-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background-color: #064e3b;
+  color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+  font-weight: 500;
+  font-size: 14px;
+  animation: slideInSiv 0.2s ease-out;
+}
+
+.siv-toast-icon {
+  color: #34d399;
+}
+
+@keyframes slideInSiv {
+  from { transform: translateY(-12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Header Banner */
+.siv-header-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.siv-header-main {
+  max-width: 900px;
+}
+
+.siv-header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.siv-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.siv-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.siv-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Badge Pills */
+.siv-badge-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.siv-badge-blue {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.siv-badge-emerald {
+  background-color: #d1fae5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.siv-badge-amber {
+  background-color: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.siv-badge-crimson {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* 5-Card Operational Ribbon */
+.siv-kpi-ribbon {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.siv-kpi-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.siv-kpi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.siv-kpi-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.siv-kpi-icon {
+  flex-shrink: 0;
+}
+
+.siv-icon-blue { color: #0284c7; }
+.siv-icon-emerald { color: #059669; }
+.siv-icon-amber { color: #d97706; }
+.siv-icon-crimson { color: #dc2626; }
+
+.siv-kpi-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.siv-val-crimson { color: #dc2626; }
+
+.siv-kpi-meta {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* Filter Card */
+.siv-filter-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.siv-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.siv-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 6px 12px;
+  flex: 1;
+  min-width: 260px;
+}
+
+.siv-search-icon {
+  color: #64748b;
+}
+
+.siv-search-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: #0f172a;
+  width: 100%;
+}
+
+.siv-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.siv-filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.siv-select {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #0f172a;
+  outline: none;
+}
+
+.siv-time-pills {
+  display: flex;
+  gap: 4px;
+  background-color: #f1f5f9;
+  border-radius: 6px;
+  padding: 3px;
+}
+
+.siv-time-pill {
+  border: none;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.siv-time-pill.active {
+  background-color: #0284c7;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Tabs Navigation */
+.siv-tabs-nav {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 2px;
+}
+
+.siv-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  padding: 10px 16px;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -4px;
+  transition: all 0.15s ease;
+}
+
+.siv-tab-btn:hover {
+  color: #0284c7;
+}
+
+.siv-tab-btn.active {
+  color: #0284c7;
+  border-bottom-color: #0284c7;
+  background-color: rgba(2, 132, 199, 0.05);
+}
+
+.siv-tab-counter {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background-color: #e2e8f0;
+  color: #475569;
+}
+
+.siv-counter-crimson {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+/* Main Content Card */
+.siv-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.siv-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.siv-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.siv-card-subtitle {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.siv-card-header-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  background-color: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+/* Responsive Table */
+.siv-table-responsive {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.siv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+}
+
+.siv-table thead th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.siv-table tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+}
+
+.siv-table tbody tr:hover td {
+  background-color: #f8fafc;
+}
+
+.siv-surgeon-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.siv-surgeon-name {
+  font-weight: 600;
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.siv-surgeon-sub {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.siv-cpt-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.siv-cpt-code {
+  font-weight: 700;
+  color: #0284c7;
+}
+
+.siv-cpt-name {
+  font-size: 11px;
+  color: #475569;
+}
+
+.siv-val-bold {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.siv-sub-muted {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.siv-sub-emerald {
+  font-size: 11px;
+  font-weight: 600;
+  color: #059669;
+}
+
+.siv-variance-cell {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.siv-var-val {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.siv-var-pct {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.siv-text-crimson { color: #dc2626; }
+.siv-text-emerald { color: #059669; }
+
+.siv-status-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.siv-waste-rec {
+  font-size: 11px;
+  color: #475569;
+  line-height: 1.4;
+}
+
+/* Savings Grid */
+.siv-savings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 16px;
+}
+
+.siv-savings-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.siv-scard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.siv-scard-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.siv-scard-sub {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.siv-construct-compare {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  background-color: #ffffff;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.siv-construct-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.siv-cbox-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.siv-cbox-vendor {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.siv-cbox-desc {
+  font-size: 11px;
+  color: #475569;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.siv-cbox-price {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 4px;
+  margin-top: 4px;
+}
+
+.siv-cprice-label {
+  color: #64748b;
+}
+
+.siv-cprice-val {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.siv-compare-arrow {
+  color: #0284c7;
+  display: flex;
+  justify-content: center;
+}
+
+.siv-scard-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 4px;
+}
+
+.siv-unit-savings-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.siv-us-val {
+  font-size: 16px;
+  font-weight: 800;
+  color: #059669;
+}
+
+.siv-us-label {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* Buttons */
+.siv-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.siv-btn-outline {
+  background-color: #ffffff;
+  color: #0284c7;
+  border: 1px solid #cbd5e1;
+}
+
+.siv-btn-outline:hover {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.siv-btn-blue {
+  background-color: #0284c7;
+  color: #ffffff;
+}
+
+.siv-btn-blue:hover {
+  background-color: #0369a1;
+}
+
+.siv-btn-sm {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #0f172a;
+  transition: all 0.15s ease;
+}
+
+.siv-btn-sm:hover {
+  background-color: #f1f5f9;
+}
+
+/* Pinned Modal Layout */
+.siv-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.siv-modal-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 720px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.siv-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ffffff;
+  flex-shrink: 0;
+}
+
+.siv-modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.siv-modal-sub {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.siv-modal-close {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.siv-modal-close:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.siv-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.siv-modal-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  background-color: #f8fafc;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.siv-mkpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.siv-mkpi-label {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.siv-mkpi-val {
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 16px;
+}
+
+.siv-modal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.siv-msec-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.siv-mcompare-box {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.siv-mcomp-col {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.siv-mcomp-rec {
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.siv-mcomp-header {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.siv-mcomp-vendor {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.siv-mcomp-name {
+  font-size: 12px;
+  color: #334155;
+}
+
+.siv-mcomp-cost {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 6px;
+}
+
+.siv-action-plan-box {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.siv-aplan-text {
+  font-size: 12px;
+  color: #1e3a8a;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.siv-modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  background-color: #f8fafc;
+  flex-shrink: 0;
+}
+
+/* ==============================================================================
+   Dark Mode Support: [data-theme="dark"]
+   ============================================================================== */
+
+[data-theme="dark"] .siv-container {
+  background-color: #0b1329 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .siv-header-banner {
+  border-bottom-color: #1e293b !important;
+}
+
+[data-theme="dark"] .siv-title {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .siv-subtitle {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .siv-kpi-card {
+  background-color: #111c30 !important;
+  border-color: #1e293b !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .siv-kpi-label {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .siv-kpi-value {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .siv-kpi-meta {
+  color: #64748b !important;
+}
+
+[data-theme="dark"] .siv-filter-card {
+  background-color: #111c30 !important;
+  border-color: #1e293b !important;
+}
+
+[data-theme="dark"] .siv-search-box {
+  background-color: #0b1329 !important;
+  border-color: #1e293b !important;
+}
+
+[data-theme="dark"] .siv-search-input {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .siv-select {
+  background-color: #0b1329 !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .siv-time-pills {
+  background-color: #0b1329 !important;
+}
+
+[data-theme="dark"] .siv-time-pill {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .siv-tabs-nav {
+  border-bottom-color: #1e293b !important;
+}
+
+[data-theme="dark"] .siv-tab-btn {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .siv-tab-btn.active {
+  color: #38bdf8 !important;
+  border-bottom-color: #38bdf8 !important;
+  background-color: rgba(56, 189, 248, 0.08) !important;
+}
+
+[data-theme="dark"] .siv-tab-counter {
+  background-color: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .siv-card {
+  background-color: #111c30 !important;
+  border-color: #1e293b !important;
+}
+
+[data-theme="dark"] .siv-card-title {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .siv-card-subtitle {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .siv-card-header-badge {
+  background-color: #0b1329 !important;
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .siv-table-responsive {
+  border-color: #1e293b !important;
+}
+
+[data-theme="dark"] .siv-table {
+  background-color: #111c30 !important;
+}
+
+[data-theme="dark"] .siv-table thead th {
+  background-color: #0d1626 !important;
+  color: #94a3b8 !important;
+  border-bottom-color: #1e293b !important;
+}
+
+[data-theme="dark"] .siv-table tbody td {
+  border-bottom-color: #1e293b !important;
+  color: #e2e8f0 !important;
+  background-color: #111c30 !important;
+}
+
+[data-theme="dark"] .siv-table tbody tr:hover td {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+[data-theme="dark"] .siv-surgeon-name {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .siv-cpt-name {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .siv-val-bold {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .siv-waste-rec {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .siv-savings-card {
+  background-color: #0b1329 !important;
+  border-color: #1e293b !important;
+}
+
+[data-theme="dark"] .siv-scard-title {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .siv-scard-header {
+  border-bottom-color: #1e293b !important;
+}
+
+[data-theme="dark"] .siv-construct-compare {
+  background-color: #111c30 !important;
+  border-color: #1e293b !important;
+}
+
+[data-theme="dark"] .siv-cbox-vendor {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .siv-cbox-desc {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .siv-cprice-val {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .siv-cbox-price {
+  border-top-color: #1e293b !important;
+}
+
+[data-theme="dark"] .siv-btn-sm {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .siv-btn-sm:hover {
+  background-color: #334155 !important;
+}
+
+[data-theme="dark"] .siv-modal-card {
+  background-color: #111c30 !important;
+  border-color: #1e293b !important;
+}
+
+[data-theme="dark"] .siv-modal-header {
+  background-color: #111c30 !important;
+  border-bottom-color: #1e293b !important;
+}
+
+[data-theme="dark"] .siv-modal-title {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .siv-modal-body {
+  background-color: #111c30 !important;
+}
+
+[data-theme="dark"] .siv-modal-kpi-grid {
+  background-color: #0b1329 !important;
+  border-color: #1e293b !important;
+}
+
+[data-theme="dark"] .siv-mkpi-val {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .siv-msec-title {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .siv-mcomp-col {
+  background-color: #0b1329 !important;
+  border-color: #1e293b !important;
+}
+
+[data-theme="dark"] .siv-mcomp-rec {
+  background-color: #052e16 !important;
+  border-color: #166534 !important;
+}
+
+[data-theme="dark"] .siv-mcomp-vendor {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .siv-mcomp-name {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .siv-mcomp-cost {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .siv-action-plan-box {
+  background-color: #082f49 !important;
+  border-color: #0284c7 !important;
+}
+
+[data-theme="dark"] .siv-aplan-text {
+  color: #bae6fd !important;
+}
+
+[data-theme="dark"] .siv-modal-footer {
+  background-color: #0d1626 !important;
+  border-top-color: #1e293b !important;
+}
