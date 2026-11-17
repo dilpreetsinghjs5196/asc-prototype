@@ -82,6 +82,7 @@ import RecoverableCapacityView from './components/RecoverableCapacityView';
 import NextBestCaseView from './components/NextBestCaseView';
 import CpSatSchedulerView from './components/CpSatSchedulerView';
 import SurgeonIntelligenceView from './components/SurgeonIntelligenceView';
+import SurgeonFinancialScorecardView from './components/SurgeonFinancialScorecardView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2556,6 +2557,13 @@ export default function App() {
             Surgeon Intelligence
           </div>
           <div
+            className={`menu-item ${activeTab === 'surgeon_financial_scorecard' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('surgeon_financial_scorecard'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><DollarSign size={16} /></div>
+            Surgeon Financial Scorecard
+          </div>
+          <div
             className={`menu-item ${(activeTab === 'surgeons' || selectedSurgeon) ? 'active' : ''}`}
             onClick={() => { setActiveTab('surgeons'); setSelectedSurgeon(null); }}
           >
@@ -3069,6 +3077,7 @@ export default function App() {
                   {activeTab === 'surgeon_management' && 'Surgeon Management'}
                   {activeTab === 'surgeons_manage' && 'Surgeon Management'}
                   {activeTab === 'surgeon_intelligence' && 'Surgeon Operational & Financial Intelligence'}
+                  {activeTab === 'surgeon_financial_scorecard' && 'Surgeon Financial Scorecards & Procedural Economics'}
                   {activeTab === 'patients' && 'Patient Management'}
                   {activeTab === 'financial' && 'Financial Performance'}
                   {activeTab === 'cpt' && 'Case Profitability'}
@@ -3152,6 +3161,7 @@ export default function App() {
                   {activeTab === 'surgeon_management' && 'Search, filter, and manage surgeon profiles and credentials'}
                   {activeTab === 'surgeons_manage' && 'Search, filter, and manage surgeon profiles and credentials'}
                   {activeTab === 'surgeon_intelligence' && 'Authoritative 5-pillar scoring, margin yield per OR-hour, churn risk detection, and retention interventions'}
+                  {activeTab === 'surgeon_financial_scorecard' && 'Billed charges, collections, direct surgical costs, net contribution margin per OR-hour, and payer/CPT mix'}
                   {activeTab === 'patients' && 'Search, filter, and view patient demographics, health insurances, and medical records'}
                   {activeTab === 'financial' && 'Analysis of revenues, expenses, EBITDA margins, and bottom lines'}
                   {activeTab === 'cpt' && 'Contribution margins, procedure times, and volumes by CPT code'}
@@ -3316,7 +3326,7 @@ export default function App() {
             </div>
 
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -5091,6 +5101,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'surgeon_intelligence' && (
                 <SurgeonIntelligenceView />
+              )}
+
+              {/* ==========================================
+              TAB: SURGEON FINANCIAL SCORECARD (PHASE B1 - MODULE 11 SURGEON INTELLIGENCE)
+              ========================================== */}
+              {activeTab === 'surgeon_financial_scorecard' && (
+                <SurgeonFinancialScorecardView />
               )}
 
               {/* ==========================================
