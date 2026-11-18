@@ -42,7 +42,7 @@ Phase C7 establishes an enterprise-grade, HIPAA-compliant voice architecture:
 PostgreSQL Migration `105_ai_voice_architecture.sql`:
 1. `public.ai_voice_sessions`:
    - `id VARCHAR(64) PRIMARY KEY`
-   - `facility_id VARCHAR(64) NOT NULL REFERENCES public.facilities(id)`
+   - `facility_id UUID NOT NULL REFERENCES public.facilities(id) ON DELETE CASCADE`
    - `user_id VARCHAR(64) NOT NULL`
    - `user_role VARCHAR(64) NOT NULL`
    - `voice_mode VARCHAR(40) NOT NULL CHECK (voice_mode IN ('SURGEON_STERILE', 'OR_CIRCULATOR', 'CLINICAL_ADMIN', 'EXECUTIVE_AUDIT'))`

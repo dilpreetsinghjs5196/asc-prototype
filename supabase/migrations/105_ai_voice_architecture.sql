@@ -6,7 +6,7 @@
 -- 1. Voice Sessions Table
 CREATE TABLE IF NOT EXISTS public.ai_voice_sessions (
     id VARCHAR(64) PRIMARY KEY,
-    facility_id VARCHAR(64) NOT NULL REFERENCES public.facilities(id) ON DELETE CASCADE,
+    facility_id UUID NOT NULL REFERENCES public.facilities(id) ON DELETE CASCADE,
     user_id VARCHAR(64) NOT NULL,
     user_role VARCHAR(64) NOT NULL,
     voice_mode VARCHAR(40) NOT NULL CHECK (voice_mode IN ('SURGEON_STERILE', 'OR_CIRCULATOR', 'CLINICAL_ADMIN', 'EXECUTIVE_AUDIT')),
@@ -79,7 +79,10 @@ CREATE POLICY ai_voice_sessions_facility_isolation
 ON public.ai_voice_sessions
 FOR ALL
 USING (
-    facility_id = NULLIF(current_setting('app.current_facility_id', true), '')
+    facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid
+)
+WITH CHECK (
+    facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid
 );
 
 CREATE POLICY ai_voice_transcripts_facility_isolation
@@ -88,7 +91,7 @@ FOR ALL
 USING (
     session_id IN (
         SELECT id FROM public.ai_voice_sessions
-        WHERE facility_id = NULLIF(current_setting('app.current_facility_id', true), '')
+        WHERE facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid
     )
 );
 
@@ -98,6 +101,6 @@ FOR ALL
 USING (
     session_id IN (
         SELECT id FROM public.ai_voice_sessions
-        WHERE facility_id = NULLIF(current_setting('app.current_facility_id', true), '')
+        WHERE facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid
     )
 );
