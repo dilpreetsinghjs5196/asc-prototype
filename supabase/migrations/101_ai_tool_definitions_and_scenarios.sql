@@ -106,18 +106,8 @@ CREATE POLICY rls_ai_query_catalogs_select ON public.ai_query_catalogs
 
 CREATE POLICY rls_ai_scenario_simulations_tenant ON public.ai_scenario_simulations
     FOR ALL TO authenticated
-    USING (
-        facility_id IN (
-            SELECT ufa.facility_id FROM public.user_facility_access ufa
-            WHERE ufa.user_id = auth.uid()
-        )
-    )
-    WITH CHECK (
-        facility_id IN (
-            SELECT ufa.facility_id FROM public.user_facility_access ufa
-            WHERE ufa.user_id = auth.uid()
-        )
-    );
+    USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid)
+    WITH CHECK (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
 
 -- 7. Seed Registry Data for 14 Production Tool Schemas
 INSERT INTO public.ai_tool_schemas (tool_id, domain, name, description, required_role, required_permission, risk_tier, rate_limit_rpm, handler_function, input_schema, output_schema)
