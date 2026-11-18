@@ -95,6 +95,7 @@ import AIToolGatewayView from './components/AIToolGatewayView';
 import AIPermissionsView from './components/AIPermissionsView';
 import AIToolDefinitionsView from './components/AIToolDefinitionsView';
 import AIEvidenceCitationsView from './components/AIEvidenceCitationsView';
+import AIHallucinationRulesView from './components/AIHallucinationRulesView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2798,6 +2799,13 @@ export default function App() {
             AI Evidence & Citations
           </div>
           <div
+            className={`menu-item ${activeTab === 'ai_hallucination_rules' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('ai_hallucination_rules'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><ShieldAlert size={16} /></div>
+            AI Hallucination Rules
+          </div>
+          <div
             className={`menu-item ${activeTab === 'ai_ops_analyst' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('ai_ops_analyst'); setSelectedSurgeon(null); }}
           >
@@ -3197,6 +3205,7 @@ export default function App() {
                   {activeTab === 'ai_permissions' && 'AI Permissions, Role Boundaries & Dual-Key Signoff'}
                   {activeTab === 'ai_tool_definitions' && 'AI Tool Definitions, Schemas & Scenario Simulators'}
                   {activeTab === 'ai_evidence_citations' && 'AI Evidence, Citations & Explainability'}
+                  {activeTab === 'ai_hallucination_rules' && 'AI Hallucination Rules & Deterministic Number Governance'}
                   {activeTab === 'supply' && 'Supply Chain'}
                   {activeTab === 'cancellations' && 'Cancellations'}
                   {activeTab === 'reports' && 'Reports & Analytics'}
@@ -3289,6 +3298,7 @@ export default function App() {
                   {activeTab === 'ai_permissions' && 'Granular privilege matrix, Human-in-the-Loop approval queues, and mutation intercept guardrails'}
                   {activeTab === 'ai_tool_definitions' && 'Formal Draft-07 schemas, deterministic query contracts, and predictive OR block and supply what-if simulation engines'}
                   {activeTab === 'ai_evidence_citations' && 'Verifiable source record linking, interactive drill-down inspection, and deterministic explainability'}
+                  {activeTab === 'ai_hallucination_rules' && 'Zero generative arithmetic, real-time number scrubber, CPT code validation, and structured unknown handling'}
                   {activeTab === 'supply' && 'Supply variance tracking and preference card standardization tools'}
                   {activeTab === 'cancellations' && 'Cancellations tracking, revenue leak analysis, and predictive risk analysis'}
                   {activeTab === 'reports' && 'Standard financial and operational reports export'}
@@ -3447,7 +3457,7 @@ export default function App() {
             </div>
 
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'ai_analyst', 'ai_tool_gateway', 'ai_permissions', 'ai_tool_definitions', 'ai_evidence_citations', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'surgeon_implant_variance', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'payer_intelligence', 'payer_contract_performance', 'cpt_intelligence', 'cpt_economics', 'cpt_denial_payment', 'vendor_cost_comparison', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'ai_analyst', 'ai_tool_gateway', 'ai_permissions', 'ai_tool_definitions', 'ai_evidence_citations', 'ai_hallucination_rules', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'surgeon_implant_variance', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'payer_intelligence', 'payer_contract_performance', 'cpt_intelligence', 'cpt_economics', 'cpt_denial_payment', 'vendor_cost_comparison', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -5313,6 +5323,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'ai_evidence_citations' && (
                 <AIEvidenceCitationsView activeFacility={activeFacility} />
+              )}
+
+              {/* ==========================================
+              TAB: AI HALLUCINATION RULES (PHASE C5 - MODULE 12 AI)
+              ========================================== */}
+              {activeTab === 'ai_hallucination_rules' && (
+                <AIHallucinationRulesView activeFacility={activeFacility} />
               )}
 
               {/* ==========================================

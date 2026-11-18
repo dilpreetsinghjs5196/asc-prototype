@@ -222,7 +222,7 @@ test('Phase 58 — Client Service Layer (preferenceCardService.js)', async (t) =
   await t.test('submitForApproval transitions draft to pending_approval', async () => {
     // Create draft
     const card = await preferenceCardService.saveCardDraft({
-      cardCode: 'PREF-SUBMIT-TEST',
+      cardCode: `PREF-SUBMIT-${Date.now()}-${Math.random()}`,
       cardName: 'Approval Test Card',
       primaryCpt: '27447',
       specialty: 'Orthopedics',
@@ -237,7 +237,7 @@ test('Phase 58 — Client Service Layer (preferenceCardService.js)', async (t) =
 
   await t.test('approveCardRevision activates revision and enforces separation of duties', async () => {
     const card = await preferenceCardService.saveCardDraft({
-      cardCode: 'PREF-SOD-TEST',
+      cardCode: `PREF-SOD-${Date.now()}-${Math.random()}`,
       cardName: 'Separation of Duties Test',
       primaryCpt: '27447',
       specialty: 'Orthopedics',
