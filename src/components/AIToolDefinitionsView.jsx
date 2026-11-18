@@ -167,124 +167,110 @@ export default function AIToolDefinitionsView() {
   };
 
   return (
-    <div className="ai-tool-definitions-container">
+    <div className="aitd-container">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="toast-notification">
-          <CheckCircle2 size={16} className="text-emerald-400" />
+        <div className="aitd-toast">
+          <CheckCircle2 size={16} className="text-emerald-500" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* Top Header & Context */}
-      <div className="view-header">
-        <div className="header-left">
-          <div className="title-row">
-            <h1 className="view-title">AI Tool Definitions & Scenarios</h1>
-            <span className="badge-facility">Naples Surgery Center</span>
-            <span className="badge-tier">Tier 1 & Tier 3 Gate</span>
+      {/* Top 5-Card Executive Metric Ribbon */}
+      <div className="aitd-ribbon">
+        <div className="aitd-ribbon-card primary">
+          <div className="card-top">
+            <span className="card-label">Registered Schemas</span>
+            <div className="icon-wrapper blue"><Code2 size={16} /></div>
           </div>
-          <p className="view-subtitle">
-            Formal JSON Schema Draft-07 contracts, deterministic parameter validation, and predictive what-if simulation engines for case, surgeon, payer, CPT, OR, and RCM intelligence.
-          </p>
-        </div>
-        <div className="header-actions">
-          <button 
-            className="btn-secondary" 
-            onClick={() => {
-              setSavedSimulations([...SAVED_SCENARIO_SIMULATIONS]);
-              showToast('Refreshed tool contracts and telemetry');
-            }}
-          >
-            <RefreshCw size={15} />
-            <span>Sync Schemas</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 5-Card Responsive Ribbon Summary */}
-      <div className="ribbon-container">
-        <div className="ribbon-card card-blue">
-          <div className="ribbon-card-header">
-            <span className="ribbon-card-title">Registered Tool Schemas</span>
-            <Code2 size={18} className="text-sky-400" />
+          <div className="card-metric">{telemetry.totalRegisteredTools} <span className="metric-unit">Contracts</span></div>
+          <div className="card-footer-info">
+            <span>Draft-07 Verified</span>
+            <span className="status-pill pill-success">100% Validated</span>
           </div>
-          <div className="ribbon-metric">{telemetry.totalRegisteredTools}</div>
-          <div className="ribbon-subtext">14 Typed Contracts Registered</div>
-          <span className="ribbon-badge badge-blue">Draft-07 Compliant</span>
         </div>
 
-        <div className="ribbon-card card-emerald">
-          <div className="ribbon-card-header">
-            <span className="ribbon-card-title">Active Query Domains</span>
-            <Database size={18} className="text-emerald-400" />
+        <div className="aitd-ribbon-card">
+          <div className="card-top">
+            <span className="card-label">Active Query Domains</span>
+            <div className="icon-wrapper emerald"><Database size={16} /></div>
           </div>
-          <div className="ribbon-metric">{telemetry.activeQueryDomains}</div>
-          <div className="ribbon-subtext">Case, Surgeon, Payer, CPT, OR, RCM</div>
-          <span className="ribbon-badge badge-emerald">100% Coverage</span>
+          <div className="card-metric">{telemetry.activeQueryDomains} <span className="metric-unit">Domains</span></div>
+          <div className="card-footer-info">
+            <span>Case, Surgeon, Payer, OR</span>
+            <span className="status-pill pill-success">Full Coverage</span>
+          </div>
         </div>
 
-        <div className="ribbon-card card-amber">
-          <div className="ribbon-card-header">
-            <span className="ribbon-card-title">Predictive Simulators</span>
-            <Sliders size={18} className="text-amber-400" />
+        <div className="aitd-ribbon-card">
+          <div className="card-top">
+            <span className="card-label">Predictive Simulators</span>
+            <div className="icon-wrapper amber"><Sliders size={16} /></div>
           </div>
-          <div className="ribbon-metric">{telemetry.activeScenarioEngines}</div>
-          <div className="ribbon-subtext">Block Realloc & Construct Std</div>
-          <span className="ribbon-badge badge-amber">What-If Models Active</span>
+          <div className="card-metric">{telemetry.activeScenarioEngines} <span className="metric-unit">Engines</span></div>
+          <div className="card-footer-info">
+            <span>Block & Implant Models</span>
+            <span className="status-pill pill-warn">What-If Active</span>
+          </div>
         </div>
 
-        <div className="ribbon-card card-emerald">
-          <div className="ribbon-card-header">
-            <span className="ribbon-card-title">Schema Contract Health</span>
-            <ShieldCheck size={18} className="text-emerald-400" />
+        <div className="aitd-ribbon-card">
+          <div className="card-top">
+            <span className="card-label">Contract Health</span>
+            <div className="icon-wrapper emerald"><ShieldCheck size={16} /></div>
           </div>
-          <div className="ribbon-metric">{telemetry.schemaHealthPct}%</div>
-          <div className="ribbon-subtext">Zero Type Ambiguity</div>
-          <span className="ribbon-badge badge-emerald">Strict Validation</span>
+          <div className="card-metric">{telemetry.schemaHealthPct}% <span className="metric-unit">Passed</span></div>
+          <div className="card-footer-info">
+            <span>Type & Range Checking</span>
+            <span className="status-pill pill-success">Zero Drift</span>
+          </div>
         </div>
 
-        <div className="ribbon-card card-blue">
-          <div className="ribbon-card-header">
-            <span className="ribbon-card-title">Deterministic Latency</span>
-            <Activity size={18} className="text-sky-400" />
+        <div className="aitd-ribbon-card">
+          <div className="card-top">
+            <span className="card-label">Deterministic Latency</span>
+            <div className="icon-wrapper blue"><Activity size={16} /></div>
           </div>
-          <div className="ribbon-metric">{telemetry.avgDeterministicLatencyMs}ms</div>
-          <div className="ribbon-subtext">Server-Side Execution</div>
-          <span className="ribbon-badge badge-blue">Zero Drift</span>
+          <div className="card-metric">{telemetry.avgDeterministicLatencyMs} <span className="metric-unit">ms</span></div>
+          <div className="card-footer-info">
+            <span>Server-Authoritative</span>
+            <span className="rate-badge">Ultra-Fast</span>
+          </div>
         </div>
       </div>
 
       {/* Main Navigation Tabs */}
-      <div className="view-tabs-bar">
-        <button
-          className={`view-tab-btn ${activeTab === 'schemas' ? 'active' : ''}`}
-          onClick={() => setActiveTab('schemas')}
-        >
-          <Layers size={16} />
-          <span>Tool Schemas Catalog ({telemetry.totalRegisteredTools})</span>
-        </button>
-        <button
-          className={`view-tab-btn ${activeTab === 'tester' ? 'active' : ''}`}
-          onClick={() => setActiveTab('tester')}
-        >
-          <Play size={16} />
-          <span>Interactive Query Tester</span>
-        </button>
-        <button
-          className={`view-tab-btn ${activeTab === 'simulators' ? 'active' : ''}`}
-          onClick={() => setActiveTab('simulators')}
-        >
-          <Sliders size={16} />
-          <span>What-If Scenario Simulators</span>
-        </button>
-        <button
-          className={`view-tab-btn ${activeTab === 'history' ? 'active' : ''}`}
-          onClick={() => setActiveTab('history')}
-        >
-          <Clock size={16} />
-          <span>Saved Simulations ({savedSimulations.length})</span>
-        </button>
+      <div className="aitd-tabs-row">
+        <div className="tab-buttons">
+          <button
+            className={`tab-btn ${activeTab === 'schemas' ? 'active' : ''}`}
+            onClick={() => setActiveTab('schemas')}
+          >
+            <Layers size={16} />
+            <span>Tool Schemas Catalog ({telemetry.totalRegisteredTools})</span>
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'tester' ? 'active' : ''}`}
+            onClick={() => setActiveTab('tester')}
+          >
+            <Play size={16} />
+            <span>Interactive Query Tester</span>
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'simulators' ? 'active' : ''}`}
+            onClick={() => setActiveTab('simulators')}
+          >
+            <Sliders size={16} />
+            <span>What-If Scenario Simulators</span>
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
+            onClick={() => setActiveTab('history')}
+          >
+            <Clock size={16} />
+            <span>Saved Simulations ({savedSimulations.length})</span>
+          </button>
+        </div>
       </div>
 
       {/* TAB 1: TOOL SCHEMAS CATALOG */}
