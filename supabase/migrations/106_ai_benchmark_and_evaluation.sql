@@ -102,6 +102,7 @@ ALTER TABLE public.ai_benchmark_questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ai_benchmark_runs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ai_benchmark_results ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS ai_benchmark_suites_facility_isolation ON public.ai_benchmark_suites;
 CREATE POLICY ai_benchmark_suites_facility_isolation
 ON public.ai_benchmark_suites
 FOR ALL
@@ -112,6 +113,7 @@ WITH CHECK (
     facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid
 );
 
+DROP POLICY IF EXISTS ai_benchmark_questions_facility_isolation ON public.ai_benchmark_questions;
 CREATE POLICY ai_benchmark_questions_facility_isolation
 ON public.ai_benchmark_questions
 FOR ALL
@@ -122,6 +124,7 @@ USING (
     )
 );
 
+DROP POLICY IF EXISTS ai_benchmark_runs_facility_isolation ON public.ai_benchmark_runs;
 CREATE POLICY ai_benchmark_runs_facility_isolation
 ON public.ai_benchmark_runs
 FOR ALL
@@ -132,6 +135,7 @@ WITH CHECK (
     facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid
 );
 
+DROP POLICY IF EXISTS ai_benchmark_results_facility_isolation ON public.ai_benchmark_results;
 CREATE POLICY ai_benchmark_results_facility_isolation
 ON public.ai_benchmark_results
 FOR ALL
