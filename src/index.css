@@ -281,6 +281,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -384,7 +385,9 @@ body {
   flex: 1;
   padding: 20px 20px 90px 20px;
   /* Added extra bottom padding to prevent overlap with floating chat icon */
+  min-width: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   background-color: var(--bg-main);
 }
 

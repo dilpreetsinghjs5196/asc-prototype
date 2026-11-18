@@ -1,0 +1,889 @@
+/* ==============================================================================
+   PHASE C0: AI ANALYST ARCHITECTURE VIEW STYLES
+   Maestro Clinical Design System
+   Clinical Palette: Emerald (#059669), Amber (#d97706), Crimson (#dc2626), Sky Blue (#0284c7)
+   Strict Clinical Color Palette Compliance
+   ============================================================================== */
+
+.aian-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding-bottom: 40px;
+  box-sizing: border-box;
+}
+
+/* Toast Notification */
+.aian-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  background-color: var(--color-emerald, #059669);
+  color: #ffffff;
+  padding: 12px 18px;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  animation: aianSlideInDown 0.3s ease;
+}
+
+@keyframes aianSlideInDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* 5-Card Top Executive Metric Ribbon */
+.aian-ribbon {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1280px) and (min-width: 768px) {
+  .aian-ribbon {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+  }
+}
+
+@media (max-width: 767px) {
+  .aian-ribbon {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+.aian-card {
+  background-color: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 8px;
+  padding: 12px 14px;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.aian-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.aian-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  gap: 6px;
+  min-width: 0;
+}
+
+.aian-card-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--color-text-secondary, #64748b);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+
+.aian-card-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.aian-icon-blue {
+  background-color: rgba(2, 132, 199, 0.12);
+  color: #0284c7;
+}
+
+.aian-icon-sky {
+  background-color: rgba(14, 165, 233, 0.12);
+  color: #0ea5e9;
+}
+
+.aian-icon-emerald {
+  background-color: rgba(5, 150, 105, 0.12);
+  color: #059669;
+}
+
+.aian-icon-amber {
+  background-color: rgba(217, 119, 6, 0.12);
+  color: #d97706;
+}
+
+.aian-icon-rose {
+  background-color: rgba(225, 29, 72, 0.12);
+  color: #e11d48;
+}
+
+.aian-card-value {
+  font-size: clamp(1.15rem, 1.4vw, 1.4rem);
+  font-weight: 700;
+  color: var(--color-text-primary, #0f172a);
+  margin-bottom: 4px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aian-card-unit {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-secondary, #64748b);
+  margin-left: 2px;
+}
+
+.aian-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  font-size: 0.68rem;
+  border-top: 1px solid var(--color-border, #f1f5f9);
+  padding-top: 6px;
+  margin-top: 2px;
+  min-width: 0;
+}
+
+.aian-card-subtext {
+  color: var(--color-text-secondary, #64748b);
+  font-size: 0.68rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+/* Badges */
+.aian-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.aian-badge-emerald {
+  background-color: rgba(5, 150, 105, 0.12);
+  color: #059669;
+  border: 1px solid rgba(5, 150, 105, 0.3);
+}
+
+.aian-badge-blue {
+  background-color: rgba(2, 132, 199, 0.12);
+  color: #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.3);
+}
+
+.aian-badge-amber {
+  background-color: rgba(217, 119, 6, 0.12);
+  color: #d97706;
+  border: 1px solid rgba(217, 119, 6, 0.3);
+}
+
+.aian-badge-crimson {
+  background-color: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.aian-badge-slate {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+/* Tabs Navigation */
+.aian-tabs-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  padding-bottom: 4px;
+}
+
+.aian-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary, #64748b);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.aian-tab-btn:hover {
+  color: var(--color-text-primary, #0f172a);
+  background-color: var(--color-hover, #f1f5f9);
+}
+
+.aian-tab-btn.active {
+  color: #0284c7;
+  background-color: rgba(2, 132, 199, 0.1);
+  border-bottom: 2px solid #0284c7;
+  border-radius: 6px 6px 0 0;
+}
+
+/* Workspace Styles */
+.aian-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Suggested Clinical Prompts Bar */
+.aian-suggestions-box {
+  background-color: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.aian-suggestions-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #0f172a);
+  white-space: nowrap;
+}
+
+.aian-prompt-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.aian-prompt-chip {
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #0284c7;
+  padding: 5px 11px;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.aian-prompt-chip:hover {
+  background-color: #e0f2fe;
+  border-color: #0284c7;
+}
+
+/* Chat Stream Container */
+.aian-chat-window {
+  background-color: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  height: 650px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.aian-chat-stream {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.aian-message-row {
+  display: flex;
+  gap: 14px;
+  max-width: 88%;
+}
+
+.aian-msg-user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.aian-msg-assistant {
+  align-self: flex-start;
+}
+
+.aian-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.aian-msg-user .aian-avatar {
+  background-color: #0284c7;
+  color: #ffffff;
+}
+
+.aian-msg-assistant .aian-avatar {
+  background-color: rgba(5, 150, 105, 0.15);
+  color: #059669;
+  border: 1px solid rgba(5, 150, 105, 0.3);
+}
+
+.aian-message-bubble {
+  background-color: var(--color-bg, #f8fafc);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 10px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.aian-msg-user .aian-message-bubble {
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.aian-msg-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding-bottom: 6px;
+}
+
+.aian-msg-sender {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--color-text-secondary, #64748b);
+  text-transform: uppercase;
+}
+
+.aian-msg-time {
+  font-size: 0.68rem;
+  color: #94a3b8;
+}
+
+/* Tool Calls Banner */
+.aian-tool-calls-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  background-color: rgba(2, 132, 199, 0.06);
+  border: 1px solid rgba(2, 132, 199, 0.2);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+}
+
+.aian-tool-call-label {
+  font-weight: 600;
+  color: #0369a1;
+}
+
+.aian-tool-pill {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  font-family: monospace;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+}
+
+/* Message Markdown Formatter */
+.aian-msg-body {
+  font-size: 0.85rem;
+  color: var(--color-text-primary, #0f172a);
+  line-height: 1.6;
+}
+
+.aian-h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 8px 0 4px 0;
+}
+
+.aian-bullet {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.aian-bullet-dot {
+  color: #059669;
+  font-weight: 700;
+}
+
+.aian-italic {
+  font-style: italic;
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-top: 6px;
+}
+
+.aian-spacer {
+  height: 6px;
+}
+
+/* Citations Box */
+.aian-citations-box {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.aian-citations-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #065f46;
+  text-transform: uppercase;
+}
+
+.aian-citations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.aian-citation-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+}
+
+.aian-cite-source {
+  color: #047857;
+  font-weight: 600;
+}
+
+.aian-cite-metric {
+  color: #475569;
+}
+
+.aian-cite-val {
+  font-family: monospace;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Thinking Indicator */
+.aian-thinking-bubble {
+  background-color: #f8fafc;
+}
+
+.aian-thinking-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.aian-pulse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #0284c7;
+  animation: aianPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes aianPulse {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0.5; }
+}
+
+/* Chat Controls Box */
+.aian-chat-controls {
+  border-top: 1px solid var(--color-border, #e2e8f0);
+  background-color: var(--color-surface, #ffffff);
+  padding: 14px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.aian-input-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aian-chat-input {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid var(--color-border, #cbd5e1);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  background-color: var(--color-bg, #f8fafc);
+  color: var(--color-text-primary, #0f172a);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.aian-chat-input:focus {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+}
+
+.aian-send-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background-color: #0284c7;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.aian-send-btn:hover:not(:disabled) {
+  background-color: #0369a1;
+}
+
+.aian-send-btn:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.aian-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.aian-tool-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.aian-tool-action-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Tab 2: Tool Registry Table */
+.aian-tab-header-box {
+  background-color: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 4px;
+}
+
+.aian-tab-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #0f172a);
+  margin-bottom: 4px;
+}
+
+.aian-tab-header-desc {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary, #64748b);
+  line-height: 1.5;
+}
+
+.aian-table-card {
+  background-color: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.aian-table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.aian-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.aian-table th {
+  background-color: var(--color-table-header, #f8fafc);
+  color: var(--color-text-secondary, #475569);
+  padding: 12px 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  white-space: nowrap;
+}
+
+.aian-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border, #f1f5f9);
+  color: var(--color-text-primary, #0f172a);
+  vertical-align: middle;
+}
+
+.aian-tool-name-code {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #0284c7;
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+.aian-desc-cell {
+  font-size: 0.8rem;
+  color: #475569;
+  max-width: 320px;
+  line-height: 1.4;
+}
+
+.aian-code-snippet {
+  font-family: monospace;
+  font-size: 0.72rem;
+  background-color: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #334155;
+  display: inline-block;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aian-test-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(5, 150, 105, 0.4);
+  background-color: rgba(5, 150, 105, 0.08);
+  color: #059669;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.aian-test-btn:hover {
+  background-color: #059669;
+  color: #ffffff;
+}
+
+.aian-test-result-box {
+  background-color: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 14px;
+}
+
+.aian-test-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+
+.aian-test-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #0f172a;
+}
+
+.aian-test-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.aian-json-pre {
+  background-color: #0f172a;
+  color: #38bdf8;
+  padding: 14px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 0.78rem;
+  max-height: 280px;
+  overflow-y: auto;
+  line-height: 1.4;
+}
+
+/* Tab 3: Audit Ledger Styles */
+.aian-num-cell {
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.aian-hash-tag {
+  display: inline-block;
+  font-family: monospace;
+  font-size: 0.72rem;
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Dark Theme Adaptations */
+[data-theme="dark"] .aian-card,
+[data-theme="dark"] .aian-suggestions-box,
+[data-theme="dark"] .aian-chat-window,
+[data-theme="dark"] .aian-table-card,
+[data-theme="dark"] .aian-tab-header-box,
+[data-theme="dark"] .aian-test-result-box {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .aian-card-value,
+[data-theme="dark"] .aian-tab-header-title,
+[data-theme="dark"] .aian-test-title,
+[data-theme="dark"] .aian-msg-body,
+[data-theme="dark"] .aian-h4 {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .aian-table th {
+  background-color: #0f172a;
+  color: #94a3b8;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .aian-table td {
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .aian-message-bubble {
+  background-color: #0f172a;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .aian-msg-user .aian-message-bubble {
+  background-color: #064e3b;
+  border-color: #059669;
+}
+
+[data-theme="dark"] .aian-chat-controls {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .aian-chat-input {
+  background-color: #0f172a;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .aian-prompt-chip {
+  background-color: #0f172a;
+  border-color: #334155;
+  color: #38bdf8;
+}
+
+[data-theme="dark"] .aian-tool-action-btn {
+  background-color: #0f172a;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .aian-tool-name-code {
+  background-color: rgba(2, 132, 199, 0.15);
+  border-color: rgba(2, 132, 199, 0.35);
+  color: #38bdf8;
+}

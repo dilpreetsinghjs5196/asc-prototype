@@ -7,8 +7,10 @@
 .cpte-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding-bottom: 40px;
   box-sizing: border-box;
 }
@@ -46,27 +48,24 @@
 /* 5-Card Top Executive Metric Ribbon */
 .cpte-ribbon {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
   width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
 }
 
-@media (min-width: 1300px) {
+@media (max-width: 1280px) and (min-width: 768px) {
   .cpte-ribbon {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 1299px) and (min-width: 768px) {
-  .cpte-ribbon {
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
   }
 }
 
 @media (max-width: 767px) {
   .cpte-ribbon {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 }
 
@@ -74,7 +73,7 @@
   background: var(--bg-card, #ffffff);
   border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 10px;
-  padding: 14px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -98,25 +97,28 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   gap: 6px;
+  min-width: 0;
 }
 
 .card-label {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   color: var(--text-secondary, #64748b);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
 }
 
 .icon-wrapper {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -144,18 +146,19 @@
 }
 
 .card-metric {
-  font-size: 1.45rem;
+  font-size: clamp(1.15rem, 1.4vw, 1.4rem);
   font-weight: 700;
   color: var(--text-primary, #0f172a);
   letter-spacing: -0.02em;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .metric-unit {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 500;
   color: var(--text-secondary, #64748b);
 }
@@ -164,23 +167,32 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   color: var(--text-secondary, #64748b);
   border-top: 1px solid var(--border-color, #f1f5f9);
-  padding-top: 8px;
+  padding-top: 6px;
   margin-top: 2px;
-  flex-wrap: wrap;
   gap: 4px;
+  min-width: 0;
+}
+
+.card-footer-info > span:first-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .rate-badge {
   background-color: var(--bg-tag, #f1f5f9);
   color: var(--text-secondary, #475569);
-  padding: 2px 7px;
+  padding: 1px 6px;
   border-radius: 4px;
   font-weight: 500;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .status-pill {
