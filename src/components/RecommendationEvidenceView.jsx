@@ -54,7 +54,8 @@ import {
 import './RecommendationEvidenceView.css';
 
 export default function RecommendationEvidenceView({ activeFacility }) {
-  const facilityId = activeFacility?.id || 'fac-naples-01';
+  const rawFacId = activeFacility?.id || (typeof activeFacility === 'string' ? activeFacility : null) || 'fac-naples-01';
+  const facilityId = (rawFacId === '00000000-0000-0000-0000-000000000002') ? 'fac-naples-01' : rawFacId;
   const facilityName = activeFacility?.name || 'Naples Surgery Center';
 
   // State
@@ -76,8 +77,8 @@ export default function RecommendationEvidenceView({ activeFacility }) {
   const refreshData = () => {
     const actList = getNextBestFinancialActions(facilityId);
     setActions(actList);
-    if (actList.length > 0 && !selectedActionId) {
-      setSelectedActionId(actList[0].id);
+    if (actList.length > 0) {
+      setSelectedActionId(prev => (prev && actList.some(a => a.id === prev)) ? prev : actList[0].id);
     }
     const telem = getEvidenceTelemetry(facilityId);
     setTelemetry(telem);
@@ -168,10 +169,12 @@ export default function RecommendationEvidenceView({ activeFacility }) {
 
   // Export dossier
   const handleExportDossier = () => {
+    const targetAction = selectedAction || actions[0];
+    if (!targetAction && actions.length === 0) return;
     setIsExporting(true);
     setTimeout(() => {
       setIsExporting(false);
-      showToast(`Exported verified legal evidence dossier for ${selectedAction?.actionCode}.`);
+      showToast(`Exported verified legal evidence dossier for ${targetAction ? targetAction.actionCode : 'all actions'}.`);
     }, 800);
   };
 
@@ -207,7 +210,7 @@ export default function RecommendationEvidenceView({ activeFacility }) {
           <button
             className="rev-btn-primary"
             onClick={handleExportDossier}
-            disabled={!selectedAction || isExporting}
+            disabled={isExporting || (!selectedAction && actions.length === 0)}
           >
             <Download size={14} />
             {isExporting ? 'Generating Dossier...' : 'Export Legal Dossier'}

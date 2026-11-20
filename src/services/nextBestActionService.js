@@ -330,6 +330,17 @@ export function resetNBFABackendStore() {
   return { activeActions, activeEvents };
 }
 
+const NAPLES_FACILITY_ALIASES = ['fac-naples-01', '00000000-0000-0000-0000-000000000002'];
+
+export function matchesFacilityId(actionFacilityId, requestedFacilityId) {
+  if (!requestedFacilityId || requestedFacilityId === 'ALL') return true;
+  if (actionFacilityId === requestedFacilityId) return true;
+  if (NAPLES_FACILITY_ALIASES.includes(actionFacilityId) && NAPLES_FACILITY_ALIASES.includes(requestedFacilityId)) {
+    return true;
+  }
+  return false;
+}
+
 /**
  * Retrieve Next Best Financial Actions with optional filters
  */
@@ -342,7 +353,7 @@ export function getNextBestFinancialActions(facilityId = 'fac-naples-01', filter
   } = filters;
 
   return activeActions.filter(action => {
-    if (facilityId && facilityId !== 'ALL' && action.facilityId !== facilityId) {
+    if (facilityId && facilityId !== 'ALL' && !matchesFacilityId(action.facilityId, facilityId)) {
       return false;
     }
     if (category && category !== 'ALL' && action.category !== category) {

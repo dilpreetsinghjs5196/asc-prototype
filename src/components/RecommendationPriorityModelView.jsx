@@ -40,7 +40,8 @@ import { getNextBestFinancialActions } from '../services/nextBestActionService';
 import './RecommendationPriorityModelView.css';
 
 export default function RecommendationPriorityModelView({ activeFacility }) {
-  const facilityId = activeFacility?.id || 'fac-naples-01';
+  const rawFacId = activeFacility?.id || (typeof activeFacility === 'string' ? activeFacility : null) || 'fac-naples-01';
+  const facilityId = (rawFacId === '00000000-0000-0000-0000-000000000002') ? 'fac-naples-01' : rawFacId;
   const facilityName = activeFacility?.name || 'Naples Surgery Center';
 
   const [activeTab, setActiveTab] = useState('profiles'); // 'profiles' | 'sensitivity' | 'logs'

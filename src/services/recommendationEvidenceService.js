@@ -577,12 +577,23 @@ export function resetEvidenceStore() {
   return { activeEvidenceItems, activeEvidenceAudits };
 }
 
+const NAPLES_FACILITY_ALIASES = ['fac-naples-01', '00000000-0000-0000-0000-000000000002'];
+
+export function matchesFacilityId(recordFacilityId, requestedFacilityId) {
+  if (!requestedFacilityId || requestedFacilityId === 'ALL') return true;
+  if (recordFacilityId === requestedFacilityId) return true;
+  if (NAPLES_FACILITY_ALIASES.includes(recordFacilityId) && NAPLES_FACILITY_ALIASES.includes(requestedFacilityId)) {
+    return true;
+  }
+  return false;
+}
+
 /**
  * Retrieve all evidence items for a facility
  */
 export function getAllEvidenceItems(facilityId = 'fac-naples-01') {
   if (!facilityId || facilityId === 'ALL') return activeEvidenceItems;
-  return activeEvidenceItems.filter(e => e.facilityId === facilityId);
+  return activeEvidenceItems.filter(e => matchesFacilityId(e.facilityId, facilityId));
 }
 
 /**
@@ -603,7 +614,7 @@ export function getEvidenceForAction(actionId, facilityId = 'fac-naples-01') {
         (actionId === 'nbfa-007-workers-comp' && e.actionCode === 'NBFA-2026-0807')
       ))
     );
-    const matchesFacility = (!facilityId || facilityId === 'ALL' || e.facilityId === facilityId);
+    const matchesFacility = matchesFacilityId(e.facilityId, facilityId);
     return matchesAction && matchesFacility;
   });
 }

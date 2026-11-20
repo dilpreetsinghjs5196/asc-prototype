@@ -107,12 +107,23 @@ export function resetPriorityModelStore() {
   return { activeProfiles, activeScoreLogs };
 }
 
+const NAPLES_FACILITY_ALIASES = ['fac-naples-01', '00000000-0000-0000-0000-000000000002'];
+
+export function matchesFacilityId(recordFacilityId, requestedFacilityId) {
+  if (!requestedFacilityId || requestedFacilityId === 'ALL') return true;
+  if (recordFacilityId === requestedFacilityId) return true;
+  if (NAPLES_FACILITY_ALIASES.includes(recordFacilityId) && NAPLES_FACILITY_ALIASES.includes(requestedFacilityId)) {
+    return true;
+  }
+  return false;
+}
+
 /**
  * Retrieve all scoring profiles for a facility
  */
 export function getScoringProfiles(facilityId = 'fac-naples-01') {
   if (!facilityId || facilityId === 'ALL') return activeProfiles;
-  return activeProfiles.filter(p => p.facilityId === facilityId);
+  return activeProfiles.filter(p => matchesFacilityId(p.facilityId, facilityId));
 }
 
 /**
