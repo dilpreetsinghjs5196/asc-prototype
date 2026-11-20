@@ -169,6 +169,7 @@ import {
   BookOpen,
   FileCheck,
   FileCheck2,
+  FileSpreadsheet,
   History,
   ArrowRightLeft,
   Award,
