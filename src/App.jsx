@@ -99,6 +99,7 @@ import AIHallucinationRulesView from './components/AIHallucinationRulesView';
 import AIHumanApprovalView from './components/AIHumanApprovalView';
 import AIVoiceArchitectureView from './components/AIVoiceArchitectureView';
 import AIBenchmarkEvaluationView from './components/AIBenchmarkEvaluationView';
+import NextBestFinancialActionView from './components/NextBestFinancialActionView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2831,6 +2832,13 @@ export default function App() {
             AI Benchmark & Evaluation
           </div>
           <div
+            className={`menu-item ${activeTab === 'next_best_financial_action' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('next_best_financial_action'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><TrendingUp size={16} /></div>
+            Next Best Action (NBFA)
+          </div>
+          <div
             className={`menu-item ${activeTab === 'ai_ops_analyst' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('ai_ops_analyst'); setSelectedSurgeon(null); }}
           >
@@ -3234,6 +3242,7 @@ export default function App() {
                   {activeTab === 'ai_human_approval' && 'AI Human Approval & Consequential Action Governance'}
                   {activeTab === 'ai_voice_architecture' && 'AI Voice Architecture, Ephemeral Credentials & Role Boundaries'}
                   {activeTab === 'ai_benchmark_evaluation' && 'AI Benchmark & Evaluation Framework'}
+                  {activeTab === 'next_best_financial_action' && 'Next Best Financial Action Engine'}
                   {activeTab === 'supply' && 'Supply Chain'}
                   {activeTab === 'cancellations' && 'Cancellations'}
                   {activeTab === 'reports' && 'Reports & Analytics'}
@@ -3330,6 +3339,7 @@ export default function App() {
                   {activeTab === 'ai_human_approval' && 'Dual-key signoffs, executive quorum voting, blast-radius impact analysis, and 1-click rollback safeguards'}
                   {activeTab === 'ai_voice_architecture' && 'Real-time WebRTC audio pipelines, ephemeral credential gateways, OR sterile hands-free modes, and HIPAA audio scrubbing'}
                   {activeTab === 'ai_benchmark_evaluation' && 'Golden query evaluation suites, deterministic tool verification, zero-drift arithmetic, and automated regression scoring'}
+                  {activeTab === 'next_best_financial_action' && 'Daily ranked financial actions, deterministic multi-parameter priority scoring, and auditable action resolution'}
                   {activeTab === 'supply' && 'Supply variance tracking and preference card standardization tools'}
                   {activeTab === 'cancellations' && 'Cancellations tracking, revenue leak analysis, and predictive risk analysis'}
                   {activeTab === 'reports' && 'Standard financial and operational reports export'}
@@ -3488,7 +3498,7 @@ export default function App() {
             </div>
 
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'ai_analyst', 'ai_tool_gateway', 'ai_permissions', 'ai_tool_definitions', 'ai_evidence_citations', 'ai_hallucination_rules', 'ai_human_approval', 'ai_voice_architecture', 'ai_benchmark_evaluation', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'surgeon_implant_variance', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'payer_intelligence', 'payer_contract_performance', 'cpt_intelligence', 'cpt_economics', 'cpt_denial_payment', 'vendor_cost_comparison', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'ai_analyst', 'ai_tool_gateway', 'ai_permissions', 'ai_tool_definitions', 'ai_evidence_citations', 'ai_hallucination_rules', 'ai_human_approval', 'ai_voice_architecture', 'ai_benchmark_evaluation', 'next_best_financial_action', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'surgeon_implant_variance', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'payer_intelligence', 'payer_contract_performance', 'cpt_intelligence', 'cpt_economics', 'cpt_denial_payment', 'vendor_cost_comparison', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -5382,6 +5392,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'ai_benchmark_evaluation' && (
                 <AIBenchmarkEvaluationView activeFacility={activeFacility} />
+              )}
+
+              {/* ==========================================
+              TAB: NEXT BEST FINANCIAL ACTION (PHASE D0 - MODULE 13 DECISION INTELLIGENCE)
+              ========================================== */}
+              {activeTab === 'next_best_financial_action' && (
+                <NextBestFinancialActionView activeFacility={activeFacility} />
               )}
 
               {/* ==========================================
