@@ -204,17 +204,19 @@ export default function ManagementPnlView({ activeFacility }) {
         </div>
       )}
 
-      {/* Header Banner */}
+      {/* Spacious Header Banner */}
       <div className="pnl-header">
         <div className="header-left">
           <div className="header-title-row">
             <h2>Management P&L & Reconciliation Boundaries</h2>
-            <span className="badge-facility">{facilityName}</span>
-            <span className="badge-module">Phase E0 - Module 14</span>
-            <span className={`badge-period-status ${isPeriodFrozen ? 'status-frozen' : 'status-provisional'}`}>
-              {isPeriodFrozen ? <Lock size={12} /> : <Unlock size={12} />}
-              {activePeriodObj?.status || 'PROVISIONAL_CLOSE'}
-            </span>
+            <div className="header-badges-row">
+              <span className="badge-facility">{facilityName}</span>
+              <span className="badge-module">Phase E0 - Module 14</span>
+              <span className={`badge-period-status ${isPeriodFrozen ? 'status-frozen' : 'status-provisional'}`}>
+                {isPeriodFrozen ? <Lock size={12} /> : <Unlock size={12} />}
+                {activePeriodObj?.status || 'PROVISIONAL_CLOSE'}
+              </span>
+            </div>
           </div>
           <p className="header-description">
             Managerial healthcare accounting structure bridging surgery-level procedural economics,
@@ -223,34 +225,10 @@ export default function ManagementPnlView({ activeFacility }) {
         </div>
 
         <div className="header-actions">
-          {/* Period Selector */}
-          <div className="period-selector-wrapper">
-            <Calendar size={15} className="period-icon" />
-            <select
-              value={selectedPeriodCode}
-              onChange={handlePeriodChange}
-              className="period-select"
-            >
-              {periods.map(p => (
-                <option key={p.id} value={p.periodCode}>
-                  {p.periodName} ({p.status})
-                </option>
-              ))}
-            </select>
-          </div>
-
           <button className="btn-secondary" onClick={() => setShowReconciliationDrawer(true)}>
             <Scale size={15} />
             Reconciliation Audit ({telemetry?.balancedCount || 0}/{telemetry?.reconciliationsCount || 0})
           </button>
-
-          {!isPeriodFrozen && (
-            <button className="btn-freeze" onClick={handleFreezePeriod}>
-              <Lock size={15} />
-              Freeze Period
-            </button>
-          )}
-
           <button className="btn-primary" onClick={handleExportDossier}>
             <Download size={15} />
             Export P&L Dossier
@@ -342,7 +320,7 @@ export default function ManagementPnlView({ activeFacility }) {
             <span>3.5% Dep</span>
           </div>
           <div className="seg seg-noi" style={{ width: '23.4%' }} title="Net Operating Income: 23.4%">
-            <span>23.4% Net Operating Income</span>
+            <span>23.4% Operating Profit (EBIT)</span>
           </div>
         </div>
 
@@ -370,33 +348,70 @@ export default function ManagementPnlView({ activeFacility }) {
         </div>
       </div>
 
-      {/* Filter Ribbon */}
-      <div className="filter-ribbon">
-        <div className="search-box">
-          <Search size={16} className="search-icon" />
-          <input
-            type="text"
-            placeholder="Search line name, accounting code, or formula..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+      {/* Accounting Period Selection & Filter Toolbar */}
+      <div className="pnl-toolbar-card">
+        <div className="toolbar-left">
+          <div className="period-picker-group">
+            <span className="picker-label">ACCOUNTING PERIOD:</span>
+            <div className="period-selector-wrapper">
+              <Calendar size={15} className="period-icon" />
+              <select
+                value={selectedPeriodCode}
+                onChange={handlePeriodChange}
+                className="period-select"
+              >
+                {periods.map(p => (
+                  <option key={p.id} value={p.periodCode}>
+                    {p.periodName} ({p.status === 'HARD_CLOSE_FROZEN' ? 'Frozen' : 'Provisional'})
+                  </option>
+                ))}
+              </select>
+            </div>
+            {!isPeriodFrozen ? (
+              <button className="btn-freeze" onClick={handleFreezePeriod} title="Lock and seal this period">
+                <Lock size={14} />
+                Freeze Period
+              </button>
+            ) : (
+              <span className="frozen-seal-badge">
+                <Lock size={12} /> Period Locked & Sealed
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="filter-group">
-          <Filter size={15} className="filter-label-icon" />
-          <select
-            value={sectionFilter}
-            onChange={(e) => setSectionFilter(e.target.value)}
-            className="filter-select"
-          >
-            <option value="ALL">All P&L Sections</option>
-            <option value={PNL_SECTIONS.GROSS_REVENUE}>Gross Revenue</option>
-            <option value={PNL_SECTIONS.CONTRACTUAL_DEDUCTIONS}>Contractual Deductions</option>
-            <option value={PNL_SECTIONS.DIRECT_CLINICAL_COSTS}>Direct Clinical Costs</option>
-            <option value={PNL_SECTIONS.VARIABLE_FACILITY_COSTS}>Variable Facility Costs</option>
-            <option value={PNL_SECTIONS.FIXED_OVERHEAD_OPEX}>Fixed Overhead (OPEX)</option>
-            <option value={PNL_SECTIONS.DEPRECIATION_AMORTIZATION}>Depreciation & Amortization</option>
-          </select>
+        <div className="toolbar-right">
+          <div className="search-box">
+            <Search size={15} className="search-icon" />
+            <input
+              type="text"
+              placeholder="Search line name, code, formula..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button className="search-clear-btn" onClick={() => setSearchQuery('')}>
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          <div className="filter-select-wrapper">
+            <Filter size={14} className="filter-icon" />
+            <select
+              value={sectionFilter}
+              onChange={(e) => setSectionFilter(e.target.value)}
+              className="filter-select"
+            >
+              <option value="ALL">All P&L Sections</option>
+              <option value={PNL_SECTIONS.GROSS_REVENUE}>1. Gross Revenue</option>
+              <option value={PNL_SECTIONS.CONTRACTUAL_DEDUCTIONS}>2. Contractual Deductions</option>
+              <option value={PNL_SECTIONS.DIRECT_CLINICAL_COSTS}>3. Direct Clinical Costs</option>
+              <option value={PNL_SECTIONS.VARIABLE_FACILITY_COSTS}>4. Variable Facility Costs</option>
+              <option value={PNL_SECTIONS.FIXED_OVERHEAD_OPEX}>5. Fixed Overhead (OPEX)</option>
+              <option value={PNL_SECTIONS.DEPRECIATION_AMORTIZATION}>6. Depreciation & Amortization</option>
+            </select>
+          </div>
         </div>
       </div>
 
