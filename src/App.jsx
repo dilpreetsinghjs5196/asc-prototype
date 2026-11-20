@@ -103,6 +103,7 @@ import NextBestFinancialActionView from './components/NextBestFinancialActionVie
 import RecommendationPriorityModelView from './components/RecommendationPriorityModelView';
 import RecommendationEvidenceView from './components/RecommendationEvidenceView';
 import RecommendationApprovalWorkflowView from './components/RecommendationApprovalWorkflowView';
+import DecisionLedgerView from './components/DecisionLedgerView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -2864,6 +2865,13 @@ export default function App() {
             Human Approval Workflow
           </div>
           <div
+            className={`menu-item ${activeTab === 'decision_ledger' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('decision_ledger'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><History size={16} /></div>
+            Decision Ledger & Outcomes
+          </div>
+          <div
             className={`menu-item ${activeTab === 'ai_ops_analyst' && !selectedSurgeon ? 'active' : ''}`}
             onClick={() => { setActiveTab('ai_ops_analyst'); setSelectedSurgeon(null); }}
           >
@@ -3271,6 +3279,7 @@ export default function App() {
                   {activeTab === 'recommendation_priority_model' && 'Recommendation Priority Model & Scoring'}
                   {activeTab === 'recommendation_evidence' && 'Recommendation Evidence & Citations'}
                   {activeTab === 'recommendation_approvals' && 'Human Approval & Quorum Workflow'}
+                  {activeTab === 'decision_ledger' && 'Decision Ledger & Realized Value History'}
                   {activeTab === 'supply' && 'Supply Chain'}
                   {activeTab === 'cancellations' && 'Cancellations'}
                   {activeTab === 'reports' && 'Reports & Analytics'}
@@ -3371,6 +3380,7 @@ export default function App() {
                   {activeTab === 'recommendation_priority_model' && 'Configurable facility scoring profiles, multi-parameter weight tuning, and deterministic formula calculation traces'}
                   {activeTab === 'recommendation_evidence' && 'Auditable evidence linking financial recommendations to source claims, 835 remittances, contracts, and operative notes'}
                   {activeTab === 'recommendation_approvals' && 'Role-based authorization, multi-tier dual-key signoffs, anti-self-approval enforcement, and execution gating'}
+                  {activeTab === 'decision_ledger' && 'Immutable audit ledger linking recommendations, dual-key approvals, external execution, 835 remittances, and realized financial outcomes'}
                   {activeTab === 'supply' && 'Supply variance tracking and preference card standardization tools'}
                   {activeTab === 'cancellations' && 'Cancellations tracking, revenue leak analysis, and predictive risk analysis'}
                   {activeTab === 'reports' && 'Standard financial and operational reports export'}
@@ -3529,7 +3539,7 @@ export default function App() {
             </div>
 
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'ai_analyst', 'ai_tool_gateway', 'ai_permissions', 'ai_tool_definitions', 'ai_evidence_citations', 'ai_hallucination_rules', 'ai_human_approval', 'ai_voice_architecture', 'ai_benchmark_evaluation', 'next_best_financial_action', 'recommendation_priority_model', 'recommendation_evidence', 'recommendation_approvals', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'surgeon_implant_variance', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'payer_intelligence', 'payer_contract_performance', 'cpt_intelligence', 'cpt_economics', 'cpt_denial_payment', 'vendor_cost_comparison', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'ai_analyst', 'ai_tool_gateway', 'ai_permissions', 'ai_tool_definitions', 'ai_evidence_citations', 'ai_hallucination_rules', 'ai_human_approval', 'ai_voice_architecture', 'ai_benchmark_evaluation', 'next_best_financial_action', 'recommendation_priority_model', 'recommendation_evidence', 'recommendation_approvals', 'decision_ledger', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'surgeon_implant_variance', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'payer_intelligence', 'payer_contract_performance', 'cpt_intelligence', 'cpt_economics', 'cpt_denial_payment', 'vendor_cost_comparison', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -5451,6 +5461,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'recommendation_approvals' && (
                 <RecommendationApprovalWorkflowView activeFacility={activeFacility} />
+              )}
+
+              {/* ==========================================
+              TAB: DECISION LEDGER (PHASE D4 - MODULE 13 DECISION INTELLIGENCE)
+              ========================================== */}
+              {activeTab === 'decision_ledger' && (
+                <DecisionLedgerView activeFacility={activeFacility} />
               )}
 
               {/* ==========================================
