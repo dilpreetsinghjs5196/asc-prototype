@@ -381,7 +381,7 @@
   }
 }
 
-.drawer-header {
+.modal-drawer .drawer-header {
   padding: 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
@@ -390,13 +390,13 @@
   background: #0b1120;
 }
 
-.drawer-title-group {
+.modal-drawer .drawer-title-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.drawer-title {
+.modal-drawer .drawer-title {
   font-size: 20px;
   font-weight: 700;
   color: #f8fafc;
@@ -404,7 +404,7 @@
   letter-spacing: -0.01em;
 }
 
-.drawer-code-tag {
+.modal-drawer .drawer-code-tag {
   font-family: monospace;
   font-size: 12px;
   color: #38bdf8;
@@ -414,7 +414,7 @@
   align-self: flex-start;
 }
 
-.drawer-close-btn {
+.modal-drawer .drawer-close-btn {
   background: none;
   border: none;
   color: #64748b;
@@ -423,7 +423,7 @@
   border-radius: 6px;
 }
 
-.drawer-close-btn:hover {
+.modal-drawer .drawer-close-btn:hover {
   background: rgba(255, 255, 255, 0.05);
   color: #f8fafc;
 }
