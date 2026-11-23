@@ -132,20 +132,35 @@ ALTER TABLE public.management_pnl_reconciliations ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS tenant_isolation_pnl_periods ON public.management_pnl_periods;
 CREATE POLICY tenant_isolation_pnl_periods ON public.management_pnl_periods
     FOR ALL
-    USING (facility_id = auth.uid() OR facility_id IN (
-        SELECT facility_id FROM public.user_facility_access WHERE user_id = auth.uid()
-    ) OR current_user = 'postgres' OR auth.role() = 'authenticated');
+    USING (
+        facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid
+        OR current_setting('app.is_super_admin', true) = 'true'
+    )
+    WITH CHECK (
+        facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid
+        OR current_setting('app.is_super_admin', true) = 'true'
+    );
 
 DROP POLICY IF EXISTS tenant_isolation_pnl_lines ON public.management_pnl_statement_lines;
 CREATE POLICY tenant_isolation_pnl_lines ON public.management_pnl_statement_lines
     FOR ALL
-    USING (facility_id = auth.uid() OR facility_id IN (
-        SELECT facility_id FROM public.user_facility_access WHERE user_id = auth.uid()
-    ) OR current_user = 'postgres' OR auth.role() = 'authenticated');
+    USING (
+        facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid
+        OR current_setting('app.is_super_admin', true) = 'true'
+    )
+    WITH CHECK (
+        facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid
+        OR current_setting('app.is_super_admin', true) = 'true'
+    );
 
 DROP POLICY IF EXISTS tenant_isolation_pnl_recon ON public.management_pnl_reconciliations;
 CREATE POLICY tenant_isolation_pnl_recon ON public.management_pnl_reconciliations
     FOR ALL
-    USING (facility_id = auth.uid() OR facility_id IN (
-        SELECT facility_id FROM public.user_facility_access WHERE user_id = auth.uid()
-    ) OR current_user = 'postgres' OR auth.role() = 'authenticated');
+    USING (
+        facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid
+        OR current_setting('app.is_super_admin', true) = 'true'
+    )
+    WITH CHECK (
+        facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid
+        OR current_setting('app.is_super_admin', true) = 'true'
+    );
