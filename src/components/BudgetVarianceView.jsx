@@ -594,34 +594,37 @@ export default function BudgetVarianceView({ activeFacility }) {
 
       {/* Root Cause Mitigation Side Drawer */}
       {selectedLineForDrawer && (
-        <div className="drawer-overlay" onClick={() => setSelectedLineForDrawer(null)}>
-          <div className="drawer-container" onClick={(e) => e.stopPropagation()}>
-            <div className="drawer-header">
-              <div className="drawer-title-group">
-                <h3>Root Cause & Mitigation: {selectedLineForDrawer.lineName}</h3>
-                <span className="font-mono text-xs text-slate">{selectedLineForDrawer.lineCode} | {selectedLineForDrawer.accountCategory}</span>
+        <div className="bva-drawer-overlay" onClick={() => setSelectedLineForDrawer(null)}>
+          <div className="bva-drawer-container" onClick={(e) => e.stopPropagation()}>
+            <div className="bva-drawer-header">
+              <div className="bva-drawer-title-group">
+                <h3 className="bva-drawer-title">Root Cause & Mitigation: {selectedLineForDrawer.lineName}</h3>
+                <div className="bva-drawer-badges-row">
+                  <span className="bva-code-pill font-mono">{selectedLineForDrawer.lineCode}</span>
+                  <span className="bva-category-pill">{selectedLineForDrawer.accountCategory}</span>
+                </div>
               </div>
-              <button className="btn-close" onClick={() => setSelectedLineForDrawer(null)}>
+              <button className="bva-btn-close" onClick={() => setSelectedLineForDrawer(null)} title="Close Drawer">
                 <X size={18} />
               </button>
             </div>
 
-            <div className="drawer-body">
+            <div className="bva-drawer-body">
               {/* Financial Metrics Summary */}
-              <div className="drawer-card-grid">
-                <div className="drawer-stat-box">
+              <div className="bva-drawer-card-grid">
+                <div className="bva-drawer-stat-box">
                   <span className="stat-label">ACTUAL AMOUNT</span>
                   <span className="stat-val font-mono">{formatExactCurrency(selectedLineForDrawer.actualAmount)}</span>
                 </div>
-                <div className="drawer-stat-box">
+                <div className="bva-drawer-stat-box">
                   <span className="stat-label">BUDGET TARGET</span>
                   <span className="stat-val font-mono">{formatExactCurrency(selectedLineForDrawer.budgetAmount)}</span>
                 </div>
-                <div className="drawer-stat-box">
+                <div className="bva-drawer-stat-box">
                   <span className="stat-label">FLEXIBLE BUDGET</span>
                   <span className="stat-val font-mono">{formatExactCurrency(selectedLineForDrawer.flexibleBudgetAmount)}</span>
                 </div>
-                <div className="drawer-stat-box">
+                <div className="bva-drawer-stat-box">
                   <span className="stat-label">TOTAL VARIANCE</span>
                   <span className={`stat-val font-mono ${selectedLineForDrawer.isFavorable ? 'text-emerald' : 'text-crimson'}`}>
                     {formatExactCurrency(selectedLineForDrawer.dollarVariance)} ({selectedLineForDrawer.percentVariance}%)
@@ -630,20 +633,20 @@ export default function BudgetVarianceView({ activeFacility }) {
               </div>
 
               {/* 3-Way Variance Breakdown */}
-              <div className="drawer-section">
+              <div className="bva-drawer-section">
                 <h4>3-Way Variance Decomposition (Surgical Economics)</h4>
-                <div className="decomp-grid">
-                  <div className="decomp-col">
+                <div className="bva-decomp-grid">
+                  <div className="bva-decomp-col">
                     <span className="decomp-label">Volume Impact:</span>
                     <span className="decomp-val font-mono">{formatExactCurrency(selectedLineForDrawer.volumeImpact)}</span>
                     <span className="decomp-sub">Cases Delta (240 vs 250)</span>
                   </div>
-                  <div className="decomp-col">
+                  <div className="bva-decomp-col">
                     <span className="decomp-label">Rate / Price Impact:</span>
                     <span className="decomp-val font-mono">{formatExactCurrency(selectedLineForDrawer.rateImpact)}</span>
                     <span className="decomp-sub">Contractual reimbursement yield</span>
                   </div>
-                  <div className="decomp-col">
+                  <div className="bva-decomp-col">
                     <span className="decomp-label">Specialty Mix Impact:</span>
                     <span className="decomp-val font-mono">{formatExactCurrency(selectedLineForDrawer.mixImpact)}</span>
                     <span className="decomp-sub">Construct acuity & pack shifts</span>
@@ -652,10 +655,10 @@ export default function BudgetVarianceView({ activeFacility }) {
               </div>
 
               {/* Root Cause Explanation */}
-              <div className="drawer-section">
+              <div className="bva-drawer-section">
                 <h4>CFO Root Cause Analysis</h4>
                 <textarea
-                  className="drawer-textarea"
+                  className="bva-drawer-textarea"
                   rows={4}
                   placeholder="Document clinical or operational drivers explaining this variance..."
                   value={drawerExplanation}
@@ -664,10 +667,10 @@ export default function BudgetVarianceView({ activeFacility }) {
               </div>
 
               {/* Action Plan */}
-              <div className="drawer-section">
+              <div className="bva-drawer-section">
                 <h4>Mitigation & Recovery Action Plan</h4>
                 <textarea
-                  className="drawer-textarea"
+                  className="bva-drawer-textarea"
                   rows={4}
                   placeholder="Define corrective operational actions, physician outreach, or contract negotiations..."
                   value={drawerActionPlan}
@@ -676,7 +679,7 @@ export default function BudgetVarianceView({ activeFacility }) {
               </div>
             </div>
 
-            <div className="drawer-footer">
+            <div className="bva-drawer-footer">
               <button className="btn-secondary" onClick={() => setSelectedLineForDrawer(null)}>
                 Cancel
               </button>
