@@ -109,6 +109,7 @@ import RealizedValueCalculationView from './components/RealizedValueCalculationV
 import ManagementPnlView from './components/ManagementPnlView';
 import BudgetVarianceView from './components/BudgetVarianceView';
 import RollingForecastView from './components/RollingForecastView';
+import CashForecastView from './components/CashForecastView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -3032,6 +3033,13 @@ export default function App() {
             <div className="menu-item-icon"><TrendingUp size={16} /></div>
             Rolling Forecast (CFO)
           </div>
+          <div
+            className={`menu-item ${activeTab === 'cash_forecast' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('cash_forecast'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><DollarSign size={16} /></div>
+            13-Week Cash (CFO)
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
           <div className="sidebar-section-header" style={{ padding: '4px 16px', fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -3340,6 +3348,7 @@ export default function App() {
                   {activeTab === 'management_pnl' && 'Management P&L & Reconciliation Boundaries'}
                   {activeTab === 'budget_variance' && 'Budget vs. Actual (BvA) & Variance Reporting'}
                   {activeTab === 'rolling_forecast' && '12-Month Rolling Forecast & Continuous Projections'}
+                  {activeTab === 'cash_forecast' && '13-Week Cash Forecast & Liquidity Management'}
                   {activeTab === 'claims_model' && 'Claims Management & RCM Lifecycle'}
                   {activeTab === 'edi_837_ingestion' && '837 Ingestion & Case Matching Engine'}
                   {activeTab === 'edi_835_remittance' && '835 Remittance Advice & Electronic Posting Engine'}
@@ -3446,6 +3455,7 @@ export default function App() {
                   {activeTab === 'management_pnl' && 'Hierarchical chart of accounts, gross-to-net deductions, clinical margins, EBITDA, and multi-boundary reconciliation checkpoints'}
                   {activeTab === 'budget_variance' && 'Deterministic budget model, flexible budgeting benchmarks, 3-way volume/rate/mix decomposition, and CFO mitigation governance'}
                   {activeTab === 'rolling_forecast' && 'Multi-method projections, empirical ASC seasonality, OR capacity constraints, and continuous 12-month horizon modeling'}
+                  {activeTab === 'cash_forecast' && 'Direct weekly cash receipts & disbursements, bi-weekly payroll scheduling, and debt covenant monitoring'}
                   {activeTab === 'claims_model' && 'UB-04 Institutional & CMS-1500 Adjudication, Clearinghouse Provenance & AR Ledger'}
                   {activeTab === 'edi_837_ingestion' && 'ANSI ASC X12 837I/P Clearinghouse Ingestion, WEDI SNIP 1–4 Validation & Case Linking'}
                   {activeTab === 'edi_835_remittance' && 'ANSI ASC X12 835 ERA Ingestion, CLP Adjudication, CARC Balancing & Auto-Post'}
@@ -3590,7 +3600,7 @@ export default function App() {
             </div>
 
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'ai_analyst', 'ai_tool_gateway', 'ai_permissions', 'ai_tool_definitions', 'ai_evidence_citations', 'ai_hallucination_rules', 'ai_human_approval', 'ai_voice_architecture', 'ai_benchmark_evaluation', 'next_best_financial_action', 'recommendation_priority_model', 'recommendation_evidence', 'recommendation_approvals', 'decision_ledger', 'recommendation_outcomes', 'realized_value', 'management_pnl', 'budget_variance', 'rolling_forecast', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'surgeon_implant_variance', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'payer_intelligence', 'payer_contract_performance', 'cpt_intelligence', 'cpt_economics', 'cpt_denial_payment', 'vendor_cost_comparison', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'ai_analyst', 'ai_tool_gateway', 'ai_permissions', 'ai_tool_definitions', 'ai_evidence_citations', 'ai_hallucination_rules', 'ai_human_approval', 'ai_voice_architecture', 'ai_benchmark_evaluation', 'next_best_financial_action', 'recommendation_priority_model', 'recommendation_evidence', 'recommendation_approvals', 'decision_ledger', 'recommendation_outcomes', 'realized_value', 'management_pnl', 'budget_variance', 'rolling_forecast', 'cash_forecast', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'surgeon_implant_variance', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'payer_intelligence', 'payer_contract_performance', 'cpt_intelligence', 'cpt_economics', 'cpt_denial_payment', 'vendor_cost_comparison', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -5554,6 +5564,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'rolling_forecast' && (
                 <RollingForecastView activeFacility={activeFacility} />
+              )}
+
+              {/* ==========================================
+              TAB: 13-WEEK CASH FORECAST (PHASE E3 - MODULE 14 CFO)
+              ========================================== */}
+              {activeTab === 'cash_forecast' && (
+                <CashForecastView activeFacility={activeFacility} />
               )}
 
               {/* ==========================================
