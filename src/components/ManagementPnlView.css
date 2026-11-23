@@ -4,6 +4,7 @@
  * Phase E0: Module 14 CFO Dashboard & Financial Accounting
  * Maestro Clinical Design System: Emerald, Amber, Crimson, Sky, Slate, Neutral
  * Zero Prohibited Accent Tokens
+ * Full Light & Dark Theme Support ([data-theme="dark"], .dark)
  * ==============================================================================
  */
 
@@ -12,8 +13,8 @@
   flex-direction: column;
   gap: 1.25rem;
   padding: 1.5rem;
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: var(--bg-app, #f8fafc);
+  color: var(--text-primary, #0f172a);
   min-height: 100vh;
   box-sizing: border-box;
 }
@@ -53,11 +54,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #ffffff;
+  background-color: var(--bg-card, #ffffff);
   padding: 1.25rem 1.5rem;
   border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-color, #e2e8f0);
+  box-shadow: var(--shadow-sm, 0 1px 3px 0 rgba(0, 0, 0, 0.05));
   gap: 1.5rem;
 }
 
@@ -80,7 +81,7 @@
   margin: 0;
   font-size: 1.35rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-primary, #0f172a);
   line-height: 1.25;
 }
 
@@ -135,7 +136,7 @@
 
 .header-description {
   margin: 0;
-  color: #64748b;
+  color: var(--text-muted, #64748b);
   font-size: 0.875rem;
   line-height: 1.4;
   max-width: 860px;
@@ -172,20 +173,20 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: #ffffff;
-  color: #334155;
+  background-color: var(--bg-card, #ffffff);
+  color: var(--text-secondary, #334155);
   padding: 0.6rem 1rem;
   border-radius: 6px;
   font-weight: 600;
   font-size: 0.85rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border-color, #cbd5e1);
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s ease;
 }
 
 .btn-secondary:hover {
-  background-color: #f8fafc;
+  background-color: var(--bg-card-hover, #f8fafc);
   border-color: #94a3b8;
 }
 
@@ -197,11 +198,11 @@
 }
 
 .metric-card {
-  background-color: #ffffff;
+  background-color: var(--bg-card, #ffffff);
   padding: 1.15rem;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border-color, #e2e8f0);
+  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.04));
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -216,14 +217,14 @@
 .card-label {
   font-size: 0.72rem;
   font-weight: 700;
-  color: #64748b;
+  color: var(--text-muted, #64748b);
   letter-spacing: 0.04em;
 }
 
 .card-value {
   font-size: 1.55rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-primary, #0f172a);
   letter-spacing: -0.02em;
 }
 
@@ -233,7 +234,7 @@
 
 .card-subtext {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-muted, #64748b);
 }
 
 .health-pill {
@@ -247,14 +248,14 @@
 
 /* Margin Decomposition Allocation Card */
 .pnl-allocation-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 8px;
   padding: 1.15rem 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.04));
 }
 
 .allocation-header {
@@ -273,12 +274,12 @@
   margin: 0;
   font-size: 1.05rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-primary, #0f172a);
 }
 
 .alloc-subtext {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--text-muted, #64748b);
 }
 
 .multi-segment-bar {
@@ -327,7 +328,7 @@
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--border-light, #f1f5f9);
   padding-top: 0.75rem;
   flex-wrap: wrap;
 }
@@ -337,7 +338,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.78rem;
-  color: #334155;
+  color: var(--text-secondary, #334155);
 }
 
 .leg-dot {
@@ -369,15 +370,15 @@
 
 /* Dedicated Period & Filter Toolbar Card */
 .pnl-toolbar-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 8px;
   padding: 0.85rem 1.25rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.04));
   flex-wrap: wrap;
 }
 
@@ -396,7 +397,7 @@
 .picker-label {
   font-size: 0.72rem;
   font-weight: 700;
-  color: #64748b;
+  color: var(--text-muted, #64748b);
   letter-spacing: 0.04em;
   white-space: nowrap;
 }
@@ -404,15 +405,15 @@
 .period-selector-wrapper {
   display: flex;
   align-items: center;
-  background-color: #f8fafc;
-  border: 1px solid #cbd5e1;
+  background-color: var(--bg-main, #f8fafc);
+  border: 1px solid var(--border-color, #cbd5e1);
   border-radius: 6px;
   padding: 0.35rem 0.65rem;
   gap: 0.45rem;
 }
 
 .period-icon {
-  color: #64748b;
+  color: var(--text-muted, #64748b);
 }
 
 .period-select {
@@ -421,7 +422,7 @@
   background: transparent;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-primary, #1e293b);
   cursor: pointer;
 }
 
@@ -468,8 +469,8 @@
 .search-box {
   display: flex;
   align-items: center;
-  background-color: #f8fafc;
-  border: 1px solid #cbd5e1;
+  background-color: var(--bg-main, #f8fafc);
+  border: 1px solid var(--border-color, #cbd5e1);
   border-radius: 6px;
   padding: 0.4rem 0.65rem;
   gap: 0.45rem;
@@ -477,7 +478,7 @@
 }
 
 .search-icon {
-  color: #64748b;
+  color: var(--text-muted, #64748b);
 }
 
 .search-box input {
@@ -486,7 +487,7 @@
   background: transparent;
   width: 100%;
   font-size: 0.85rem;
-  color: #0f172a;
+  color: var(--text-primary, #0f172a);
 }
 
 .search-clear-btn {
@@ -500,21 +501,21 @@
 }
 
 .search-clear-btn:hover {
-  color: #0f172a;
+  color: var(--text-primary, #0f172a);
 }
 
 .filter-select-wrapper {
   display: flex;
   align-items: center;
-  background-color: #f8fafc;
-  border: 1px solid #cbd5e1;
+  background-color: var(--bg-main, #f8fafc);
+  border: 1px solid var(--border-color, #cbd5e1);
   border-radius: 6px;
   padding: 0.4rem 0.65rem;
   gap: 0.45rem;
 }
 
 .filter-icon {
-  color: #64748b;
+  color: var(--text-muted, #64748b);
 }
 
 .filter-select {
@@ -523,17 +524,17 @@
   background: transparent;
   font-size: 0.85rem;
   font-weight: 500;
-  color: #334155;
+  color: var(--text-secondary, #334155);
   cursor: pointer;
 }
 
 /* Statement Table */
 .statement-table-wrapper {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.04));
 }
 
 .statement-table {
@@ -543,31 +544,31 @@
 }
 
 .statement-table th {
-  background-color: #f8fafc;
-  color: #475569;
+  background-color: var(--bg-main, #f8fafc);
+  color: var(--text-secondary, #475569);
   font-weight: 700;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
   text-align: left;
 }
 
 .statement-table td {
   padding: 0.65rem 1rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border-light, #f1f5f9);
   vertical-align: middle;
 }
 
 .section-header-row {
-  background-color: #f1f5f9;
+  background-color: var(--bg-subtab, #f1f5f9);
   cursor: pointer;
   user-select: none;
 }
 
 .section-header-row:hover {
-  background-color: #e2e8f0;
+  background-color: var(--bg-card-hover, #e2e8f0);
 }
 
 .section-title-wrap {
@@ -575,19 +576,19 @@
   align-items: center;
   gap: 0.5rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-primary, #1e293b);
   font-size: 0.85rem;
 }
 
 .pnl-line-row:hover {
-  background-color: #f8fafc;
+  background-color: var(--bg-main, #f8fafc);
 }
 
 .summary-row {
-  background-color: #f8fafc;
+  background-color: var(--bg-main, #f8fafc);
   font-weight: 700;
-  border-top: 1px solid #cbd5e1;
-  border-bottom: 1px solid #cbd5e1;
+  border-top: 1px solid var(--border-color, #cbd5e1);
+  border-bottom: 1px solid var(--border-color, #cbd5e1);
 }
 
 .npr-row {
@@ -637,20 +638,20 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(15, 23, 42, 0.45);
+  background-color: rgba(15, 23, 42, 0.55);
   display: flex;
   justify-content: flex-end;
   z-index: 1000;
 }
 
 .drawer-container {
-  background-color: #ffffff;
+  background-color: var(--bg-card, #ffffff);
   width: 660px;
   max-width: 90vw;
   height: 100%;
   display: flex;
   flex-direction: column;
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
   animation: slideDrawer 0.25s ease-out;
 }
 
@@ -665,7 +666,7 @@
 
 .drawer-header {
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -675,14 +676,14 @@
   margin: 0;
   font-size: 1.15rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-primary, #0f172a);
 }
 
 .btn-close {
   background: transparent;
   border: none;
   cursor: pointer;
-  color: #64748b;
+  color: var(--text-muted, #64748b);
   padding: 0.25rem;
   display: flex;
   align-items: center;
@@ -690,7 +691,7 @@
 }
 
 .btn-close:hover {
-  color: #0f172a;
+  color: var(--text-primary, #0f172a);
 }
 
 .drawer-body {
@@ -704,13 +705,13 @@
 
 .recon-drawer-intro {
   margin: 0;
-  color: #64748b;
+  color: var(--text-muted, #64748b);
   font-size: 0.85rem;
   line-height: 1.4;
-  background-color: #f8fafc;
+  background-color: var(--bg-main, #f8fafc);
   padding: 0.75rem 1rem;
   border-radius: 6px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color, #e2e8f0);
 }
 
 .reconciliation-cards-list {
@@ -720,8 +721,8 @@
 }
 
 .recon-card-item {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 8px;
   padding: 1rem 1.25rem;
   display: flex;
@@ -740,7 +741,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.9rem;
-  color: #0f172a;
+  color: var(--text-primary, #0f172a);
 }
 
 .recon-status-badge {
@@ -766,7 +767,7 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0.5rem;
-  background-color: #f8fafc;
+  background-color: var(--bg-main, #f8fafc);
   padding: 0.6rem 0.8rem;
   border-radius: 6px;
 }
@@ -779,7 +780,7 @@
 
 .col-label {
   font-size: 0.7rem;
-  color: #64748b;
+  color: var(--text-muted, #64748b);
   white-space: nowrap;
 }
 
@@ -790,13 +791,13 @@
 
 .recon-notes {
   font-size: 0.8rem;
-  color: #334155;
+  color: var(--text-secondary, #334155);
   line-height: 1.3;
 }
 
 .drawer-footer {
   padding: 1rem 1.5rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border-color, #e2e8f0);
   display: flex;
   justify-content: flex-end;
 }
@@ -840,4 +841,439 @@
 
 .text-xs {
   font-size: 0.75rem;
+}
+
+/* ==============================================================================
+ * Comprehensive Dark Mode Styles
+ * Supports [data-theme="dark"] and .dark root classes
+ * ==============================================================================
+ */
+
+[data-theme="dark"] .management-pnl-view,
+.dark .management-pnl-view {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+/* Header Dark Mode */
+[data-theme="dark"] .pnl-header,
+.dark .pnl-header {
+  background-color: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .header-title-row h2,
+.dark .header-title-row h2 {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .header-description,
+.dark .header-description {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .badge-facility,
+.dark .badge-facility {
+  background-color: #0f172a;
+  color: #cbd5e1;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .badge-module,
+.dark .badge-module {
+  background-color: rgba(6, 78, 59, 0.35);
+  color: #34d399;
+  border-color: #059669;
+}
+
+[data-theme="dark"] .status-provisional,
+.dark .status-provisional {
+  background-color: rgba(180, 83, 9, 0.25);
+  color: #fbbf24;
+  border-color: #b45309;
+}
+
+[data-theme="dark"] .status-frozen,
+.dark .status-frozen {
+  background-color: rgba(6, 78, 59, 0.35);
+  color: #34d399;
+  border-color: #059669;
+}
+
+[data-theme="dark"] .btn-secondary,
+.dark .btn-secondary {
+  background-color: #0f172a;
+  color: #e2e8f0;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .btn-secondary:hover,
+.dark .btn-secondary:hover {
+  background-color: #1e293b;
+  border-color: #475569;
+  color: #ffffff;
+}
+
+/* Ribbon Metric Cards Dark Mode */
+[data-theme="dark"] .metric-card,
+.dark .metric-card {
+  background-color: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .card-label,
+.dark .card-label {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .card-value,
+.dark .card-value {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .highlight-sky,
+.dark .highlight-sky {
+  color: #38bdf8;
+}
+
+[data-theme="dark"] .card-subtext,
+.dark .card-subtext {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .health-pill,
+.dark .health-pill {
+  background-color: rgba(6, 78, 59, 0.35);
+  color: #34d399;
+}
+
+/* Margin Decomposition Allocation Card Dark Mode */
+[data-theme="dark"] .pnl-allocation-card,
+.dark .pnl-allocation-card {
+  background-color: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .alloc-title-group h3,
+.dark .alloc-title-group h3 {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .alloc-subtext,
+.dark .alloc-subtext {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .multi-segment-bar,
+.dark .multi-segment-bar {
+  background-color: #0f172a;
+}
+
+[data-theme="dark"] .allocation-legend,
+.dark .allocation-legend {
+  border-top-color: #334155;
+}
+
+[data-theme="dark"] .leg-item,
+.dark .leg-item {
+  color: #cbd5e1;
+}
+
+/* Toolbar Card Dark Mode */
+[data-theme="dark"] .pnl-toolbar-card,
+.dark .pnl-toolbar-card {
+  background-color: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .picker-label,
+.dark .picker-label {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .period-selector-wrapper,
+.dark .period-selector-wrapper {
+  background-color: #0f172a;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .period-icon,
+.dark .period-icon {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .period-select,
+.dark .period-select {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .period-select option,
+.dark .period-select option {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .frozen-seal-badge,
+.dark .frozen-seal-badge {
+  background-color: rgba(6, 78, 59, 0.35);
+  color: #34d399;
+  border-color: #059669;
+}
+
+[data-theme="dark"] .search-box,
+.dark .search-box {
+  background-color: #0f172a;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .search-icon,
+.dark .search-icon {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .search-box input,
+.dark .search-box input {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .search-box input::placeholder,
+.dark .search-box input::placeholder {
+  color: #64748b;
+}
+
+[data-theme="dark"] .search-clear-btn,
+.dark .search-clear-btn {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .search-clear-btn:hover,
+.dark .search-clear-btn:hover {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .filter-select-wrapper,
+.dark .filter-select-wrapper {
+  background-color: #0f172a;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .filter-icon,
+.dark .filter-icon {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .filter-select,
+.dark .filter-select {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .filter-select option,
+.dark .filter-select option {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+/* Statement Table Dark Mode */
+[data-theme="dark"] .statement-table-wrapper,
+.dark .statement-table-wrapper {
+  background-color: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .statement-table th,
+.dark .statement-table th {
+  background-color: #0f172a;
+  color: #94a3b8;
+  border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .statement-table td,
+.dark .statement-table td {
+  border-bottom-color: #273549;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .section-header-row,
+.dark .section-header-row {
+  background-color: #162235;
+}
+
+[data-theme="dark"] .section-header-row:hover,
+.dark .section-header-row:hover {
+  background-color: #1e293b;
+}
+
+[data-theme="dark"] .section-title-wrap,
+.dark .section-title-wrap {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .pnl-line-row:hover,
+.dark .pnl-line-row:hover {
+  background-color: #1a2436;
+}
+
+[data-theme="dark"] .summary-row,
+.dark .summary-row {
+  background-color: #111a28;
+  border-top-color: #334155;
+  border-bottom-color: #334155;
+  color: #f8fafc;
+}
+
+/* High-Contrast Clinical Subtotal Rows in Dark Mode */
+[data-theme="dark"] .npr-row,
+.dark .npr-row {
+  background-color: rgba(6, 78, 59, 0.35) !important;
+  color: #34d399 !important;
+  border-top: 2px solid #059669 !important;
+  border-bottom: 2px solid #059669 !important;
+}
+
+[data-theme="dark"] .cm-row,
+.dark .cm-row {
+  background-color: rgba(20, 83, 45, 0.35) !important;
+  color: #4ade80 !important;
+  border-top: 2px solid #16a34a !important;
+  border-bottom: 2px solid #16a34a !important;
+}
+
+[data-theme="dark"] .ebitda-row,
+.dark .ebitda-row {
+  background-color: rgba(7, 89, 133, 0.35) !important;
+  color: #38bdf8 !important;
+  border-top: 2px solid #0284c7 !important;
+  border-bottom: 2px solid #0284c7 !important;
+}
+
+[data-theme="dark"] .noi-row,
+.dark .noi-row {
+  background-color: rgba(6, 78, 59, 0.45) !important;
+  color: #34d399 !important;
+  border-top: 2px solid #059669 !important;
+  border-bottom: 3px double #059669 !important;
+}
+
+[data-theme="dark"] .formula-hint,
+.dark .formula-hint {
+  color: #94a3b8;
+}
+
+/* Drawer Dark Mode */
+[data-theme="dark"] .drawer-overlay,
+.dark .drawer-overlay {
+  background-color: rgba(0, 0, 0, 0.75);
+}
+
+[data-theme="dark"] .drawer-container,
+.dark .drawer-container {
+  background-color: #0f172a;
+  border-left: 1px solid #334155;
+  box-shadow: -4px 0 25px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .drawer-header,
+.dark .drawer-header {
+  background-color: #1e293b;
+  border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .drawer-title-group h3,
+.dark .drawer-title-group h3 {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .btn-close,
+.dark .btn-close {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .btn-close:hover,
+.dark .btn-close:hover {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .recon-drawer-intro,
+.dark .recon-drawer-intro {
+  background-color: #162235;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .recon-card-item,
+.dark .recon-card-item {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .recon-title-wrap,
+.dark .recon-title-wrap {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .badge-balanced,
+.dark .badge-balanced {
+  background-color: rgba(6, 78, 59, 0.35);
+  color: #34d399;
+  border-color: #059669;
+}
+
+[data-theme="dark"] .badge-flagged,
+.dark .badge-flagged {
+  background-color: rgba(180, 83, 9, 0.25);
+  color: #fbbf24;
+  border-color: #b45309;
+}
+
+[data-theme="dark"] .recon-math-grid,
+.dark .recon-math-grid {
+  background-color: #0b1120;
+  border: 1px solid #334155;
+}
+
+[data-theme="dark"] .col-label,
+.dark .col-label {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .recon-notes,
+.dark .recon-notes {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .drawer-footer,
+.dark .drawer-footer {
+  background-color: #1e293b;
+  border-top-color: #334155;
+}
+
+/* Utilities in Dark Mode */
+[data-theme="dark"] .text-emerald,
+.dark .text-emerald {
+  color: #34d399;
+}
+
+[data-theme="dark"] .text-sky,
+.dark .text-sky {
+  color: #38bdf8;
+}
+
+[data-theme="dark"] .text-amber,
+.dark .text-amber {
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .text-crimson,
+.dark .text-crimson {
+  color: #f87171;
+}
+
+[data-theme="dark"] .text-slate,
+.dark .text-slate {
+  color: #94a3b8;
 }
