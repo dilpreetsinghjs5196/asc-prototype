@@ -36,6 +36,10 @@ import {
 import './ScenarioModelingView.css';
 
 export default function ScenarioModelingView({ activeFacility = 'fac-naples-01' }) {
+  const facilityId = typeof activeFacility === 'object' && activeFacility !== null
+    ? (activeFacility.id || 'fac-naples-01')
+    : (activeFacility || 'fac-naples-01');
+
   const [selectedScenarioCode, setSelectedScenarioCode] = useState('SCEN_BASE_2026');
   const [showDrawer, setShowDrawer] = useState(false);
   const [freezeNotice, setFreezeNotice] = useState(null);
@@ -52,8 +56,8 @@ export default function ScenarioModelingView({ activeFacility = 'fac-naples-01' 
   });
 
   const scenario = useMemo(() => {
-    return getScenarioByIdOrCode(selectedScenarioCode, activeFacility);
-  }, [selectedScenarioCode, activeFacility]);
+    return getScenarioByIdOrCode(selectedScenarioCode, facilityId);
+  }, [selectedScenarioCode, facilityId]);
 
   const telemetry = useMemo(() => {
     if (isCustomMode) {
@@ -87,17 +91,17 @@ export default function ScenarioModelingView({ activeFacility = 'fac-naples-01' 
         availableOrMinutes: OR_CAPACITY_CONSTANTS.TOTAL_AVAILABLE_OR_MINUTES
       };
     }
-    return getScenarioTelemetry(activeFacility, selectedScenarioCode);
-  }, [selectedScenarioCode, activeFacility, isCustomMode, customLevers]);
+    return getScenarioTelemetry(facilityId, selectedScenarioCode);
+  }, [selectedScenarioCode, facilityId, isCustomMode, customLevers]);
 
   const comparativeData = useMemo(() => {
-    return getScenarioComparativeMatrix(activeFacility);
-  }, [activeFacility]);
+    return getScenarioComparativeMatrix(facilityId);
+  }, [facilityId]);
 
   const handleSelectPreset = (code) => {
     setSelectedScenarioCode(code);
     setIsCustomMode(false);
-    const target = getScenarioByIdOrCode(code, activeFacility);
+    const target = getScenarioByIdOrCode(code, facilityId);
     if (target) {
       setCustomLevers({
         caseVolumeDeltaPercent: target.caseVolumeDeltaPercent || 0,
@@ -658,31 +662,31 @@ export default function ScenarioModelingView({ activeFacility = 'fac-naples-01' 
             <div className="scen-drawer-content">
               {/* Active Scenario Overview */}
               <div className="scen-drawer-section">
-                <h4 className="scen-dsection-title">Active Model: {scenario.scenarioName}</h4>
+                <h4 className="scen-dsection-title">Active Model: {scenario?.scenarioName || 'Baseline Operating Model'}</h4>
                 <div className="scen-provenance-box">
                   <div className="scen-prow">
                     <span className="scen-plabel">Scenario Code:</span>
-                    <span className="scen-pval font-mono">{scenario.scenarioCode}</span>
+                    <span className="scen-pval font-mono">{scenario?.scenarioCode || 'SCEN_BASE_2026'}</span>
                   </div>
                   <div className="scen-prow">
                     <span className="scen-plabel">Lifecycle Status:</span>
-                    <span className="scen-pval font-mono text-emerald">{scenario.status}</span>
+                    <span className="scen-pval font-mono text-emerald">{scenario?.status || 'APPROVED_STRATEGY'}</span>
                   </div>
                   <div className="scen-prow">
                     <span className="scen-plabel">Baseline Period:</span>
-                    <span className="scen-pval font-mono">{scenario.baselinePeriodCode}</span>
+                    <span className="scen-pval font-mono">{scenario?.baselinePeriodCode || '2026-M10'}</span>
                   </div>
                   <div className="scen-prow">
                     <span className="scen-plabel">Version:</span>
-                    <span className="scen-pval font-mono">v{scenario.versionNumber}</span>
+                    <span className="scen-pval font-mono">v{scenario?.versionNumber || 1}</span>
                   </div>
                   <div className="scen-prow">
                     <span className="scen-plabel">Approved At:</span>
-                    <span className="scen-pval font-mono">{scenario.approvedAt ? new Date(scenario.approvedAt).toLocaleDateString() : 'Pending'}</span>
+                    <span className="scen-pval font-mono">{scenario?.approvedAt ? new Date(scenario.approvedAt).toLocaleDateString() : 'Pending'}</span>
                   </div>
                   <div className="scen-prow">
                     <span className="scen-plabel">SHA-256 Audit Seal:</span>
-                    <span className="scen-pval-hash font-mono">{scenario.frozenHash || 'Not Sealed'}</span>
+                    <span className="scen-pval-hash font-mono">{scenario?.frozenHash || 'Not Sealed'}</span>
                   </div>
                 </div>
               </div>
@@ -693,27 +697,27 @@ export default function ScenarioModelingView({ activeFacility = 'fac-naples-01' 
                 <div className="scen-breakdown-list">
                   <div className="scen-breakdown-row">
                     <span className="scen-brow-label">Volume Shift:</span>
-                    <span className="scen-brow-val font-mono">{scenario.caseVolumeDeltaPercent}%</span>
+                    <span className="scen-brow-val font-mono">{scenario?.caseVolumeDeltaPercent || 0}%</span>
                   </div>
                   <div className="scen-breakdown-row">
                     <span className="scen-brow-label">Payer Rate Yield:</span>
-                    <span className="scen-brow-val font-mono">{scenario.reimbursementRateDeltaPercent}%</span>
+                    <span className="scen-brow-val font-mono">{scenario?.reimbursementRateDeltaPercent || 0}%</span>
                   </div>
                   <div className="scen-breakdown-row">
                     <span className="scen-brow-label">Implant Inflation:</span>
-                    <span className="scen-brow-val font-mono">{scenario.implantCostInflationPercent}%</span>
+                    <span className="scen-brow-val font-mono">{scenario?.implantCostInflationPercent || 0}%</span>
                   </div>
                   <div className="scen-breakdown-row">
                     <span className="scen-brow-label">Supply Inflation:</span>
-                    <span className="scen-brow-val font-mono">{scenario.supplyCostInflationPercent}%</span>
+                    <span className="scen-brow-val font-mono">{scenario?.supplyCostInflationPercent || 0}%</span>
                   </div>
                   <div className="scen-breakdown-row">
                     <span className="scen-brow-label">Labor Inflation:</span>
-                    <span className="scen-brow-val font-mono">{scenario.laborWageInflationPercent}%</span>
+                    <span className="scen-brow-val font-mono">{scenario?.laborWageInflationPercent || 0}%</span>
                   </div>
                   <div className="scen-breakdown-row">
                     <span className="scen-brow-label">Fixed Overhead Shift:</span>
-                    <span className="scen-brow-val font-mono">{formatCurrency(scenario.fixedOverheadDelta)}</span>
+                    <span className="scen-brow-val font-mono">{formatCurrency(scenario?.fixedOverheadDelta || 0)}</span>
                   </div>
                 </div>
               </div>

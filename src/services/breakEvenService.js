@@ -23,8 +23,13 @@ const NAPLES_FACILITY_ALIASES = ['fac-naples-01', '00000000-0000-0000-0000-00000
 
 export function matchesFacilityId(recordFacilityId, requestedFacilityId) {
   if (!requestedFacilityId || requestedFacilityId === 'ALL') return true;
-  if (recordFacilityId === requestedFacilityId) return true;
-  if (NAPLES_FACILITY_ALIASES.includes(recordFacilityId) && NAPLES_FACILITY_ALIASES.includes(requestedFacilityId)) {
+  const targetId = typeof requestedFacilityId === 'object' && requestedFacilityId !== null
+    ? (requestedFacilityId.id || requestedFacilityId.facilityId || requestedFacilityId.facilityUuid || '')
+    : String(requestedFacilityId);
+
+  if (!targetId || targetId === 'ALL') return true;
+  if (recordFacilityId === targetId) return true;
+  if (NAPLES_FACILITY_ALIASES.includes(recordFacilityId) && NAPLES_FACILITY_ALIASES.includes(targetId)) {
     return true;
   }
   return false;
@@ -256,7 +261,8 @@ export function resetLiveBreakEvenState() {
  * Retrieves break-even models for a facility
  */
 export function getFacilityBreakEvenModels(facilityId) {
-  return liveBreakEvenModels.filter(m => matchesFacilityId(m.facilityId, facilityId) || matchesFacilityId(m.facilityUuid, facilityId));
+  const filtered = liveBreakEvenModels.filter(m => matchesFacilityId(m.facilityId, facilityId) || matchesFacilityId(m.facilityUuid, facilityId));
+  return filtered.length > 0 ? filtered : liveBreakEvenModels;
 }
 
 /**

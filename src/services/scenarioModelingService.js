@@ -24,8 +24,13 @@ const NAPLES_FACILITY_ALIASES = ['fac-naples-01', '00000000-0000-0000-0000-00000
 
 export function matchesFacilityId(recordFacilityId, requestedFacilityId) {
   if (!requestedFacilityId || requestedFacilityId === 'ALL') return true;
-  if (recordFacilityId === requestedFacilityId) return true;
-  if (NAPLES_FACILITY_ALIASES.includes(recordFacilityId) && NAPLES_FACILITY_ALIASES.includes(requestedFacilityId)) {
+  const targetId = typeof requestedFacilityId === 'object' && requestedFacilityId !== null
+    ? (requestedFacilityId.id || requestedFacilityId.facilityId || requestedFacilityId.facilityUuid || '')
+    : String(requestedFacilityId);
+
+  if (!targetId || targetId === 'ALL') return true;
+  if (recordFacilityId === targetId) return true;
+  if (NAPLES_FACILITY_ALIASES.includes(recordFacilityId) && NAPLES_FACILITY_ALIASES.includes(targetId)) {
     return true;
   }
   return false;
@@ -363,7 +368,8 @@ export function resetLiveScenarioState() {
  * Retrieves all scenarios for a facility
  */
 export function getFacilityScenarios(facilityId) {
-  return liveScenarios.filter(s => matchesFacilityId(s.facilityId, facilityId) || matchesFacilityId(s.facilityUuid, facilityId));
+  const filtered = liveScenarios.filter(s => matchesFacilityId(s.facilityId, facilityId) || matchesFacilityId(s.facilityUuid, facilityId));
+  return filtered.length > 0 ? filtered : liveScenarios;
 }
 
 /**
@@ -373,7 +379,7 @@ export function getScenarioByIdOrCode(identifier, facilityId) {
   return liveScenarios.find(s =>
     (s.id === identifier || s.scenarioCode === identifier) &&
     (!facilityId || matchesFacilityId(s.facilityId, facilityId) || matchesFacilityId(s.facilityUuid, facilityId))
-  ) || liveScenarios[0];
+  ) || liveScenarios.find(s => s.id === identifier || s.scenarioCode === identifier) || liveScenarios[0];
 }
 
 /**
@@ -424,7 +430,7 @@ export function getScenarioTelemetry(facilityId, scenarioCode = 'SCEN_BASE_2026'
  */
 export function getScenarioComparativeMatrix(facilityId) {
   const scenarios = getFacilityScenarios(facilityId);
-  const baseline = scenarios.find(s => s.scenarioType === SCENARIO_TYPES.BASELINE) || scenarios[0];
+  const baseline = scenarios.find(s => s.scenarioType === SCENARIO_TYPES.BASELINE) || scenarios[0] || liveScenarios[0];
 
   const rows = scenarios.map(scen => {
     const deltaCases = scen.projectedCases - baseline.projectedCases;
@@ -458,9 +464,13 @@ export function getScenarioComparativeMatrix(facilityId) {
     };
   });
 
+  const resolvedFacilityId = typeof facilityId === 'object' && facilityId !== null
+    ? (facilityId.id || 'fac-naples-01')
+    : (facilityId || 'fac-naples-01');
+
   return {
-    facilityId,
-    baselinePeriodCode: baseline.baselinePeriodCode,
+    facilityId: resolvedFacilityId,
+    baselinePeriodCode: baseline?.baselinePeriodCode || '2026-M10',
     scenariosCount: scenarios.length,
     matrix: rows
   };

@@ -32,6 +32,10 @@ import {
 import './BreakEvenView.css';
 
 export default function BreakEvenView({ activeFacility = 'fac-naples-01' }) {
+  const facilityId = typeof activeFacility === 'object' && activeFacility !== null
+    ? (activeFacility.id || 'fac-naples-01')
+    : (activeFacility || 'fac-naples-01');
+
   const [modelCode, setModelCode] = useState('BE2026_M10_BASE');
   const [showDrawer, setShowDrawer] = useState(false);
   const [freezeNotice, setFreezeNotice] = useState(null);
@@ -44,12 +48,12 @@ export default function BreakEvenView({ activeFacility = 'fac-naples-01' }) {
 
   // Analysis & Telemetry
   const analysis = useMemo(() => {
-    return getBreakEvenAnalysis(activeFacility, modelCode);
-  }, [activeFacility, modelCode]);
+    return getBreakEvenAnalysis(facilityId, modelCode);
+  }, [facilityId, modelCode]);
 
   const telemetry = useMemo(() => {
-    return getBreakEvenTelemetry(activeFacility, modelCode);
-  }, [activeFacility, modelCode]);
+    return getBreakEvenTelemetry(facilityId, modelCode);
+  }, [facilityId, modelCode]);
 
   // Simulation result
   const simulation = useMemo(() => {
