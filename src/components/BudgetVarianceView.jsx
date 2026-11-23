@@ -2,9 +2,9 @@
  * ==============================================================================
  * Phase E1: Budget vs. Actual & Variance Reporting View
  * Module 14: CFO Dashboard & Financial Accounting
- * Description: Executive Budget vs Actual interface featuring 5-card telemetry ribbon,
+ * Description: Executive Budget vs Actual interface featuring responsive 5-card ribbon,
  *              3-way variance waterfall bridge (volume, rate, mix), flexible budgeting,
- *              materiality severity tagging, and root cause mitigation drawer.
+ *              collapsible categorized statement table, and root cause mitigation drawer.
  * Maestro Clinical Design System: Emerald, Amber, Crimson, Sky, Slate, Neutral
  * Zero Prohibited Accent Tokens
  * ==============================================================================
@@ -19,24 +19,19 @@ import {
   Search,
   Filter,
   CheckCircle2,
-  XCircle,
   AlertTriangle,
   Download,
   Lock,
   Unlock,
   X,
-  PieChart,
   Calendar,
-  FileSpreadsheet,
-  ArrowUpRight,
-  ArrowDownRight,
-  HelpCircle,
+  ChevronDown,
+  ChevronRight,
   Sliders,
   Scale
 } from 'lucide-react';
 
 import {
-  BUDGET_STATUSES,
   ACCOUNT_CATEGORIES,
   SEVERITY_TIERS,
   getFacilityBudgets,
@@ -45,11 +40,34 @@ import {
   getBvaExecutiveTelemetry,
   approveAndFreezeBudget,
   saveVarianceExplanation,
-  isExpenseOrCostCategory,
-  matchesFacilityId
+  isExpenseOrCostCategory
 } from '../services/budgetVarianceService.js';
 
 import './BudgetVarianceView.css';
+
+// Standard 4-Tier ASC Budget Sections
+const BVA_SECTION_CONFIG = [
+  {
+    key: 'SECTION_VOLUME',
+    title: '1. Surgical Case Volume & OR Capacity Drivers',
+    lineCodes: ['CASE_VOLUME', 'TOTAL_OR_MINUTES']
+  },
+  {
+    key: 'SECTION_REVENUE',
+    title: '2. Gross Patient Revenue, Deductions & Net Patient Revenue (NPR)',
+    lineCodes: ['REV_SURGICAL_GROSS', 'DED_CONTRACTUAL_ALLOWANCES', 'NPR']
+  },
+  {
+    key: 'SECTION_DIRECT_COSTS',
+    title: '3. Direct Clinical Procedural Costs & Contribution Margin',
+    lineCodes: ['COST_IMPLANTS', 'COST_SUPPLIES', 'COST_NURSING_LABOR', 'DIRECT_CLINICAL_MARGIN']
+  },
+  {
+    key: 'SECTION_OVERHEAD_EBITDA',
+    title: '4. Facility Operating Expenses, Overhead & Operating EBITDA',
+    lineCodes: ['COST_VARIABLE_FACILITY', 'FIXED_OVERHEAD_OPEX', 'EBITDA', 'NET_OPERATING_INCOME']
+  }
+];
 
 export default function BudgetVarianceView({ activeFacility }) {
   const rawFacId = activeFacility?.id || (typeof activeFacility === 'string' ? activeFacility : null) || 'fac-naples-01';
@@ -63,6 +81,7 @@ export default function BudgetVarianceView({ activeFacility }) {
   const [severityFilter, setSeverityFilter] = useState('ALL');
   const [polarityFilter, setPolarityFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [collapsedSections, setCollapsedSections] = useState({});
 
   // Drawers & Modals
   const [selectedLineForDrawer, setSelectedLineForDrawer] = useState(null);
@@ -90,10 +109,28 @@ export default function BudgetVarianceView({ activeFacility }) {
     });
   }, [currentBudget?.id, selectedPeriodCode, categoryFilter, severityFilter, polarityFilter, searchQuery]);
 
+  // Group line items into 4 clinical sections
+  const groupedSections = useMemo(() => {
+    return BVA_SECTION_CONFIG.map((sec) => {
+      const secLines = lineItems.filter(item => sec.lineCodes.includes(item.lineCode));
+      return {
+        ...sec,
+        lines: secLines
+      };
+    }).filter(sec => sec.lines.length > 0);
+  }, [lineItems]);
+
   // Handlers
   const showToast = (message) => {
     setFeedbackToast(message);
     setTimeout(() => setFeedbackToast(null), 3500);
+  };
+
+  const toggleSection = (secKey) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [secKey]: !prev[secKey]
+    }));
   };
 
   const handleApproveFreeze = () => {
@@ -188,19 +225,19 @@ export default function BudgetVarianceView({ activeFacility }) {
             </div>
           </div>
           <p className="header-description">
-            Deterministic variance reporting bridging surgical procedural economics to annual budget models. Features 3-way volume/rate/mix variance decomposition, flexible budgeting benchmarks, and CFO mitigation tracking.
+            Managerial budget variance engine reconciling surgical volumes, flexible unit cost baselines, and 3-way volume/rate/mix waterfall decomposition to executive EBITDA.
           </p>
         </div>
 
         <div className="header-actions">
-          <button className="btn-secondary" onClick={handleExportDossier}>
+          <button className="btn-secondary" onClick={handleExportDossier} title="Export audit dossier as JSON">
             <Download size={14} />
             Export BvA Dossier
           </button>
           {!currentBudget?.isApproved && (
-            <button className="btn-primary" onClick={handleApproveFreeze}>
+            <button className="btn-primary" onClick={handleApproveFreeze} title="Hard-freeze and seal this budget model">
               <Lock size={14} />
-              Approve & Freeze Budget
+              Approve & Freeze
             </button>
           )}
         </div>
@@ -211,7 +248,7 @@ export default function BudgetVarianceView({ activeFacility }) {
         {/* Card 1: Net Patient Revenue */}
         <div className="metric-card">
           <div className="card-top">
-            <span className="card-label">NET PATIENT REVENUE (NPR)</span>
+            <span className="card-label">NET PATIENT REVENUE</span>
             <DollarSign size={16} className="text-emerald" />
           </div>
           <div className="card-value font-mono">
@@ -244,7 +281,7 @@ export default function BudgetVarianceView({ activeFacility }) {
             <span className={`variance-pill ${telemetry?.directCosts?.isFavorable ? 'pill-favorable' : 'pill-unfavorable'}`}>
               {telemetry?.directCosts?.variance <= 0 ? '' : '+'}{formatCurrency(telemetry?.directCosts?.variance)} ({telemetry?.directCosts?.percentVariance}%)
             </span>
-            <span className="subtext-muted">{telemetry?.directCosts?.isFavorable ? 'Cost Savings' : 'Overrun'}</span>
+            <span className="subtext-muted">{telemetry?.directCosts?.isFavorable ? 'Savings' : 'Overrun'}</span>
           </div>
         </div>
 
@@ -278,7 +315,7 @@ export default function BudgetVarianceView({ activeFacility }) {
             {telemetry?.volume?.actual} <span className="text-xs text-slate">cases</span>
           </div>
           <div className="card-subtext">
-            Budget Target: <strong className="font-mono">{telemetry?.volume?.budget} cases</strong>
+            Budget: <strong className="font-mono">{telemetry?.volume?.budget} cases</strong>
           </div>
           <div className="card-footer-metric">
             <span className={`variance-pill ${telemetry?.volume?.isFavorable ? 'pill-favorable' : 'pill-unfavorable'}`}>
@@ -292,18 +329,19 @@ export default function BudgetVarianceView({ activeFacility }) {
         <div className="metric-card">
           <div className="card-top">
             <span className="card-label">MATERIAL ALERTS</span>
-            <AlertTriangle size={16} className="text-amber" />
+            <AlertTriangle size={16} className={telemetry?.counts?.critical > 0 ? 'text-amber' : 'text-emerald'} />
           </div>
           <div className="card-value font-mono">
-            {telemetry?.counts?.critical} <span className="text-xs text-slate">material</span>
+            {telemetry?.counts?.critical} <span className="text-xs text-slate">alerts</span>
           </div>
           <div className="card-subtext">
-            Line Items: <strong className="font-mono">{telemetry?.counts?.favorable} Favorable / {telemetry?.counts?.unfavorable} Unfavorable</strong>
+            Line Items: <strong className="font-mono">{telemetry?.counts?.favorable} Fav / {telemetry?.counts?.unfavorable} Unfav</strong>
           </div>
           <div className="card-footer-metric">
             <span className="health-pill">
               {telemetry?.counts?.critical === 0 ? 'Optimal Control' : 'Review Required'}
             </span>
+            <span className="subtext-muted">Audit State</span>
           </div>
         </div>
       </div>
@@ -342,13 +380,13 @@ export default function BudgetVarianceView({ activeFacility }) {
           <div className="bridge-step-card step-delta delta-favorable">
             <span className="step-label">3. Rate / Price Impact</span>
             <span className="step-val font-mono">+$17,200</span>
-            <span className="step-note">+$71.67 avg reimbursement/case</span>
+            <span className="step-note">+$71.67 avg yield/case</span>
           </div>
 
           <div className="bridge-step-card step-delta delta-unfavorable">
             <span className="step-label">4. Specialty Mix Impact</span>
             <span className="step-val font-mono">-$14,400</span>
-            <span className="step-note">Construct shift & acuity</span>
+            <span className="step-note">Construct acuity shifts</span>
           </div>
 
           <div className="bridge-step-card step-end">
@@ -466,67 +504,88 @@ export default function BudgetVarianceView({ activeFacility }) {
         </div>
       </div>
 
-      {/* Statement Table */}
+      {/* Categorized BvA Statement Table */}
       <div className="bva-table-wrapper">
         <table className="bva-table">
           <thead>
             <tr>
-              <th style={{ width: '28%' }}>Line Item Description</th>
-              <th className="font-mono text-center" style={{ width: '12%' }}>Code</th>
-              <th className="text-right" style={{ width: '11%' }}>Actual</th>
-              <th className="text-right" style={{ width: '11%' }}>Budget</th>
-              <th className="text-right" style={{ width: '11%' }}>Flexible Budget</th>
-              <th className="text-right" style={{ width: '10%' }}>$ Variance</th>
-              <th className="text-right" style={{ width: '8%' }}>% Variance</th>
-              <th className="text-center" style={{ width: '9%' }}>Status</th>
+              <th className="th-desc">Line Item Description</th>
+              <th className="th-code text-center">Code</th>
+              <th className="th-num text-right">Actual Amount</th>
+              <th className="th-num text-right">Budget Target</th>
+              <th className="th-num text-right">Flexible Budget</th>
+              <th className="th-num text-right">$ Variance</th>
+              <th className="th-pct text-right">% Variance</th>
+              <th className="th-status text-center">Status</th>
             </tr>
           </thead>
           <tbody>
-            {lineItems.map((line) => {
-              const isCost = isExpenseOrCostCategory(line.accountCategory);
-              const isMargin = line.accountCategory === ACCOUNT_CATEGORIES.MARGIN;
-              const isNpr = line.lineCode === 'NPR';
-              const isVolume = line.accountCategory === ACCOUNT_CATEGORIES.VOLUME;
-
-              let rowClass = 'bva-line-row';
-              if (isMargin || isNpr) rowClass += ' highlight-margin-row';
-
+            {groupedSections.map((sec) => {
+              const isCollapsed = collapsedSections[sec.key];
               return (
-                <tr key={line.id} className={rowClass} onClick={() => handleOpenDrawer(line)}>
-                  <td className="line-desc-cell">
-                    <span className={isMargin || isNpr ? 'font-bold' : 'line-regular'}>
-                      {line.lineName}
-                    </span>
-                    {line.explanation && (
-                      <div className="explanation-hint text-xs text-slate">
-                        Note: {line.explanation}
+                <React.Fragment key={sec.key}>
+                  {/* Collapsible Section Header */}
+                  <tr className="bva-section-header-row" onClick={() => toggleSection(sec.key)}>
+                    <td colSpan={8}>
+                      <div className="section-title-wrap">
+                        {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                        <span className="section-title-text">{sec.title}</span>
+                        <span className="section-count-badge">{sec.lines.length} items</span>
                       </div>
-                    )}
-                  </td>
-                  <td className="font-mono text-xs text-center text-slate">
-                    {line.lineCode}
-                  </td>
-                  <td className="text-right font-mono font-bold">
-                    {isVolume ? `${line.actualAmount} ${line.unitOfMeasure.toLowerCase()}` : formatExactCurrency(line.actualAmount)}
-                  </td>
-                  <td className="text-right font-mono text-slate">
-                    {isVolume ? `${line.budgetAmount} ${line.unitOfMeasure.toLowerCase()}` : formatExactCurrency(line.budgetAmount)}
-                  </td>
-                  <td className="text-right font-mono text-slate">
-                    {isVolume ? '-' : formatExactCurrency(line.flexibleBudgetAmount)}
-                  </td>
-                  <td className={`text-right font-mono font-bold ${line.isFavorable ? 'text-emerald' : 'text-crimson'}`}>
-                    {line.dollarVariance >= 0 ? '+' : ''}{isVolume ? line.dollarVariance : formatExactCurrency(line.dollarVariance)}
-                  </td>
-                  <td className={`text-right font-mono ${line.isFavorable ? 'text-emerald' : 'text-crimson'}`}>
-                    {line.percentVariance >= 0 ? '+' : ''}{line.percentVariance}%
-                  </td>
-                  <td className="text-center">
-                    <span className={`status-pill ${line.isFavorable ? 'pill-favorable' : 'pill-unfavorable'} ${line.severity === 'CRITICAL' ? 'pill-critical' : ''}`}>
-                      {line.isFavorable ? 'Favorable' : 'Unfavorable'}
-                    </span>
-                  </td>
-                </tr>
+                    </td>
+                  </tr>
+
+                  {/* Section Line Items */}
+                  {!isCollapsed && sec.lines.map((line) => {
+                    const isMargin = line.accountCategory === ACCOUNT_CATEGORIES.MARGIN;
+                    const isNpr = line.lineCode === 'NPR';
+                    const isVolume = line.accountCategory === ACCOUNT_CATEGORIES.VOLUME;
+
+                    let rowClass = 'bva-line-row';
+                    if (isNpr) rowClass += ' npr-row';
+                    else if (isMargin) rowClass += ' margin-row';
+
+                    return (
+                      <tr key={line.id} className={rowClass} onClick={() => handleOpenDrawer(line)}>
+                        <td className="td-desc">
+                          <div className="line-title-wrap">
+                            <span className={isMargin || isNpr ? 'font-bold' : 'line-regular'}>
+                              {line.lineName}
+                            </span>
+                            {line.explanation && (
+                              <div className="explanation-hint text-xs text-slate">
+                                Note: {line.explanation}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="td-code text-center font-mono">
+                          <span className="code-pill">{line.lineCode}</span>
+                        </td>
+                        <td className="td-num text-right font-mono font-bold">
+                          {isVolume ? `${line.actualAmount.toLocaleString()} cases` : formatExactCurrency(line.actualAmount)}
+                        </td>
+                        <td className="td-num text-right font-mono text-slate">
+                          {isVolume ? `${line.budgetAmount.toLocaleString()} cases` : formatExactCurrency(line.budgetAmount)}
+                        </td>
+                        <td className="td-num text-right font-mono text-slate">
+                          {isVolume ? '-' : formatExactCurrency(line.flexibleBudgetAmount)}
+                        </td>
+                        <td className={`td-num text-right font-mono font-bold ${line.isFavorable ? 'text-emerald' : 'text-crimson'}`}>
+                          {line.dollarVariance >= 0 ? '+' : ''}{isVolume ? `${line.dollarVariance} cases` : formatExactCurrency(line.dollarVariance)}
+                        </td>
+                        <td className={`td-pct text-right font-mono ${line.isFavorable ? 'text-emerald' : 'text-crimson'}`}>
+                          {line.percentVariance >= 0 ? '+' : ''}{line.percentVariance}%
+                        </td>
+                        <td className="td-status text-center">
+                          <span className={`status-pill ${line.isFavorable ? 'pill-favorable' : 'pill-unfavorable'} ${line.severity === 'CRITICAL' ? 'pill-critical' : ''}`}>
+                            {line.isFavorable ? 'Favorable' : 'Unfavorable'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </React.Fragment>
               );
             })}
           </tbody>
