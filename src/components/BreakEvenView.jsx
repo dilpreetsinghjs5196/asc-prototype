@@ -130,7 +130,7 @@ export default function BreakEvenView({ activeFacility = 'fac-naples-01' }) {
               <Lock size={12} /> {telemetry.status}
             </span>
             <span className="be-badge-period">
-              Baseline: {model.baselinePeriodCode} (October Close)
+              Baseline: {model?.baselinePeriodCode || '2026-M10'} (October Close)
             </span>
           </div>
           <h2 className="be-header-title">Break-Even Analysis & Cost-Volume-Profit (CVP) Engine</h2>
@@ -625,7 +625,7 @@ export default function BreakEvenView({ activeFacility = 'fac-naples-01' }) {
                   </div>
                   <div className="be-prow">
                     <span className="be-plabel">Baseline Close:</span>
-                    <span className="be-pval font-mono">{model.baselinePeriodCode}</span>
+                    <span className="be-pval font-mono">{model?.baselinePeriodCode || '2026-M10'}</span>
                   </div>
                   <div className="be-prow">
                     <span className="be-plabel">Approved At:</span>
