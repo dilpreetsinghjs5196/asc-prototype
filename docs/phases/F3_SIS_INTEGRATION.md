@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS public.sis_case_mappings (
     sis_case_id VARCHAR(64) NOT NULL,
     sis_patient_id VARCHAR(64) NOT NULL,
     sis_account_number VARCHAR(64),
-    platform_case_id UUID REFERENCES public.surgical_cases(id) ON DELETE SET NULL,
+    platform_case_id UUID,
     surgery_date DATE NOT NULL,
     surgeon_npi VARCHAR(10) NOT NULL,
     surgeon_name VARCHAR(128) NOT NULL,
