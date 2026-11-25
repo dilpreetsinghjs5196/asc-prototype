@@ -4,17 +4,18 @@
  * Module 15: Enterprise Healthcare Integrations
  * Maestro Clinical Design System: Emerald, Sky, Amber, Crimson, Slate, Neutral
  * Strict Zero Prohibited Accent Tokens
+ * Full Light & Dark Theme Support, Print Optimization
  * ==============================================================================
  */
 
+/* Container - Default Light Theme */
 .ipv-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 24px;
-  background-color: var(--bg-dashboard, #0b1329);
-  color: var(--text-primary, #f8fafc);
-  min-height: 100vh;
+  gap: 16px;
+  padding: 0;
+  background-color: var(--bg-main, #f8fafc);
+  color: var(--text-primary, #0f172a);
   box-sizing: border-box;
 }
 
@@ -23,23 +24,23 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 18px;
+  padding: 10px 16px;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 500;
   animation: ipvSlideDown 0.25s ease-out;
 }
 
 .ipv-banner-success {
-  background-color: rgba(16, 185, 129, 0.12);
+  background-color: #ecfdf5;
   border: 1px solid #10b981;
-  color: #34d399;
+  color: #065f46;
 }
 
 .ipv-banner-error {
-  background-color: rgba(220, 38, 38, 0.12);
-  border: 1px solid #dc2626;
-  color: #f87171;
+  background-color: #fef2f2;
+  border: 1px solid #ef4444;
+  color: #991b1b;
 }
 
 .ipv-btn-banner-close {
@@ -51,45 +52,47 @@
   padding: 4px;
 }
 
-/* Header Card */
+/* Header Control Card - Compact and Elegant */
 .ipv-header-card {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  background: var(--bg-card, #131d38);
-  border: 1px solid var(--border-color, #1e293b);
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-  gap: 24px;
+  align-items: center;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 10px;
+  padding: 14px 20px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .ipv-header-left {
   flex: 1;
+  min-width: 300px;
 }
 
 .ipv-header-badges {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
 }
 
 .ipv-badge-facility {
-  background: rgba(2, 132, 199, 0.15);
-  color: #38bdf8;
-  border: 1px solid rgba(2, 132, 199, 0.3);
-  padding: 4px 10px;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  padding: 3px 9px;
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 600;
 }
 
 .ipv-badge-phase {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  padding: 4px 10px;
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  padding: 3px 9px;
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -99,44 +102,36 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(16, 185, 129, 0.12);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  padding: 4px 10px;
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  padding: 3px 9px;
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 600;
 }
 
 .ipv-badge-source {
-  background: rgba(100, 116, 139, 0.15);
-  color: #94a3b8;
-  border: 1px solid rgba(100, 116, 139, 0.3);
-  padding: 4px 10px;
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  padding: 3px 9px;
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 500;
 }
 
-.ipv-header-title {
-  margin: 0 0 8px 0;
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--text-primary, #f8fafc);
-  letter-spacing: -0.02em;
-}
-
-.ipv-header-subtitle {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--text-secondary, #94a3b8);
-  line-height: 1.5;
-  max-width: 900px;
+.ipv-header-note {
+  margin: 6px 0 0 0;
+  font-size: 0.82rem;
+  color: #64748b;
+  line-height: 1.4;
 }
 
 .ipv-header-actions {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
 }
 
 .ipv-btn-primary {
@@ -146,12 +141,13 @@
   background-color: #0284c7;
   color: #ffffff;
   border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
+  padding: 8px 16px;
+  border-radius: 6px;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   cursor: pointer;
   transition: background-color 0.15s ease;
+  white-space: nowrap;
 }
 
 .ipv-btn-primary:hover {
@@ -162,38 +158,52 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: transparent;
-  color: var(--text-primary, #f8fafc);
-  border: 1px solid var(--border-color, #334155);
-  padding: 10px 16px;
-  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  padding: 8px 14px;
+  border-radius: 6px;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .ipv-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: #64748b;
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
 }
 
 /* 6-Card Executive Telemetry Ribbon */
 .ipv-telemetry-ribbon {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1280px) {
+  .ipv-telemetry-ribbon {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .ipv-telemetry-ribbon {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .ipv-telemetry-card {
-  background: var(--bg-card, #131d38);
-  border: 1px solid var(--border-color, #1e293b);
-  border-radius: 10px;
-  padding: 16px;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  gap: 4px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
 }
 
 .ipv-tcard-header {
@@ -203,60 +213,64 @@
 }
 
 .ipv-tcard-label {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   text-transform: uppercase;
-  color: var(--text-secondary, #94a3b8);
+  color: #64748b;
   letter-spacing: 0.04em;
 }
 
 .ipv-tcard-value {
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 700;
-  color: var(--text-primary, #f8fafc);
+  color: #0f172a;
 }
 
 .ipv-tcard-subtext {
-  font-size: 0.75rem;
-  color: var(--text-secondary, #64748b);
+  font-size: 0.72rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 6-Stage Visual Stepper Pipeline Card */
 .ipv-stepper-card {
-  background: var(--bg-card, #131d38);
-  border: 1px solid var(--border-color, #1e293b);
-  border-radius: 12px;
-  padding: 20px 24px;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 10px;
+  padding: 14px 20px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
 }
 
 .ipv-scard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .ipv-scard-title {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .ipv-scard-title h3 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: var(--text-primary, #f8fafc);
+  color: #0f172a;
 }
 
 .ipv-scard-tag {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  color: #38bdf8;
-  background: rgba(2, 132, 199, 0.12);
-  padding: 3px 10px;
-  border-radius: 6px;
-  border: 1px solid rgba(2, 132, 199, 0.25);
+  color: #0284c7;
+  background: #f0f9ff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid #bae6fd;
 }
 
 .ipv-stepper-track {
@@ -265,40 +279,41 @@
   justify-content: space-between;
   gap: 8px;
   overflow-x: auto;
-  padding: 8px 0;
+  padding: 4px 0;
 }
 
 .ipv-step-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-width: 140px;
+  gap: 10px;
+  min-width: 130px;
 }
 
 .ipv-step-bubble {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.85rem;
-  background: #1e293b;
-  border: 2px solid #334155;
-  color: #94a3b8;
+  font-size: 0.8rem;
+  background: #f1f5f9;
+  border: 2px solid #cbd5e1;
+  color: #64748b;
+  flex-shrink: 0;
 }
 
 .ipv-step-item.completed .ipv-step-bubble {
-  background: rgba(16, 185, 129, 0.15);
+  background: #ecfdf5;
   border-color: #10b981;
-  color: #34d399;
+  color: #047857;
 }
 
 .ipv-step-item.active .ipv-step-bubble {
-  background: rgba(217, 119, 6, 0.18);
+  background: #fef3c7;
   border-color: #f59e0b;
-  color: #fbbf24;
+  color: #b45309;
 }
 
 .ipv-step-content {
@@ -307,22 +322,22 @@
 }
 
 .ipv-step-name {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
-  color: var(--text-primary, #f8fafc);
+  color: #0f172a;
 }
 
 .ipv-step-desc {
-  font-size: 0.72rem;
-  color: var(--text-secondary, #94a3b8);
+  font-size: 0.7rem;
+  color: #64748b;
   white-space: nowrap;
 }
 
 .ipv-step-divider {
   flex: 1;
   height: 2px;
-  background: #334155;
-  min-width: 24px;
+  background: #e2e8f0;
+  min-width: 16px;
 }
 
 .ipv-step-divider.completed {
@@ -337,8 +352,8 @@
 .ipv-tabs-bar {
   display: flex;
   gap: 8px;
-  border-bottom: 1px solid var(--border-color, #1e293b);
-  padding-bottom: 4px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0;
   overflow-x: auto;
 }
 
@@ -347,33 +362,35 @@
   align-items: center;
   gap: 8px;
   background: transparent;
-  color: var(--text-secondary, #94a3b8);
+  color: #64748b;
   border: none;
   border-bottom: 2px solid transparent;
-  padding: 10px 16px;
-  font-size: 0.85rem;
+  padding: 8px 14px;
+  font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
+  margin-bottom: -2px;
 }
 
 .ipv-tab-btn:hover {
-  color: var(--text-primary, #f8fafc);
+  color: #0f172a;
 }
 
 .ipv-tab-btn.active {
-  color: #38bdf8;
+  color: #0284c7;
   border-bottom-color: #0284c7;
+  font-weight: 700;
 }
 
-/* Tables */
+/* Table Card */
 .ipv-table-card {
-  background: var(--bg-card, #131d38);
-  border: 1px solid var(--border-color, #1e293b);
-  border-radius: 12px;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
 }
 
 .ipv-table-toolbar {
@@ -381,30 +398,41 @@
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border-color, #1e293b);
+  padding: 12px 18px;
+  border-bottom: 1px solid #e2e8f0;
   flex-wrap: wrap;
+  background: #ffffff;
 }
 
 .ipv-search-box {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--bg-dashboard, #0b1329);
-  border: 1px solid var(--border-color, #334155);
-  border-radius: 8px;
-  padding: 8px 14px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 6px 12px;
   flex: 1;
-  min-width: 280px;
+  min-width: 260px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ipv-search-box:focus-within {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
 }
 
 .ipv-search-box input {
   background: transparent;
   border: none;
-  color: var(--text-primary, #f8fafc);
-  font-size: 0.85rem;
+  color: #0f172a;
+  font-size: 0.82rem;
   width: 100%;
   outline: none;
+}
+
+.ipv-search-box input::placeholder {
+  color: #94a3b8;
 }
 
 .ipv-filter-group {
@@ -414,12 +442,12 @@
 }
 
 .ipv-select {
-  background: var(--bg-dashboard, #0b1329);
-  color: var(--text-primary, #f8fafc);
-  border: 1px solid var(--border-color, #334155);
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
   border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 0.82rem;
+  padding: 6px 10px;
+  font-size: 0.8rem;
   outline: none;
   cursor: pointer;
 }
@@ -432,32 +460,32 @@
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
 }
 
 .ipv-table th {
-  padding: 12px 18px;
-  background: rgba(255, 255, 255, 0.02);
-  color: var(--text-secondary, #94a3b8);
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: 10px 16px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid var(--border-color, #1e293b);
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .ipv-table td {
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--border-color, #1e293b);
-  color: var(--text-primary, #f8fafc);
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #0f172a;
   vertical-align: middle;
 }
 
 .ipv-table tr:hover td {
-  background: rgba(255, 255, 255, 0.02);
+  background: #f8fafc;
 }
 
-/* Badges & Pills in Tables */
+/* Badges & Pills */
 .ipv-rec-cell {
   display: flex;
   flex-direction: column;
@@ -465,97 +493,100 @@
 }
 
 .ipv-rec-id {
-  font-weight: 600;
-  color: #38bdf8;
+  font-weight: 700;
+  color: #0284c7;
 }
 
 .ipv-rec-batch {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: #64748b;
 }
 
 .ipv-rule-badge {
-  background: rgba(2, 132, 199, 0.15);
-  color: #38bdf8;
-  padding: 3px 8px;
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  padding: 2px 7px;
   border-radius: 4px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 600;
 }
 
 .ipv-cat-name {
-  color: #94a3b8;
+  color: #475569;
   font-weight: 500;
 }
 
 .ipv-sev-badge {
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: 4px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
 }
 
 .ipv-sev-badge.critical {
-  background: rgba(220, 38, 38, 0.15);
-  color: #f87171;
-  border: 1px solid rgba(220, 38, 38, 0.3);
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
 }
 
 .ipv-sev-badge.warning {
-  background: rgba(217, 119, 6, 0.15);
-  color: #fbbf24;
-  border: 1px solid rgba(217, 119, 6, 0.3);
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
 }
 
 .ipv-val-bad {
-  color: #f87171;
-  background: rgba(220, 38, 38, 0.08);
+  color: #b91c1c;
+  background: #fee2e2;
   padding: 2px 6px;
   border-radius: 4px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .ipv-val-good {
-  color: #34d399;
-  background: rgba(16, 185, 129, 0.08);
+  color: #047857;
+  background: #ecfdf5;
   padding: 2px 6px;
   border-radius: 4px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .ipv-status-pill {
-  padding: 3px 8px;
+  padding: 2px 8px;
   border-radius: 9999px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 600;
   text-transform: capitalize;
 }
 
 .ipv-status-pill.pending {
-  background: rgba(217, 119, 6, 0.15);
-  color: #fbbf24;
+  background: #fef3c7;
+  color: #b45309;
 }
 
-.ipv-status-pill.resolved, .ipv-status-pill.completed {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
+.ipv-status-pill.resolved,
+.ipv-status-pill.completed {
+  background: #ecfdf5;
+  color: #047857;
 }
 
 .ipv-status-pill.warning {
-  background: rgba(217, 119, 6, 0.15);
-  color: #f59e0b;
+  background: #fef3c7;
+  color: #b45309;
 }
 
 .ipv-status-pill.rejected {
-  background: rgba(220, 38, 38, 0.15);
-  color: #f87171;
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
 .ipv-stage-pill {
-  background: rgba(2, 132, 199, 0.12);
-  color: #38bdf8;
-  padding: 2px 8px;
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 2px 7px;
   border-radius: 4px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 600;
 }
 
@@ -570,80 +601,81 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  padding: 5px 9px;
-  border-radius: 6px;
-  font-size: 0.75rem;
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .ipv-btn-row-override:hover {
-  background: rgba(16, 185, 129, 0.25);
+  background: #d1fae5;
 }
 
 .ipv-btn-row-remap {
   display: flex;
   align-items: center;
   gap: 4px;
-  background: rgba(2, 132, 199, 0.15);
-  color: #38bdf8;
-  border: 1px solid rgba(2, 132, 199, 0.3);
-  padding: 5px 9px;
-  border-radius: 6px;
-  font-size: 0.75rem;
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .ipv-btn-row-remap:hover {
-  background: rgba(2, 132, 199, 0.25);
+  background: #e0f2fe;
 }
 
 .ipv-btn-row-reject {
   display: flex;
   align-items: center;
   gap: 4px;
-  background: rgba(220, 38, 38, 0.15);
-  color: #f87171;
-  border: 1px solid rgba(220, 38, 38, 0.3);
-  padding: 5px 9px;
-  border-radius: 6px;
-  font-size: 0.75rem;
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .ipv-btn-row-reject:hover {
-  background: rgba(220, 38, 38, 0.25);
+  background: #fee2e2;
 }
 
 /* Schema Inspector Grid */
 .ipv-schema-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 16px;
 }
 
 .ipv-schema-card {
-  background: var(--bg-card, #131d38);
-  border: 1px solid var(--border-color, #1e293b);
-  border-radius: 12px;
-  padding: 20px;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
 }
 
 .ipv-code-block {
-  background: #090e1a;
+  background: #0f172a;
   border: 1px solid #1e293b;
   border-radius: 8px;
-  padding: 16px;
-  font-size: 0.8rem;
-  color: #94a3b8;
+  padding: 14px;
+  font-size: 0.78rem;
+  color: #f8fafc;
   line-height: 1.5;
   overflow-x: auto;
   margin: 0;
@@ -653,7 +685,7 @@
 .ipv-drawer-backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(15, 23, 42, 0.6);
   display: flex;
   justify-content: flex-end;
   z-index: 1000;
@@ -661,40 +693,41 @@
 }
 
 .ipv-drawer-panel {
-  width: 520px;
+  width: 500px;
   max-width: 90vw;
   height: 100%;
-  background: #0f172a;
-  border-left: 1px solid #334155;
+  background: #ffffff;
+  border-left: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
   animation: ipvSlideIn 0.25s ease-out;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
 }
 
 .ipv-drawer-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #1e293b;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .ipv-dheader-title {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .ipv-dheader-title h3 {
   margin: 0;
-  font-size: 1.1rem;
-  color: #f8fafc;
+  font-size: 1rem;
+  color: #0f172a;
 }
 
 .ipv-btn-drawer-close {
   background: transparent;
   border: none;
-  color: #94a3b8;
+  color: #64748b;
   cursor: pointer;
   padding: 4px;
 }
@@ -702,90 +735,92 @@
 .ipv-drawer-content {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 .ipv-dsection-title {
-  margin: 0 0 12px 0;
-  font-size: 0.85rem;
+  margin: 0 0 10px 0;
+  font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: #94a3b8;
+  color: #64748b;
   letter-spacing: 0.05em;
 }
 
 .ipv-provenance-box {
-  background: #1e293b;
-  border: 1px solid #334155;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 14px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .ipv-prow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
 }
 
 .ipv-plabel {
-  color: #94a3b8;
+  color: #64748b;
 }
 
 .ipv-pval {
-  color: #f8fafc;
-  font-weight: 500;
+  color: #0f172a;
+  font-weight: 600;
 }
 
 .ipv-pval-hash {
-  font-size: 0.72rem;
-  color: #38bdf8;
+  font-size: 0.7rem;
+  color: #0284c7;
   word-break: break-all;
-  max-width: 260px;
+  max-width: 250px;
 }
 
 .ipv-breakdown-list {
-  background: #1e293b;
-  border: 1px solid #334155;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 14px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .ipv-breakdown-row {
   display: flex;
   justify-content: space-between;
-  font-size: 0.85rem;
-  color: #e2e8f0;
+  font-size: 0.82rem;
+  color: #334155;
 }
 
 .ipv-drawer-footer {
-  padding: 16px 24px;
-  border-top: 1px solid #1e293b;
+  padding: 14px 20px;
+  border-top: 1px solid #e2e8f0;
 }
 
 .ipv-btn-drawer-close-full {
   width: 100%;
-  padding: 10px;
-  background: #334155;
-  color: #f8fafc;
-  border: none;
-  border-radius: 8px;
+  padding: 9px;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
   font-weight: 600;
+  font-size: 0.84rem;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: all 0.15s ease;
 }
 
 .ipv-btn-drawer-close-full:hover {
-  background: #475569;
+  background: #e2e8f0;
+  color: #0f172a;
 }
 
 /* Common Typography & Utilities */
@@ -794,7 +829,7 @@
 }
 
 .font-xs {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
 }
 
 .font-weight-600 {
@@ -802,50 +837,254 @@
 }
 
 .text-emerald {
-  color: #10b981;
+  color: #059669;
 }
 
 .text-sky {
-  color: #38bdf8;
+  color: #0284c7;
 }
 
 .text-amber {
-  color: #f59e0b;
+  color: #d97706;
 }
 
 .text-slate {
-  color: #94a3b8;
+  color: #64748b;
 }
 
 @keyframes ipvSlideDown {
-  from {
-    transform: translateY(-8px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(-6px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes ipvSlideIn {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
 }
 
 @keyframes ipvFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
+/* ==============================================================================
+   DARK THEME OVERRIDES ([data-theme="dark"] and .dark)
+   ============================================================================== */
+
+[data-theme="dark"] .ipv-container,
+.dark .ipv-container {
+  background-color: #090d16;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .ipv-header-card,
+.dark .ipv-header-card,
+[data-theme="dark"] .ipv-telemetry-card,
+.dark .ipv-telemetry-card,
+[data-theme="dark"] .ipv-stepper-card,
+.dark .ipv-stepper-card,
+[data-theme="dark"] .ipv-table-card,
+.dark .ipv-table-card,
+[data-theme="dark"] .ipv-schema-card,
+.dark .ipv-schema-card {
+  background-color: #0f172a;
+  border-color: #1e293b;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .ipv-badge-facility,
+.dark .ipv-badge-facility {
+  background-color: #1e293b;
+  color: #cbd5e1;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .ipv-badge-phase,
+.dark .ipv-badge-phase {
+  background-color: rgba(2, 132, 199, 0.15);
+  color: #38bdf8;
+  border-color: rgba(2, 132, 199, 0.3);
+}
+
+[data-theme="dark"] .ipv-badge-status,
+.dark .ipv-badge-status {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="dark"] .ipv-badge-source,
+.dark .ipv-badge-source {
+  background-color: rgba(100, 116, 139, 0.15);
+  color: #94a3b8;
+  border-color: rgba(100, 116, 139, 0.3);
+}
+
+[data-theme="dark"] .ipv-header-note,
+.dark .ipv-header-note {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .ipv-btn-secondary,
+.dark .ipv-btn-secondary {
+  background: transparent;
+  color: #f8fafc;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .ipv-btn-secondary:hover,
+.dark .ipv-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: #64748b;
+}
+
+[data-theme="dark"] .ipv-tcard-value,
+.dark .ipv-tcard-value,
+[data-theme="dark"] .ipv-scard-title h3,
+.dark .ipv-scard-title h3,
+[data-theme="dark"] .ipv-step-name,
+.dark .ipv-step-name {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .ipv-tcard-label,
+.dark .ipv-tcard-label,
+[data-theme="dark"] .ipv-tcard-subtext,
+.dark .ipv-tcard-subtext,
+[data-theme="dark"] .ipv-step-desc,
+.dark .ipv-step-desc {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .ipv-step-bubble,
+.dark .ipv-step-bubble {
+  background: #1e293b;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .ipv-step-divider,
+.dark .ipv-step-divider {
+  background: #334155;
+}
+
+[data-theme="dark"] .ipv-tabs-bar,
+.dark .ipv-tabs-bar {
+  border-bottom-color: #1e293b;
+}
+
+[data-theme="dark"] .ipv-tab-btn,
+.dark .ipv-tab-btn {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .ipv-tab-btn:hover,
+.dark .ipv-tab-btn:hover {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .ipv-tab-btn.active,
+.dark .ipv-tab-btn.active {
+  color: #38bdf8;
+  border-bottom-color: #38bdf8;
+}
+
+[data-theme="dark"] .ipv-table-toolbar,
+.dark .ipv-table-toolbar {
+  background-color: #0f172a;
+  border-bottom-color: #1e293b;
+}
+
+[data-theme="dark"] .ipv-search-box,
+.dark .ipv-search-box {
+  background-color: #090e17;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .ipv-search-box input,
+.dark .ipv-search-box input {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .ipv-select,
+.dark .ipv-select {
+  background-color: #090e17;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .ipv-table th,
+.dark .ipv-table th {
+  background-color: #090e17;
+  color: #94a3b8;
+  border-bottom-color: #1e293b;
+}
+
+[data-theme="dark"] .ipv-table td,
+.dark .ipv-table td {
+  border-bottom-color: #1e293b;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .ipv-table tr:hover td,
+.dark .ipv-table tr:hover td {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="dark"] .ipv-rec-id,
+.dark .ipv-rec-id {
+  color: #38bdf8;
+}
+
+[data-theme="dark"] .ipv-drawer-panel,
+.dark .ipv-drawer-panel {
+  background-color: #0f172a;
+  border-left-color: #1e293b;
+}
+
+[data-theme="dark"] .ipv-drawer-header,
+.dark .ipv-drawer-header,
+[data-theme="dark"] .ipv-drawer-footer,
+.dark .ipv-drawer-footer {
+  border-color: #1e293b;
+}
+
+[data-theme="dark"] .ipv-dheader-title h3,
+.dark .ipv-dheader-title h3 {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .ipv-provenance-box,
+.dark .ipv-provenance-box,
+[data-theme="dark"] .ipv-breakdown-list,
+.dark .ipv-breakdown-list {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .ipv-pval,
+.dark .ipv-pval {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .ipv-breakdown-row,
+.dark .ipv-breakdown-row {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .ipv-btn-drawer-close-full,
+.dark .ipv-btn-drawer-close-full {
+  background-color: #334155;
+  color: #f8fafc;
+  border-color: #475569;
+}
+
+[data-theme="dark"] .ipv-btn-drawer-close-full:hover,
+.dark .ipv-btn-drawer-close-full:hover {
+  background-color: #475569;
+}
+
+/* Print Styles */
 @media print {
   .ipv-header-actions,
   .ipv-tabs-bar,

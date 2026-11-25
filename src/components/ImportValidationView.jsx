@@ -127,7 +127,7 @@ export default function ImportValidationView({ activeFacility = 'fac-naples-01' 
         </div>
       )}
 
-      {/* Header Card */}
+      {/* Header Control Card */}
       <div className="ipv-header-card">
         <div className="ipv-header-left">
           <div className="ipv-header-badges">
@@ -140,10 +140,8 @@ export default function ImportValidationView({ activeFacility = 'fac-naples-01' 
               Source: HST Pathways FHIR R4
             </span>
           </div>
-          <h2 className="ipv-header-title">Import Validation Pipeline & Exception Workqueue</h2>
-          <p className="ipv-header-subtitle">
-            Deterministic 6-stage healthcare data processing pipeline: Import &rarr; Validate &rarr; Normalize &rarr; Match &rarr; Exception &rarr; Commit.
-            Enforces NPI Luhn checks, canonical payer aliasing, composite clinical matching, and tamper-evident audit seals.
+          <p className="ipv-header-note">
+            Deterministic 6-stage lifecycle: <strong>Import &rarr; Validate &rarr; Normalize &rarr; Match &rarr; Exception &rarr; Commit</strong>. Enforces NPI Luhn checks, canonical payer aliasing, and cryptographic audit seals.
           </p>
         </div>
 
