@@ -120,6 +120,7 @@ import ExcelCsvImportView from './components/ExcelCsvImportView';
 import SisIntegrationView from './components/SisIntegrationView';
 import HstIntegrationView from './components/HstIntegrationView';
 import ClearinghouseIntegrationView from './components/ClearinghouseIntegrationView';
+import AccountingIntegrationView from './components/AccountingIntegrationView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -191,7 +192,8 @@ import {
   Server,
   Workflow,
   Code2,
-  Send
+  Send,
+  Landmark
 } from 'lucide-react';
 
 // ==========================================
@@ -3295,6 +3297,13 @@ export default function App() {
             <div className="menu-item-icon"><Send size={16} /></div>
             Clearinghouse EDI
           </div>
+          <div
+            className={`menu-item ${activeTab === 'accounting_integration' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('accounting_integration'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><Landmark size={16} /></div>
+            Accounting & GL
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -3448,6 +3457,7 @@ export default function App() {
                   {activeTab === 'sis_integration' && 'Surgical Information Systems (SIS) EHR Gateway'}
                   {activeTab === 'hst_integration' && 'HST Pathways EHR/PMS Gateway'}
                   {activeTab === 'clearinghouse_integration' && 'Clearinghouse EDI Gateway & Adjudication Engine'}
+                  {activeTab === 'accounting_integration' && 'Accounting & General Ledger Gateway'}
                   {activeTab === 'claims_model' && 'Claims Management & RCM Lifecycle'}
                   {activeTab === 'edi_837_ingestion' && '837 Ingestion & Case Matching Engine'}
                   {activeTab === 'edi_835_remittance' && '835 Remittance Advice & Electronic Posting Engine'}
@@ -3565,6 +3575,7 @@ export default function App() {
                   {activeTab === 'sis_integration' && 'Bi-directional EHR synchronization, perioperative milestone chronology, AdvantX charge capture & inventory construct reconciliation'}
                   {activeTab === 'hst_integration' && 'Bi-directional EHR synchronization, HST eChart perioperative milestone chronology, HST Practice Management charge capture & implant construct reconciliation'}
                   {activeTab === 'clearinghouse_integration' && 'Automated ANSI ASC X12 837I/P dispatch, 999/277CA acknowledgments, 835 ERA remittance ingestion, WEDI SNIP 1–7 validation & CARC balancing'}
+                  {activeTab === 'accounting_integration' && 'Automated Chart of Accounts mapping, double-entry journal posting, sub-ledger to bank reconciliation & GAAP compliance'}
                   {activeTab === 'claims_model' && 'UB-04 Institutional & CMS-1500 Adjudication, Clearinghouse Provenance & AR Ledger'}
                   {activeTab === 'edi_837_ingestion' && 'ANSI ASC X12 837I/P Clearinghouse Ingestion, WEDI SNIP 1–4 Validation & Case Linking'}
                   {activeTab === 'edi_835_remittance' && 'ANSI ASC X12 835 ERA Ingestion, CLP Adjudication, CARC Balancing & Auto-Post'}
@@ -3709,7 +3720,7 @@ export default function App() {
             </div>
 
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'ai_analyst', 'ai_tool_gateway', 'ai_permissions', 'ai_tool_definitions', 'ai_evidence_citations', 'ai_hallucination_rules', 'ai_human_approval', 'ai_voice_architecture', 'ai_benchmark_evaluation', 'next_best_financial_action', 'recommendation_priority_model', 'recommendation_evidence', 'recommendation_approvals', 'decision_ledger', 'recommendation_outcomes', 'realized_value', 'management_pnl', 'budget_variance', 'rolling_forecast', 'cash_forecast', 'break_even', 'scenario_modeling', 'board_reporting', 'roi_value_report', 'integration_framework', 'import_validation', 'excel_csv_import', 'sis_integration', 'hst_integration', 'clearinghouse_integration', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'surgeon_implant_variance', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'payer_intelligence', 'payer_contract_performance', 'cpt_intelligence', 'cpt_economics', 'cpt_denial_payment', 'vendor_cost_comparison', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'ai_analyst', 'ai_tool_gateway', 'ai_permissions', 'ai_tool_definitions', 'ai_evidence_citations', 'ai_hallucination_rules', 'ai_human_approval', 'ai_voice_architecture', 'ai_benchmark_evaluation', 'next_best_financial_action', 'recommendation_priority_model', 'recommendation_evidence', 'recommendation_approvals', 'decision_ledger', 'recommendation_outcomes', 'realized_value', 'management_pnl', 'budget_variance', 'rolling_forecast', 'cash_forecast', 'break_even', 'scenario_modeling', 'board_reporting', 'roi_value_report', 'integration_framework', 'import_validation', 'excel_csv_import', 'sis_integration', 'hst_integration', 'clearinghouse_integration', 'accounting_integration', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'surgeon_implant_variance', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'payer_intelligence', 'payer_contract_performance', 'cpt_intelligence', 'cpt_economics', 'cpt_denial_payment', 'vendor_cost_comparison', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -5750,6 +5761,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'clearinghouse_integration' && (
                 <ClearinghouseIntegrationView activeFacility={activeFacility} />
+              )}
+
+              {/* ==========================================
+              TAB: ACCOUNTING & GL GATEWAY (PHASE F6 - MODULE 15 INTEGRATIONS)
+              ========================================== */}
+              {activeTab === 'accounting_integration' && (
+                <AccountingIntegrationView activeFacility={activeFacility} />
               )}
 
               {/* ==========================================
