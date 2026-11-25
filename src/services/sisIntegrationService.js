@@ -209,7 +209,7 @@ const IN_MEMORY_SYNC_BATCHES = [
     durationMs: 412,
     startedAt: '2026-02-24T11:30:00Z',
     completedAt: '2026-02-24T11:30:41Z',
-    sha256SyncSeal: 'sha256_sis_7a189fbc01234567890abcdef1234567890abcdef1234567890abcdef123'
+    sha256SyncSeal: 'sha256_sis_7a189fbc01234567890abcdef1234567890abcdef1234567890ab'
   },
   {
     id: 'e2222222-2222-2222-2222-222222222222',
@@ -226,7 +226,7 @@ const IN_MEMORY_SYNC_BATCHES = [
     durationMs: 380,
     startedAt: '2026-02-24T12:00:00Z',
     completedAt: '2026-02-24T12:00:38Z',
-    sha256SyncSeal: 'sha256_sis_8b290acd1234567890abcdef1234567890abcdef1234567890abcdef124'
+    sha256SyncSeal: 'sha256_sis_8b290acd01234567890abcdef1234567890abcdef1234567890ab'
   },
   {
     id: 'e3333333-3333-3333-3333-333333333333',
@@ -243,7 +243,7 @@ const IN_MEMORY_SYNC_BATCHES = [
     durationMs: 320,
     startedAt: '2026-02-24T12:30:00Z',
     completedAt: '2026-02-24T12:30:32Z',
-    sha256SyncSeal: 'sha256_sis_9c301bde2345678901abcdef1234567890abcdef1234567890abcdef125'
+    sha256SyncSeal: 'sha256_sis_9c301bde01234567890abcdef1234567890abcdef1234567890ab'
   }
 ];
 

@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS public.sis_sync_batches (
     duration_ms INT NOT NULL DEFAULT 0,
     started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     completed_at TIMESTAMPTZ,
-    sha256_sync_seal VARCHAR(64) NOT NULL,
+    sha256_sync_seal VARCHAR(128) NOT NULL,
     metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
     CONSTRAINT unq_facility_sis_batch UNIQUE (facility_id, batch_code)
 );
@@ -194,7 +194,7 @@ CREATE TABLE IF NOT EXISTS public.sis_provenance_ledger (
     batch_id UUID NOT NULL REFERENCES public.sis_sync_batches(id) ON DELETE CASCADE,
     event_type VARCHAR(32) NOT NULL,
     records_impacted INT NOT NULL DEFAULT 0,
-    sha256_seal VARCHAR(64) NOT NULL,
+    sha256_seal VARCHAR(128) NOT NULL,
     operator_id VARCHAR(128) NOT NULL DEFAULT 'system',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     metadata JSONB NOT NULL DEFAULT '{}'::jsonb

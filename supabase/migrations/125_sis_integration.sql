@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS public.sis_sync_batches (
     duration_ms INT NOT NULL DEFAULT 0,
     started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     completed_at TIMESTAMPTZ,
-    sha256_sync_seal VARCHAR(64) NOT NULL,
+    sha256_sync_seal VARCHAR(128) NOT NULL,
     metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
     CONSTRAINT unq_facility_sis_batch UNIQUE (facility_id, batch_code)
 );
@@ -134,7 +134,7 @@ CREATE TABLE IF NOT EXISTS public.sis_provenance_ledger (
     batch_id UUID NOT NULL REFERENCES public.sis_sync_batches(id) ON DELETE CASCADE,
     event_type VARCHAR(32) NOT NULL,
     records_impacted INT NOT NULL DEFAULT 0,
-    sha256_seal VARCHAR(64) NOT NULL,
+    sha256_seal VARCHAR(128) NOT NULL,
     operator_id VARCHAR(128) NOT NULL DEFAULT 'system',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     metadata JSONB NOT NULL DEFAULT '{}'::jsonb
@@ -249,7 +249,7 @@ BEGIN
             412,
             NOW() - INTERVAL '64 minutes',
             NOW() - INTERVAL '63 minutes',
-            'sha256_sis_7a189fbc01234567890abcdef1234567890abcdef1234567890abcdef123'
+            'sha256_sis_7a189fbc01234567890abcdef1234567890abcdef1234567890ab'
         ),
         (
             batch_2_id,
@@ -266,7 +266,7 @@ BEGIN
             380,
             NOW() - INTERVAL '34 minutes',
             NOW() - INTERVAL '33 minutes',
-            'sha256_sis_8b290acd1234567890abcdef1234567890abcdef1234567890abcdef124'
+            'sha256_sis_8b290acd01234567890abcdef1234567890abcdef1234567890ab'
         ),
         (
             batch_3_id,
@@ -283,7 +283,7 @@ BEGIN
             320,
             NOW() - INTERVAL '4 minutes',
             NOW() - INTERVAL '3 minutes',
-            'sha256_sis_9c301bde2345678901abcdef1234567890abcdef1234567890abcdef125'
+            'sha256_sis_9c301bde01234567890abcdef1234567890abcdef1234567890ab'
         )
         ON CONFLICT (facility_id, batch_code) DO NOTHING;
 
@@ -369,7 +369,7 @@ BEGIN
             batch_3_id,
             'INCREMENTAL_SYNC_COMPLETED',
             71,
-            'sha256_sis_9c301bde2345678901abcdef1234567890abcdef1234567890abcdef125',
+            'sha256_sis_9c301bde01234567890abcdef1234567890abcdef1234567890ab',
             'sis_scheduler',
             '{"source": "SIS Exchange", "endpoint": "https://exchange.sissurgical.com/api/v2/naples-asc", "cases": 12, "charges": 58}'::jsonb
         )
