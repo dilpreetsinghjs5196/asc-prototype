@@ -306,6 +306,7 @@ describe('Phase F5: Clearinghouse EDI Gateway & Adjudication Engine', () => {
     assert.ok(appContent.includes("import ClearinghouseIntegrationView from './components/ClearinghouseIntegrationView'"));
     assert.ok(appContent.includes("activeTab === 'clearinghouse_integration'"));
     assert.ok(appContent.includes("<ClearinghouseIntegrationView activeFacility={activeFacility} />"));
+    assert.ok(appContent.match(/import\s*\{[^}]*\bSend\b[^}]*\}\s*from\s*['"]lucide-react['"]/), "Send icon must be imported from lucide-react in App.jsx");
   });
 
 });
