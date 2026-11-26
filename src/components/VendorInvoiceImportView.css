@@ -1,0 +1,686 @@
+/* ==============================================================================
+   VendorInvoiceImportView.css
+   Module 15: Enterprise Healthcare Integrations (Phase F9)
+   Strict compliance: Design token standard compliant.
+   Full dark/light theme support.
+   ============================================================================== */
+
+.vinv-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  padding: 0;
+  background-color: var(--bg-main, #f8fafc);
+  color: var(--text-primary, #0f172a);
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+/* 1. Header Action Bar */
+.vinv-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.25rem;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.vinv-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.vinv-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.vinv-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  letter-spacing: -0.02em;
+}
+
+.vinv-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #64748b);
+  line-height: 1.4;
+}
+
+.vinv-policy-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.375rem;
+  background: var(--bg-accent, #e0f2fe);
+  color: var(--text-accent, #0369a1);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.vinv-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--bg-secondary, #f1f5f9);
+  color: var(--text-secondary, #475569);
+}
+
+.vinv-status-pill.connected,
+.vinv-status-pill.active {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.vinv-status-pill.warning {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+.vinv-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.vinv-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.vinv-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  border: 1px solid transparent;
+}
+
+.vinv-btn-primary {
+  background: var(--color-primary, #0284c7);
+  color: #ffffff;
+}
+
+.vinv-btn-primary:hover:not(:disabled) {
+  background: #0369a1;
+}
+
+.vinv-btn-secondary {
+  background: var(--bg-card, #ffffff);
+  border-color: var(--border-color, #cbd5e1);
+  color: var(--text-primary, #1e293b);
+}
+
+.vinv-btn-secondary:hover:not(:disabled) {
+  background: var(--bg-hover, #f8fafc);
+  border-color: #94a3b8;
+}
+
+.vinv-btn-icon {
+  background: var(--bg-card, #ffffff);
+  border-color: var(--border-color, #cbd5e1);
+  color: var(--text-secondary, #64748b);
+  padding: 0.5rem;
+}
+
+.vinv-btn-icon:hover {
+  color: var(--text-primary, #0f172a);
+  background: var(--bg-hover, #f8fafc);
+}
+
+.vinv-btn-xs {
+  padding: 0.25rem 0.55rem;
+  font-size: 0.72rem;
+  border-radius: 0.35rem;
+  background: var(--color-primary, #0284c7);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+}
+
+.vinv-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 2. Banner */
+.vinv-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.84rem;
+  font-weight: 500;
+}
+
+.vinv-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.vinv-banner-success {
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.vinv-banner-error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.vinv-banner-info {
+  background: rgba(14, 165, 233, 0.12);
+  color: #0369a1;
+  border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+.vinv-banner-close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: currentColor;
+  opacity: 0.7;
+}
+
+/* 3. Telemetry Grid */
+.vinv-telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.vinv-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 0.75rem;
+  padding: 1.15rem 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.vinv-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vinv-card-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.vinv-card-icon {
+  color: var(--text-accent, #0284c7);
+}
+
+.vinv-metric-value {
+  margin: 0.5rem 0 0.35rem;
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  letter-spacing: -0.02em;
+}
+
+.vinv-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.74rem;
+}
+
+.vinv-trend.positive {
+  color: #059669;
+  font-weight: 600;
+}
+
+.vinv-trend.warning {
+  color: #d97706;
+  font-weight: 600;
+}
+
+.vinv-muted {
+  color: var(--text-secondary, #64748b);
+}
+
+/* 4. Pipeline Visualizer */
+.vinv-pipeline-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.vinv-pipeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.vinv-pipeline-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary, #0f172a);
+}
+
+.vinv-pipeline-tag {
+  font-size: 0.74rem;
+  color: var(--text-secondary, #64748b);
+  background: var(--bg-hover, #f1f5f9);
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.35rem;
+}
+
+.vinv-pipeline-steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.vinv-pipeline-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 140px;
+}
+
+.vinv-step-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.vinv-step-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.vinv-step-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+}
+
+.vinv-step-detail {
+  font-size: 0.7rem;
+  color: var(--text-secondary, #64748b);
+}
+
+.vinv-step-arrow {
+  color: var(--border-color, #cbd5e1);
+  margin-left: auto;
+}
+
+/* 5. Navigation Bar */
+.vinv-nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.vinv-subtabs {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 0.55rem;
+  padding: 0.25rem;
+}
+
+.vinv-subtab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 0.375rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #64748b);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.vinv-subtab-btn.active {
+  background: var(--bg-hover, #f1f5f9);
+  color: var(--color-primary, #0284c7);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.vinv-tab-count {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 9999px;
+  background: var(--border-color, #e2e8f0);
+  color: var(--text-secondary, #475569);
+}
+
+.vinv-tab-count.warning {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.vinv-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.vinv-search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.75rem;
+}
+
+.vinv-search-box input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.82rem;
+  color: var(--text-primary, #0f172a);
+  width: 220px;
+}
+
+/* 6. Table Panels */
+.vinv-split-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.vinv-panel {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.vinv-panel-subheader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-hover, #f8fafc);
+}
+
+.vinv-panel-subheader h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.vinv-table-container {
+  overflow-x: auto;
+}
+
+.vinv-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.82rem;
+}
+
+.vinv-table th {
+  background: var(--bg-hover, #f8fafc);
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  color: var(--text-secondary, #64748b);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.vinv-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  color: var(--text-primary, #0f172a);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.vinv-table tr:last-child td {
+  border-bottom: none;
+}
+
+.vinv-table tr:hover td,
+.vinv-row-selected td {
+  background: var(--bg-hover, #f8fafc);
+}
+
+.vinv-mono-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.78rem;
+}
+
+.vinv-tag-pill {
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.3rem;
+  background: var(--bg-hover, #f1f5f9);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.vinv-match-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.vinv-match-pill.matched,
+.vinv-match-pill.approved_for_ap,
+.vinv-match-pill.received {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.vinv-match-pill.price_variance,
+.vinv-match-pill.overbilled,
+.vinv-match-pill.quantity_mismatch,
+.vinv-match-pill.unmapped_sku {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+}
+
+.vinv-seal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.3rem;
+  background: #f1f5f9;
+  font-family: ui-monospace, monospace;
+  font-size: 0.7rem;
+  color: #475569;
+}
+
+.vinv-severity-pill {
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.vinv-severity-pill.critical {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.vinv-severity-pill.warning {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.font-bold { font-weight: 700; }
+.font-semibold { font-weight: 600; }
+.text-success { color: #059669; }
+.text-warning { color: #d97706; }
+.text-danger { color: #dc2626; }
+.text-primary { color: var(--color-primary, #0284c7); }
+
+/* 7. Modal Drawer */
+.vinv-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 1rem;
+}
+
+.vinv-modal-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 0.75rem;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.vinv-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.vinv-modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.vinv-modal-title-group h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+}
+
+.vinv-modal-close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary, #64748b);
+}
+
+.vinv-modal-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.vinv-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.vinv-form-group label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-secondary, #475569);
+  text-transform: uppercase;
+}
+
+.vinv-form-group input,
+.vinv-form-group select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: 0.375rem;
+  background: var(--bg-hover, #f8fafc);
+  font-size: 0.82rem;
+  color: var(--text-primary, #0f172a);
+}
+
+.vinv-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.vinv-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-hover, #f8fafc);
+  border-bottom-left-radius: 0.75rem;
+  border-bottom-right-radius: 0.75rem;
+}
+
+.spin {
+  animation: vinv-spin 1s linear infinite;
+}
+
+@keyframes vinv-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
