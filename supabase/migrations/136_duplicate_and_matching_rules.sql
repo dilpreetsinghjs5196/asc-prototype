@@ -199,178 +199,205 @@ ALTER TABLE public.dmr_merge_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.dmr_match_runs ENABLE ROW LEVEL SECURITY;
 
 -- Tenant Isolation RLS Policies
+DROP POLICY IF EXISTS dmr_configs_tenant_iso ON public.dmr_configs;
 CREATE POLICY dmr_configs_tenant_iso ON public.dmr_configs USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
+
+DROP POLICY IF EXISTS dmr_rules_tenant_iso ON public.dmr_matching_rules;
 CREATE POLICY dmr_rules_tenant_iso ON public.dmr_matching_rules USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
+
+DROP POLICY IF EXISTS dmr_surv_tenant_iso ON public.dmr_survivorship_policies;
 CREATE POLICY dmr_surv_tenant_iso ON public.dmr_survivorship_policies USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
+
+DROP POLICY IF EXISTS dmr_golden_tenant_iso ON public.dmr_golden_records;
 CREATE POLICY dmr_golden_tenant_iso ON public.dmr_golden_records USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
+
+DROP POLICY IF EXISTS dmr_pairs_tenant_iso ON public.dmr_candidate_pairs;
 CREATE POLICY dmr_pairs_tenant_iso ON public.dmr_candidate_pairs USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
+
+DROP POLICY IF EXISTS dmr_hist_tenant_iso ON public.dmr_merge_history;
 CREATE POLICY dmr_hist_tenant_iso ON public.dmr_merge_history USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
+
+DROP POLICY IF EXISTS dmr_runs_tenant_iso ON public.dmr_match_runs;
 CREATE POLICY dmr_runs_tenant_iso ON public.dmr_match_runs USING (facility_id = NULLIF(current_setting('app.current_facility_id', true), '')::uuid);
 
 -- ==============================================================================
 -- Seed Data for Naples Surgery Center (00000000-0000-0000-0000-000000000002)
 -- ==============================================================================
+DO $$
+DECLARE
+    naples_id UUID;
+    golden_1_id UUID := 'd4100001-0000-4000-8000-000000000001';
+BEGIN
+    SELECT id INTO naples_id FROM public.facilities
+    WHERE id = '00000000-0000-0000-0000-000000000002' OR name ILIKE '%Naples%'
+    LIMIT 1;
 
-INSERT INTO public.dmr_configs (
-    id, facility_id, auto_merge_threshold, manual_review_threshold,
-    block_exact_collisions, enable_cross_source_blocking, require_reason_for_unmerge,
-    client_secret_encrypted, sync_status, health_status
-) VALUES (
-    'd4000001-0000-4000-8000-000000000001',
-    '00000000-0000-0000-0000-000000000002',
-    95.00, 75.00, TRUE, TRUE, TRUE,
-    'dmr_sec_****_naples_9402', 'ACTIVE', 'HEALTHY'
-) ON CONFLICT (facility_id) DO NOTHING;
+    IF naples_id IS NOT NULL THEN
+        INSERT INTO public.dmr_configs (
+            id, facility_id, auto_merge_threshold, manual_review_threshold,
+            block_exact_collisions, enable_cross_source_blocking, require_reason_for_unmerge,
+            client_secret_encrypted, sync_status, health_status
+        ) VALUES (
+            'd4000001-0000-4000-8000-000000000001',
+            naples_id,
+            95.00, 75.00, TRUE, TRUE, TRUE,
+            'dmr_sec_****_naples_9402', 'ACTIVE', 'HEALTHY'
+        ) ON CONFLICT (facility_id) DO NOTHING;
 
-INSERT INTO public.dmr_matching_rules (
-    facility_id, rule_code, entity_type, rule_name, match_algorithm,
-    blocking_keys_json, field_weights_json, exact_override_keys_json, version_tag
-) VALUES
-(
-    '00000000-0000-0000-0000-000000000002',
-    'DMR-PAT-001', 'PATIENT', 'Patient EMPI Composite Matching', 'COMPOSITE_WEIGHTED',
-    '["dob", "last_name_soundex", "zip5"]'::jsonb,
-    '{"mrn": 30.00, "last_name": 25.00, "first_name": 20.00, "dob": 15.00, "ssn_last4": 10.00}'::jsonb,
-    '[["mrn", "dob"], ["ssn_last4", "dob", "last_name"]]'::jsonb,
-    'dmr-v1.0.0'
-),
-(
-    '00000000-0000-0000-0000-000000000002',
-    'DMR-CASE-001', 'SURGICAL_CASE', 'Surgical Encounter Cross-System Match', 'COMPOSITE_WEIGHTED',
-    '["dos", "or_room_code"]'::jsonb,
-    '{"patient_mrn": 30.00, "dos": 25.00, "surgeon_npi": 20.00, "primary_cpt": 15.00, "case_number": 10.00}'::jsonb,
-    '[["case_number", "dos"], ["patient_mrn", "dos", "primary_cpt"]]'::jsonb,
-    'dmr-v1.0.0'
-),
-(
-    '00000000-0000-0000-0000-000000000002',
-    'DMR-CLM-001', 'CLAIM', '837/Payer Duplicate Claim Guard', 'COMPOSITE_WEIGHTED',
-    '["payer_id", "dos"]'::jsonb,
-    '{"payer_control_number": 35.00, "patient_mrn": 25.00, "dos": 20.00, "billed_amount_usd": 20.00}'::jsonb,
-    '[["payer_control_number"], ["patient_mrn", "dos", "billed_amount_usd", "primary_cpt"]]'::jsonb,
-    'dmr-v1.0.0'
-),
-(
-    '00000000-0000-0000-0000-000000000002',
-    'DMR-VND-001', 'VENDOR', 'Vendor Master Legal Entity & EIN Match', 'NORMALIZED_JARO_WINKLER',
-    '["tax_id_ein", "name_prefix_4"]'::jsonb,
-    '{"tax_id_ein": 35.00, "legal_name": 35.00, "vendor_code": 20.00, "remit_zip": 10.00}'::jsonb,
-    '[["tax_id_ein"], ["vendor_code"]]'::jsonb,
-    'dmr-v1.0.0'
-),
-(
-    '00000000-0000-0000-0000-000000000002',
-    'DMR-INV-001', 'VENDOR_INVOICE', 'AP 810/OCR Duplicate Invoice Detection', 'EXACT_KEY',
-    '["vendor_code", "invoice_month"]'::jsonb,
-    '{"vendor_code": 30.00, "invoice_number": 40.00, "invoice_total_usd": 20.00, "invoice_date": 10.00}'::jsonb,
-    '[["vendor_code", "invoice_number"], ["vendor_code", "invoice_total_usd", "invoice_date"]]'::jsonb,
-    'dmr-v1.0.0'
-),
-(
-    '00000000-0000-0000-0000-000000000002',
-    'DMR-SKU-001', 'IMPLANT_SKU', 'Implant UDI & Catalog Deduplication', 'TOKEN_SET_RATIO',
-    '["manufacturer_code", "udi_di"]'::jsonb,
-    '{"udi_gtin": 40.00, "catalog_number": 30.00, "item_description": 20.00, "manufacturer_name": 10.00}'::jsonb,
-    '[["udi_gtin"], ["manufacturer_name", "catalog_number"]]'::jsonb,
-    'dmr-v1.0.0'
-) ON CONFLICT (facility_id, rule_code) DO NOTHING;
+        INSERT INTO public.dmr_matching_rules (
+            facility_id, rule_code, entity_type, rule_name, match_algorithm,
+            blocking_keys_json, field_weights_json, exact_override_keys_json, version_tag
+        ) VALUES
+        (
+            naples_id,
+            'DMR-PAT-001', 'PATIENT', 'Patient EMPI Composite Matching', 'COMPOSITE_WEIGHTED',
+            '["dob", "last_name_soundex", "zip5"]'::jsonb,
+            '{"mrn": 30.00, "last_name": 25.00, "first_name": 20.00, "dob": 15.00, "ssn_last4": 10.00}'::jsonb,
+            '[["mrn", "dob"], ["ssn_last4", "dob", "last_name"]]'::jsonb,
+            'dmr-v1.0.0'
+        ),
+        (
+            naples_id,
+            'DMR-CASE-001', 'SURGICAL_CASE', 'Surgical Encounter Cross-System Match', 'COMPOSITE_WEIGHTED',
+            '["dos", "or_room_code"]'::jsonb,
+            '{"patient_mrn": 30.00, "dos": 25.00, "surgeon_npi": 20.00, "primary_cpt": 15.00, "case_number": 10.00}'::jsonb,
+            '[["case_number", "dos"], ["patient_mrn", "dos", "primary_cpt"]]'::jsonb,
+            'dmr-v1.0.0'
+        ),
+        (
+            naples_id,
+            'DMR-CLM-001', 'CLAIM', '837/Payer Duplicate Claim Guard', 'COMPOSITE_WEIGHTED',
+            '["payer_id", "dos"]'::jsonb,
+            '{"payer_control_number": 35.00, "patient_mrn": 25.00, "dos": 20.00, "billed_amount_usd": 20.00}'::jsonb,
+            '[["payer_control_number"], ["patient_mrn", "dos", "billed_amount_usd", "primary_cpt"]]'::jsonb,
+            'dmr-v1.0.0'
+        ),
+        (
+            naples_id,
+            'DMR-VND-001', 'VENDOR', 'Vendor Master Legal Entity & EIN Match', 'NORMALIZED_JARO_WINKLER',
+            '["tax_id_ein", "name_prefix_4"]'::jsonb,
+            '{"tax_id_ein": 35.00, "legal_name": 35.00, "vendor_code": 20.00, "remit_zip": 10.00}'::jsonb,
+            '[["tax_id_ein"], ["vendor_code"]]'::jsonb,
+            'dmr-v1.0.0'
+        ),
+        (
+            naples_id,
+            'DMR-INV-001', 'VENDOR_INVOICE', 'AP 810/OCR Duplicate Invoice Detection', 'EXACT_KEY',
+            '["vendor_code", "invoice_month"]'::jsonb,
+            '{"vendor_code": 30.00, "invoice_number": 40.00, "invoice_total_usd": 20.00, "invoice_date": 10.00}'::jsonb,
+            '[["vendor_code", "invoice_number"], ["vendor_code", "invoice_total_usd", "invoice_date"]]'::jsonb,
+            'dmr-v1.0.0'
+        ),
+        (
+            naples_id,
+            'DMR-SKU-001', 'IMPLANT_SKU', 'Implant UDI & Catalog Deduplication', 'TOKEN_SET_RATIO',
+            '["manufacturer_code", "udi_di"]'::jsonb,
+            '{"udi_gtin": 40.00, "catalog_number": 30.00, "item_description": 20.00, "manufacturer_name": 10.00}'::jsonb,
+            '[["udi_gtin"], ["manufacturer_name", "catalog_number"]]'::jsonb,
+            'dmr-v1.0.0'
+        ) ON CONFLICT (facility_id, rule_code) DO NOTHING;
 
-INSERT INTO public.dmr_survivorship_policies (
-    facility_id, policy_code, entity_type, source_precedence_json, field_strategies_json, tie_breaker_strategy
-) VALUES
-(
-    '00000000-0000-0000-0000-000000000002', 'SURV-PAT-01', 'PATIENT',
-    '["SIS_EHR", "HST_EHR", "CLEARINGHOUSE_EDI", "EXCEL_CSV"]'::jsonb,
-    '{"mrn": "SOURCE_SYSTEM_RANK", "legal_name": "MOST_RECENT_VERIFIED", "dob": "SOURCE_SYSTEM_RANK", "phone": "MOST_COMPLETE_NON_NULL"}'::jsonb,
-    'MOST_RECENT_VERIFIED'
-),
-(
-    '00000000-0000-0000-0000-000000000002', 'SURV-VND-01', 'VENDOR',
-    '["ACCOUNTING_GL", "VENDOR_INVOICE", "INVENTORY_POU", "EXCEL_CSV"]'::jsonb,
-    '{"tax_id_ein": "SOURCE_SYSTEM_RANK", "legal_name": "MOST_RECENT_VERIFIED", "remit_address": "MOST_COMPLETE_NON_NULL", "contract_rate": "MAX_FINANCIAL_PRECISION"}'::jsonb,
-    'SOURCE_SYSTEM_RANK'
-),
-(
-    '00000000-0000-0000-0000-000000000002', 'SURV-INV-01', 'VENDOR_INVOICE',
-    '["VENDOR_INVOICE", "ACCOUNTING_GL", "EXCEL_CSV"]'::jsonb,
-    '{"invoice_number": "SOURCE_SYSTEM_RANK", "invoice_total_usd": "MAX_FINANCIAL_PRECISION", "po_number": "MOST_COMPLETE_NON_NULL"}'::jsonb,
-    'MAX_FINANCIAL_PRECISION'
-) ON CONFLICT (facility_id, entity_type) DO NOTHING;
+        INSERT INTO public.dmr_survivorship_policies (
+            facility_id, policy_code, entity_type, source_precedence_json, field_strategies_json, tie_breaker_strategy
+        ) VALUES
+        (
+            naples_id, 'SURV-PAT-01', 'PATIENT',
+            '["SIS_EHR", "HST_EHR", "CLEARINGHOUSE_EDI", "EXCEL_CSV"]'::jsonb,
+            '{"mrn": "SOURCE_SYSTEM_RANK", "legal_name": "MOST_RECENT_VERIFIED", "dob": "SOURCE_SYSTEM_RANK", "phone": "MOST_COMPLETE_NON_NULL"}'::jsonb,
+            'MOST_RECENT_VERIFIED'
+        ),
+        (
+            naples_id, 'SURV-VND-01', 'VENDOR',
+            '["ACCOUNTING_GL", "VENDOR_INVOICE", "INVENTORY_POU", "EXCEL_CSV"]'::jsonb,
+            '{"tax_id_ein": "SOURCE_SYSTEM_RANK", "legal_name": "MOST_RECENT_VERIFIED", "remit_address": "MOST_COMPLETE_NON_NULL", "contract_rate": "MAX_FINANCIAL_PRECISION"}'::jsonb,
+            'SOURCE_SYSTEM_RANK'
+        ),
+        (
+            naples_id, 'SURV-INV-01', 'VENDOR_INVOICE',
+            '["VENDOR_INVOICE", "ACCOUNTING_GL", "EXCEL_CSV"]'::jsonb,
+            '{"invoice_number": "SOURCE_SYSTEM_RANK", "invoice_total_usd": "MAX_FINANCIAL_PRECISION", "po_number": "MOST_COMPLETE_NON_NULL"}'::jsonb,
+            'MAX_FINANCIAL_PRECISION'
+        ) ON CONFLICT (facility_id, entity_type) DO NOTHING;
 
-INSERT INTO public.dmr_golden_records (
-    id, facility_id, golden_code, entity_type, canonical_key,
-    survived_payload_json, field_provenance_json, lineage_source_ids_json,
-    merged_source_count, confidence_score, is_active, sha256_sync_seal
-) VALUES (
-    'd4100001-0000-4000-8000-000000000001',
-    '00000000-0000-0000-0000-000000000002',
-    'GLD-INV-9001', 'VENDOR_INVOICE', 'STRYKER::INV-2026-88412',
-    '{"vendor_code": "VND-STRYKER", "invoice_number": "INV-2026-88412", "invoice_total_usd": 4250.00, "invoice_date": "2026-11-18", "po_number": "PO-NAP-7721"}'::jsonb,
-    '{"vendor_code": {"winning_source": "VENDOR_INVOICE", "strategy": "SOURCE_SYSTEM_RANK"}, "invoice_total_usd": {"winning_source": "VENDOR_INVOICE", "strategy": "MAX_FINANCIAL_PRECISION"}}'::jsonb,
-    '["inv-810-9910", "csv-ap-3302"]'::jsonb,
-    2, 100.00, TRUE,
-    'sha256_dmr_91a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3'
-) ON CONFLICT (facility_id, golden_code) DO NOTHING;
+        INSERT INTO public.dmr_golden_records (
+            id, facility_id, golden_code, entity_type, canonical_key,
+            survived_payload_json, field_provenance_json, lineage_source_ids_json,
+            merged_source_count, confidence_score, is_active, sha256_sync_seal
+        ) VALUES (
+            golden_1_id,
+            naples_id,
+            'GLD-INV-9001', 'VENDOR_INVOICE', 'STRYKER::INV-2026-88412',
+            '{"vendor_code": "VND-STRYKER", "invoice_number": "INV-2026-88412", "invoice_total_usd": 4250.00, "invoice_date": "2026-11-18", "po_number": "PO-NAP-7721"}'::jsonb,
+            '{"vendor_code": {"winning_source": "VENDOR_INVOICE", "strategy": "SOURCE_SYSTEM_RANK"}, "invoice_total_usd": {"winning_source": "VENDOR_INVOICE", "strategy": "MAX_FINANCIAL_PRECISION"}}'::jsonb,
+            '["inv-810-9910", "csv-ap-3302"]'::jsonb,
+            2, 100.00, TRUE,
+            'sha256_dmr_91a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3'
+        ) ON CONFLICT (facility_id, golden_code) DO NOTHING;
 
-INSERT INTO public.dmr_candidate_pairs (
-    id, facility_id, pair_code, entity_type,
-    source_record_a_id, source_module_a, record_a_snapshot_json,
-    source_record_b_id, source_module_b, record_b_snapshot_json,
-    confidence_score, match_classification, matched_fields_json, score_breakdown_json,
-    resolution_status, golden_record_id, financial_exposure_usd, sha256_sync_seal
-) VALUES
-(
-    'd4200001-0000-4000-8000-000000000001',
-    '00000000-0000-0000-0000-000000000002',
-    'DMR-PAIR-201', 'VENDOR_INVOICE',
-    'inv-810-9910', 'VENDOR_INVOICE', '{"vendor_code": "VND-STRYKER", "invoice_number": "INV-2026-88412", "invoice_total_usd": 4250.00, "invoice_date": "2026-11-18", "po_number": "PO-NAP-7721"}'::jsonb,
-    'csv-ap-3302', 'EXCEL_CSV', '{"vendor_code": "VND-STRYKER", "invoice_number": "INV2026-88412", "invoice_total_usd": 4250.00, "invoice_date": "2026-11-18", "po_number": ""}'::jsonb,
-    100.00, 'EXACT_DUPLICATE', '["vendor_code", "invoice_number", "invoice_total_usd", "invoice_date"]'::jsonb,
-    '{"vendor_code": 30.00, "invoice_number": 40.00, "invoice_total_usd": 20.00, "invoice_date": 10.00}'::jsonb,
-    'AUTO_MERGED', 'd4100001-0000-4000-8000-000000000001', 4250.00,
-    'sha256_dmr_a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4'
-),
-(
-    'd4200002-0000-4000-8000-000000000002',
-    '00000000-0000-0000-0000-000000000002',
-    'DMR-PAIR-202', 'VENDOR',
-    'vnd-zb-01', 'ACCOUNTING_GL', '{"vendor_code": "ZIMMER-01", "legal_name": "Zimmer Biomet Holdings Inc", "tax_id_ein": "13-4041511", "remit_zip": "46580"}'::jsonb,
-    'vnd-zb-imp-09', 'INVENTORY_POU', '{"vendor_code": "ZIMMER-SURG", "legal_name": "Zimmer Biomet Surgical LLC", "tax_id_ein": "13-4041511", "remit_zip": "46580"}'::jsonb,
-    91.40, 'HIGH_CONFIDENCE_CANDIDATE', '["tax_id_ein", "legal_name", "remit_zip"]'::jsonb,
-    '{"tax_id_ein": 35.00, "legal_name": 31.40, "vendor_code": 15.00, "remit_zip": 10.00}'::jsonb,
-    'PENDING_REVIEW', NULL, 18450.00,
-    'sha256_dmr_b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5'
-),
-(
-    'd4200003-0000-4000-8000-000000000003',
-    '00000000-0000-0000-0000-000000000002',
-    'DMR-PAIR-203', 'PATIENT',
-    'pat-sis-4410', 'SIS_EHR', '{"mrn": "MRN-884102", "first_name": "Eleanor", "last_name": "Vance-Miller", "dob": "1964-08-19", "ssn_last4": "4921"}'::jsonb,
-    'pat-hst-9021', 'HST_EHR', '{"mrn": "MRN-884102", "first_name": "Eleanor", "last_name": "Vance", "dob": "1964-08-19", "ssn_last4": "4921"}'::jsonb,
-    93.20, 'HIGH_CONFIDENCE_CANDIDATE', '["mrn", "first_name", "dob", "ssn_last4"]'::jsonb,
-    '{"mrn": 30.00, "last_name": 18.20, "first_name": 20.00, "dob": 15.00, "ssn_last4": 10.00}'::jsonb,
-    'PENDING_REVIEW', NULL, 0.00,
-    'sha256_dmr_c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6'
-),
-(
-    'd4200004-0000-4000-8000-000000000004',
-    '00000000-0000-0000-0000-000000000002',
-    'DMR-PAIR-204', 'CLAIM',
-    'clm-837-7741', 'CLEARINGHOUSE_EDI', '{"payer_control_number": "PCN-UHC-55219", "patient_mrn": "MRN-77310", "dos": "2026-11-20", "billed_amount_usd": 6890.00}'::jsonb,
-    'clm-sis-7741b', 'SIS_EHR', '{"payer_control_number": "PCN-UHC-55219", "patient_mrn": "MRN-77310", "dos": "2026-11-20", "billed_amount_usd": 6890.00}'::jsonb,
-    100.00, 'EXACT_DUPLICATE', '["payer_control_number", "patient_mrn", "dos", "billed_amount_usd"]'::jsonb,
-    '{"payer_control_number": 35.00, "patient_mrn": 25.00, "dos": 20.00, "billed_amount_usd": 20.00}'::jsonb,
-    'PENDING_REVIEW', NULL, 6890.00,
-    'sha256_dmr_d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7'
-) ON CONFLICT (facility_id, pair_code) DO NOTHING;
+        SELECT id INTO golden_1_id FROM public.dmr_golden_records
+        WHERE facility_id = naples_id AND golden_code = 'GLD-INV-9001' LIMIT 1;
 
-INSERT INTO public.dmr_match_runs (
-    facility_id, batch_control_number, entity_scope, records_scanned,
-    pairs_evaluated, exact_duplicates_found, candidates_queued, auto_merged_count,
-    duration_ms, executed_by, sha256_sync_seal
-) VALUES (
-    '00000000-0000-0000-0000-000000000002',
-    'DMR-BATCH-20261126-01', 'ALL', 1842, 4, 2, 3, 1, 218,
-    'system.scheduler@naplessurgery.com',
-    'sha256_dmr_e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8'
-) ON CONFLICT (facility_id, batch_control_number) DO NOTHING;
+        INSERT INTO public.dmr_candidate_pairs (
+            id, facility_id, pair_code, entity_type,
+            source_record_a_id, source_module_a, record_a_snapshot_json,
+            source_record_b_id, source_module_b, record_b_snapshot_json,
+            confidence_score, match_classification, matched_fields_json, score_breakdown_json,
+            resolution_status, golden_record_id, financial_exposure_usd, sha256_sync_seal
+        ) VALUES
+        (
+            'd4200001-0000-4000-8000-000000000001',
+            naples_id,
+            'DMR-PAIR-201', 'VENDOR_INVOICE',
+            'inv-810-9910', 'VENDOR_INVOICE', '{"vendor_code": "VND-STRYKER", "invoice_number": "INV-2026-88412", "invoice_total_usd": 4250.00, "invoice_date": "2026-11-18", "po_number": "PO-NAP-7721"}'::jsonb,
+            'csv-ap-3302', 'EXCEL_CSV', '{"vendor_code": "VND-STRYKER", "invoice_number": "INV2026-88412", "invoice_total_usd": 4250.00, "invoice_date": "2026-11-18", "po_number": ""}'::jsonb,
+            100.00, 'EXACT_DUPLICATE', '["vendor_code", "invoice_number", "invoice_total_usd", "invoice_date"]'::jsonb,
+            '{"vendor_code": 30.00, "invoice_number": 40.00, "invoice_total_usd": 20.00, "invoice_date": 10.00}'::jsonb,
+            'AUTO_MERGED', golden_1_id, 4250.00,
+            'sha256_dmr_a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4'
+        ),
+        (
+            'd4200002-0000-4000-8000-000000000002',
+            naples_id,
+            'DMR-PAIR-202', 'VENDOR',
+            'vnd-zb-01', 'ACCOUNTING_GL', '{"vendor_code": "ZIMMER-01", "legal_name": "Zimmer Biomet Holdings Inc", "tax_id_ein": "13-4041511", "remit_zip": "46580"}'::jsonb,
+            'vnd-zb-imp-09', 'INVENTORY_POU', '{"vendor_code": "ZIMMER-SURG", "legal_name": "Zimmer Biomet Surgical LLC", "tax_id_ein": "13-4041511", "remit_zip": "46580"}'::jsonb,
+            91.40, 'HIGH_CONFIDENCE_CANDIDATE', '["tax_id_ein", "legal_name", "remit_zip"]'::jsonb,
+            '{"tax_id_ein": 35.00, "legal_name": 31.40, "vendor_code": 15.00, "remit_zip": 10.00}'::jsonb,
+            'PENDING_REVIEW', NULL, 18450.00,
+            'sha256_dmr_b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5'
+        ),
+        (
+            'd4200003-0000-4000-8000-000000000003',
+            naples_id,
+            'DMR-PAIR-203', 'PATIENT',
+            'pat-sis-4410', 'SIS_EHR', '{"mrn": "MRN-884102", "first_name": "Eleanor", "last_name": "Vance-Miller", "dob": "1964-08-19", "ssn_last4": "4921"}'::jsonb,
+            'pat-hst-9021', 'HST_EHR', '{"mrn": "MRN-884102", "first_name": "Eleanor", "last_name": "Vance", "dob": "1964-08-19", "ssn_last4": "4921"}'::jsonb,
+            93.20, 'HIGH_CONFIDENCE_CANDIDATE', '["mrn", "first_name", "dob", "ssn_last4"]'::jsonb,
+            '{"mrn": 30.00, "last_name": 18.20, "first_name": 20.00, "dob": 15.00, "ssn_last4": 10.00}'::jsonb,
+            'PENDING_REVIEW', NULL, 0.00,
+            'sha256_dmr_c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6'
+        ),
+        (
+            'd4200004-0000-4000-8000-000000000004',
+            naples_id,
+            'DMR-PAIR-204', 'CLAIM',
+            'clm-837-7741', 'CLEARINGHOUSE_EDI', '{"payer_control_number": "PCN-UHC-55219", "patient_mrn": "MRN-77310", "dos": "2026-11-20", "billed_amount_usd": 6890.00}'::jsonb,
+            'clm-sis-7741b', 'SIS_EHR', '{"payer_control_number": "PCN-UHC-55219", "patient_mrn": "MRN-77310", "dos": "2026-11-20", "billed_amount_usd": 6890.00}'::jsonb,
+            100.00, 'EXACT_DUPLICATE', '["payer_control_number", "patient_mrn", "dos", "billed_amount_usd"]'::jsonb,
+            '{"payer_control_number": 35.00, "patient_mrn": 25.00, "dos": 20.00, "billed_amount_usd": 20.00}'::jsonb,
+            'PENDING_REVIEW', NULL, 6890.00,
+            'sha256_dmr_d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7'
+        ) ON CONFLICT (facility_id, pair_code) DO NOTHING;
+
+        INSERT INTO public.dmr_match_runs (
+            facility_id, batch_control_number, entity_scope, records_scanned,
+            pairs_evaluated, exact_duplicates_found, candidates_queued, auto_merged_count,
+            duration_ms, executed_by, sha256_sync_seal
+        ) VALUES (
+            naples_id,
+            'DMR-BATCH-20261126-01', 'ALL', 1842, 4, 2, 3, 1, 218,
+            'system.scheduler@naplessurgery.com',
+            'sha256_dmr_e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8'
+        ) ON CONFLICT (facility_id, batch_control_number) DO NOTHING;
+    END IF;
+END $$;

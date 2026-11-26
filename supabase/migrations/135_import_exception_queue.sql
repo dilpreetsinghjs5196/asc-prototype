@@ -272,14 +272,29 @@ BEGIN
         )
         ON CONFLICT (facility_id, exception_ticket_code) DO NOTHING;
 
-        -- Seed Resolution Action Timeline
+        -- Resolve persisted IDs in case tickets were already seeded on a prior run
+        SELECT id INTO exc_1_id FROM public.ieq_exception_items WHERE facility_id = naples_id AND exception_ticket_code = 'EXC-2026-101' LIMIT 1;
+        SELECT id INTO exc_3_id FROM public.ieq_exception_items WHERE facility_id = naples_id AND exception_ticket_code = 'EXC-2026-103' LIMIT 1;
+        SELECT id INTO exc_5_id FROM public.ieq_exception_items WHERE facility_id = naples_id AND exception_ticket_code = 'EXC-2026-105' LIMIT 1;
+
+        -- Seed Resolution Action Timeline (idempotent)
         INSERT INTO public.ieq_resolution_actions (
             facility_id, exception_id, from_status, to_status, action_type, actor_id, action_notes
-        ) VALUES
-        (naples_id, exc_1_id, 'OPEN', 'IN_REVIEW', 'CLAIM', 'materials_mgr@naplesasc.com', 'Auto-routed via VENDOR_INVOICE rule; requested Vizient price sheet check.'),
-        (naples_id, exc_3_id, 'ASSIGNED', 'ESCALATED', 'ESCALATE', 'system_sla_monitor', '4-hour CRITICAL SLA expired; escalated to Materials Manager & Clinical Director.'),
-        (naples_id, exc_5_id, 'IN_REVIEW', 'RESOLVED_REPLAYED', 'REPLAY_SUCCESS', 'data_steward@naplesasc.com', 'Mapped Payer_Plan_Cd and replayed 18 staging rows cleanly.')
-        ON CONFLICT DO NOTHING;
+        )
+        SELECT naples_id, v.ex_id, v.from_st, v.to_st, v.act_type, v.actor, v.notes
+        FROM (
+            VALUES
+            (exc_1_id, 'OPEN', 'IN_REVIEW', 'CLAIM', 'materials_mgr@naplesasc.com', 'Auto-routed via VENDOR_INVOICE rule; requested Vizient price sheet check.'),
+            (exc_3_id, 'ASSIGNED', 'ESCALATED', 'ESCALATE', 'system_sla_monitor', '4-hour CRITICAL SLA expired; escalated to Materials Manager & Clinical Director.'),
+            (exc_5_id, 'IN_REVIEW', 'RESOLVED_REPLAYED', 'REPLAY_SUCCESS', 'data_steward@naplesasc.com', 'Mapped Payer_Plan_Cd and replayed 18 staging rows cleanly.')
+        ) AS v(ex_id, from_st, to_st, act_type, actor, notes)
+        WHERE v.ex_id IS NOT NULL
+          AND NOT EXISTS (
+              SELECT 1 FROM public.ieq_resolution_actions a
+              WHERE a.facility_id = naples_id
+                AND a.exception_id = v.ex_id
+                AND a.action_type = v.act_type
+          );
 
         -- Seed Owner Workloads
         INSERT INTO public.ieq_owner_workloads (
