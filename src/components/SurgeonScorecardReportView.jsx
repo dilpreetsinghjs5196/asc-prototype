@@ -116,8 +116,8 @@ export default function SurgeonScorecardReportView({ activeFacility }) {
           anonymize_peer_names_for_surgeon_view: cfg.anonymize_peer_names_for_surgeon_view,
           min_cases_for_benchmark: cfg.min_cases_for_benchmark
         });
-        if (cards.length > 0 && !cards.some(c => c.id === selectedSurgeonId)) {
-          setSelectedSurgeonId(cards[0].id);
+        if (cards.length > 0) {
+          setSelectedSurgeonId(prev => (cards.some(c => c.id === prev) ? prev : cards[0].id));
         }
       } catch (err) {
         if (isMounted) {
