@@ -8,7 +8,7 @@
  * ==============================================================================
  */
 
-import crypto from 'crypto';
+import { sha256Hex } from '../utils/isomorphicSha256.js';
 
 export const NAPLES_FACILITY_ID = '00000000-0000-0000-0000-000000000002';
 
@@ -63,7 +63,7 @@ export function normalizeFacilityId(facilityInput) {
  */
 export function computeRptProvenanceSeal(payload) {
   const canonicalJson = JSON.stringify(payload || {});
-  const digest = crypto.createHash('sha256').update(canonicalJson).digest('hex');
+  const digest = sha256Hex(canonicalJson);
   return `sha256_rpt_${digest.slice(0, 53)}`;
 }
 

@@ -199,11 +199,14 @@
 .spr-search-box {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   background-color: var(--bg-card, #ffffff);
   border: 1px solid var(--border-color, #cbd5e1);
   border-radius: 8px;
-  padding: 6px 10px;
+  padding: 0 12px;
+  height: 38px;
+  box-sizing: border-box;
+  color: var(--text-secondary, #64748b);
 }
 
 .spr-search-box input {
@@ -217,18 +220,26 @@
 
 .spr-select {
   background-color: var(--bg-card, #ffffff);
+  color: var(--text-primary, #0f172a);
   border: 1px solid var(--border-color, #cbd5e1);
   border-radius: 8px;
-  padding: 6px 10px;
-  font-size: 0.8rem;
-  color: var(--text-primary, #0f172a);
+  padding: 0 12px;
+  height: 38px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
 }
 
 .spr-split-workspace {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 320px minmax(0, 1fr);
   gap: 16px;
   align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .spr-telemetry-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .spr-split-workspace { grid-template-columns: 1fr; }
 }
 
 .spr-list-pane {
@@ -460,3 +471,24 @@
   gap: 8px;
   margin-top: 8px;
 }
+
+[data-theme="dark"] .spr-container { color: #f8fafc; }
+[data-theme="dark"] .spr-select,
+[data-theme="dark"] .spr-select option,
+[data-theme="dark"] .spr-form-row input,
+[data-theme="dark"] .spr-form-row select,
+[data-theme="dark"] .spr-form-row select option {
+  background-color: #1e293b;
+  color: #f8fafc;
+  border-color: #334155;
+}
+[data-theme="dark"] .spr-subtabs { background-color: #0f172a; border-color: #334155; }
+[data-theme="dark"] .spr-subtab.active { background-color: #1e293b; color: #38bdf8; }
+[data-theme="dark"] .spr-flow-ribbon { background-color: #0f172a; border-color: #334155; }
+[data-theme="dark"] .spr-flow-node { background-color: #1e293b; border-color: #334155; color: #f8fafc; }
+[data-theme="dark"] .spr-flow-node-final { background-color: rgba(16, 185, 129, 0.14); border-color: #10b981; }
+[data-theme="dark"] .spr-banner-success { background-color: rgba(16, 185, 129, 0.14); color: #a7f3d0; border-color: rgba(16, 185, 129, 0.4); }
+[data-theme="dark"] .spr-banner-error { background-color: rgba(244, 63, 94, 0.14); color: #fecdd3; border-color: rgba(244, 63, 94, 0.4); }
+[data-theme="dark"] .spr-badge-emerald { background-color: rgba(16, 185, 129, 0.18); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.4); }
+[data-theme="dark"] .spr-badge-sky { background-color: rgba(14, 165, 233, 0.18); color: #7dd3fc; border-color: rgba(14, 165, 233, 0.4); }
+[data-theme="dark"] .spr-badge-slate { background-color: #334155; color: #e2e8f0; border-color: #475569; }

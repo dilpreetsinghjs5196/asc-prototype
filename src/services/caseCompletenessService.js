@@ -9,7 +9,7 @@
  * ==============================================================================
  */
 
-import crypto from 'crypto';
+import { sha256Hex } from '../utils/isomorphicSha256.js';
 
 export const NAPLES_FACILITY_ID = '00000000-0000-0000-0000-000000000002';
 
@@ -47,7 +47,7 @@ export function normalizeFacilityId(facilityInput) {
 export function computeCaseCompletenessSeal(facilityId, identifier, score, blockersCount, status) {
   const normId = normalizeFacilityId(facilityId);
   const payload = `${normId}|${identifier}|${Number(score).toFixed(2)}|${Number(blockersCount)}|${status}`;
-  const rawHash = crypto.createHash('sha256').update(payload).digest('hex');
+  const rawHash = sha256Hex(payload);
   return `sha256_ccs_${rawHash.substring(0, 53)}`; // Exactly 64 chars (11 + 53)
 }
 

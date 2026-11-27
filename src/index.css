@@ -1164,3 +1164,27 @@ tr.clickable-row:hover {
   border-color: rgba(59, 130, 246, 0.4);
   background-color: var(--bg-card-hover);
 }
+
+/* Global Native Form & Dropdown Contrast Guarantees (Light & Dark Themes) */
+[data-theme="light"] {
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+[data-theme="dark"] select,
+[data-theme="dark"] select option,
+[data-theme="dark"] select optgroup {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155;
+}
+
+[data-theme="light"] select,
+[data-theme="light"] select option,
+[data-theme="light"] select optgroup {
+  background-color: #ffffff;
+  color: #0f172a;
+}

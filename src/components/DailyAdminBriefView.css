@@ -404,3 +404,38 @@
   gap: 8px;
   margin-top: 8px;
 }
+
+@media (max-width: 1024px) {
+  .dab-telemetry-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+[data-theme="dark"] .dab-container {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .dab-subtabs {
+  background-color: #0f172a;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .dab-subtab.active {
+  background-color: #1e293b;
+  color: #38bdf8;
+}
+
+[data-theme="dark"] .dab-note-input,
+[data-theme="dark"] .dab-form-row input {
+  background-color: #0f172a;
+  color: #f8fafc;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .dab-banner-success { background-color: rgba(16, 185, 129, 0.14); color: #a7f3d0; border-color: rgba(16, 185, 129, 0.4); }
+[data-theme="dark"] .dab-banner-error { background-color: rgba(244, 63, 94, 0.14); color: #fecdd3; border-color: rgba(244, 63, 94, 0.4); }
+[data-theme="dark"] .dab-badge-emerald { background-color: rgba(16, 185, 129, 0.18); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.4); }
+[data-theme="dark"] .dab-badge-sky { background-color: rgba(14, 165, 233, 0.18); color: #7dd3fc; border-color: rgba(14, 165, 233, 0.4); }
+[data-theme="dark"] .dab-badge-amber { background-color: rgba(245, 158, 11, 0.18); color: #fcd34d; border-color: rgba(245, 158, 11, 0.4); }
+[data-theme="dark"] .dab-badge-rose { background-color: rgba(244, 63, 94, 0.18); color: #fda4af; border-color: rgba(244, 63, 94, 0.4); }
+[data-theme="dark"] .dab-badge-slate { background-color: #334155; color: #e2e8f0; border-color: #475569; }

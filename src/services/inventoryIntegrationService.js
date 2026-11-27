@@ -9,7 +9,7 @@
  * ==============================================================================
  */
 
-import crypto from 'crypto';
+import { sha256Hex } from '../utils/isomorphicSha256.js';
 
 export const NAPLES_FACILITY_ID = '00000000-0000-0000-0000-000000000002';
 
@@ -39,7 +39,7 @@ export function normalizeFacilityId(facilityInput) {
 export function computeInventoryProvenanceSeal(facilityId, batchControlNumber, periodCode, totalValue, status) {
   const normId = normalizeFacilityId(facilityId);
   const payload = `${normId}|${batchControlNumber}|${periodCode}|${Number(totalValue).toFixed(2)}|${status}`;
-  const rawHash = crypto.createHash('sha256').update(payload).digest('hex');
+  const rawHash = sha256Hex(payload);
   return `sha256_inv_${rawHash.substring(0, 53)}`; // Exactly 64 chars
 }
 
