@@ -137,6 +137,7 @@ import MonthlyCfoReportView from './components/MonthlyCfoReportView';
 import SurgeonScorecardReportView from './components/SurgeonScorecardReportView';
 import PayerScorecardReportView from './components/PayerScorecardReportView';
 import CptEconomicsReportView from './components/CptEconomicsReportView';
+import OrBlockReportView from './components/OrBlockReportView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -3442,6 +3443,13 @@ export default function App() {
             <div className="menu-item-icon"><Layers size={16} /></div>
             CPT Economics Report
           </div>
+          <div
+            className={`menu-item ${activeTab === 'or_block_report' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('or_block_report'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><CalendarDays size={16} /></div>
+            OR Block Report
+          </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
@@ -3612,6 +3620,7 @@ export default function App() {
                   {activeTab === 'surgeon_scorecard_report' && 'Surgeon Performance Scorecard & Peer Benchmarking'}
                   {activeTab === 'payer_scorecard_report' && 'Payer Reimbursement & Contract Scorecard'}
                   {activeTab === 'cpt_economics_report' && 'CPT Reimbursement, Cost, Margin & OR Duration Report'}
+                  {activeTab === 'or_block_report' && 'OR Utilization, Block Releases & Financial Yield Report'}
                   {activeTab === 'claims_model' && 'Claims Management & RCM Lifecycle'}
                   {activeTab === 'edi_837_ingestion' && '837 Ingestion & Case Matching Engine'}
                   {activeTab === 'edi_835_remittance' && '835 Remittance Advice & Electronic Posting Engine'}
@@ -3746,6 +3755,7 @@ export default function App() {
                   {activeTab === 'surgeon_scorecard_report' && 'Conserved 4-pillar composite scoring, specialty peer benchmarks, CPT implant discipline & role-aware peer privacy'}
                   {activeTab === 'payer_scorecard_report' && 'Conserved 4-pillar payer grading, contract yield compliance, adjudication velocity, carve-out recovery & renewal radar'}
                   {activeTab === 'cpt_economics_report' && 'Activity-based CPT unit decomposition, implant/supply/labor costs, allocated overhead & Net Operating Income per OR-hour'}
+                  {activeTab === 'or_block_report' && 'Raw vs adjusted block utilization, 72h release compliance, abandoned idle opportunity cost & MEC rightsizing governance'}
                   {activeTab === 'claims_model' && 'UB-04 Institutional & CMS-1500 Adjudication, Clearinghouse Provenance & AR Ledger'}
                   {activeTab === 'edi_837_ingestion' && 'ANSI ASC X12 837I/P Clearinghouse Ingestion, WEDI SNIP 1–4 Validation & Case Linking'}
                   {activeTab === 'edi_835_remittance' && 'ANSI ASC X12 835 ERA Ingestion, CLP Adjudication, CARC Balancing & Auto-Post'}
@@ -3890,7 +3900,7 @@ export default function App() {
             </div>
 
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'ai_analyst', 'ai_tool_gateway', 'ai_permissions', 'ai_tool_definitions', 'ai_evidence_citations', 'ai_hallucination_rules', 'ai_human_approval', 'ai_voice_architecture', 'ai_benchmark_evaluation', 'next_best_financial_action', 'recommendation_priority_model', 'recommendation_evidence', 'recommendation_approvals', 'decision_ledger', 'recommendation_outcomes', 'realized_value', 'management_pnl', 'budget_variance', 'rolling_forecast', 'cash_forecast', 'break_even', 'scenario_modeling', 'board_reporting', 'roi_value_report', 'integration_framework', 'import_validation', 'excel_csv_import', 'sis_integration', 'hst_integration', 'clearinghouse_integration', 'accounting_integration', 'payroll_integration', 'inventory_integration', 'vendor_invoice_import', 'data_quality_framework', 'case_completeness_score', 'dq_financial_completeness', 'import_exception_queue', 'duplicate_matching_rules', 'source_provenance', 'reporting_architecture', 'daily_admin_brief', 'weekly_revenue_leakage_report', 'monthly_cfo_report', 'surgeon_scorecard_report', 'payer_scorecard_report', 'cpt_economics_report', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'surgeon_implant_variance', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'payer_intelligence', 'payer_contract_performance', 'cpt_intelligence', 'cpt_economics', 'cpt_denial_payment', 'vendor_cost_comparison', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'ai_analyst', 'ai_tool_gateway', 'ai_permissions', 'ai_tool_definitions', 'ai_evidence_citations', 'ai_hallucination_rules', 'ai_human_approval', 'ai_voice_architecture', 'ai_benchmark_evaluation', 'next_best_financial_action', 'recommendation_priority_model', 'recommendation_evidence', 'recommendation_approvals', 'decision_ledger', 'recommendation_outcomes', 'realized_value', 'management_pnl', 'budget_variance', 'rolling_forecast', 'cash_forecast', 'break_even', 'scenario_modeling', 'board_reporting', 'roi_value_report', 'integration_framework', 'import_validation', 'excel_csv_import', 'sis_integration', 'hst_integration', 'clearinghouse_integration', 'accounting_integration', 'payroll_integration', 'inventory_integration', 'vendor_invoice_import', 'data_quality_framework', 'case_completeness_score', 'dq_financial_completeness', 'import_exception_queue', 'duplicate_matching_rules', 'source_provenance', 'reporting_architecture', 'daily_admin_brief', 'weekly_revenue_leakage_report', 'monthly_cfo_report', 'surgeon_scorecard_report', 'payer_scorecard_report', 'cpt_economics_report', 'or_block_report', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'surgeon_implant_variance', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'payer_intelligence', 'payer_contract_performance', 'cpt_intelligence', 'cpt_economics', 'cpt_denial_payment', 'vendor_cost_comparison', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -6050,6 +6060,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'cpt_economics_report' && (
                 <CptEconomicsReportView activeFacility={activeFacility} />
+              )}
+
+              {/* ==========================================
+              TAB: OR BLOCK REPORT (PHASE H7 - MODULE 17 REPORTING)
+              ========================================== */}
+              {activeTab === 'or_block_report' && (
+                <OrBlockReportView activeFacility={activeFacility} />
               )}
 
               {/* ==========================================
