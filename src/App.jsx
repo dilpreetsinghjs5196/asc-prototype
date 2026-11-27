@@ -130,6 +130,7 @@ import DqFinancialCompletenessView from './components/DqFinancialCompletenessVie
 import ImportExceptionQueueView from './components/ImportExceptionQueueView';
 import DuplicateMatchingRulesView from './components/DuplicateMatchingRulesView';
 import SourceProvenanceView from './components/SourceProvenanceView';
+import ReportingArchitectureView from './components/ReportingArchitectureView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { rbacService, CANONICAL_ROLES } from './lib/rbacService';
 import Swal from 'sweetalert2';
@@ -3383,6 +3384,18 @@ export default function App() {
           </div>
 
           <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
+          <div className="sidebar-section-header" style={{ padding: '4px 16px', fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Enterprise Reporting (Phase 17)
+          </div>
+          <div
+            className={`menu-item ${activeTab === 'reporting_architecture' && !selectedSurgeon ? 'active' : ''}`}
+            onClick={() => { setActiveTab('reporting_architecture'); setSelectedSurgeon(null); }}
+          >
+            <div className="menu-item-icon"><FileSpreadsheet size={16} /></div>
+            Reporting Architecture
+          </div>
+
+          <div className="sidebar-section-divider" style={{ marginTop: '16px', marginBottom: '8px' }}></div>
 
           {/* Theme Switcher inside Sidebar */}
           <div
@@ -3544,6 +3557,7 @@ export default function App() {
                   {activeTab === 'import_exception_queue' && 'Import Exception Queue & Resolution'}
                   {activeTab === 'duplicate_matching_rules' && 'Duplicate Detection, Matching Rules & Survivorship'}
                   {activeTab === 'source_provenance' && 'Source Provenance & Audit Lineage'}
+                  {activeTab === 'reporting_architecture' && 'Enterprise Reporting Architecture, Exports & Scheduling'}
                   {activeTab === 'claims_model' && 'Claims Management & RCM Lifecycle'}
                   {activeTab === 'edi_837_ingestion' && '837 Ingestion & Case Matching Engine'}
                   {activeTab === 'edi_835_remittance' && '835 Remittance Advice & Electronic Posting Engine'}
@@ -3671,6 +3685,7 @@ export default function App() {
                   {activeTab === 'import_exception_queue' && 'Cross-module import exception triage, SLA countdowns, role-based ownership routing, inline payload repair & replay provenance'}
                   {activeTab === 'duplicate_matching_rules' && 'Deterministic entity matching, rule weight conservation, golden master survivorship, confidence thresholds & reversible merge history'}
                   {activeTab === 'source_provenance' && 'End-to-end source system tracking, ingestion batch envelopes, SemVer mapping specs, 7-year HIPAA retention & hash-chained audit provenance'}
+                  {activeTab === 'reporting_architecture' && 'Unified H1–H9 report catalog, normalized filters, DQ trust-gate watermarking, automated cron delivery schedules & RBAC access audit'}
                   {activeTab === 'claims_model' && 'UB-04 Institutional & CMS-1500 Adjudication, Clearinghouse Provenance & AR Ledger'}
                   {activeTab === 'edi_837_ingestion' && 'ANSI ASC X12 837I/P Clearinghouse Ingestion, WEDI SNIP 1–4 Validation & Case Linking'}
                   {activeTab === 'edi_835_remittance' && 'ANSI ASC X12 835 ERA Ingestion, CLP Adjudication, CARC Balancing & Auto-Post'}
@@ -3815,7 +3830,7 @@ export default function App() {
             </div>
 
 
-            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'ai_analyst', 'ai_tool_gateway', 'ai_permissions', 'ai_tool_definitions', 'ai_evidence_citations', 'ai_hallucination_rules', 'ai_human_approval', 'ai_voice_architecture', 'ai_benchmark_evaluation', 'next_best_financial_action', 'recommendation_priority_model', 'recommendation_evidence', 'recommendation_approvals', 'decision_ledger', 'recommendation_outcomes', 'realized_value', 'management_pnl', 'budget_variance', 'rolling_forecast', 'cash_forecast', 'break_even', 'scenario_modeling', 'board_reporting', 'roi_value_report', 'integration_framework', 'import_validation', 'excel_csv_import', 'sis_integration', 'hst_integration', 'clearinghouse_integration', 'accounting_integration', 'payroll_integration', 'inventory_integration', 'vendor_invoice_import', 'data_quality_framework', 'case_completeness_score', 'dq_financial_completeness', 'import_exception_queue', 'duplicate_matching_rules', 'source_provenance', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'surgeon_implant_variance', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'payer_intelligence', 'payer_contract_performance', 'cpt_intelligence', 'cpt_economics', 'cpt_denial_payment', 'vendor_cost_comparison', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
+            {!['settings', 'profile', 'business_analysis', 'instruction', 'ai_agent', 'ai_ops_analyst', 'ai_analyst', 'ai_tool_gateway', 'ai_permissions', 'ai_tool_definitions', 'ai_evidence_citations', 'ai_hallucination_rules', 'ai_human_approval', 'ai_voice_architecture', 'ai_benchmark_evaluation', 'next_best_financial_action', 'recommendation_priority_model', 'recommendation_evidence', 'recommendation_approvals', 'decision_ledger', 'recommendation_outcomes', 'realized_value', 'management_pnl', 'budget_variance', 'rolling_forecast', 'cash_forecast', 'break_even', 'scenario_modeling', 'board_reporting', 'roi_value_report', 'integration_framework', 'import_validation', 'excel_csv_import', 'sis_integration', 'hst_integration', 'clearinghouse_integration', 'accounting_integration', 'payroll_integration', 'inventory_integration', 'vendor_invoice_import', 'data_quality_framework', 'case_completeness_score', 'dq_financial_completeness', 'import_exception_queue', 'duplicate_matching_rules', 'source_provenance', 'reporting_architecture', 'or_block_schedule', 'cancellations', 'or_model', 'room_staffing', 'block_schedule', 'block_releases', 'or_utilization', 'block_utilization', 'booking_accuracy', 'turnover_metrics', 'duration_prediction', 'recoverable_capacity', 'next_best_case', 'cp_sat_optimizer', 'surgeon_intelligence', 'surgeon_financial_scorecard', 'surgeon_implant_variance', 'ot_cost_manage', 'cpt_manage', 'medicare_rates', 'payer_master', 'payer', 'payer_intelligence', 'payer_contract_performance', 'cpt_intelligence', 'cpt_economics', 'cpt_denial_payment', 'vendor_cost_comparison', 'surgeons_manage', 'staff_manage', 'patients', 'scheduler', 'facility_management', 'user_management', 'role_management', 'audit_logs'].includes(activeTab) && (
               <>
 
                 {/* Toggle Group */}
@@ -5926,6 +5941,13 @@ export default function App() {
               ========================================== */}
               {activeTab === 'source_provenance' && (
                 <SourceProvenanceView activeFacility={activeFacility} />
+              )}
+
+              {/* ==========================================
+              TAB: REPORTING ARCHITECTURE (PHASE H0 - MODULE 17 REPORTING)
+              ========================================== */}
+              {activeTab === 'reporting_architecture' && (
+                <ReportingArchitectureView activeFacility={activeFacility} />
               )}
 
               {/* ==========================================
